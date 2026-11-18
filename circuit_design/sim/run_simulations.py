@@ -7,9 +7,11 @@ Single Source of Truth:
   - Reads RefDes / nominal values from circuit_design/COMPONENT_IDS.csv
 
 Engine 1 (ngspice SPICE):
-  - Executes circuit_design/sim/netlists/lepiled_nominal.cir (9.5 ms: OFF -> 4-UV -> 8-ALL -> 4-UV)
+  - Executes circuit_design/sim/netlists/lepiled_nominal.cir (9.5 ms: OFF -> 4-UV -> 8-ALL -> 4-UV, 0.042 Ohm round-trip cable)
   - Executes circuit_design/sim/netlists/lepiled_fault_open_led.cir (worst-case BZT52C18 19.1V open-load OVP)
-  - Executes circuit_design/sim/netlists/lepiled_fault_input_prot.cir (IC=0 cold plug, -12V rev, +12V stiff & 4A-limited, 5->12V step)
+  - Executes circuit_design/sim/netlists/lepiled_fault_input_prot.cir (85 C IC=0 cold plug, -12/-16V rev, +12/+16V stiff & 4A-limited, +16V resistor powers)
+  - Executes circuit_design/sim/netlists/lepiled_fault_hotplug_85c.cir (85 C LOW-corner 0->5.5V 200ns 0.5uH dual-LM3410XMY cold hot-plug)
+  - Executes circuit_design/sim/netlists/lepiled_fault_ovp_sweep.cir (85 C 5.5V hold, 6x inductive 0->5.5V hot-plugs, 6.0..16.0V OVP sweep + latch stability, 27 C & 85 C 5.5->16V steps)
   - Parses logs & wrdata traces, verifies assertions, saves ngspice_transient_modes.png
 
 Engine 2 (Python / SciPy):
@@ -89,6 +91,7 @@ def run_ngspice_suite() -> dict:
         ("nominal", NETLIST_DIR / "lepiled_nominal.cir"),
         ("fault_open_led", NETLIST_DIR / "lepiled_fault_open_led.cir"),
         ("fault_input_prot", NETLIST_DIR / "lepiled_fault_input_prot.cir"),
+        ("fault_hotplug_85c", NETLIST_DIR / "lepiled_fault_hotplug_85c.cir"),
         ("fault_ovp_sweep", NETLIST_DIR / "lepiled_fault_ovp_sweep.cir"),
     ]:
         proc = subprocess.run(
@@ -101,9 +104,11 @@ def run_ngspice_suite() -> dict:
         log_path = OUT_DIR / f"ngspice_{name}.log"
         full_log = proc.stdout + proc.stderr
         log_path.write_text(full_log, encoding="utf-8")
-        assert "Error:" not in full_log and "failed!" not in full_log, (
-            f"ngspice {name} reported errors in {log_path}"
-        )
+        assert (
+            "Error:" not in full_log
+            and "failed!" not in full_log
+            and "aborted" not in full_log.lower()
+        ), f"ngspice {name} reported errors in {log_path}"
         meas = parse_ngspice_meas(proc.stdout)
         results["runs"][name] = {
             "returncode": proc.returncode,
@@ -134,17 +139,32 @@ def run_ngspice_suite() -> dict:
     for r_key in ["ov16_pr12_w", "ov16_pr13_w", "ov16_pr14_w", "ov16_pr15_w", "ov16_pr16_w", "ov16_pr17_w", "ov16_pr19_w"]:
         assert prot_m[r_key] <= 0.050, f"+16V resistor {r_key} exceeded 50 mW: {prot_m[r_key]}"
 
+    hp_m = results["runs"]["fault_hotplug_85c"]["measurements"]
+    assert hp_m["hp55_200n_0u5_iin_pk"] < 3.0, f"5.5V 200ns 0.5uH @85C I_in_pk >= 3A: {hp_m['hp55_200n_0u5_iin_pk']}"
+    assert hp_m["hp55_200n_0u5_il1_pk"] < 3.0, f"5.5V 200ns 0.5uH @85C I_L1_pk >= 3A: {hp_m['hp55_200n_0u5_il1_pk']}"
+    assert hp_m["hp55_200n_0u5_il2_pk"] < 3.0, f"5.5V 200ns 0.5uH @85C I_L2_pk >= 3A: {hp_m['hp55_200n_0u5_il2_pk']}"
+    assert hp_m["hp55_200n_0u5_vin_ss"] >= 5.10, f"5.5V 200ns 0.5uH @85C dual-LM3410 failed recovery: {hp_m['hp55_200n_0u5_vin_ss']}"
+
     swp_m = results["runs"]["fault_ovp_sweep"]["measurements"]
-    assert swp_m["hold55_85c_vin_ss"] > 5.0, f"5.5V @ 85C hold ON failed: {swp_m['hold55_85c_vin_ss']}"
+    assert swp_m["hold55_85c_vin_ss"] >= 5.10, f"5.5V @ 85C hold ON failed: {swp_m['hold55_85c_vin_ss']}"
+    for hp_key in ["hp55_200n_0u5_nl_ss", "hp55_1u_0u5_nl_ss", "hp55_200n_1u0_nl_ss", "hp55_1u_1u0_nl_ss", "hp55_27c_0u5_nl_ss"]:
+        assert swp_m[hp_key] >= 5.49, f"Inductive 5.5V cold hot-plug {hp_key} failed recovery: {swp_m[hp_key]}"
+    for hp_key in ["hp55_200n_1u0_2r5_ss", "hp55_1u_1u0_2r5_ss"]:
+        assert swp_m[hp_key] >= 5.10, f"Inductive 5.5V 2.5-Ohm cold hot-plug {hp_key} failed recovery: {swp_m[hp_key]}"
     for v_tag in ["60", "62", "64", "66", "67", "68", "69", "70", "12", "15", "16"]:
         assert swp_m[f"sw{v_tag}_vp_pk"] < 7.0, f"OVP sweep {v_tag} VIN_PROT >= 7V: {swp_m[f'sw{v_tag}_vp_pk']}"
         assert swp_m[f"sw{v_tag}_pd11_pk"] < 0.050, f"OVP sweep {v_tag} P(D11) >= 50mW: {swp_m[f'sw{v_tag}_pd11_pk']}"
+    for v_tag in ["62", "64", "66", "67", "68", "69", "70", "12", "15", "16"]:
+        assert swp_m[f"sw{v_tag}_odrv_pp"] <= 1e-3, f"OVP latch {v_tag} oscillation OVP_DRV_pp > 1mV: {swp_m[f'sw{v_tag}_odrv_pp']}"
     assert swp_m["step_5to12_vin_pk"] < 7.0, f"5.5->12V step VIN_PROT >= 7V: {swp_m['step_5to12_vin_pk']}"
     assert swp_m["step_5to12_vin_ss"] < 1e-3, f"5.5->12V step failed to cut off: {swp_m['step_5to12_vin_ss']}"
     assert swp_m["step_5to12_vgs_min"] > -8.0, f"5.5->12V Vgs exceeded -8V: {swp_m['step_5to12_vgs_min']}"
     assert swp_m["step_5to16_vin_pk"] < 7.0, f"5.5->16V step VIN_PROT >= 7V: {swp_m['step_5to16_vin_pk']}"
     assert swp_m["step_5to16_vin_ss"] < 1e-3, f"5.5->16V step failed to cut off: {swp_m['step_5to16_vin_ss']}"
     assert swp_m["step_5to16_vgs_min"] > -8.0, f"5.5->16V Vgs exceeded -8V: {swp_m['step_5to16_vgs_min']}"
+    assert swp_m["step27_5to16_vin_pk"] < 7.0, f"27C 5.5->16V step VIN_PROT >= 7V: {swp_m['step27_5to16_vin_pk']}"
+    assert swp_m["step27_5to16_vin_ss"] < 1e-3, f"27C 5.5->16V step failed to cut off: {swp_m['step27_5to16_vin_ss']}"
+    assert swp_m["step27_5to16_vgs_min"] > -8.0, f"27C 5.5->16V Vgs exceeded -8V: {swp_m['step27_5to16_vgs_min']}"
 
     # Plot ngspice nominal trace
     trace_path = OUT_DIR / "ngspice_nominal_trace.txt"
@@ -294,9 +314,9 @@ def run_scipy_transient_ode(ds: dict) -> dict:
     vd = ds["schottky_diode"]["B340A-13-F"]["vf_V"]["at_1A_25C_typ"]
     icl_typ = ic["icl_A"]["typ"]
 
-    # Input path impedance: 18 AWG 1m cable (0.022) + J1 (0.040) + F1 MF-LSMF500/16X (0.015) + Q1A+Q1B (0.080)
+    # Input path impedance: 18 AWG 1m 2-wire round-trip cable (0.042) + J1 (0.040) + F1 MF-LSMF500/16X (0.015) + Q1A+Q1B (0.080)
     r_in_path = (
-        0.022
+        0.042
         + usb["contact_resistance_mohm"]["initial"] * 1e-3
         + 0.015
         + 2.0 * mos["rds_on_ohm"]["at_4V5_typ"]
@@ -557,9 +577,9 @@ def run_corners_and_mc(ds: dict) -> tuple[dict, list[dict]]:
     tr, tf = ic["t_rise_ns"], ic["t_fall_ns"]
     t_pcb_max_C = 55.0
 
-    # Nominal steady-state at typ 5.0 V USB (18 AWG 1.0 m cable + J1 + F1 + Q1A/Q1B -> R_path = 0.157 Ohm)
+    # Nominal steady-state at typ 5.0 V USB (18 AWG 1.0 m 2-wire round-trip cable 0.042 Ohm + J1 + F1 + Q1A/Q1B -> R_path = 0.177 Ohm)
     nom_droop = solve_usb_path_droop(
-        5.0, 0.022, usb["contact_resistance_mohm"]["initial"] * 1e-3,
+        5.0, 0.042, usb["contact_resistance_mohm"]["initial"] * 1e-3,
         0.015, 2.0 * mos["rds_on_ohm"]["at_4V5_typ"], ds, worst_boost=False, worst_leds=False,
     )
     vin_ic_nom = nom_droop["vin_prot_V"]
@@ -584,16 +604,24 @@ def run_corners_and_mc(ds: dict) -> tuple[dict, list[dict]]:
         tr_ns=tr, tf_ns=tf,
     )
 
-    # Reconciled input-path droop scenarios (8-ALL mode) — zero uncovered V_IC gap
+    # Reconciled 2-wire round-trip input-path droop scenarios (8-ALL mode) — zero uncovered V_IC gap
     droop_checks = {
-        "usb_5p0V_typ_18AWG_1m_usbc": solve_usb_path_droop(5.0, 0.022, 0.040, 0.015, 0.080, ds, worst_boost=False, worst_leds=False),
-        "usb_4p85V_ds_worst_18AWG_1m_captive": solve_usb_path_droop(4.85, 0.022, 0.0, ptc["r_1max_ohm"], 2.0 * mos["rds_on_ohm"]["at_4V5_max"], ds, worst_boost=True, worst_leds=True),
-        "usb_4p90V_ds_worst_18AWG_0p8m_usbc": solve_usb_path_droop(4.90, 0.018, 0.050, ptc["r_1max_ohm"], 2.0 * mos["rds_on_ohm"]["at_4V5_max"], ds, worst_boost=True, worst_leds=True),
-        "usb_4p75V_typLED_20AWG_1m_usbc": solve_usb_path_droop(4.75, 0.040, 0.050, ptc["r_1max_ohm"], 2.0 * mos["rds_on_ohm"]["at_4V5_max"], ds, worst_boost=True, worst_leds=False),
+        "usb_5p0V_typ_18AWG_1m_usbc": solve_usb_path_droop(5.0, 0.042, 0.040, 0.015, 0.080, ds, worst_boost=False, worst_leds=False),
+        "usb_4p85V_ds_worst_18AWG_1m_captive_20C": solve_usb_path_droop(4.85, 0.042, 0.0, ptc["r_1max_ohm"], 2.0 * mos["rds_on_ohm"]["at_4V5_max"], ds, worst_boost=True, worst_leds=True),
+        "usb_4p85V_ds_worst_18AWG_1m_captive": solve_usb_path_droop(4.85, 0.048, 0.0, ptc["r_1max_ohm"], 2.0 * mos["rds_on_ohm"]["at_4V5_max"], ds, worst_boost=True, worst_leds=True),
+        "usb_4p90V_ds_worst_Rcab18m_usbc": solve_usb_path_droop(4.90, 0.018, 0.050, ptc["r_1max_ohm"], 2.0 * mos["rds_on_ohm"]["at_4V5_max"], ds, worst_boost=True, worst_leds=True),
+        "usb_4p75V_typLED_Rcab40m_usbc": solve_usb_path_droop(4.75, 0.040, 0.050, ptc["r_1max_ohm"], 2.0 * mos["rds_on_ohm"]["at_4V5_max"], ds, worst_boost=True, worst_leds=False),
         "vic_4p25V_ds_worst_direct": solve_usb_path_droop(4.25, 0.0, 0.0, 0.0, 0.0, ds, worst_boost=True, worst_leds=True),
     }
-    for d_key in ["usb_4p85V_ds_worst_18AWG_1m_captive", "usb_4p90V_ds_worst_18AWG_0p8m_usbc", "usb_4p75V_typLED_20AWG_1m_usbc"]:
+    for d_key in [
+        "usb_4p85V_ds_worst_18AWG_1m_captive_20C",
+        "usb_4p85V_ds_worst_18AWG_1m_captive",
+        "usb_4p90V_ds_worst_Rcab18m_usbc",
+        "usb_4p75V_typLED_Rcab40m_usbc",
+    ]:
         dc = droop_checks[d_key]
+        if d_key != "usb_4p75V_typLED_Rcab40m_usbc":
+            assert dc["vin_prot_V"] >= 4.25, f"{d_key} dropped below V_IC=4.25V: {dc}"
         assert dc["i_usb_A"] < ptc["ihold_55C_A"], f"{d_key} exceeds F1 Ihold@55C ({ptc['ihold_55C_A']}A): {dc}"
         assert dc["i_usb_A"] < ptc["ihold_60C_A"], f"{d_key} exceeds F1 Ihold@60C ({ptc['ihold_60C_A']}A): {dc}"
         assert dc["ch1_ipk_A"] < ic["icl_A"]["min"], f"{d_key} exceeds ICL_min: {dc}"

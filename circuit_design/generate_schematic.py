@@ -3,7 +3,7 @@
 Generate the complete LepiLED DIY Maxi Switch schematic (SVG, PDF, PNG)
 using schemdraw + inkscape.
 
-All 62 RefDes in circuit_design/COMPONENT_IDS.csv are represented cleanly with
+All 71 RefDes in circuit_design/COMPONENT_IDS.csv are represented cleanly with
 zero overlapping labels or wires, and pinouts verified strictly against vendor PDFs.
 """
 
@@ -472,15 +472,16 @@ def build_schematic(out_dir: Path) -> Path:
     d += elm.Dot().label("Q2_BASE", loc="bottom", ofst=0.14, fontsize=6.1)
     d += elm.Resistor().at(p_bus_r15).to(p_q2b).label("R15 10k\n0603", loc="top", ofst=0.18, fontsize=6.2)
     # Connect U3.K (OVP_K) via R16 (5.6k) to Q2_BASE (cleanly clear of U3 top pin)
-    d += elm.Line().at(u3_pts["K"]).to((u3_pts["K"][0], p_q2b[1] + 0.6))
-    d += elm.Line().to((u3_pts["K"][0], p_q2b[1]))
+    d += elm.Line().at(u3_pts["K"]).right(0.8)
     d += elm.Dot().label("OVP_K", loc="top", ofst=0.14, fontsize=6.0)
+    d += elm.Line().to((d.here[0], p_q2b[1]))
     d += elm.Resistor().to(p_q2b).label("R16 5.6k\n0603", loc="bottom", ofst=0.20, fontsize=6.1)
 
     # OVP_DRV node cleanly below Q2.C
     p_ovp_drv = (q2_pts["C"][0], q2_pts["C"][1] - 0.35)
     d += elm.Line().at(q2_pts["C"]).to(p_ovp_drv)
-    d += elm.Dot().label("OVP_DRV", loc="left", ofst=0.14, fontsize=6.2)
+    d += elm.Dot()
+    d += elm.Label().at((p_ovp_drv[0] + 0.14, p_ovp_drv[1] - 0.20)).label("OVP_DRV", halign="left", valign="top", fontsize=6.2)
 
     # 4. D16 (BAW56LT1G Common Anode) at x = 24.4..27.0, y = 5.7..7.3
     d16_x0 = 24.4
@@ -527,7 +528,8 @@ def build_schematic(out_dir: Path) -> Path:
     # R17 (10k) from OVP_DRV to Q4_BASE + R20 (100k) to GND
     d += elm.Line().at(q4_pts["B"]).left(0.9)
     p_q4b = d.here
-    d += elm.Dot().label("Q4_BASE", loc="bottom", ofst=0.16, fontsize=6.0)
+    d += elm.Dot()
+    d += elm.Label().at((p_q4b[0] + 0.10, p_q4b[1] + 0.12)).label("Q4_BASE", halign="left", valign="bottom", fontsize=6.0)
     d.push()
     d += elm.Resistor().down(1.4).label("R20 100k\n0603", loc="top", ofst=0.24, fontsize=6.1)
     d += elm.Ground()
@@ -570,17 +572,18 @@ def build_schematic(out_dir: Path) -> Path:
     d += elm.Line().at(q4_pts["C"]).to((q4_pts["C"][0], p_q3b[1]))
     d += elm.Line().to(p_q3b)
     d.pop()
-    # R14 (220k) routed at y = 8.4 cleanly ABOVE D16 up to p_vmid_r14
+    # R14 (220k) vertical clear of R18/Q2, then routed cleanly at y = 8.7 to p_vmid_r14
     d.push()
-    d += elm.Line().at(p_q3b).up(3.1)
-    d += elm.Resistor().to((p_vmid_r14[0], d.here[1])).label("R14 220k 0603", loc="bottom", ofst=0.14, fontsize=6.2)
+    d += elm.Line().at(p_q3b).up(1.2)
+    d += elm.Resistor().up(2.2).label("R14 220k\n0603", loc="bottom", ofst=0.22, fontsize=6.2)
+    d += elm.Line().to((p_vmid_r14[0], d.here[1]))
     d += elm.Line().to(p_vmid_r14)
     d.pop()
 
-    # Hysteresis K2 -> R19 (27k) -> OVP_SENSE cleanly along bottom of Block 1 (y = 1.9)
+    # Hysteresis K2 -> R19 (68k) -> OVP_SENSE cleanly along bottom of Block 1 (y = 1.9)
     hyst_y = 1.9
     d += elm.Line().at(d16_pts["K2"]).to((d16_pts["K2"][0], hyst_y))
-    d += elm.Resistor().to((p_ovp_sense[0] + 1.2, hyst_y)).label("R19 27k 1% 0603 (Hyst)", loc="bottom", ofst=0.14, fontsize=6.2)
+    d += elm.Resistor().to((p_ovp_sense[0] + 1.2, hyst_y)).label("R19 68k 1% 0603 (Hyst)", loc="bottom", ofst=0.14, fontsize=6.2)
     d += elm.Line().to((p_ovp_sense[0] + 1.2, p_ovp_sense[1]))
     d += elm.Line().to(p_ovp_sense)
 

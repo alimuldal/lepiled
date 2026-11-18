@@ -5,7 +5,7 @@
 
 .INCLUDE circuit_design/sim/netlists/models.lib
 
-.SUBCKT INPUT_PROT_SWEEP VBUS VIN_PROT GND PARAMS: RF1=0.025 VREF=2.537 IREF=4u R12V=13.837k R13V=9.90k R19V=26.73k
+.SUBCKT INPUT_PROT_SWEEP VBUS VIN_PROT GND PARAMS: RF1=0.025 VREF=2.537 IREF=4u R12V=13.837k R13V=9.90k R19V=67.32k
 C12 VBUS GND 100n IC=0
 R_F1 VBUS VBUS_FUSED {RF1}
 M_Q1A VBUS_FUSED Q1_GATE V_MID V_MID M_DMG2305UX_WC
@@ -34,12 +34,55 @@ D16B OVP_DRV OVP_HYS D_BAV70
 R19 OVP_HYS OVP_SENSE {R19V}
 .ENDS INPUT_PROT_SWEEP
 
-* Case 0: 5.5 V @ 85 C Hold ON (worst-case LOW-trip corner: Vref=2.453 V, Iref=0, R12 -1%, R13 +1%, 2.5 Ohm load)
+* Case 0: 5.5 V @ 85 C Hold ON (worst-case LOW-trip corner: Vref=2.453 V, Iref=0, R12 -1%, R13 +1%, R19 +1%, 2.5 Ohm load)
 V_H55 IN_H55 0 PWL(0 0 200n 5.5 9.0m 5.5)
 R_H55 IN_H55 VB_H55 0.05
-X_PH55 VB_H55 VP_H55 0 INPUT_PROT_SWEEP VREF=2.453 IREF=0 R12V=13.563k R13V=10.10k R19V=27.27k
+X_PH55 VB_H55 VP_H55 0 INPUT_PROT_SWEEP VREF=2.453 IREF=0 R12V=13.563k R13V=10.10k R19V=68.68k
 C_H55 VP_H55 0 24.2u IC=0
 R_LH55 VP_H55 0 2.5
+
+* Inductive cold 0 -> 5.5 V hot-plug regressions @ 85 C LOW corner (0.062 Ohm + 0.5 uH / 1.0 uH, 200 ns / 1 us)
+V_HP_200N_0U5 IN_HP1 0 PWL(0 0 200n 5.5 9.0m 5.5)
+R_HP1 IN_HP1 VA_HP1 0.062
+L_HP1 VA_HP1 VB_HP1 0.5u
+X_HP1 VB_HP1 VP_HP1 0 INPUT_PROT_SWEEP VREF=2.453 IREF=0 R12V=13.563k R13V=10.10k R19V=68.68k
+C_HP1 VP_HP1 0 24.2u IC=0
+R_LHP1 VP_HP1 0 10k
+
+V_HP_1U_0U5 IN_HP2 0 PWL(0 0 1u 5.5 9.0m 5.5)
+R_HP2 IN_HP2 VA_HP2 0.062
+L_HP2 VA_HP2 VB_HP2 0.5u
+X_HP2 VB_HP2 VP_HP2 0 INPUT_PROT_SWEEP VREF=2.453 IREF=0 R12V=13.563k R13V=10.10k R19V=68.68k
+C_HP2 VP_HP2 0 24.2u IC=0
+R_LHP2 VP_HP2 0 10k
+
+V_HP_200N_1U0 IN_HP3 0 PWL(0 0 200n 5.5 9.0m 5.5)
+R_HP3 IN_HP3 VA_HP3 0.062
+L_HP3 VA_HP3 VB_HP3 1.0u
+X_HP3 VB_HP3 VP_HP3 0 INPUT_PROT_SWEEP VREF=2.453 IREF=0 R12V=13.563k R13V=10.10k R19V=68.68k
+C_HP3 VP_HP3 0 24.2u IC=0
+R_LHP3 VP_HP3 0 10k
+
+V_HP_1U_1U0 IN_HP4 0 PWL(0 0 1u 5.5 9.0m 5.5)
+R_HP4 IN_HP4 VA_HP4 0.062
+L_HP4 VA_HP4 VB_HP4 1.0u
+X_HP4 VB_HP4 VP_HP4 0 INPUT_PROT_SWEEP VREF=2.453 IREF=0 R12V=13.563k R13V=10.10k R19V=68.68k
+C_HP4 VP_HP4 0 24.2u IC=0
+R_LHP4 VP_HP4 0 10k
+
+V_HP_200N_1U0_L IN_HP5 0 PWL(0 0 200n 5.5 9.0m 5.5)
+R_HP5 IN_HP5 VA_HP5 0.062
+L_HP5 VA_HP5 VB_HP5 1.0u
+X_HP5 VB_HP5 VP_HP5 0 INPUT_PROT_SWEEP VREF=2.453 IREF=0 R12V=13.563k R13V=10.10k R19V=68.68k
+C_HP5 VP_HP5 0 24.2u IC=0
+R_LHP5 VP_HP5 0 2.5
+
+V_HP_1U_1U0_L IN_HP6 0 PWL(0 0 1u 5.5 9.0m 5.5)
+R_HP6 IN_HP6 VA_HP6 0.062
+L_HP6 VA_HP6 VB_HP6 1.0u
+X_HP6 VB_HP6 VP_HP6 0 INPUT_PROT_SWEEP VREF=2.453 IREF=0 R12V=13.563k R13V=10.10k R19V=68.68k
+C_HP6 VP_HP6 0 24.2u IC=0
+R_LHP6 VP_HP6 0 2.5
 
 V_SW60 IN_60 0 PWL(0 0 5u 5.0 6.5m 5.0 6.501m 6.0 9.0m 6.0)
 R_SW60 IN_60 VB_60 0.05
@@ -121,6 +164,7 @@ C_S16 VP_S16 0 24.2u IC=0
 R_LS16 VP_S16 0 2.5
 
 .TEMP 85
+.OPTIONS cshunt=1e-12 reltol=0.003
 .TRAN 200n 9.0m 0 200n UIC
 
 .CONTROL
@@ -138,28 +182,45 @@ let pd11_15 = v(vp_15)*(-@d.x_sw15.d11[id])
 let pd11_16 = v(vp_16)*(-@d.x_sw16.d11[id])
 
 meas tran hold55_85c_vin_ss avg v(vp_h55) from=8.0m to=9.0m
+meas tran hp55_200n_0u5_nl_ss avg v(vp_hp1) from=8.0m to=9.0m
+meas tran hp55_1u_0u5_nl_ss avg v(vp_hp2) from=8.0m to=9.0m
+meas tran hp55_200n_1u0_nl_ss avg v(vp_hp3) from=8.0m to=9.0m
+meas tran hp55_1u_1u0_nl_ss avg v(vp_hp4) from=8.0m to=9.0m
+meas tran hp55_200n_1u0_2r5_ss avg v(vp_hp5) from=8.0m to=9.0m
+meas tran hp55_1u_1u0_2r5_ss avg v(vp_hp6) from=8.0m to=9.0m
+
 meas tran sw60_vp_pk max v(vp_60) from=6.4m to=9.0m
 meas tran sw60_pd11_pk max pd11_60 from=6.4m to=9.0m
 meas tran sw62_vp_pk max v(vp_62) from=6.4m to=9.0m
 meas tran sw62_pd11_pk max pd11_62 from=6.4m to=9.0m
+meas tran sw62_odrv_pp pp v(x_sw62.ovp_drv) from=7.5m to=9.0m
 meas tran sw64_vp_pk max v(vp_64) from=6.4m to=9.0m
 meas tran sw64_pd11_pk max pd11_64 from=6.4m to=9.0m
+meas tran sw64_odrv_pp pp v(x_sw64.ovp_drv) from=7.5m to=9.0m
 meas tran sw66_vp_pk max v(vp_66) from=6.4m to=9.0m
 meas tran sw66_pd11_pk max pd11_66 from=6.4m to=9.0m
+meas tran sw66_odrv_pp pp v(x_sw66.ovp_drv) from=7.5m to=9.0m
 meas tran sw67_vp_pk max v(vp_67) from=6.4m to=9.0m
 meas tran sw67_pd11_pk max pd11_67 from=6.4m to=9.0m
+meas tran sw67_odrv_pp pp v(x_sw67.ovp_drv) from=7.5m to=9.0m
 meas tran sw68_vp_pk max v(vp_68) from=6.4m to=9.0m
 meas tran sw68_pd11_pk max pd11_68 from=6.4m to=9.0m
+meas tran sw68_odrv_pp pp v(x_sw68.ovp_drv) from=7.5m to=9.0m
 meas tran sw69_vp_pk max v(vp_69) from=6.4m to=9.0m
 meas tran sw69_pd11_pk max pd11_69 from=6.4m to=9.0m
+meas tran sw69_odrv_pp pp v(x_sw69.ovp_drv) from=7.5m to=9.0m
 meas tran sw70_vp_pk max v(vp_70) from=6.4m to=9.0m
 meas tran sw70_pd11_pk max pd11_70 from=6.4m to=9.0m
+meas tran sw70_odrv_pp pp v(x_sw70.ovp_drv) from=7.5m to=9.0m
 meas tran sw12_vp_pk max v(vp_12) from=6.4m to=9.0m
 meas tran sw12_pd11_pk max pd11_12 from=6.4m to=9.0m
+meas tran sw12_odrv_pp pp v(x_sw12.ovp_drv) from=7.5m to=9.0m
 meas tran sw15_vp_pk max v(vp_15) from=6.4m to=9.0m
 meas tran sw15_pd11_pk max pd11_15 from=6.4m to=9.0m
+meas tran sw15_odrv_pp pp v(x_sw15.ovp_drv) from=7.5m to=9.0m
 meas tran sw16_vp_pk max v(vp_16) from=6.4m to=9.0m
 meas tran sw16_pd11_pk max pd11_16 from=6.4m to=9.0m
+meas tran sw16_odrv_pp pp v(x_sw16.ovp_drv) from=7.5m to=9.0m
 
 let vgs_s12 = v(x_ps12.q1_gate) - v(x_ps12.v_mid)
 let vgs_s16 = v(x_ps16.q1_gate) - v(x_ps16.v_mid)
@@ -169,6 +230,15 @@ meas tran step_5to12_vgs_min min vgs_s12 from=0 to=9.0m
 meas tran step_5to16_vin_pk max v(vp_s16) from=7.45m to=9.0m
 meas tran step_5to16_vin_ss avg v(vp_s16) from=8.5m to=9.0m
 meas tran step_5to16_vgs_min min vgs_s16 from=0 to=9.0m
+
+* Re-verify +5.5 -> +16.0 V 200 ns step and inductive hot-plug at 27 C
+set temp=27
+tran 200n 9.0m 0 200n uic
+let vgs27_s16 = v(x_ps16.q1_gate) - v(x_ps16.v_mid)
+meas tran step27_5to16_vin_pk max v(vp_s16) from=7.45m to=9.0m
+meas tran step27_5to16_vin_ss avg v(vp_s16) from=8.5m to=9.0m
+meas tran step27_5to16_vgs_min min vgs27_s16 from=0 to=9.0m
+meas tran hp55_27c_0u5_nl_ss avg v(vp_hp1) from=8.0m to=9.0m
 quit 0
 .ENDC
 .END

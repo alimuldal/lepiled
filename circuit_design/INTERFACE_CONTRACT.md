@@ -53,8 +53,8 @@
 
 ### 2.1 Thermal Dissipation Budget (Fanless Sizing)
 Nominal steady-state drive current = **`339.3 mA`** (`V_FB = 0.190 V`, `R3 = R4 = 0.56 Ω ±1%`).
-Nominal USB input scenario: `V_USB = 5.00 V` through `18 AWG ≤ 1.0 m` USB-C cable + `J1` + `F1` + `Q1A/Q1B` (`R_path = 0.157 Ω` typ -> `V_IC = 4.666 V`, `I_in = 2.124 A` analytic / `2.050 A` ngspice, `P_USB = 5.00 V × 2.1245 A = 10.622 W`).
-Worst-case Datasheet Bound column below evaluates a **single consistent corner** at `V_IC = 4.25 V` (`datasheet_spec` `corner_sweep.csv`: `V_FB = 202 mV`, `R_sense = 0.5544 Ω` -> `I_LED = 364.36 mA`, `V_str = 16.0 / 13.5 V`, `L = 8.0 µH`, `DCR = 76.2 mΩ`, `R_ds = 0.33 Ω`, `V_d = 0.50 V`, `f_sw = 2.0 MHz`, `I_q = 11 mA`) paired with max `F1/Q1` `I^2R` droop (`I_in = 3.237 A` at `4.90 V` USB-C `0.8 m` `18 AWG` cable, `V_IC = 4.262 V`).
+Nominal USB input scenario: `V_USB = 5.00 V` through `18 AWG ≤ 1.0 m` 2-wire round-trip USB-C cable (`0.042 Ω`) + `J1` + `F1` + `Q1A/Q1B` (`R_path = 0.177 Ω` typ -> `V_IC = 4.620 V`, `I_in = 2.149 A` analytic / `2.071 A` ngspice, `P_USB = 5.00 V × 2.1485 A = 10.743 W`).
+Worst-case Datasheet Bound column below evaluates a **single consistent corner** at `V_IC = 4.25 V` (`datasheet_spec` `corner_sweep.csv`: `V_FB = 202 mV`, `R_sense = 0.5544 Ω` -> `I_LED = 364.36 mA`, `V_str = 16.0 / 13.5 V`, `L = 8.0 µH`, `DCR = 76.2 mΩ`, `R_ds = 0.33 Ω`, `V_d = 0.50 V`, `f_sw = 2.0 MHz`, `I_q = 11 mA`) paired with max `F1/Q1` `I^2R` droop (`I_in = 3.237 A` at `4.90 V` USB-C `R_cable ≤ 0.018 Ω` round-trip [`≤ 0.4 m` `18 AWG` or `≤ 0.65 m` `16 AWG`], `V_IC = 4.262 V`).
 
 | Subsystem | `8-ALL` Electrical (W) | `8-ALL` Nominal Heat (W) | `8-ALL` Worst-Case Datasheet Bound (W) | `4-UV` Nominal Heat (W) | Thermal Limit ($T_{j,\max}$ / $T_{\text{amb}}$) |
 |---|---|---|---|---|---|
@@ -64,17 +64,17 @@ Worst-case Datasheet Bound column below evaluates a **single consistent corner**
 | **Visible Green (`D7`, `XPEBGR-00K01`)** | `0.92 W` | `0.66 W` | `1.19 W` | `0.00 W` | $T_{j,\max} = 150^\circ\text{C}$ ($R_{\theta J-s} = 9.0^\circ\text{C/W}$) |
 | **Visible Cool White (`D8`, `XPEBWT-00H51`)** | `0.99 W` | `0.64 W` | `1.26 W` | `0.00 W` | $T_{j,\max} = 150^\circ\text{C}$ ($R_{\theta J-s} = 5.8^\circ\text{C/W}$) |
 | **Ch2 Visible Array Total (`4× Vis`)** | `3.89 W` | **`2.30 W`** | `4.93 W` | `0.00 W` | Target $T_{j,\text{Vis}} \le 85^\circ\text{C}$ @ $30^\circ\text{C}$ amb |
-| **`U1` (`LM3410XMY` Ch1 UV)** | `0.398 W` loss | **`0.398 W`** | **`1.290 W`** (`datasheet_spec @ 4.25 V`) | **`0.398 W`** | **$T_{j,\max} = 125^\circ\text{C}$** ($R_{\theta JA} = 53.7^\circ\text{C/W}$) |
-| **`U2` (`LM3410XMY` Ch2 Vis)** | `0.251 W` loss | **`0.251 W`** | **`0.839 W`** (`datasheet_spec @ 4.25 V`) | `0.00 W` | **$T_{j,\max} = 125^\circ\text{C}$** ($R_{\theta JA} = 53.7^\circ\text{C/W}$) |
+| **`U1` (`LM3410XMY` Ch1 UV)** | `0.404 W` loss | **`0.404 W`** | **`1.290 W`** (`datasheet_spec @ 4.25 V`) | **`0.404 W`** | **$T_{j,\max} = 125^\circ\text{C}$** ($R_{\theta JA} = 53.7^\circ\text{C/W}$) |
+| **`U2` (`LM3410XMY` Ch2 Vis)** | `0.255 W` loss | **`0.255 W`** | **`0.839 W`** (`datasheet_spec @ 4.25 V`) | `0.00 W` | **$T_{j,\max} = 125^\circ\text{C}$** ($R_{\theta JA} = 53.7^\circ\text{C/W}$) |
 | **`D9` / `D10` (`B340A-13-F`)** | `0.129 W` ea | **`0.258 W`** tot | `0.364 W` tot (`0.182 W` ea) | `0.129 W` (`D9`) | $T_{j,\max} = 125^\circ\text{C}$ ($R_{\theta JA} = 50^\circ\text{C/W}$) |
-| **`L1` / `L2` (`SRN6045-100M`)** | `0.068 W` / `0.043 W` | **`0.111 W`** tot | `0.402 W` tot (`0.243 + 0.159 W`) | `0.068 W` (`L1`) | $T_{\max} = 125^\circ\text{C}$ |
-| **`F1 + Q1A/Q1B + R3/R4` Passives** | `0.558 W` tot | **`0.558 W`** | **`1.499 W`** (`0.262+1.090+0.147 W`) | `0.198 W` | `F1` $I_{\text{hold}}(60^\circ\text{C})=3.30\text{ A}$ (`3.53 A @ 55°C`) |
-| **Driver PCB Total Loss** | **`1.576 W`** | **`1.58 W`** | **`4.39 W`** (`1.290+0.839+0.364+0.402+1.499`) | **`0.79 W`** | **Keep PCB ambient $\le 55^\circ\text{C}$** |
-| **Total Lamp + Cable USB Power (`5.0 V`)** | **`10.622 W`** (`2.124 A`) | **`5.26 W` hs + `1.58 W` PCB** | `10.77 W` + `4.39 W` PCB (`15.86 W` @ `4.90 V`) | **`2.96 W` hs + `0.79 W` PCB** | `U1` $T_j \le 124.3^\circ\text{C}$ (DS @ `4.25 V`, `55 °C`) |
+| **`L1` / `L2` (`SRN6045-100M`)** | `0.070 W` / `0.044 W` | **`0.113 W`** tot | `0.402 W` tot (`0.243 + 0.159 W`) | `0.070 W` (`L1`) | $T_{\max} = 125^\circ\text{C}$ |
+| **`F1 + Q1A/Q1B + R3/R4` Passives** | `0.568 W` tot | **`0.568 W`** | **`1.499 W`** (`0.262+1.090+0.147 W`) | `0.201 W` | `F1` $I_{\text{hold}}(60^\circ\text{C})=3.30\text{ A}$ (`3.53 A @ 55°C`) |
+| **Driver PCB Total Loss** | **`1.598 W`** | **`1.60 W`** | **`4.39 W`** (`1.290+0.839+0.364+0.402+1.499`) | **`0.80 W`** | **Keep PCB ambient $\le 55^\circ\text{C}$** |
+| **Total Lamp + Cable USB Power (`5.0 V`)** | **`10.743 W`** (`2.149 A`) | **`5.26 W` hs + `1.60 W` PCB** | `10.77 W` + `4.39 W` PCB (`15.86 W` @ `4.90 V`) | **`2.96 W` hs + `0.80 W` PCB** | `U1` $T_j \le 124.3^\circ\text{C}$ (DS @ `4.25 V`, `55 °C`) |
 
-> **USB Source & Cable Contract (`8-ALL` Mode — Zero Uncovered `V_IC` Gap):**
-> - **Captive Weatherproof Gland Option (`TP1`/`TP2`, recommended):** **`18 AWG ≤ 1.0 m`** USB pigtail (`R_cable ≤ 0.022 Ω`) and **`≥ 4.85 V`** (`5.0 V ±3%`) USB power-bank output (`R_path,max = 0.151 Ω` -> `V_IC ≥ 4.380 V`, `I_in ≤ 3.110 A` even under full stacked `datasheet_spec` worst-case; `< F1 I_hold = 3.53 A @ 55 °C` & `3.30 A @ 60 °C`).
-> - **Removable USB-C Receptacle Option (`J1`):** **`18 AWG ≤ 0.8 m`** USB-C cable (`R_cable ≤ 0.018 Ω`) and **`≥ 4.90 V`** (`5.0 V ±2%`) `3.5 A` / QC3.0 supply (`R_path,max = 0.197 Ω` -> `V_IC ≥ 4.262 V`, `I_in ≤ 3.237 A < 3.30 A @ 60 °C`; at typical LEDs + `4.75 V` `20 AWG 1.0 m`, `I_in = 2.915 A < 3.30 A`). `corner_sweep` `datasheet_spec` explicitly covers `V_IC ∈ [4.25, 5.50] V` with `10,935/10,935` passing corners per channel (`0` DCM, `I_L,pk ≤ 1.872 A < 2.10 A`, `T_j ≤ 124.3 °C @ 55 °C`).
+> **USB Source & Cable Contract (`8-ALL` Mode — Zero Uncovered `V_IC` Gap, True 2-Wire Round-Trip Copper Resistance):**
+> - **Captive Weatherproof Gland Option (`TP1`/`TP2`, recommended):** **`18 AWG ≤ 1.0 m`** USB pigtail (2-wire round-trip `R_cable ≤ 0.042 Ω @ 20 °C`, **`≤ 0.048 Ω` hot @ `55 °C`**) and **`≥ 4.85 V`** (`5.0 V ±3%`) USB power-bank output (`R_path,max = 0.177 Ω @ 55 °C` -> `V_IC ≥ 4.281 V` [`4.304 V @ 20 °C`], `I_in ≤ 3.216 A` [`3.190 A @ 20 °C`], `T_j@55 = 122.94 °C ≤ 125 °C` even under full stacked `datasheet_spec` worst-case; `< F1 I_hold = 3.53 A @ 55 °C` & `3.30 A @ 60 °C`).
+> - **Removable USB-C Receptacle Option (`J1`):** Keep 2-wire round-trip **`R_cable ≤ 0.018 Ω`** — requiring **`18 AWG ≤ 0.4 m`** (or **`16 AWG ≤ 0.65 m`**) USB-C cable — with **`≥ 4.90 V`** (`5.0 V ±2%`) `3.5 A` / QC3.0 supply (`R_path,max = 0.197 Ω` -> `V_IC ≥ 4.262 V`, `I_in ≤ 3.237 A < 3.30 A @ 60 °C`, `T_j@55 = 123.74 °C`; at typical LEDs + `4.75 V` `R_cable = 0.040 Ω` [`≤ 0.6 m` `20 AWG` or `≤ 0.95 m` `18 AWG` round-trip], `I_in = 2.915 A < 3.30 A`). `corner_sweep` `datasheet_spec` explicitly covers `V_IC ∈ [4.25, 5.50] V` with `10,935/10,935` passing corners per channel (`0` DCM, `I_L,pk ≤ 1.872 A < 2.10 A`, `T_j ≤ 124.3 °C @ 55 °C`).
 
 ### 2.2 LED Array Geometry & Wiring Constraints
 - **Emitter Mounting:** `4×` custom JLCPCB `1.0 W/m·K` Aluminum MCPCB dual-LED strips (`MECH-MCPCB-1..4`, ~`20 × 80 mm` each, or `8×` 20 mm Cu DTP star fallback) mounted on the 4 faces of a central aluminum heatsink core (`90°` azimuth spacing, 2 vertical tiers: 4× UV + 4× Visible, `360°` emission).

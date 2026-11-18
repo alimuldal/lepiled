@@ -44,7 +44,7 @@ R15,1,Resistor,Vishay CRCW060310K0FKEA,10 kOhm +/-1%; 0.1 W,0603,On-PCB,"V_MID,Q
 R16,1,Resistor,Vishay CRCW06035K60FKEA,5.6 kOhm +/-1%; 0.1 W,0603,On-PCB,"Q2_BASE,OVP_K",U3 TL431 cathode bias resistor into Q2 base (<= 29 mW @ 16 V),datasheets/dcrcwe3.pdf
 R17,1,Resistor,Vishay CRCW060310K0FKEA,10 kOhm +/-1%; 0.1 W,0603,On-PCB,"OVP_DRV,Q4_BASE",Q4 base drive resistor from Q2 OVP_DRV (<= 22 mW @ 16 V),datasheets/dcrcwe3.pdf
 R18,1,Resistor,Vishay CRCW0603220RFKEA,220 Ohm +/-1%; 0.1 W,0603,On-PCB,"OVP_DRV_GATE,Q1_GATE",Fast Q1_GATE turn-off current limiter from D16.K1,datasheets/dcrcwe3.pdf
-R19,1,Resistor,Vishay CRCW060327K0FKEA,27 kOhm +/-1%; 0.1 W,0603,On-PCB,"OVP_HYS,OVP_SENSE",TL431 OVP hysteresis feedback resistor from D16.K2,datasheets/dcrcwe3.pdf
+R19,1,Resistor,Vishay CRCW060368K0FKEA,68.0 kOhm +/-1%; 0.1 W,0603,On-PCB,"OVP_HYS,OVP_SENSE",TL431 OVP hysteresis feedback resistor from D16.K2,datasheets/dcrcwe3.pdf
 R20,1,Resistor,Vishay CRCW0603100KFKEA,100 kOhm +/-1%; 0.1 W,0603,On-PCB,"Q4_BASE,GND",Q4 base pulldown (prevents spurious latch turn-off),datasheets/dcrcwe3.pdf
 C1,1,MLCC Input,Murata GRM31CR71E106KA12L,10 uF +/-10%; 25 V; X7R,1206,On-PCB,"VIN_PROT,GND",Input bus bulk ceramic capacitor,datasheets/datasheets_summary.json
 C2,1,MLCC Input,Murata GRM31CR71E106KA12L,10 uF +/-10%; 25 V; X7R,1206,On-PCB,"VIN_PROT,GND",U1 local VIN decoupling capacitor,datasheets/datasheets_summary.json

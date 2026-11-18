@@ -91,5 +91,6 @@ Extracted from `datasheets/lm3410.pdf` (`SNVS541H`, Sec. 5 p. 3, Sec. 6.1–6.5 
 | `C1..C3` | `Murata GRM31CR71E106KA12L` | `10 µF ±10%, 25 V, X7R, 1206` (`~8.0 µF` effective at 5 V DC bias). |
 | `C4..C5` | `Samsung CL32B106KBJNFNE` | `10 µF ±10%, 50 V, X7R, 1210` (`~7.5 µF` effective at 16 V DC bias). |
 | `C6..C8, C11..C12` | `Murata GRM188R71E104KA01D` | `100 nF ±10%, 25 V, X7R, 0603` (stagger, `VIN_PROT` bypass, soft-start, `VBUS` ESD bypass). |
+| `C9..C10` | `Murata GRM188R71H104KA93D` | `100 nF ±10%, 50 V, X7R, 0603` (`VOUT1`/`VOUT2` HF output bypass). |
 | `SW1` | `E-Switch 100SP3T1B1M1QEH` | `SPDT On-Off-On`, `5 A`, `1/4-40` bushing, `Ø 6.35 mm` panel cutout, `10.41 mm` actuator. |
 | `SW1_BOOT` | `C&K 759D02000` | Full silicone waterproof toggle boot (`1/4-40` thread, mates to `SW1`). |

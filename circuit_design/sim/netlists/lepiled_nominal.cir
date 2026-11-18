@@ -5,9 +5,9 @@
 .INCLUDE circuit_design/sim/netlists/models.lib
 .INCLUDE circuit_design/sim/netlists/lm3410xmy.lib
 
-* --- 5V USB Power Supply + Realistic 18 AWG <= 1.0 m Cable & J1 Contact Resistance ---
+* --- 5V USB Power Supply + Realistic 18 AWG <= 1.0 m Round-Trip Cable (0.042 Ohm) & J1 Contact Resistance ---
 V_USB VUSB_SRC 0 DC 5.0
-R_CABLE VUSB_SRC VBUS 0.022
+R_CABLE VUSB_SRC VBUS 0.042
 L_CABLE VBUS VBUS_IN 0.5u
 R_J1 VBUS_IN VBUS_PCB 0.040
 
@@ -41,7 +41,7 @@ Q4 Q3_BASE Q4_BASE 0 Q_MMBT3904
 D16A OVP_DRV OVP_DRV_GATE D_BAV70
 R18 OVP_DRV_GATE Q1_GATE 220
 D16B OVP_DRV OVP_HYS D_BAV70
-R19 OVP_HYS OVP_SENSE 27k
+R19 OVP_HYS OVP_SENSE 68k
 
 * --- Input Bulk & Decoupling MLCCs (Effective Capacitance at 5V DC bias) ---
 C1 VIN_PROT C1_ESR 8.0u IC=4.9

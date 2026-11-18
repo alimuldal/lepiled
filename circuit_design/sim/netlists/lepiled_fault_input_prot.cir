@@ -11,7 +11,7 @@
 .INCLUDE circuit_design/sim/netlists/lm3410xmy.lib
 
 * Worst-Case Input Protection Subcircuit (TL431AIDBZR + MMBT3906 + MMBT3904 + BAW56 + BZT52C5V6 + SMBJ5.0A_MIN)
-.SUBCKT INPUT_PROT_WC VBUS VIN_PROT GND PARAMS: RF1=0.025 VREF=2.495 IREF=2u R12V=13.7k R13V=10.0k R19V=27.0k
+.SUBCKT INPUT_PROT_WC VBUS VIN_PROT GND PARAMS: RF1=0.025 VREF=2.495 IREF=2u R12V=13.7k R13V=10.0k R19V=68.0k
 C12 VBUS GND 100n IC=0
 R_F1 VBUS VBUS_FUSED {RF1}
 M_Q1A VBUS_FUSED Q1_GATE V_MID V_MID M_DMG2305UX_WC
@@ -22,6 +22,11 @@ D15 Q1_GATE V_MID D_Z5V6_MAX
 R10 V_MID Q1_GATE 10k
 Q3 Q1_GATE Q3_BASE Q3_EMIT Q_MMBT3904_MIN
 R11 Q3_EMIT GND 1.5k
+C_PAR_Q3E Q3_EMIT GND 1p
+C_PAR_OK  OVP_K   GND 1p
+C_PAR_Q2B Q2_BASE GND 1p
+C_PAR_OD  OVP_DRV GND 1p
+C_PAR_OH  OVP_HYS GND 1p
 R14 V_MID Q3_BASE 220k
 C11 Q3_BASE GND 100n IC=0
 
@@ -44,7 +49,7 @@ R19 OVP_HYS OVP_SENSE {R19V}
 V_C1 IN1 0 PWL(0 0 10u 5.0 7.5m 5.0)
 R_C1 IN1 VBUS1_A 0.062
 L_C1 VBUS1_A VBUS1 0.5u
-X_P1 VBUS1 VIN1 0 INPUT_PROT_WC RF1=0.015 VREF=2.495 IREF=2u R12V=13.7k R13V=10.0k R19V=27.0k
+X_P1 VBUS1 VIN1 0 INPUT_PROT_WC RF1=0.015 VREF=2.495 IREF=2u R12V=13.7k R13V=10.0k R19V=68.0k
 C1_1 VIN1 0 24.2u IC=0
 
 L1_1 VIN1 SW1_1 10u
@@ -102,10 +107,11 @@ R_LD4 VIN4 0 1k
 
 V_16L IN_16L 0 PWL(0 0 10u 16.0 7.5m 16.0)
 R_16L IN_16L VB_16L 0.05
-X_P16L VB_16L VP_16L 0 INPUT_PROT_WC RF1=0.005 VREF=2.453 IREF=0 R12V=13.563k R13V=10.10k R19V=27.27k
+X_P16L VB_16L VP_16L 0 INPUT_PROT_WC RF1=0.005 VREF=2.453 IREF=0 R12V=13.563k R13V=10.10k R19V=68.68k
 C_16L VP_16L 0 24.2u IC=0
 R_L16L VP_16L 0 10k
 
+.TEMP 85
 .TRAN 80n 7.5m 0 80n UIC
 
 .CONTROL
@@ -141,14 +147,14 @@ let p16_r14 = (v(x_p16l.v_mid)-v(x_p16l.q3_base))*(v(x_p16l.v_mid)-v(x_p16l.q3_b
 let p16_r15 = (v(x_p16l.v_mid)-v(x_p16l.q2_base))*(v(x_p16l.v_mid)-v(x_p16l.q2_base))/10k
 let p16_r16 = (v(x_p16l.q2_base)-v(x_p16l.ovp_k))*(v(x_p16l.q2_base)-v(x_p16l.ovp_k))/5.6k
 let p16_r17 = (v(x_p16l.ovp_drv)-v(x_p16l.q4_base))*(v(x_p16l.ovp_drv)-v(x_p16l.q4_base))/10k
-let p16_r19 = (v(x_p16l.ovp_hys)-v(x_p16l.ovp_sense))*(v(x_p16l.ovp_hys)-v(x_p16l.ovp_sense))/27.27k
-meas tran ov16_pr12_W avg p16_r12 from=6.5m to=7.5m
-meas tran ov16_pr13_W avg p16_r13 from=6.5m to=7.5m
-meas tran ov16_pr14_W avg p16_r14 from=6.5m to=7.5m
-meas tran ov16_pr15_W avg p16_r15 from=6.5m to=7.5m
-meas tran ov16_pr16_W avg p16_r16 from=6.5m to=7.5m
-meas tran ov16_pr17_W avg p16_r17 from=6.5m to=7.5m
-meas tran ov16_pr19_W avg p16_r19 from=6.5m to=7.5m
+let p16_r19 = (v(x_p16l.ovp_hys)-v(x_p16l.ovp_sense))*(v(x_p16l.ovp_hys)-v(x_p16l.ovp_sense))/68.68k
+meas tran ov16_pr12_w avg p16_r12 from=6.5m to=7.5m
+meas tran ov16_pr13_w avg p16_r13 from=6.5m to=7.5m
+meas tran ov16_pr14_w avg p16_r14 from=6.5m to=7.5m
+meas tran ov16_pr15_w avg p16_r15 from=6.5m to=7.5m
+meas tran ov16_pr16_w avg p16_r16 from=6.5m to=7.5m
+meas tran ov16_pr17_w avg p16_r17 from=6.5m to=7.5m
+meas tran ov16_pr19_w avg p16_r19 from=6.5m to=7.5m
 quit 0
 .ENDC
 .END

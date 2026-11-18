@@ -30,7 +30,7 @@ D_CLMP_HI COMP_NODE COMP_HI D_IDEAL
 V_COMP_HI COMP_HI GND DC 2.2
 D_CLMP_LO GND COMP_NODE D_IDEAL
 S_COMP_RST COMP_NODE GND DIS_INT GND S_RST_MOD
-.MODEL D_IDEAL D(IS=1e-14 N=0.1 RS=1)
+.MODEL D_IDEAL D(IS=1e-14 N=0.1 RS=1 EG=0 XTI=0)
 
 * --- 1.6 MHz Oscillator Clock, Max-Duty Reset & Slope Compensation ---
 * Clock rising edge at t = 10n sets D-FF; off-pulse at DMAX*T forces reset
