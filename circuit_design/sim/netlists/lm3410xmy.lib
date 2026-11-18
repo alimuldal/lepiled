@@ -1,0 +1,74 @@
+* TI LM3410XMY/NOPB Behavioral Cycle-by-Cycle Peak Current-Mode Boost Controller
+* Based on TI SNVS541H (lm3410.pdf) Electrical Characteristics & Functional Block Diagram
+* Pins: VIN SW FB DIM GND
+.SUBCKT LM3410XMY VIN SW FB DIM GND PARAMS: VFB=0.190 FSW=1.6e6 ICL=2.8 RDS=0.170 DMAX=0.92
+
+* --- Enable & UVLO Logic ---
+B_EN EN_INT GND V = 0.5*(1 + tanh(25*(V(DIM,GND)-1.1))) * 0.5*(1 + tanh(25*(V(VIN,GND)-2.3)))
+B_DIS DIS_INT GND V = 1 - V(EN_INT,GND)
+R_EN_DN EN_INT GND 100k
+
+* Quiescent current (7 mA switching / 80 nA shutdown) & DIM pin leakage (100 nA)
+B_IQ VIN GND I = V(EN_INT,GND)*7m + (1 - V(EN_INT,GND))*80n
+B_IDIM DIM GND I = 100n * tanh(V(DIM,GND)/0.1)
+
+* --- Soft-Start Ramp (charges to 1.4V over ~100us when enabled; resets when disabled) ---
+B_SS_SRC SS_TARGET GND V = V(EN_INT,GND) * 1.4
+R_SS SS_TARGET SS_NODE 10k
+C_SS SS_NODE GND 10n
+S_SS_RST SS_NODE GND DIS_INT GND S_RST_MOD
+.MODEL S_RST_MOD SW(RON=50 ROFF=100Meg VT=0.55 VH=0.05)
+
+* --- Error Amplifier & Internal Type-II Compensation ---
+* gm = 80 uA/V, Vref = VFB (0.190 V typ), clamped [0, 2.2 V]
+B_EA GND COMP_NODE I = V(EN_INT,GND) * 80u * tanh((VFB - V(FB,GND))/0.025)
+R_COMP COMP_NODE COMP_Z 2.5k
+C_COMP COMP_Z GND 22n
+C_HF COMP_NODE GND 220p
+R_COMP_LEAK COMP_NODE GND 5Meg
+D_CLMP_HI COMP_NODE COMP_HI D_IDEAL
+V_COMP_HI COMP_HI GND DC 2.2
+D_CLMP_LO GND COMP_NODE D_IDEAL
+S_COMP_RST COMP_NODE GND DIS_INT GND S_RST_MOD
+.MODEL D_IDEAL D(IS=1e-14 N=0.1 RS=1)
+
+* --- 1.6 MHz Oscillator Clock, Max-Duty Reset & Slope Compensation ---
+* Clock rising edge at t = 10n sets D-FF; off-pulse at DMAX*T forces reset
+V_CLK CLK_A GND PULSE(0 5 10n 4n 4n {0.06/FSW} {1/FSW})
+V_MAXOFF MAXOFF_A GND PULSE(0 5 {10n + DMAX/FSW} 4n 4n {(1-DMAX-0.02)/FSW} {1/FSW})
+V_SLOPE SLOPE_V GND PULSE(0 0.75 10n {(DMAX-0.01)/FSW} 4n 4n {1/FSW})
+
+* --- Current Sense (with 35ns Leading-Edge Blanking RC) + Slope Compensation ---
+* Sense gain = 0.5 V/A (so 2.8 A ICL = 1.4 V)
+V_ISENS SW_INT SW_MOS DC 0
+B_ISENS_RAW ISENS_RAW GND V = 0.5 * I(V_ISENS)
+R_LEB ISENS_RAW ISENS_FLT 100
+C_LEB ISENS_FLT GND 350p
+B_VCTRL CTRL_V GND V = min(V(COMP_NODE,GND), min(V(SS_NODE,GND), ICL*0.5))
+B_CMP CMP_RST_A GND V = 2.5*(1 + tanh(80*( (V(ISENS_FLT,GND) + V(SLOPE_V,GND)) - V(CTRL_V,GND) )))
+
+* Combine async reset (current limit OR max-duty blanking OR disabled)
+B_RST RST_A GND V = max(V(CMP_RST_A,GND), max(V(MAXOFF_A,GND), 5*(1 - V(EN_INT,GND))))
+
+* --- XSPICE Digital D-Flip-Flop Peak-Current-Mode PWM Latch ---
+A_ADC_CLK [CLK_A] [CLK_D] ADC_FAST
+A_ADC_RST [RST_A] [RST_D] ADC_FAST
+A_ONE ONE_D PULLUP1
+.MODEL PULLUP1 d_pullup(load=1e-12)
+.MODEL ADC_FAST adc_bridge(in_low=1.5 in_high=3.5 rise_delay=1e-9 fall_delay=1e-9)
+
+A_DFF ONE_D CLK_D NULL RST_D Q_D QN_D DFF_MOD
+.MODEL DFF_MOD d_dff(clk_delay=2e-9 set_delay=2e-9 reset_delay=2e-9 ic=0 rise_delay=2e-9 fall_delay=2e-9)
+
+A_DAC_Q [Q_D] [GATE_RAW] DAC_FAST
+.MODEL DAC_FAST dac_bridge(out_low=0.0 out_high=5.0 out_undef=0.0 input_load=1e-12 t_rise=5e-9 t_fall=5e-9)
+
+* Gate final switch drive with EN_INT
+B_GATE GATE_DRV GND V = V(GATE_RAW,GND) * V(EN_INT,GND)
+
+* --- Internal Power NMOS Switch + Switch Node Capacitance ---
+S_MAIN SW SW_INT GATE_DRV GND S_NMOS
+.MODEL S_NMOS SW(RON={RDS} ROFF=10Meg VT=2.5 VH=0.2)
+R_SENS_RET SW_MOS GND 1m
+C_SW SW GND 50p
+.ENDS LM3410XMY

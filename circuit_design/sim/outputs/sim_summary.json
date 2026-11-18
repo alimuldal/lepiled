@@ -1,0 +1,187 @@
+{
+  "single_source_of_truth": {
+    "datasheets_json": "datasheets/datasheets_summary.json",
+    "component_ids_csv": "circuit_design/COMPONENT_IDS.csv",
+    "refdes_count": 52
+  },
+  "ngspice": {
+    "status": "executed",
+    "binary": "/home/alimuldal/.local/share/lepiled-tools/bin/ngspice",
+    "runs": {
+      "nominal": {
+        "returncode": 0,
+        "measurements": {
+          "i_uv_4uv": 0.339126,
+          "i_vis_backfeed": 3.498978e-08,
+          "vout1_4uv": 14.53461,
+          "vout2_4uv": 4.825071,
+          "iin_4uv": 1.106987,
+          "i_uv_8all": 0.3391448,
+          "i_vis_8all": 0.339171,
+          "vout1_8all": 14.53469,
+          "vout2_8all": 11.66094,
+          "vout1_pp": 0.02934889,
+          "vout2_pp": 0.02429595,
+          "il1_max": 1.335079,
+          "il2_max": 1.023155,
+          "iin_8all": 2.065521,
+          "iin_peak": 2.081534,
+          "vin_prot_min": 4.654019,
+          "dim2_cross": 0.001970876
+        },
+        "log_file": "circuit_design/sim/outputs/ngspice_nominal.log"
+      },
+      "fault_open_led": {
+        "returncode": 0,
+        "measurements": {
+          "vout1_pre": 14.55146,
+          "i_uv_pre": 0.3390979,
+          "vout1_open_peak": 23.05598,
+          "vout1_open_ss": 21.34674,
+          "iz_open_avg": 0.01188059
+        },
+        "log_file": "circuit_design/sim/outputs/ngspice_fault_open_led.log"
+      }
+    }
+  },
+  "scipy_transient_ode": {
+    "4uv_i_uv_mA": 336.96800292692916,
+    "4uv_i_vis_backfeed_mA": 9.292927149816066e-17,
+    "4uv_vout1_V": 14.549555608985294,
+    "4uv_iin_A": 1.0854643959183923,
+    "8all_i_uv_mA": 339.19742757247326,
+    "8all_i_vis_mA": 338.69848535602927,
+    "8all_vout1_V": 14.557494982884238,
+    "8all_vout2_V": 11.658599205109676,
+    "8all_iin_A": 2.0342832395396204,
+    "dim2_cross_1p8V_ms": 1.9679999999999997
+  },
+  "analytic_and_mc": {
+    "nominal_analytic": {
+      "ch1_uv": {
+        "i_led_A": 0.33928571428571425,
+        "v_str_V": 14.367857142857144,
+        "v_out_V": 14.557857142857143,
+        "duty": 0.6873711471553381,
+        "ccm": true,
+        "i_in_avg_A": 1.0922667986287802,
+        "di_l_pp_A": 0.1981487628895161,
+        "i_l_pk_A": 1.1843411800735384,
+        "i_l_rms_A": 1.086773175610033,
+        "dv_out_pp_V": 0.010708044257863817,
+        "p_led_W": 4.874808673469388,
+        "p_ic_W": 0.35523262306985437,
+        "p_diode_W": 0.12892857142857142,
+        "p_ind_W": 0.057872720826050265,
+        "p_rsense_W": 0.06446428571428571,
+        "p_in_ch_W": 5.4813068745081495,
+        "efficiency": 0.889351533325128
+      },
+      "ch2_vis": {
+        "i_led_A": 0.33928571428571425,
+        "v_str_V": 11.470714285714285,
+        "v_out_V": 11.660714285714285,
+        "duty": 0.60815846326581,
+        "ccm": true,
+        "i_in_avg_A": 0.8728748051916518,
+        "di_l_pp_A": 0.1771403459956736,
+        "i_l_pk_A": 0.9544449781894886,
+        "i_l_rms_A": 0.8673834619785934,
+        "dv_out_pp_V": 0.009483180005313478,
+        "p_led_W": 3.8918494897959177,
+        "p_ic_W": 0.22885552121133432,
+        "p_diode_W": 0.12892857142857142,
+        "p_ind_W": 0.036865349435584525,
+        "p_rsense_W": 0.06446428571428571,
+        "p_in_ch_W": 4.350963217585693,
+        "efficiency": 0.8944799795286403
+      }
+    },
+    "corners": {
+      "datasheet_spec__Ch1_UV": {
+        "total_corners": 6561,
+        "dcm_corners": 0,
+        "max_i_l_pk_A": 1.6788,
+        "margin_vs_icl_min_A": 0.4212,
+        "max_duty": 0.7611,
+        "margin_vs_dmax_min": 0.1189,
+        "max_i_led_mA": 364.36,
+        "max_v_out_V": 16.245,
+        "max_p_ic_mW": 993.5,
+        "all_limits_pass": true
+      },
+      "datasheet_spec__Ch2_Vis": {
+        "total_corners": 6561,
+        "dcm_corners": 0,
+        "max_i_l_pk_A": 1.4098,
+        "margin_vs_icl_min_A": 0.6902,
+        "max_duty": 0.7113,
+        "margin_vs_dmax_min": 0.1687,
+        "max_i_led_mA": 364.36,
+        "max_v_out_V": 13.728,
+        "max_p_ic_mW": 675.2,
+        "all_limits_pass": true
+      },
+      "oos_vfb_10pct_r_5pct__Ch1_UV": {
+        "total_corners": 6561,
+        "dcm_corners": 0,
+        "max_i_l_pk_A": 1.8272,
+        "margin_vs_icl_min_A": 0.2728,
+        "max_duty": 0.7654,
+        "margin_vs_dmax_min": 0.1146,
+        "max_i_led_mA": 392.86,
+        "max_v_out_V": 16.338,
+        "max_p_ic_mW": 1155.6,
+        "all_limits_pass": true
+      },
+      "oos_vfb_10pct_r_5pct__Ch2_Vis": {
+        "total_corners": 6561,
+        "dcm_corners": 0,
+        "max_i_l_pk_A": 1.5259,
+        "margin_vs_icl_min_A": 0.5741,
+        "max_duty": 0.7151,
+        "margin_vs_dmax_min": 0.1649,
+        "max_i_led_mA": 392.86,
+        "max_v_out_V": 13.786,
+        "max_p_ic_mW": 774.7,
+        "all_limits_pass": true
+      },
+      "oos_vfb_15pct_r_5pct__Ch1_UV": {
+        "total_corners": 6561,
+        "dcm_corners": 0,
+        "max_i_l_pk_A": 1.9241,
+        "margin_vs_icl_min_A": 0.1759,
+        "max_duty": 0.7683,
+        "margin_vs_dmax_min": 0.1117,
+        "max_i_led_mA": 410.71,
+        "max_v_out_V": 16.401,
+        "max_p_ic_mW": 1268.6,
+        "all_limits_pass": true
+      },
+      "oos_vfb_15pct_r_5pct__Ch2_Vis": {
+        "total_corners": 6561,
+        "dcm_corners": 0,
+        "max_i_l_pk_A": 1.6011,
+        "margin_vs_icl_min_A": 0.4989,
+        "max_duty": 0.7177,
+        "margin_vs_dmax_min": 0.1623,
+        "max_i_led_mA": 410.71,
+        "max_v_out_V": 13.828,
+        "max_p_ic_mW": 843.2,
+        "all_limits_pass": true
+      }
+    },
+    "monte_carlo_N2000": {
+      "seed": 42,
+      "ch1_ipk_max_A": 1.4879663715896445,
+      "ch1_ipk_p99_A": 1.388949301002575,
+      "ch2_ipk_max_A": 1.2469347987398918,
+      "ch1_iled_min_mA": 287.58116083290844,
+      "ch1_iled_max_mA": 393.5773192914101,
+      "ch1_vout_max_V": 15.843152944670404,
+      "ch1_tj_ic_max_C": 88.39346644602193,
+      "pass_count_icl": 2000,
+      "pass_count_tj": 2000
+    }
+  }
+}

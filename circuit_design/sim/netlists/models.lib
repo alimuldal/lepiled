@@ -1,0 +1,36 @@
+* LepiLED DIY Maxi Switch - Semiconductor & Passive SPICE Models
+* Fitted directly from vendor PDFs archived in datasheets/
+
+* --- LED Emitters ---
+* Luminus SST-10-UV-A130-G365-00 (365 nm UV-A): 3.59V @ 350mA, 3.70V @ 500mA, 4.00V @ 1.0A
+.MODEL D_SST10UV D(IS=5.3197e-11 N=5.9231 RS=0.3762 CJO=40p BV=5 IBV=10u)
+
+* Cree XLamp XP-E2 Royal Blue (XPEBRY-L1-0000-00R02): 2.93V @ 350mA, 3.20V @ 1.0A
+.MODEL D_XPE2_RB D(IS=5.2359e-12 N=4.4210 RS=0.2308 CJO=40p BV=5 IBV=10u)
+
+* Cree XLamp XP-E2 Green (XPEBGR-L1-0000-00E01): 2.70V @ 350mA, 3.01V @ 1.0A
+.MODEL D_XPE2_GR D(IS=3.4868e-12 N=3.9556 RS=0.3117 CJO=40p BV=5 IBV=10u)
+
+* Cree XLamp XP-E2 Cool White (XPEBWT-L1-0000-00F51): 2.93V @ 350mA, 3.12V @ 1.0A (25C)
+.MODEL D_XPE2_CW D(IS=7.6986e-22 N=2.3268 RS=0.1951 CJO=40p BV=5 IBV=10u)
+
+* --- Schottky Catch Diode ---
+* Diodes Inc B340A-13-F (40V, 3A, SMA): 0.38V @ 1A, 0.43V @ 2A, 0.46V @ 3A (ds13005.pdf)
+.MODEL D_B340A D(IS=1.2366e-06 N=1.0182 RS=0.0249 CJO=250p VJ=0.45 M=0.35 BV=40 IBV=500u)
+
+* --- Switching & Protection Diodes ---
+* onsemi BAV70LT1G (100V, 200mA, Common-Cathode Dual Switching Diode)
+.MODEL D_BAV70 D(IS=4.8851e-09 N=2.0529 RS=0.8643 CJO=1.5p TT=6n BV=100 IBV=1u)
+
+* Diodes Inc BZT52C20-7-F (20V nominal OVP Zener, 500mW, SOD-123)
+.MODEL D_Z20V D(IS=1e-12 N=1.5 BV=20.0 IBV=5m RS=10 CJO=30p)
+
+* Diodes Inc BZT52C5V6-7-F (5.6V Gate Clamp Zener, 500mW, SOD-123)
+.MODEL D_Z5V6 D(IS=1e-12 N=1.5 BV=5.6 IBV=5m RS=10 CJO=60p)
+
+* Vishay SMBJ5.0A-E3/5B (5.0V Vrwm, 6.40-7.07V Vbr, 9.2V Vc @ 65.2A)
+.MODEL D_SMBJ5 D(IS=1e-11 N=1.5 BV=6.73 IBV=10m RS=0.038 CJO=500p)
+
+* --- Input Reverse-Polarity P-MOSFET ---
+* Diodes Inc DMG2305UX-7 (-20V, -5.0A, Rds(on)=40mOhm typ @ -4.5V, Vth=-0.7V)
+.MODEL M_DMG2305UX PMOS(LEVEL=1 VTO=-0.70 KP=45.0 RD=0.015 RS=0.015 CBD=150p CBS=150p CGSO=400p CGDO=120p)

@@ -1,0 +1,48 @@
+* LepiLED DIY Maxi Switch - Fault Simulation: Open-Load LED String (OVP Clamp Check)
+* Verifies D13 (BZT52C20, 20V Zener) + R8 (100 Ohm) safely clamp VOUT1 < 24V if UV LED wire breaks at t=0.6ms
+
+.INCLUDE circuit_design/sim/netlists/models.lib
+.INCLUDE circuit_design/sim/netlists/lm3410xmy.lib
+
+V_USB VUSB_SRC 0 DC 5.0
+R_CABLE VUSB_SRC VIN_PROT 0.08
+
+C1 VIN_PROT 0 24.0u IC=5.0
+L1 VIN_PROT SW1_L 10u
+R_DCR_L1 SW1_L SW1_NODE 0.049
+V_EN1 EN1_NET 0 DC 5.0
+
+X_U1 VIN_PROT SW1_NODE FB1_NET EN1_NET 0 LM3410XMY VFB=0.190 FSW=1.6e6 ICL=2.8 RDS=0.170 DMAX=0.92
+D9 SW1_NODE VOUT1 D_B340A
+C4 VOUT1 C4_ESR 7.5u IC=4.7
+R_ESR_C4 C4_ESR 0 0.005
+R3 UV_RET 0 0.56
+D13 FB1_NET VOUT1 D_Z20V
+R8 FB1_NET OVP1_S 100
+V_OVP_SENS OVP1_S UV_RET DC 0
+
+* 4S UV LED String with switch S_OPEN CLOSED 0..0.8ms and OPEN 0.8..2.0ms
+D1 VOUT1 UV_N1 D_SST10UV
+D2 UV_N1 UV_N2 D_SST10UV
+D3 UV_N2 UV_N3 D_SST10UV
+D4 UV_N3 UV_SW_IN D_SST10UV
+V_UV_SENS UV_SW_IN UV_SW DC 0
+S_OPEN UV_SW UV_RET CTL_OPEN 0 S_BRK
+V_CTL_OPEN CTL_OPEN 0 PWL(0 5 0.799m 5 0.800m 0 2.0m 0)
+.MODEL S_BRK SW(RON=0.05 ROFF=100Meg VT=2.5 VH=0.1)
+
+.TRAN 25n 2.0m 0 25n UIC
+
+.CONTROL
+run
+meas tran vout1_pre avg v(vout1) from=0.55m to=0.75m
+meas tran i_uv_pre avg i(v_uv_sens) from=0.55m to=0.75m
+meas tran vout1_open_peak max v(vout1) from=0.80m to=2.0m
+meas tran vout1_open_ss avg v(vout1) from=1.6m to=2.0m
+meas tran iz_open_avg avg i(v_ovp_sens) from=1.6m to=2.0m
+set wr_vecnames
+set wr_singlescale
+wrdata circuit_design/sim/outputs/ngspice_fault_open_trace.txt v(vout1) v(fb1_net) i(l1) i(v_ovp_sens) i(v_uv_sens)
+quit 0
+.ENDC
+.END
