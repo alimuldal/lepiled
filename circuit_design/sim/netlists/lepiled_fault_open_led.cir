@@ -1,24 +1,25 @@
-* LepiLED DIY Maxi Switch - Fault Simulation: Open-Load LED String (OVP Clamp Check)
-* Verifies D13 (BZT52C20, 20V Zener) + R8 (100 Ohm) safely clamp VOUT1 < 24V if UV LED wire breaks at t=0.6ms
+* LepiLED DIY Maxi Switch - Worst-Case Fault Simulation: Open-Load LED String (BZT52C18 OVP Clamp)
+* Worst-case corner: Vin=5.5V, L=8.0uH (-20%), C4=6.75uF, VFB=0.2185V (+15%), R3=0.532 (-5%), FSW=1.2MHz,
+* BZT52C18-7-F max Vz=19.1V @ 5mA, Zzt_max=45 Ohm (D_Z18V_MAX) -> verifies VOUT1_pk & VSW_pk < 24.0 V rec max!
 
 .INCLUDE circuit_design/sim/netlists/models.lib
 .INCLUDE circuit_design/sim/netlists/lm3410xmy.lib
 
-V_USB VUSB_SRC 0 DC 5.0
-R_CABLE VUSB_SRC VIN_PROT 0.08
+V_USB VUSB_SRC 0 DC 5.5
+R_CABLE VUSB_SRC VIN_PROT 0.05
 
-C1 VIN_PROT 0 24.0u IC=5.0
-L1 VIN_PROT SW1_L 10u
-R_DCR_L1 SW1_L SW1_NODE 0.049
-V_EN1 EN1_NET 0 DC 5.0
+C1 VIN_PROT 0 24.0u IC=5.5
+L1 VIN_PROT SW1_L 8.0u
+R_DCR_L1 SW1_L SW1_NODE 0.0586
+V_EN1 EN1_NET 0 DC 5.5
 
-X_U1 VIN_PROT SW1_NODE FB1_NET EN1_NET 0 LM3410XMY VFB=0.190 FSW=1.6e6 ICL=2.8 RDS=0.170 DMAX=0.92
+X_U1 VIN_PROT SW1_NODE FB1_NET EN1_NET 0 LM3410XMY VFB=0.2185 FSW=1.2e6 ICL=2.8 RDS=0.170 DMAX=0.92
 D9 SW1_NODE VOUT1 D_B340A
-C4 VOUT1 C4_ESR 7.5u IC=4.7
+C4 VOUT1 C4_ESR 6.75u IC=5.2
 R_ESR_C4 C4_ESR 0 0.005
-R3 UV_RET 0 0.56
-D13 FB1_NET VOUT1 D_Z20V
-R8 FB1_NET OVP1_S 100
+R3 UV_RET 0 0.532
+D13 FB1_NET VOUT1 D_Z18V_MAX
+R8 FB1_NET OVP1_S 101
 V_OVP_SENS OVP1_S UV_RET DC 0
 
 * 4S UV LED String with switch S_OPEN CLOSED 0..0.8ms and OPEN 0.8..2.0ms
@@ -38,11 +39,12 @@ run
 meas tran vout1_pre avg v(vout1) from=0.55m to=0.75m
 meas tran i_uv_pre avg i(v_uv_sens) from=0.55m to=0.75m
 meas tran vout1_open_peak max v(vout1) from=0.80m to=2.0m
+meas tran vsw_open_peak max v(sw1_node) from=0.80m to=2.0m
 meas tran vout1_open_ss avg v(vout1) from=1.6m to=2.0m
 meas tran iz_open_avg avg i(v_ovp_sens) from=1.6m to=2.0m
 set wr_vecnames
 set wr_singlescale
-wrdata circuit_design/sim/outputs/ngspice_fault_open_trace.txt v(vout1) v(fb1_net) i(l1) i(v_ovp_sens) i(v_uv_sens)
+wrdata circuit_design/sim/outputs/ngspice_fault_open_trace.txt v(vout1) v(sw1_node) v(fb1_net) i(l1) i(v_ovp_sens) i(v_uv_sens)
 quit 0
 .ENDC
 .END

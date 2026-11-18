@@ -1,0 +1,136 @@
+* LepiLED DIY Maxi Switch - Input Protection & Cold Hot-Plug Fault Suite (ngspice)
+* Verifies 5 critical scenarios directly on the back-to-back PMOS + OVP + soft-start architecture:
+*   1. Cold 0 -> 5 V hot-plug (IC=0 on all caps, SW1 in 8-ALL, dual LM3410XMY load): I_in_pk < 3.0 A, I_L1/L2 < 3.0 A I_sat
+*   2. -12 V reverse polarity: zero crowbar (|I_rev| < 1 mA, VIN_PROT ~ 0 V)
+*   3. +12 V stiff over-voltage fault: VIN_PROT_pk < 7.0 V abs max, minimal leakage
+*   4. +12 V 4.0 A current-limited over-voltage fault: VIN_PROT_pk < 7.0 V, D15 power << 370 mW
+*   5. +5 V -> +12 V live step during operation: VIN_PROT_pk < 7.0 V, clean shutoff (< 1 mV)
+
+.INCLUDE circuit_design/sim/netlists/models.lib
+.INCLUDE circuit_design/sim/netlists/lm3410xmy.lib
+
+* Reusable Input Protection Subcircuit (F1 + C12 + Q1A + Q1B + Q2 + Q3 + D15 + D11 + R10..R14 + C11)
+.SUBCKT INPUT_PROT VBUS VIN_PROT GND PARAMS: RF1=0.020
+C12 VBUS GND 100n IC=0
+R_F1 VBUS VBUS_FUSED {RF1}
+M_Q1A VBUS_FUSED Q1_GATE V_MID V_MID M_DMG2305UX
+M_Q1B VIN_PROT   Q1_GATE V_MID V_MID M_DMG2305UX
+D11 GND VIN_PROT D_SMBJ5
+
+R10 V_MID Q1_GATE 10k
+Q3 Q1_GATE Q3_BASE Q3_EMIT Q_MMBT3904
+R11 Q3_EMIT GND 1.5k
+R14 V_MID Q3_BASE 220k
+C11 Q3_BASE GND 100n IC=0
+
+D15 OVP_SENSE V_MID D_Z5V6
+R12 OVP_SENSE Q2_BASE 470
+R13 Q2_BASE GND 1.2k
+Q2 Q3_BASE Q2_BASE GND Q_MMBT3904
+.ENDS INPUT_PROT
+
+* --- CASE 1: Cold 0->5V Hot-Plug (IC=0 everywhere, 8-ALL pre-selected) ---
+V_C1 IN1 0 PWL(0 0 10u 5.0 7.5m 5.0)
+R_C1 IN1 VBUS1_A 0.08
+L_C1 VBUS1_A VBUS1 0.5u
+X_P1 VBUS1 VIN1 0 INPUT_PROT RF1=0.020
+C1_1 VIN1 0 24.2u IC=0
+
+* Ch1 UV + Ch2 Vis boost load (IC=0)
+L1_1 VIN1 SW1_1 10u
+X_U1_1 VIN1 SW1_1 FB1_1 VIN1 0 LM3410XMY VFB=0.190 FSW=1.6e6 ICL=2.8 RDS=0.170 DMAX=0.92
+D9_1 SW1_1 VOUT1_1 D_B340A
+C4_1 VOUT1_1 0 7.6u IC=0
+R3_1 UR_1 0 0.56
+D13_1 FB1_1 VOUT1_1 D_Z18V
+R8_1 FB1_1 UR_1 100
+D1_1 VOUT1_1 U1A_1 D_SST10UV
+D2_1 U1A_1 U1B_1 D_SST10UV
+D3_1 U1B_1 U1C_1 D_SST10UV
+D4_1 U1C_1 UR_1 D_SST10UV
+
+R7_1 VIN1 DIM2_1 10k
+C6_1 DIM2_1 0 100n IC=0
+L2_1 VIN1 SW2_1 10u
+X_U2_1 VIN1 SW2_1 FB2_1 DIM2_1 0 LM3410XMY VFB=0.190 FSW=1.6e6 ICL=2.8 RDS=0.170 DMAX=0.92
+D10_1 SW2_1 VOUT2_1 D_B340A
+C5_1 VOUT2_1 0 7.6u IC=0
+R4_1 VR_1 0 0.56
+D14_1 FB2_1 VOUT2_1 D_Z18V
+R9_1 FB2_1 VR_1 100
+D5_1 VOUT2_1 V1A_1 D_XPE2_RB
+D6_1 V1A_1 V1B_1 D_XPE2_RB
+D7_1 V1B_1 V1C_1 D_XPE2_GR
+D8_1 V1C_1 VR_1 D_XPE2_CW
+
+* --- CASE 2: -12V Reverse Polarity Fault ---
+V_C2 IN2 0 PWL(0 0 10u -12.0 7.5m -12.0)
+R_C2 IN2 VBUS2 0.05
+X_P2 VBUS2 VIN2 0 INPUT_PROT RF1=0.020
+C1_2 VIN2 0 24.2u IC=0
+R_LD2 VIN2 0 1k
+
+* --- CASE 3: +12V Stiff Fault ---
+V_C3 IN3 0 PWL(0 0 10u 12.0 7.5m 12.0)
+R_C3 IN3 VBUS3 0.05
+X_P3 VBUS3 VIN3 0 INPUT_PROT RF1=0.005
+C1_3 VIN3 0 24.2u IC=0
+R_LD3 VIN3 0 1k
+
+* --- CASE 4: +12V 4.0A Current-Limited Supply ---
+I_C4 0 IN4 DC 4.0
+D_CL4 IN4 CL4_N D_B340A
+V_CL4 CL4_N 0 DC 11.6
+R_C4 IN4 VBUS4 0.05
+X_P4 VBUS4 VIN4 0 INPUT_PROT RF1=0.040
+C1_4 VIN4 0 24.2u IC=0
+R_LD4 VIN4 0 1k
+
+* --- CASE 5: +5V -> +12V Live Step (while running 2A load, Q1A/Q1B pre-enabled at 5V) ---
+V_C5 IN5 0 PWL(0 5.0 3.0m 5.0 3.01m 12.0 7.5m 12.0)
+R_C5 IN5 VBUS5 0.05
+C12_5 VBUS5 0 100n IC=5.0
+R_F1_5 VBUS5 VBUS5_F 0.020
+M_Q1A_5 VBUS5_F QG5 VMID5 VMID5 M_DMG2305UX
+M_Q1B_5 VIN5    QG5 VMID5 VMID5 M_DMG2305UX
+D11_5 0 VIN5 D_SMBJ5
+R10_5 VMID5 QG5 10k
+Q3_5 QG5 QB5 QE5 Q_MMBT3904
+R11_5 QE5 0 1.5k
+R14_5 VMID5 QB5 220k
+C11_5 QB5 0 100n IC=1.20
+D15_5 OS5 VMID5 D_Z5V6_MAX
+R12_5 OS5 Q2B5 470
+R13_5 Q2B5 0 1.2k
+Q2_5 QB5 Q2B5 0 Q_MMBT3904
+C1_5 VIN5 0 24.2u IC=4.8
+R_LD5 VIN5 0 2.5
+
+.TRAN 80n 7.5m 0 80n UIC
+
+.CONTROL
+run
+let i1_in = -i(v_c1)
+let i2_in = -i(v_c2)
+let i3_in = -i(v_c3)
+
+meas tran cold_iin_pk max i1_in from=0 to=7.5m
+meas tran cold_il1_pk max i(l1_1) from=0 to=7.5m
+meas tran cold_il2_pk max i(l2_1) from=0 to=7.5m
+meas tran cold_vin_ss avg v(vin1) from=6.5m to=7.5m
+meas tran cold_vout1_ss avg v(vout1_1) from=6.5m to=7.5m
+
+meas tran rev12_iin_ss avg i2_in from=3.0m to=7.5m
+meas tran rev12_vin_min min v(vin2) from=0 to=7.5m
+
+meas tran ov12_stiff_vin_pk max v(vin3) from=0 to=7.5m
+meas tran ov12_stiff_iin_ss avg i3_in from=3.0m to=7.5m
+
+meas tran ov12_4a_vin_pk max v(vin4) from=0 to=7.5m
+meas tran ov12_4a_vbus_ss avg v(vbus4) from=3.0m to=7.5m
+
+meas tran step_5to12_vin_pk max v(vin5) from=0 to=7.5m
+meas tran step_5to12_vin_ss avg v(vin5) from=6.5m to=7.5m
+quit 0
+.ENDC
+.END

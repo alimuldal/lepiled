@@ -1,5 +1,5 @@
 * TI LM3410XMY/NOPB Behavioral Cycle-by-Cycle Peak Current-Mode Boost Controller
-* Based on TI SNVS541H (lm3410.pdf) Electrical Characteristics & Functional Block Diagram
+* Based on TI SNVS541H (lm3410.pdf) Electrical Characteristics & Sec. 7.2 Functional Block Diagram
 * Pins: VIN SW FB DIM GND
 .SUBCKT LM3410XMY VIN SW FB DIM GND PARAMS: VFB=0.190 FSW=1.6e6 ICL=2.8 RDS=0.170 DMAX=0.92
 
@@ -12,8 +12,8 @@ R_EN_DN EN_INT GND 100k
 B_IQ VIN GND I = V(EN_INT,GND)*7m + (1 - V(EN_INT,GND))*80n
 B_IDIM DIM GND I = 100n * tanh(V(DIM,GND)/0.1)
 
-* --- Soft-Start Ramp (charges to 1.4V over ~100us when enabled; resets when disabled) ---
-B_SS_SRC SS_TARGET GND V = V(EN_INT,GND) * 1.4
+* --- Soft-Start Ramp (charges to 2.4 V > V_COMP_HI=2.2 V over ~100us; resets when disabled) ---
+B_SS_SRC SS_TARGET GND V = V(EN_INT,GND) * 2.4
 R_SS SS_TARGET SS_NODE 10k
 C_SS SS_NODE GND 10n
 S_SS_RST SS_NODE GND DIS_INT GND S_RST_MOD
@@ -38,17 +38,18 @@ V_CLK CLK_A GND PULSE(0 5 10n 4n 4n {0.06/FSW} {1/FSW})
 V_MAXOFF MAXOFF_A GND PULSE(0 5 {10n + DMAX/FSW} 4n 4n {(1-DMAX-0.02)/FSW} {1/FSW})
 V_SLOPE SLOPE_V GND PULSE(0 0.75 10n {(DMAX-0.01)/FSW} 4n 4n {1/FSW})
 
-* --- Current Sense (with 35ns Leading-Edge Blanking RC) + Slope Compensation ---
-* Sense gain = 0.5 V/A (so 2.8 A ICL = 1.4 V)
+* --- Current Sense (with 35ns Leading-Edge Blanking RC) + Separate PWM & ILIMIT Comparators (TI Sec. 7.2) ---
+* Sense gain = 0.5 V/A (so 2.8 A ICL = 1.4 V, 2.1 A ICL_min = 1.05 V independent of slope ramp)
 V_ISENS SW_INT SW_MOS DC 0
 B_ISENS_RAW ISENS_RAW GND V = 0.5 * I(V_ISENS)
 R_LEB ISENS_RAW ISENS_FLT 100
 C_LEB ISENS_FLT GND 350p
-B_VCTRL CTRL_V GND V = min(V(COMP_NODE,GND), min(V(SS_NODE,GND), ICL*0.5))
-B_CMP CMP_RST_A GND V = 2.5*(1 + tanh(80*( (V(ISENS_FLT,GND) + V(SLOPE_V,GND)) - V(CTRL_V,GND) )))
+B_VCTRL CTRL_V GND V = min(V(COMP_NODE,GND), V(SS_NODE,GND))
+B_CMP_PWM CMP_PWM_A GND V = 2.5*(1 + tanh(80*( (V(ISENS_FLT,GND) + V(SLOPE_V,GND)) - V(CTRL_V,GND) )))
+B_CMP_ICL CMP_ICL_A GND V = 2.5*(1 + tanh(80*( V(ISENS_FLT,GND) - ICL*0.5 )))
 
-* Combine async reset (current limit OR max-duty blanking OR disabled)
-B_RST RST_A GND V = max(V(CMP_RST_A,GND), max(V(MAXOFF_A,GND), 5*(1 - V(EN_INT,GND))))
+* Combine async reset (PWM comparator OR independent ILIMIT OR max-duty blanking OR disabled)
+B_RST RST_A GND V = max(max(V(CMP_PWM_A,GND), V(CMP_ICL_A,GND)), max(V(MAXOFF_A,GND), 5*(1 - V(EN_INT,GND))))
 
 * --- XSPICE Digital D-Flip-Flop Peak-Current-Mode PWM Latch ---
 A_ADC_CLK [CLK_A] [CLK_D] ADC_FAST

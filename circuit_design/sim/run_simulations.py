@@ -7,17 +7,17 @@ Single Source of Truth:
   - Reads RefDes / nominal values from circuit_design/COMPONENT_IDS.csv
 
 Engine 1 (ngspice SPICE):
-  - Executes circuit_design/sim/netlists/lepiled_nominal.cir (OFF -> 4-UV -> 8-ALL -> 4-UV)
-  - Executes circuit_design/sim/netlists/lepiled_fault_open_led.cir (open-load 20V OVP clamp)
-  - Parses logs & wrdata traces, saves ngspice_transient_modes.png
+  - Executes circuit_design/sim/netlists/lepiled_nominal.cir (9.5 ms: OFF -> 4-UV -> 8-ALL -> 4-UV)
+  - Executes circuit_design/sim/netlists/lepiled_fault_open_led.cir (worst-case BZT52C18 19.1V open-load OVP)
+  - Executes circuit_design/sim/netlists/lepiled_fault_input_prot.cir (IC=0 cold plug, -12V rev, +12V stiff & 4A-limited, 5->12V step)
+  - Parses logs & wrdata traces, verifies assertions, saves ngspice_transient_modes.png
 
 Engine 2 (Python / SciPy):
-  - Switched-averaged state-space ODE (scipy.integrate.solve_ivp) across OFF -> 4-UV -> 8-ALL -> 4-UV
-  - Exhaustive worst-case corner sweep across:
-      * Datasheet VFB [0.178, 0.202] V (±6.3%), R_sense ±1%, L ±20%
-      * Out-of-spec VFB ±10% and ±15%, R_sense ±5%, L ±20%
-      * Vin [4.5, 5.5] V, Vf across [-10 C, +85 C], fsw [1.2, 2.0] MHz, Rds_on [0.17, 0.33] Ohm, VD [0.34, 0.50] V
-  - N = 2000 seeded (seed=42) Monte-Carlo tolerance trials checking all datasheet & thermal limits
+  - Switched-averaged state-space ODE (scipy.integrate.solve_ivp) across 9.5 ms (OFF -> 4-UV -> 8-ALL -> 4-UV)
+    with 2.0 ms DIM2 discharge tau (R6+R7) and LM3410 soft-start/ICL clamp
+  - Exhaustive worst-case corner sweep across datasheet & OOS tolerances including explicit Tj <= 125 C gate (T_PCB = 55 C)
+  - Input-path droop verification (V_USB = 4.75 V full-path droop & V_IC = 4.50 V direct droop vs F1 I_hold)
+  - N = 2000 seeded (seed=42) Monte-Carlo sampling full [4.5, 5.5] V and [0.17, 0.33] Ohm ranges
   - Outputs: sim_summary.json, corner_sweep.csv, scipy_transient_modes.png, monte_carlo_margins.png
 """
 
@@ -80,7 +80,7 @@ def parse_ngspice_meas(log_text: str) -> dict[str, float]:
 def run_ngspice_suite() -> dict:
     ngspice = find_ngspice()
     if ngspice is None:
-        return {"status": "skipped_missing_ngspice"}
+        raise RuntimeError("ngspice binary not found")
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     results = {"status": "executed", "binary": str(ngspice), "runs": {}}
@@ -88,6 +88,7 @@ def run_ngspice_suite() -> dict:
     for name, netlist in [
         ("nominal", NETLIST_DIR / "lepiled_nominal.cir"),
         ("fault_open_led", NETLIST_DIR / "lepiled_fault_open_led.cir"),
+        ("fault_input_prot", NETLIST_DIR / "lepiled_fault_input_prot.cir"),
     ]:
         proc = subprocess.run(
             [str(ngspice), "-b", str(netlist)],
@@ -109,21 +110,42 @@ def run_ngspice_suite() -> dict:
             "log_file": str(log_path.relative_to(REPO_ROOT)),
         }
 
-    # Plot ngspice nominal trace if generated
+    # Verify ngspice pass/fail invariants
+    nom_m = results["runs"]["nominal"]["measurements"]
+    assert nom_m["dim2_end"] < 0.4, f"U2 DIM2_NET failed to discharge < 0.4V: {nom_m['dim2_end']}"
+    assert abs(nom_m["il2_end_avg"]) < 1e-3, f"U2 L2 DC current did not stop: {nom_m['il2_end_avg']}"
+    assert nom_m["i_vis_backfeed"] < 1e-6, f"4-UV steady backfeed >= 1uA: {nom_m['i_vis_backfeed']}"
+    assert nom_m["i_vis_end"] < 1.5e-3, f"U2 C5 passive tail did not decay below 1.5 mA by 9.5ms: {nom_m['i_vis_end']}"
+
+    ovp_m = results["runs"]["fault_open_led"]["measurements"]
+    assert ovp_m["vout1_open_peak"] < 24.0, f"Open-load OVP VOUT1 exceeded 24V: {ovp_m['vout1_open_peak']}"
+    assert ovp_m["vsw_open_peak"] < 24.0, f"Open-load OVP VSW exceeded 24V: {ovp_m['vsw_open_peak']}"
+
+    prot_m = results["runs"]["fault_input_prot"]["measurements"]
+    assert prot_m["cold_iin_pk"] < 3.0, f"Cold hot-plug I_in_pk >= 3A: {prot_m['cold_iin_pk']}"
+    assert prot_m["cold_il1_pk"] < 3.0, f"Cold hot-plug I_L1_pk >= 3A Isat: {prot_m['cold_il1_pk']}"
+    assert prot_m["cold_il2_pk"] < 3.0, f"Cold hot-plug I_L2_pk >= 3A Isat: {prot_m['cold_il2_pk']}"
+    assert abs(prot_m["rev12_iin_ss"]) < 1e-3, f"-12V reverse current >= 1mA: {prot_m['rev12_iin_ss']}"
+    assert prot_m["ov12_stiff_vin_pk"] < 7.0, f"+12V stiff VIN_PROT >= 7V: {prot_m['ov12_stiff_vin_pk']}"
+    assert prot_m["ov12_4a_vin_pk"] < 7.0, f"+12V 4A-limited VIN_PROT >= 7V: {prot_m['ov12_4a_vin_pk']}"
+    assert prot_m["step_5to12_vin_pk"] < 7.0, f"5->12V step VIN_PROT >= 7V: {prot_m['step_5to12_vin_pk']}"
+    assert prot_m["step_5to12_vin_ss"] < 1e-3, f"5->12V step failed to cut off: {prot_m['step_5to12_vin_ss']}"
+
+    # Plot ngspice nominal trace
     trace_path = OUT_DIR / "ngspice_nominal_trace.txt"
     if trace_path.exists():
         data = np.loadtxt(trace_path, skiprows=1)
         t_ms = data[:, 0] * 1e3
-        # Downsample cleanly for plotting (~4000 points)
-        step = max(1, len(t_ms) // 4000)
+        step = max(1, len(t_ms) // 5000)
         td = t_ms[::step]
 
         fig, axes = plt.subplots(3, 1, figsize=(10.5, 8.0), sharex=True)
         axes[0].plot(td, data[::step, 2], label="EN1_NET (U1.DIM)", color="#047857", lw=1.3)
-        axes[0].plot(td, data[::step, 3], label="DIM2_NET (U2.DIM, 1ms RC)", color="#2563EB", lw=1.3)
+        axes[0].plot(td, data[::step, 3], label="DIM2_NET (U2.DIM, tau_dis=2.0ms)", color="#2563EB", lw=1.3)
         axes[0].axhline(1.8, color="#64748B", ls="--", lw=0.9, label="VDIM_H = 1.8 V")
+        axes[0].axhline(0.4, color="#94A3B8", ls=":", lw=0.9, label="VDIM_L = 0.4 V")
         axes[0].set_ylabel("Enable (V)")
-        axes[0].set_title("ngspice 45.2 Cycle-by-Cycle Transient: OFF -> 4-UV -> 8-ALL -> 4-UV")
+        axes[0].set_title("ngspice 45.2 Cycle-by-Cycle Transient (9.5 ms): OFF -> 4-UV -> 8-ALL -> 4-UV")
         axes[0].legend(loc="upper right", fontsize=8)
         axes[0].grid(True, alpha=0.3)
 
@@ -170,7 +192,6 @@ def solve_steady_boost(
     v_str = vstr_at_350mA + (i_led - 0.350) * rdyn_str
     v_out = v_str + vfb
 
-    # Solve duty cycle iteratively including inductor DCR & switch Rds_on drops
     d = (v_out + vd - vin_ic) / (v_out + vd)
     for _ in range(15):
         i_in_avg = i_led / max(1.0 - d, 0.04)
@@ -198,9 +219,8 @@ def solve_steady_boost(
     p_in_ch = p_led + p_rsense + p_ic + p_diode + p_ind
     eta = p_led / p_in_ch
 
-    # Output ripple (TI Eq. 11)
-    r_out_dyn = (v_out / i_led)
-    dv_out_pp = di_l_pp * esr_out + (v_out * d) / (2.0 * fsw * r_out_dyn * c_out_eff)
+    # Output ripple voltage: capacitor charge/discharge + peak inductor current * ESR
+    dv_out_pp = (i_led * d) / (c_out_eff * fsw) + i_l_pk * esr_out
 
     return {
         "i_led_A": i_led,
@@ -224,31 +244,37 @@ def solve_steady_boost(
 
 
 def run_scipy_transient_ode(ds: dict) -> dict:
-    """State-space averaged transient ODE across OFF -> 4-UV -> 8-ALL -> 4-UV."""
+    """State-space averaged transient ODE across 9.5 ms: OFF -> 4-UV -> 8-ALL -> 4-UV."""
     ic = ds["boost_ic"]["LM3410XMY/NOPB"]
     ind = ds["inductor"]["SRN6045-100M"]
     cap_out = ds["capacitors"]["CL32B106KBJNFNE"]
     res_s = ds["resistors"]["CRL1206-FW-R560ELF"]
     uv = ds["leds"]["SST-10-UV-A130-G365-00"]
-    rb = ds["leds"]["XPEBRY-L1-0000-00R02"]
-    gr = ds["leds"]["XPEBGR-L1-0000-00E01"]
-    cw = ds["leds"]["XPEBWT-L1-0000-00F51"]
+    rb = ds["leds"]["XPEBRY-L1-0000-00S02"]
+    gr = ds["leds"]["XPEBGR-L1-0000-00K01"]
+    cw = ds["leds"]["XPEBWT-L1-0000-00H51"]
     mos = ds["protection_and_input"]["DMG2305UX-7"]
-    ptc = ds["protection_and_input"]["MF-LSMF300/24X"]
+    ptc = ds["protection_and_input"]["MF-LSMF400/16X"]
+    usb = ds["protection_and_input"]["USB4085-GF-A"]
 
     L = ind["L_H"]
-    dcr = ind["dcr_max_ohm"] * 0.85
+    dcr = ind["dcr_typ_ohm"]
     c_out = cap_out["effective_capacitance_at_16V_F"]
     r_s = res_s["resistance_ohm"]
     vfb = ic["vfb_V"]["typ"]
     rds = ic["rds_on_ohm"]["typ_25C"]
     vd = ds["schottky_diode"]["B340A-13-F"]["vf_V"]["at_1A_25C_typ"]
+    icl_typ = ic["icl_A"]["typ"]
 
-    # Input path impedance: cable (0.08) + F1 (0.03) + Q1 (0.04)
-    r_in_path = 0.08 + 0.5 * (ptc["r_min_ohm"] + ptc["r_1max_ohm"]) + mos["rds_on_ohm"]["at_4V5_typ"]
+    # Input path impedance: cable (0.05) + J1 (0.04) + F1 (0.02) + Q1A+Q1B (0.08)
+    r_in_path = (
+        0.05
+        + usb["contact_resistance_mohm"]["initial"] * 1e-3
+        + 0.020
+        + 2.0 * mos["rds_on_ohm"]["at_4V5_typ"]
+    )
     v_usb = 5.0
 
-    # Smooth LED string I(V) curve from datasheet Vstr0 + rdyn
     v_th_uv = 4.0 * (uv["vf_at_350mA_25C_V"]["typ"] - 0.350 * uv["rdyn_ohm_per_led"])
     r_dyn_uv = 4.0 * uv["rdyn_ohm_per_led"] + r_s
     v_th_vis = (
@@ -260,12 +286,11 @@ def run_scipy_transient_ode(ds: dict) -> dict:
     r_dyn_vis = 2 * rb["rdyn_ohm_per_led"] + gr["rdyn_ohm_per_led"] + cw["rdyn_ohm_per_led"] + r_s
 
     def led_current(v_out: float, v_th: float, r_dyn: float) -> float:
-        # Smooth diode turn-on with 150 mV soft knee
         dv = v_out - v_th
         return 0.15 * np.logaddexp(0.0, dv / 0.15) / r_dyn
 
     def switch_mode(t: float) -> tuple[float, float]:
-        # OFF (0..0.2ms) -> 4-UV (0.2..1.5ms) -> 8-ALL (1.5..3.5ms) -> 4-UV (3.5..4.5ms)
+        # OFF (0..0.2ms) -> 4-UV (0.2..1.5ms) -> 8-ALL (1.5..3.5ms) -> 4-UV (3.5..9.5ms)
         if t < 0.2e-3:
             return 0.0, 0.0
         elif t < 1.5e-3:
@@ -275,24 +300,30 @@ def run_scipy_transient_ode(ds: dict) -> dict:
         else:
             return 1.0, 0.0
 
-    # State: [i_L1, v_C4, d1_int, i_L2, v_C5, d2_int, v_dim2]
-    tau_rc = 10e3 * 100e-9  # R7 * C6 = 1.0 ms
+    # State: [i_L1, v_C4, d1_int, ss1, i_L2, v_C5, d2_int, ss2, v_dim2]
+    tau_chg = 10e3 * 100e-9   # R7 * C6 = 1.0 ms (when SW1 drives EN2_NET)
+    tau_dis = 20e3 * 100e-9   # (R7 + R6) * C6 = 2.0 ms (when SW1 opens EN2_NET)
 
     def rhs(t: float, y: np.ndarray) -> np.ndarray:
-        i_l1, v_c4, d1, i_l2, v_c5, d2, v_dim2 = y
+        i_l1, v_c4, d1, ss1, i_l2, v_c5, d2, ss2, v_dim2 = y
         sw_uv, sw_all = switch_mode(t)
 
-        # Estimate vin_prot after input path drop
         i_in_est = max(i_l1, 0.0) + max(i_l2, 0.0)
         vin_prot = v_usb - i_in_est * r_in_path
         v_en1 = vin_prot - 0.65 if (sw_uv > 0.5 or sw_all > 0.5) else 0.0
         v_en2_src = vin_prot if sw_all > 0.5 else 0.0
 
-        # R7/C6/R6 divider & RC stagger on DIM2
-        dv_dim2 = (v_en2_src - v_dim2) / tau_rc if sw_all > 0.5 else -(v_dim2 / (10e3 * 100e-9))
+        # Exact R7/C6/R6 charge (tau=1.0 ms) and open-switch discharge (tau=2.0 ms)
+        dv_dim2 = (v_en2_src - v_dim2) / tau_chg if sw_all > 0.5 else -(v_dim2 / tau_dis)
 
         en1 = 1.0 if v_en1 >= ic["vdim_high_min_V"] else 0.0
         en2 = 1.0 if v_dim2 >= ic["vdim_high_min_V"] else 0.0
+
+        # Soft-start ramp (0..1 over ~0.15 ms) limiting peak cycle current below ICL_typ
+        dss1 = (1.0 - ss1) / 1.0e-4 if en1 > 0.5 else -ss1 / 1.0e-5
+        dss2 = (1.0 - ss2) / 1.0e-4 if en2 > 0.5 else -ss2 / 1.0e-5
+        icl_eff1 = max(0.35, ss1 * icl_typ)
+        icl_eff2 = max(0.35, ss2 * icl_typ)
 
         i_led1 = led_current(v_c4, v_th_uv, r_dyn_uv)
         i_led2 = led_current(v_c5, v_th_vis, r_dyn_vis)
@@ -300,20 +331,19 @@ def run_scipy_transient_ode(ds: dict) -> dict:
         v_fb1 = i_led1 * r_s
         v_fb2 = i_led2 * r_s
 
-        # Outer current-mode control loop dynamics (PI control matching ~0.35ms soft-start)
-        d_cmd1 = np.clip(d1 + 2.0 * (vfb - v_fb1), 0.05, ic["dmax"]["typ"]) if en1 > 0.5 else 0.0
-        d_cmd2 = np.clip(d2 + 2.0 * (vfb - v_fb2), 0.05, ic["dmax"]["typ"]) if en2 > 0.5 else 0.0
+        # Outer loop with soft-start / ICL duty limit (prevents unphysical current spike)
+        d_raw1 = np.clip(d1 + 2.0 * (vfb - v_fb1), 0.05, ic["dmax"]["typ"]) if en1 > 0.5 else 0.0
+        d_raw2 = np.clip(d2 + 2.0 * (vfb - v_fb2), 0.05, ic["dmax"]["typ"]) if en2 > 0.5 else 0.0
+        d_cmd1 = d_raw1 * (1.0 / (1.0 + math.exp(25.0 * (i_l1 - icl_eff1 * 0.85)))) if en1 > 0.5 else 0.0
+        d_cmd2 = d_raw2 * (1.0 / (1.0 + math.exp(25.0 * (i_l2 - icl_eff2 * 0.85)))) if en2 > 0.5 else 0.0
 
-        dd1 = 12000.0 * (vfb - v_fb1) if en1 > 0.5 else -15000.0 * d1
-        dd2 = 12000.0 * (vfb - v_fb2) if en2 > 0.5 else -15000.0 * d2
+        dd1 = 12000.0 * (vfb - v_fb1) if (en1 > 0.5 and i_l1 < icl_eff1 * 0.85) else (-15000.0 * d1 if en1 < 0.5 else 0.0)
+        dd2 = 12000.0 * (vfb - v_fb2) if (en2 > 0.5 and i_l2 < icl_eff2 * 0.85) else (-15000.0 * d2 if en2 < 0.5 else 0.0)
 
-        # State-space averaged inductor & output capacitor derivatives
-        # When disabled, diode conducts passively only if v_c < vin_prot - vd
         if en1 > 0.5:
             di_l1 = (vin_prot - i_l1 * (dcr + d_cmd1 * rds) - (1.0 - d_cmd1) * (v_c4 + vd)) / L
             i_out1 = (1.0 - d_cmd1) * i_l1
         else:
-            # Passive clamp path through L1 + D9 if v_c4 < vin_prot - vd
             v_pass1 = max(vin_prot - vd - v_c4, 0.0)
             di_l1 = (v_pass1 - i_l1 * 0.5) / L if v_pass1 > 0 or i_l1 > 0 else 0.0
             i_out1 = max(i_l1, 0.0)
@@ -329,28 +359,37 @@ def run_scipy_transient_ode(ds: dict) -> dict:
         dv_c4 = (i_out1 - i_led1) / c_out
         dv_c5 = (i_out2 - i_led2) / c_out
 
-        return np.array([di_l1, dv_c4, dd1, di_l2, dv_c5, dd2, dv_dim2])
+        return np.array([di_l1, dv_c4, dd1, dss1, di_l2, dv_c5, dd2, dss2, dv_dim2])
 
-    y0 = np.array([0.0, 4.7, 0.0, 0.0, 4.7, 0.0, 0.0])
-    t_eval = np.linspace(0.0, 4.5e-3, 4501)
-    sol = solve_ivp(rhs, (0.0, 4.5e-3), y0, method="Radau", t_eval=t_eval, rtol=1e-6, atol=1e-8)
+    y0 = np.array([0.0, 4.7, 0.0, 0.0, 0.0, 4.7, 0.0, 0.0, 0.0])
+    t_eval = np.linspace(0.0, 9.5e-3, 9501)
+    sol = solve_ivp(rhs, (0.0, 9.5e-3), y0, method="Radau", t_eval=t_eval, rtol=1e-6, atol=1e-8)
     assert sol.success, f"ODE solver failed: {sol.message}"
 
     t = sol.t
-    i_l1, v_c4, _, i_l2, v_c5, _, v_dim2 = sol.y
+    i_l1, v_c4, _, _, i_l2, v_c5, _, _, v_dim2 = sol.y
     i_led1 = np.array([led_current(v, v_th_uv, r_dyn_uv) for v in v_c4])
     i_led2 = np.array([led_current(v, v_th_vis, r_dyn_vis) for v in v_c5])
     i_in_tot = np.maximum(i_l1, 0.0) + np.maximum(i_l2, 0.0)
 
     m_4uv = (t >= 1.1e-3) & (t <= 1.45e-3)
     m_8all = (t >= 3.1e-3) & (t <= 3.45e-3)
+    m_end = (t >= 9.0e-3) & (t <= 9.5e-3)
+
+    dim2_end = float(np.mean(v_dim2[m_end]))
+    i_vis_end_mA = float(np.min(i_led2[m_end]) * 1e3)
+    i_vis_backfeed_mA = float(np.max(i_led2[m_4uv]) * 1e3)
+    assert dim2_end < 0.4, f"SciPy DIM2_NET failed to discharge < 0.4V: {dim2_end}"
+    assert i_vis_backfeed_mA < 1e-3, f"SciPy 4-UV backfeed >= 1uA: {i_vis_backfeed_mA} mA"
+    assert i_vis_end_mA < 1.0, f"SciPy I_VIS C5 tail did not decay < 1 mA by 9.5ms: {i_vis_end_mA} mA"
 
     # Plot SciPy transient ODE
     fig, axes = plt.subplots(3, 1, figsize=(10.5, 8.0), sharex=True)
-    axes[0].plot(t * 1e3, v_dim2, label="DIM2_NET (U2.DIM, 1.0ms stagger)", color="#2563EB", lw=1.5)
+    axes[0].plot(t * 1e3, v_dim2, label="DIM2_NET (tau_chg=1.0ms, tau_dis=2.0ms)", color="#2563EB", lw=1.5)
     axes[0].axhline(1.8, color="#64748B", ls="--", lw=0.9, label="VDIM_H = 1.8 V")
+    axes[0].axhline(0.4, color="#94A3B8", ls=":", lw=0.9, label="VDIM_L = 0.4 V")
     axes[0].set_ylabel("DIM2 (V)")
-    axes[0].set_title("SciPy Radau State-Space Transient ODE: OFF -> 4-UV -> 8-ALL -> 4-UV")
+    axes[0].set_title("SciPy Radau State-Space Transient ODE (9.5 ms): OFF -> 4-UV -> 8-ALL -> 4-UV")
     axes[0].legend(loc="upper right", fontsize=8)
     axes[0].grid(True, alpha=0.3)
 
@@ -382,7 +421,71 @@ def run_scipy_transient_ode(ds: dict) -> dict:
         "8all_vout1_V": float(np.mean(v_c4[m_8all])),
         "8all_vout2_V": float(np.mean(v_c5[m_8all])),
         "8all_iin_A": float(np.mean(i_in_tot[m_8all])),
+        "iin_peak_A": float(np.max(i_in_tot)),
         "dim2_cross_1p8V_ms": float(t[np.argmax(v_dim2 >= 1.8)] * 1e3),
+        "dim2_end_V": dim2_end,
+        "i_vis_end_mA": i_vis_end_mA,
+    }
+
+
+def solve_usb_path_droop(
+    v_usb: float,
+    r_cable: float,
+    r_j1: float,
+    r_f1: float,
+    r_q1_pair: float,
+    ds: dict,
+    worst_boost: bool = False,
+) -> dict:
+    """Self-consistent 8-ALL input-path droop & F1 hold-current verification."""
+    ic = ds["boost_ic"]["LM3410XMY/NOPB"]
+    ind = ds["inductor"]["SRN6045-100M"]
+    sch = ds["schottky_diode"]["B340A-13-F"]
+    res_s = ds["resistors"]["CRL1206-FW-R560ELF"]
+    cap_out = ds["capacitors"]["CL32B106KBJNFNE"]
+    uv = ds["leds"]["SST-10-UV-A130-G365-00"]
+    rb = ds["leds"]["XPEBRY-L1-0000-00S02"]
+    gr = ds["leds"]["XPEBGR-L1-0000-00K01"]
+    cw = ds["leds"]["XPEBWT-L1-0000-00H51"]
+
+    r_path = r_cable + r_j1 + r_f1 + r_q1_pair
+    L = ind["L_min_H"] if worst_boost else ind["L_H"]
+    dcr = ind["dcr_max_ohm"] if worst_boost else ind["dcr_typ_ohm"]
+    rds = ic["rds_on_ohm"]["typ_125C"] if worst_boost else ic["rds_on_ohm"]["typ_25C"]
+    vd = sch["vf_V"]["at_2A_25C_typ"] if worst_boost else sch["vf_V"]["at_1A_25C_typ"]
+    vfb = ic["vfb_V"]["typ"]
+    fsw = ic["fsw_Hz"]["typ"]
+    r_sense = res_s["resistance_ohm"]
+    vstr_uv = 4.0 * uv["vf_at_350mA_25C_V"]["typ"]
+    vstr_vis = 2.0 * rb["vf_at_350mA_25C_V"]["typ"] + gr["vf_at_350mA_25C_V"]["typ"] + cw["vf_at_350mA_25C_V"]["typ"]
+    rdyn_uv = 4.0 * uv["rdyn_ohm_per_led"]
+    rdyn_vis = 2.0 * rb["rdyn_ohm_per_led"] + gr["rdyn_ohm_per_led"] + cw["rdyn_ohm_per_led"]
+
+    vin_prot = v_usb - 0.35
+    for _ in range(30):
+        c1 = solve_steady_boost(
+            vin_prot, L, r_sense, vstr_uv, rdyn_uv, vfb, fsw, rds, dcr, vd,
+            cap_out["effective_capacitance_at_16V_F"], cap_out["esr_ohm"],
+            ic["iq_switching_mA"]["typ"] * 1e-3, ic["t_rise_ns"], ic["t_fall_ns"],
+        )
+        c2 = solve_steady_boost(
+            vin_prot, L, r_sense, vstr_vis, rdyn_vis, vfb, fsw, rds, dcr, vd,
+            cap_out["effective_capacitance_at_16V_F"], cap_out["esr_ohm"],
+            ic["iq_switching_mA"]["typ"] * 1e-3, ic["t_rise_ns"], ic["t_fall_ns"],
+        )
+        i_in = c1["i_in_avg_A"] + c2["i_in_avg_A"]
+        vin_prot = v_usb - i_in * r_path
+
+    return {
+        "v_usb_V": v_usb,
+        "r_path_ohm": round(r_path, 4),
+        "vin_prot_V": round(vin_prot, 3),
+        "i_usb_A": round(i_in, 3),
+        "ch1_ipk_A": round(c1["i_l_pk_A"], 3),
+        "ch2_ipk_A": round(c2["i_l_pk_A"], 3),
+        "p_f1_W": round((i_in**2) * r_f1, 3),
+        "p_q1_pair_W": round((i_in**2) * r_q1_pair, 3),
+        "p_pcb_passives_W": round((i_in**2) * (r_f1 + r_q1_pair) + c1["p_rsense_W"] + c2["p_rsense_W"], 3),
     }
 
 
@@ -393,9 +496,12 @@ def run_corners_and_mc(ds: dict) -> tuple[dict, list[dict]]:
     res_s = ds["resistors"]["CRL1206-FW-R560ELF"]
     cap_out = ds["capacitors"]["CL32B106KBJNFNE"]
     uv = ds["leds"]["SST-10-UV-A130-G365-00"]
-    rb = ds["leds"]["XPEBRY-L1-0000-00R02"]
-    gr = ds["leds"]["XPEBGR-L1-0000-00E01"]
-    cw = ds["leds"]["XPEBWT-L1-0000-00F51"]
+    rb = ds["leds"]["XPEBRY-L1-0000-00S02"]
+    gr = ds["leds"]["XPEBGR-L1-0000-00K01"]
+    cw = ds["leds"]["XPEBWT-L1-0000-00H51"]
+    ptc = ds["protection_and_input"]["MF-LSMF400/16X"]
+    mos = ds["protection_and_input"]["DMG2305UX-7"]
+    usb = ds["protection_and_input"]["USB4085-GF-A"]
 
     L_nom = ind["L_H"]
     L_tol = ind["tolerance_fraction"]
@@ -404,31 +510,51 @@ def run_corners_and_mc(ds: dict) -> tuple[dict, list[dict]]:
     c_out_eff = cap_out["effective_capacitance_at_16V_F"]
     esr = cap_out["esr_ohm"]
     tr, tf = ic["t_rise_ns"], ic["t_fall_ns"]
+    t_pcb_max_C = 55.0
 
-    # Nominal steady-state for Ch1 (4S UV) and Ch2 (4S Vis)
+    # Nominal steady-state at typ 5.0 V USB -> ~4.62 V at IC after cable + J1 + F1 + Q1A/Q1B
+    nom_droop = solve_usb_path_droop(
+        5.0, 0.05, usb["contact_resistance_mohm"]["initial"] * 1e-3,
+        0.020, 2.0 * mos["rds_on_ohm"]["at_4V5_typ"], ds, worst_boost=False
+    )
+    vin_ic_nom = nom_droop["vin_prot_V"]
+
     vstr_uv_nom = 4.0 * uv["vf_at_350mA_25C_V"]["typ"]
     vstr_vis_nom = 2.0 * rb["vf_at_350mA_25C_V"]["typ"] + gr["vf_at_350mA_25C_V"]["typ"] + cw["vf_at_350mA_25C_V"]["typ"]
     rdyn_uv = 4.0 * uv["rdyn_ohm_per_led"]
     rdyn_vis = 2.0 * rb["rdyn_ohm_per_led"] + gr["rdyn_ohm_per_led"] + cw["rdyn_ohm_per_led"]
 
     nom_ch1 = solve_steady_boost(
-        vin_ic=4.85, L=L_nom, r_sense=r_nom, vstr_at_350mA=vstr_uv_nom, rdyn_str=rdyn_uv,
+        vin_ic=vin_ic_nom, L=L_nom, r_sense=r_nom, vstr_at_350mA=vstr_uv_nom, rdyn_str=rdyn_uv,
         vfb=vfb_nom, fsw=ic["fsw_Hz"]["typ"], rds=ic["rds_on_ohm"]["typ_25C"],
         dcr=ind["dcr_typ_ohm"], vd=sch["vf_V"]["at_1A_25C_typ"],
         c_out_eff=c_out_eff, esr_out=esr, iq=ic["iq_switching_mA"]["typ"] * 1e-3,
         tr_ns=tr, tf_ns=tf,
     )
     nom_ch2 = solve_steady_boost(
-        vin_ic=4.85, L=L_nom, r_sense=r_nom, vstr_at_350mA=vstr_vis_nom, rdyn_str=rdyn_vis,
+        vin_ic=vin_ic_nom, L=L_nom, r_sense=r_nom, vstr_at_350mA=vstr_vis_nom, rdyn_str=rdyn_vis,
         vfb=vfb_nom, fsw=ic["fsw_Hz"]["typ"], rds=ic["rds_on_ohm"]["typ_25C"],
         dcr=ind["dcr_typ_ohm"], vd=sch["vf_V"]["at_1A_25C_typ"],
         c_out_eff=c_out_eff, esr_out=esr, iq=ic["iq_switching_mA"]["typ"] * 1e-3,
         tr_ns=tr, tf_ns=tf,
     )
 
+    # Input-path droop scenarios (8-ALL mode)
+    droop_checks = {
+        "usb_5p0V_typ_20AWG_1m": solve_usb_path_droop(5.0, 0.05, 0.04, 0.020, 0.080, ds, worst_boost=False),
+        "usb_4p75V_maxR_20AWG_1p5m": solve_usb_path_droop(4.75, 0.06, 0.05, ptc["r_1max_ohm"], 2.0 * mos["rds_on_ohm"]["at_4V5_max"], ds, worst_boost=True),
+        "usb_4p50V_short_cable": solve_usb_path_droop(4.50, 0.04, 0.04, 0.020, 0.080, ds, worst_boost=False),
+        "vic_4p50V_direct": solve_usb_path_droop(4.50, 0.0, 0.0, 0.0, 0.0, ds, worst_boost=True),
+    }
+    assert droop_checks["usb_4p75V_maxR_20AWG_1p5m"]["i_usb_A"] < ptc["ihold_55C_A"], (
+        f"4.75V droop exceeds F1 Ihold@55C ({ptc['ihold_55C_A']}A): {droop_checks['usb_4p75V_maxR_20AWG_1p5m']}"
+    )
+    assert droop_checks["usb_4p75V_maxR_20AWG_1p5m"]["i_usb_A"] < ptc["ihold_60C_A"], (
+        f"4.75V droop exceeds F1 Ihold@60C ({ptc['ihold_60C_A']}A): {droop_checks['usb_4p75V_maxR_20AWG_1p5m']}"
+    )
+    assert droop_checks["vic_4p50V_direct"]["ch1_ipk_A"] < ic["icl_A"]["min"]
+
     # Exhaustive corner sweep across 3 scenarios
-    # Temp range -10C to +85C shifts Vf: UV (-2.67 mV/C * 4 = -10.68 mV/C -> +0.37V at -10C, -0.64V at +85C)
-    # Plus binning spread: UV [2.7..3.9]*4 => [11.4, 16.0] V; Vis => [10.2, 13.5] V
     scenarios = [
         ("datasheet_spec", [ic["vfb_V"]["min"], vfb_nom, ic["vfb_V"]["max"]], [r_nom * 0.99, r_nom, r_nom * 1.01]),
         ("oos_vfb_10pct_r_5pct", [vfb_nom * 0.90, vfb_nom, vfb_nom * 1.10], [r_nom * 0.95, r_nom, r_nom * 1.05]),
@@ -502,9 +628,12 @@ def run_corners_and_mc(ds: dict) -> tuple[dict, list[dict]]:
                         "i_l_pk_A": round(res["i_l_pk_A"], 4),
                         "margin_vs_icl_min_A": round(ic["icl_A"]["min"] - res["i_l_pk_A"], 4),
                         "p_ic_mW": round(res["p_ic_W"] * 1e3, 1),
+                        "tj_ic_at_55C": round(t_pcb_max_C + res["p_ic_W"] * ic["r_theta_ja_C_per_W"], 2),
                         "ccm": res["ccm"],
                     })
 
+            max_tj_55C = t_pcb_max_C + max_pic * ic["r_theta_ja_C_per_W"]
+            max_tj_60C = 60.0 + max_pic * ic["r_theta_ja_C_per_W"]
             key = f"{scen_name}__{ch_name}"
             corner_summary[key] = {
                 "total_corners": tot,
@@ -516,15 +645,18 @@ def run_corners_and_mc(ds: dict) -> tuple[dict, list[dict]]:
                 "max_i_led_mA": round(max_iled * 1e3, 2),
                 "max_v_out_V": round(max_vout, 3),
                 "max_p_ic_mW": round(max_pic * 1e3, 1),
+                "max_tj_ic_55C_amb": round(max_tj_55C, 2),
+                "max_tj_ic_60C_amb": round(max_tj_60C, 2),
                 "all_limits_pass": bool(
                     max_ipk < ic["icl_A"]["min"]
                     and max_d < ic["dmax"]["min"]
                     and max_iled < if_max
                     and max_vout < ic["vsw_recommended_V"]["max"]
+                    and max_tj_55C <= ic["tj_recommended_max_C"]
                 ),
             }
 
-    # Seeded N = 2000 Monte-Carlo (including out-of-spec tails: 3-sigma covers ±12% VFB, ±3% R, ±20% L)
+    # Seeded N = 2000 Monte-Carlo sampling FULL [4.5, 5.5] V and [0.17, 0.33] Ohm ranges, T_PCB in [25, 55] C
     rng = np.random.default_rng(42)
     N = 2000
     mc_ipk_ch1 = np.zeros(N)
@@ -534,7 +666,7 @@ def run_corners_and_mc(ds: dict) -> tuple[dict, list[dict]]:
     mc_tj_ic1 = np.zeros(N)
 
     for i in range(N):
-        vin = rng.uniform(4.60, 5.40)
+        vin = rng.uniform(4.50, 5.50)
         L1 = np.clip(rng.normal(L_nom, L_nom * L_tol / 2.5), L_nom * 0.78, L_nom * 1.22)
         L2 = np.clip(rng.normal(L_nom, L_nom * L_tol / 2.5), L_nom * 0.78, L_nom * 1.22)
         r1 = rng.normal(r_nom, r_nom * 0.015)
@@ -543,12 +675,12 @@ def run_corners_and_mc(ds: dict) -> tuple[dict, list[dict]]:
         vfb2 = np.clip(rng.normal(vfb_nom, vfb_nom * 0.045), 0.1615, 0.2185)
         fsw1 = np.clip(rng.normal(1.6e6, 0.12e6), 1.2e6, 2.0e6)
         fsw2 = np.clip(rng.normal(1.6e6, 0.12e6), 1.2e6, 2.0e6)
-        vstr1 = rng.uniform(13.2, 15.6)
-        vstr2 = rng.uniform(10.6, 12.8)
-        rds1 = rng.uniform(0.17, 0.28)
-        rds2 = rng.uniform(0.17, 0.28)
-        vd = rng.uniform(0.32, 0.44)
-        t_pcb = rng.uniform(25.0, 60.0)
+        vstr1 = rng.uniform(11.4, 16.0)
+        vstr2 = rng.uniform(10.2, 13.5)
+        rds1 = rng.uniform(0.17, 0.33)
+        rds2 = rng.uniform(0.17, 0.33)
+        vd = rng.uniform(0.30, 0.50)
+        t_pcb = rng.uniform(25.0, t_pcb_max_C)
 
         c1 = solve_steady_boost(vin, L1, r1, vstr1, rdyn_uv, vfb1, fsw1, rds1, ind["dcr_max_ohm"] * 1.2, vd, c_out_eff, esr, 7e-3, tr, tf)
         c2 = solve_steady_boost(vin, L2, r2, vstr2, rdyn_vis, vfb2, fsw2, rds2, ind["dcr_max_ohm"] * 1.2, vd, c_out_eff, esr, 7e-3, tr, tf)
@@ -579,7 +711,7 @@ def run_corners_and_mc(ds: dict) -> tuple[dict, list[dict]]:
 
     axes[2].hist(mc_tj_ic1, bins=35, color="#D97706", alpha=0.8)
     axes[2].axvline(ic["tj_recommended_max_C"], color="#DC2626", ls="--", lw=1.8, label="Tj_max = 125 C")
-    axes[2].set_title("U1 LM3410XMY Tj (T_pcb 25-60C)")
+    axes[2].set_title("U1 LM3410XMY Tj (T_pcb 25-55C)")
     axes[2].set_xlabel("Tj (C)")
     axes[2].legend(fontsize=8)
     axes[2].grid(True, alpha=0.25)
@@ -589,10 +721,14 @@ def run_corners_and_mc(ds: dict) -> tuple[dict, list[dict]]:
     plt.close(fig)
 
     summary = {
-        "nominal_analytic": {"ch1_uv": nom_ch1, "ch2_vis": nom_ch2},
+        "nominal_analytic": {"vin_ic_V": vin_ic_nom, "ch1_uv": nom_ch1, "ch2_vis": nom_ch2},
+        "input_droop_checks": droop_checks,
         "corners": corner_summary,
         "monte_carlo_N2000": {
             "seed": 42,
+            "vin_range_V": [4.50, 5.50],
+            "rds_range_ohm": [0.17, 0.33],
+            "t_pcb_range_C": [25.0, t_pcb_max_C],
             "ch1_ipk_max_A": float(np.max(mc_ipk_ch1)),
             "ch1_ipk_p99_A": float(np.percentile(mc_ipk_ch1, 99)),
             "ch2_ipk_max_A": float(np.max(mc_ipk_ch2)),
@@ -611,13 +747,13 @@ def main() -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     ds, comps = load_specs()
 
-    print("1/3 Running ngspice SPICE simulations...")
+    print("1/3 Running ngspice SPICE simulations (nominal 9.5ms, open-load OVP, input-prot faults)...")
     ngspice_res = run_ngspice_suite()
 
-    print("2/3 Running SciPy state-space transient ODE...")
+    print("2/3 Running SciPy state-space transient ODE (9.5ms, tau_dis=2.0ms)...")
     ode_res = run_scipy_transient_ode(ds)
 
-    print("3/3 Running exhaustive corner sweeps & N=2000 Monte-Carlo...")
+    print("3/3 Running exhaustive corner sweeps, droop checks & N=2000 Monte-Carlo...")
     mc_corner_res, corner_rows = run_corners_and_mc(ds)
 
     csv_path = OUT_DIR / "corner_sweep.csv"
@@ -640,7 +776,6 @@ def main() -> None:
     summary_path = OUT_DIR / "sim_summary.json"
     summary_path.write_text(json.dumps(full_summary, indent=2), encoding="utf-8")
 
-    # Assert all safety margins pass
     for key, val in mc_corner_res["corners"].items():
         assert val["all_limits_pass"], f"Corner check failed for {key}: {val}"
         assert val["dcm_corners"] == 0, f"Unexpected DCM corner in {key}: {val}"

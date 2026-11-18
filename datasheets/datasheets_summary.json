@@ -2,7 +2,7 @@
   "metadata": {
     "project": "LepiLED DIY Maxi Switch",
     "milestone": "M1",
-    "generated_utc": "2026-11-18T10:30:00Z",
+    "generated_utc": "2026-11-18T11:05:00Z",
     "notes": "Single source of truth for M1 simulation parameters and M2/M3 thermal/electrical limits. All specs extracted from verified HTTP 200 PDF datasheets in datasheets/."
   },
   "leds": {
@@ -41,12 +41,13 @@
       "r_theta_js_C_per_W": 3.8,
       "citation": "p. 3 Table 2 (Brehm 2017 comparison baseline; inferior thermal margin vs SST-10-UV)"
     },
-    "XPEBRY-L1-0000-00R02": {
+    "XPEBRY-L1-0000-00S02": {
       "manufacturer": "Cree LED",
       "color": "Royal Blue",
       "datasheet_pdf": "datasheets/XLamp-XPE2.pdf",
       "revision": "CLD-DS56 Rev 25B (2026)",
-      "wavelength_nm": {"min": 450, "typ": 455, "max": 460, "citation": "p. 43 Appendix D3-D4"},
+      "wavelength_nm": {"min": 450, "typ": 455, "max": 460, "citation": "p. 10 Order Codes Suggested for New Designs (D3-D4)"},
+      "flux_min_350mA_mW": 650.0,
       "vf_at_350mA_25C_V": {"min": 2.6, "typ": 2.93, "max": 3.40, "citation": "p. 4 Characteristics"},
       "vf_tempco_mV_per_C": -1.5,
       "rdyn_ohm_per_led": 0.45,
@@ -55,14 +56,15 @@
       "r_theta_js_C_per_W": 5.7,
       "vr_max_V": 1.0,
       "wpe_nominal_fraction": 0.58,
-      "citation": "p. 3-4 Characteristics; pp. 38-39 Mechanical/Footprint (3.30x3.30 mm XP pad)"
+      "citation": "p. 3-4 Characteristics; p. 10 Order Codes Suggested for New Designs; pp. 38-39 Mechanical/Footprint (3.30x3.30 mm XP pad)"
     },
-    "XPEBGR-L1-0000-00E01": {
+    "XPEBGR-L1-0000-00K01": {
       "manufacturer": "Cree LED",
       "color": "Green",
       "datasheet_pdf": "datasheets/XLamp-XPE2.pdf",
       "revision": "CLD-DS56 Rev 25B (2026)",
-      "wavelength_nm": {"min": 520, "typ": 528, "max": 535, "citation": "p. 11"},
+      "wavelength_nm": {"min": 520, "typ": 528, "max": 535, "citation": "p. 11 Order Codes Suggested for New Designs (G2-G4)"},
+      "flux_min_350mA_lm": 156.0,
       "vf_at_350mA_25C_V": {"min": 2.5, "typ": 2.70, "max": 3.25, "citation": "p. 4 Characteristics (note: legacy pre-PCN up to 3.6 V max)"},
       "vf_at_350mA_legacy_max_V": 3.60,
       "vf_tempco_mV_per_C": -1.2,
@@ -72,14 +74,15 @@
       "r_theta_js_C_per_W": 9.0,
       "vr_max_V": 1.0,
       "wpe_nominal_fraction": 0.28,
-      "citation": "p. 3-4 Characteristics; p. 11"
+      "citation": "p. 3-4 Characteristics; p. 11 Order Codes Suggested for New Designs"
     },
-    "XPEBWT-L1-0000-00F51": {
+    "XPEBWT-L1-0000-00H51": {
       "manufacturer": "Cree LED",
       "color": "Cool White (6200 K)",
       "datasheet_pdf": "datasheets/XLamp-XPE2.pdf",
       "revision": "CLD-DS56 Rev 25B (2026)",
       "cct_K": 6200,
+      "flux_min_350mA_85C_lm": 139.0,
       "vf_at_350mA_85C_V": {"typ": 2.84, "max": 3.10, "citation": "p. 4 Characteristics (binned at Tj=85C)"},
       "vf_at_350mA_25C_V": {"min": 2.6, "typ": 2.93, "max": 3.19, "citation": "p. 4 adjusted by -1.5 mV/C from 85C to 25C"},
       "vf_tempco_mV_per_C": -1.5,
@@ -89,7 +92,7 @@
       "r_theta_js_C_per_W": 5.8,
       "vr_max_V": 1.0,
       "wpe_nominal_fraction": 0.35,
-      "citation": "p. 3-4 Characteristics; p. 43"
+      "citation": "p. 3-4 Characteristics; p. 5 Order Codes Suggested for New Designs"
     }
   },
   "boost_ic": {
@@ -98,6 +101,18 @@
       "datasheet_pdf": "datasheets/lm3410.pdf",
       "revision": "SNVS541H (Aug 2016)",
       "package": "8-pin HVSSOP / MSOP-PowerPAD (DGN)",
+      "pinout_dgn": {
+        "1": "NC",
+        "2": "PGND",
+        "3": "VIN",
+        "4": "DIM",
+        "5": "FB",
+        "6": "AGND",
+        "7": "SW",
+        "8": "NC",
+        "DAP": "GND (connect to PGND and AGND on top layer with 4-6 thermal vias to bottom GND plane)",
+        "citation": "Sec. 5 p. 3 DGN Package"
+      },
       "vin_recommended_V": {"min": 2.7, "max": 5.5, "citation": "Sec. 6.3 p. 4"},
       "vin_abs_max_V": {"min": -0.5, "max": 7.0, "citation": "Sec. 6.1 p. 4"},
       "vsw_recommended_V": {"min": 3.0, "max": 24.0, "citation": "Sec. 6.3 p. 4"},
@@ -119,7 +134,7 @@
       "idim_nA": 100.0,
       "t_rise_ns": 8.0,
       "t_fall_ns": 6.5,
-      "t_sw_citation": "Sec. 10.3.3 Table 25 p. 39 (tr ~ 6-10 ns, tf ~ 5-8 ns)",
+      "t_sw_citation": "Sec. 10.3.3 Table 25 p. 37 (tr ~ 6-10 ns, tf ~ 5-8 ns)",
       "tj_recommended_max_C": 125.0,
       "tj_abs_max_C": 150.0,
       "tsd_C": 165.0,
@@ -184,7 +199,7 @@
       "irms_A": 2.8,
       "isat_A": 3.8,
       "srf_MHz_typ": 20.0,
-      "selection_note": "Evaluated against SRN6045-100M; 100M selected for superior worst-case ICL margin (+0.426 A vs +0.330 A DS, +0.199 A vs +0.109 A OOS) and lower ripple"
+      "selection_note": "Evaluated against SRN6045-100M; 100M selected for superior worst-case ICL margin and lower ripple"
     }
   },
   "resistors": {
@@ -207,9 +222,21 @@
       "package": "0805",
       "resistance_ohm": 5100.0,
       "tolerance_fraction": 0.01,
-      "power_rating_70C_W": 0.25,
+      "power_rating_70C_standard_W": 0.125,
+      "power_rating_70C_extended_W": 0.25,
       "tcr_ppm_per_C": 100,
-      "citation": "p. 1 Technical Specifications"
+      "citation": "p. 1 Technical Specifications (0.125 W Standard <=1% drift, 0.25 W Extended <=2% drift)"
+    },
+    "CRCW0603_series": {
+      "manufacturer": "Vishay",
+      "datasheet_pdf": "datasheets/dcrcwe3.pdf",
+      "revision": "Doc 20035 (14-Apr-2026)",
+      "package": "0603",
+      "tolerance_fraction": 0.01,
+      "power_rating_70C_standard_W": 0.10,
+      "power_rating_70C_extended_W": 0.125,
+      "tcr_ppm_per_C": 100,
+      "citation": "p. 1 Technical Specifications (R5..R14)"
     }
   },
   "protection_and_input": {
@@ -224,34 +251,57 @@
       "ipp_A": 65.2,
       "id_max_uA": 800.0,
       "pppm_W": 600.0,
+      "placement_note": "Placed downstream of Q1A/Q1B on VIN_PROT so -12 V reverse polarity never forward-biases D11 and +12 V OVP is blocked by Q1B",
       "citation": "p. 1-2 Electrical Characteristics"
     },
     "DMG2305UX-7": {
       "manufacturer": "Diodes Incorporated",
       "datasheet_pdf": "datasheets/DMG2305UX.pdf",
       "revision": "DS36196 Rev. 8-2 (July 2021)",
-      "package": "SOT-23-3",
+      "package": "SOT-23-3 (1=Gate, 2=Source, 3=Drain)",
       "bvdss_V": -20.0,
+      "vgss_max_V": 8.0,
       "vgs_th_V": {"min": -0.5, "max": -0.9},
       "rds_on_ohm": {"at_4V5_typ": 0.040, "at_4V5_max": 0.052, "at_2V5_typ": 0.052, "at_2V5_max": 0.100},
-      "id_max_25C_A": -5.0,
+      "id_max_25C_steady_A": -4.2,
+      "id_max_70C_steady_A": -3.3,
+      "id_max_25C_t10s_A": -5.0,
       "pd_max_W": 1.4,
       "r_theta_ja_C_per_W": 90.0,
-      "citation": "p. 1-2 Product Summary, Thermal & Electrical Characteristics"
+      "citation": "p. 1-2 Product Summary, Thermal & Electrical Characteristics (Q1A reverse blocker + Q1B OVP/soft-start switch)"
     },
-    "MF-LSMF300/24X": {
+    "MMBT3904LT1G": {
+      "manufacturer": "onsemi",
+      "datasheet_pdf": "datasheets/mmbt3904lt1-d.pdf",
+      "revision": "Rev. 15 (Sept 2026)",
+      "package": "SOT-23-3 (Case 318 Style 6: 1=Base, 2=Emitter, 3=Collector)",
+      "vceo_V": 40.0,
+      "vcbo_V": 60.0,
+      "vebo_V": 6.0,
+      "ic_max_mA": 200.0,
+      "hfe_1mA_min": 70.0,
+      "hfe_10mA": {"min": 100.0, "max": 300.0},
+      "vce_sat_10mA_max_V": 0.2,
+      "pd_fr5_25C_mW": 225.0,
+      "r_theta_ja_fr5_C_per_W": 556.0,
+      "citation": "p. 1-2 Maximum Ratings & Electrical Characteristics, p. 7 Ordering Information (Q2 OVP sense, Q3 soft-start gate driver)"
+    },
+    "MF-LSMF400/16X": {
       "manufacturer": "Bourns",
       "datasheet_pdf": "datasheets/MF-LSMF.pdf",
+      "pages": 11,
       "package": "2920",
-      "vmax_V": 24.0,
+      "vmax_V": 16.0,
       "imax_A": 40.0,
-      "ihold_23C_A": 3.0,
-      "ihold_60C_A": 2.15,
-      "itrip_23C_A": 5.2,
-      "r_min_ohm": 0.015,
-      "r_1max_ohm": 0.075,
+      "ihold_23C_A": 4.0,
+      "ihold_50C_A": 3.00,
+      "ihold_55C_A": 2.82,
+      "ihold_60C_A": 2.64,
+      "itrip_23C_A": 8.0,
+      "r_min_ohm": 0.005,
+      "r_1max_ohm": 0.040,
       "pd_tripped_W": 1.5,
-      "citation": "p. 1-2 Electrical Characteristics & Thermal Derating (note: replaces nonexistent MF-MSMF300/24X)"
+      "citation": "p. 2-3 Electrical Characteristics & Thermal Derating (upgraded from MF-LSMF300/24X for >=2.64 A @ 60C hold margin and 40 mOhm R1max; 16 V rating covers 12 V faults)"
     },
     "BAV70LT1G": {
       "manufacturer": "onsemi",
@@ -270,26 +320,30 @@
       "revision": "DS18004 Rev. 38-2 (Oct 2017)",
       "package": "SOD-123",
       "vz_V": {"min": 5.2, "nom": 5.6, "max": 6.0, "izt_mA": 5.0},
+      "zzt_max_ohm": 40.0,
       "pd_75C_mW": 500.0,
       "r_theta_ja_C_per_W": 338.0,
-      "citation": "p. 2 Thermal & Electrical Characteristics"
+      "citation": "p. 2 Thermal & Electrical Characteristics (D15 OVP sense Zener driving Q2)"
     },
-    "BZT52C20-7-F": {
+    "BZT52C18-7-F": {
       "manufacturer": "Diodes Incorporated",
       "datasheet_pdf": "datasheets/BZT52C.pdf",
       "revision": "DS18004 Rev. 38-2 (Oct 2017)",
       "package": "SOD-123",
-      "vz_V": {"min": 18.8, "nom": 20.0, "max": 21.2, "izt_mA": 5.0},
-      "zzt_max_ohm": 55.0,
-      "ir_max_uA_14V": 0.1,
+      "vz_V": {"min": 16.8, "nom": 18.0, "max": 19.1, "izt_mA": 5.0},
+      "zzt_max_ohm": 45.0,
+      "ir_max_uA_12V6": 0.1,
       "pd_75C_mW": 500.0,
       "r_theta_ja_C_per_W": 338.0,
-      "citation": "p. 2 Thermal & Electrical Characteristics"
+      "citation": "p. 2 Thermal & Electrical Characteristics (D13/D14 open-load OVP; replaces BZT52C20 to keep worst-case peak < 24.0 V rec max)"
     },
     "USB4085-GF-A": {
       "manufacturer": "GCT",
       "datasheet_pdf": "datasheets/usb4085.pdf",
       "revision": "Rev B PCN (2023-02-28)",
+      "vbus_pins": ["A4", "A9", "B4", "B9"],
+      "gnd_pins": ["A1", "A12", "B1", "B12", "SHELL"],
+      "cc_pins": {"CC1": "A5", "CC2": "B5"},
       "vbus_current_max_A": 5.0,
       "gnd_current_max_A": 6.25,
       "voltage_max_V": 48.0,
@@ -329,7 +383,7 @@
       "tolerance_fraction": 0.10,
       "voltage_rating_V": 25.0,
       "dielectric": "X7R",
-      "notes": "C6 stagger timing & C7..C8 HF VIN bypass"
+      "notes": "C6 stagger timing, C7..C8 HF VIN bypass, C11 soft-start timing, C12 VBUS ESD bypass"
     },
     "GRM188R71H104KA93D": {
       "manufacturer": "Murata",
@@ -341,6 +395,38 @@
       "notes": "C9..C10 HF VOUT bypass"
     }
   },
+  "connectors": {
+    "B2B-XH-A": {
+      "manufacturer": "JST",
+      "datasheet_pdf": "datasheets/jst_xh.pdf",
+      "circuits": 2,
+      "pitch_mm": 2.50,
+      "current_rating_A": 3.0,
+      "voltage_rating_V": 250.0,
+      "temp_range_C": [-25.0, 85.0],
+      "contact_resistance_initial_mohm": 10.0,
+      "height_unmated_mm": 7.0,
+      "height_mated_mm": 9.8,
+      "body_width_mm": 7.4,
+      "drill_hole_mm": 1.0,
+      "citation": "p. 1-2, 5 JST XH Series (J2 UV string header, J3 Vis string header)"
+    },
+    "B3B-XH-A": {
+      "manufacturer": "JST",
+      "datasheet_pdf": "datasheets/jst_xh.pdf",
+      "circuits": 3,
+      "pitch_mm": 2.50,
+      "current_rating_A": 3.0,
+      "voltage_rating_V": 250.0,
+      "temp_range_C": [-25.0, 85.0],
+      "contact_resistance_initial_mohm": 10.0,
+      "height_unmated_mm": 7.0,
+      "height_mated_mm": 9.8,
+      "body_width_mm": 9.9,
+      "drill_hole_mm": 0.9,
+      "citation": "p. 1-2, 5 JST XH Series (J4 Maxi-Switch header)"
+    }
+  },
   "electromechanical": {
     "100SP3T1B1M1QEH": {
       "manufacturer": "E-Switch",
@@ -348,8 +434,14 @@
       "rating": "5 A @ 120 VAC / 28 VDC",
       "bushing": "1/4-40 threaded, 10.41 mm actuator",
       "panel_cutout_mm": 6.35,
-      "boot_mpn": "C&K 759D02000 (full silicone boot for 1/4-40 10.41 mm toggle)",
-      "notes": "Replaces OOS RS PRO 734-7233; E-Switch/C&K PDFs blocked to curl (grounded via UK distributors)"
+      "notes": "Replaces OOS RS PRO 734-7233; E-Switch PDF blocked to curl (grounded via UK distributors)"
+    },
+    "759D02000": {
+      "manufacturer": "C&K",
+      "type": "Full Silicone Waterproof Toggle Boot",
+      "thread": "1/4-40 threaded nut",
+      "compatible_actuator_mm": 10.41,
+      "notes": "Mates with SW1 (E-Switch 100SP3T1B1M1QEH) as separate RefDes SW1_BOOT for 1:1 M4 BOM line mapping"
     }
   }
 }
