@@ -1,0 +1,84 @@
+(footprint "MountingHole_3.2mm_M3_NPTH"
+	(version 20241229)
+	(generator "pcbnew")
+	(generator_version "9.0")
+	(layer "F.Cu")
+	(property "Reference" "MH"
+		(at 0 -4.099999 0)
+		(layer "F.Fab")
+		(uuid "cf7796f3-7b17-4e2a-8baa-91c512b5463f")
+		(effects
+			(font
+				(size 0.85 0.85)
+				(thickness 0.14)
+			)
+		)
+	)
+	(property "Value" "MountingHole_3.2mm_M3_NPTH"
+		(at 0 4.099999 0)
+		(layer "F.Fab")
+		(uuid "3c0a405b-4fb9-4bd0-8051-84dfab154f76")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "2507f1b6-db54-4d3b-861c-a2c14bb54f94")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "5ca32f72-f530-4590-9a2b-2aef67fa3a7f")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr board_only exclude_from_pos_files exclude_from_bom)
+	(fp_circle
+		(center 0 0)
+		(end 3.25 0)
+		(stroke
+			(width 0.15)
+			(type default)
+		)
+		(fill no)
+		(layer "F.SilkS")
+		(uuid "50e6c923-d076-4581-b9bf-da56515efb14")
+	)
+	(fp_circle
+		(center 0 0)
+		(end 3.3 0)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(fill no)
+		(layer "F.CrtYd")
+		(uuid "8282c04d-9f1f-4e5f-bb16-463675cd9ac2")
+	)
+	(pad "" np_thru_hole circle
+		(at 0 0)
+		(size 3.2 3.2)
+		(drill 3.2)
+		(layers "F.Mask")
+		(solder_mask_margin 1.4)
+		(uuid "6edc5b11-1255-4d3f-ba9a-ada6ab27faa6")
+	)
+	(embedded_fonts no)
+)

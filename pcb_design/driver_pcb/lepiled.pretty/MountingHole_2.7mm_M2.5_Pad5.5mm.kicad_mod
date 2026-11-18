@@ -1,0 +1,74 @@
+(footprint "MountingHole_2.7mm_M2.5_Pad5.5mm"
+	(version 20241229)
+	(generator "pcbnew")
+	(generator_version "9.0")
+	(layer "F.Cu")
+	(property "Reference" "H"
+		(at 0 3.4 0)
+		(layer "F.Fab")
+		(uuid "a9553edb-31a2-4300-a8c1-9be169f603f1")
+		(effects
+			(font
+				(size 0.65 0.65)
+				(thickness 0.11)
+			)
+		)
+	)
+	(property "Value" "MountingHole_2.7mm_M2.5"
+		(at 0 -3.4 0)
+		(layer "F.Fab")
+		(uuid "9192d222-062a-492f-80e8-add4b3d55cbc")
+		(effects
+			(font
+				(size 0.6 0.6)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "47e596c9-6c19-4b31-b665-14e3a4f34e3f")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "d2364745-718a-4c44-a3fe-022c6193a555")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr through_hole exclude_from_pos_files)
+	(fp_circle
+		(center 0 0)
+		(end 2.85 0)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(fill no)
+		(layer "F.CrtYd")
+		(uuid "f5de33fc-882c-4a27-8898-c96f0c7feaf4")
+	)
+	(pad "1" thru_hole circle
+		(at 0 0)
+		(size 5.5 5.5)
+		(drill 2.7)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(solder_mask_margin 0.05)
+		(uuid "511bacd1-1263-4720-b470-1316a40417d0")
+	)
+	(embedded_fonts no)
+)

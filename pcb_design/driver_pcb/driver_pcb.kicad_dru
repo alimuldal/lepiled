@@ -1,0 +1,41 @@
+(version 1)
+
+(rule "Power_SW clearance >= 0.25mm"
+  (condition "A.NetClass == 'Power_SW' && !(A.Type == 'Pad' && B.Type == 'Pad')")
+  (constraint clearance (min 0.25mm))
+)
+
+(rule "Power_HV clearance >= 0.25mm"
+  (condition "A.NetClass == 'Power_HV'")
+  (constraint clearance (min 0.25mm))
+)
+
+(rule "Signal track width >= 0.25mm"
+  (condition "A.NetClass == 'Signal'")
+  (constraint track_width (min 0.25mm))
+)
+
+(rule "Power_HV track width >= 0.60mm"
+  (condition "A.NetClass == 'Power_HV'")
+  (constraint track_width (min 0.60mm))
+)
+
+(rule "Power_SW pad-exit stub >= 0.35mm"
+  (condition "A.NetClass == 'Power_SW'")
+  (constraint track_width (min 0.35mm))
+)
+
+(rule "Power_SW trunk track width >= 1.00mm"
+  (condition "A.NetClass == 'Power_SW' && !A.intersectsCourtyard('U1') && !A.intersectsCourtyard('U2')")
+  (constraint track_width (min 1.00mm))
+)
+
+(rule "Power_5V pad-exit / sense tap >= 0.35mm"
+  (condition "A.NetClass == 'Power_5V'")
+  (constraint track_width (min 0.35mm))
+)
+
+(rule "Power_5V trunk track width >= 1.50mm"
+  (condition "A.NetClass == 'Power_5V' && !A.insideArea('Sense_Tap_Area') && !A.intersectsCourtyard('J1') && !A.intersectsCourtyard('Q1A') && !A.intersectsCourtyard('Q1B') && !A.intersectsCourtyard('U1') && !A.intersectsCourtyard('U2')")
+  (constraint track_width (min 1.50mm))
+)

@@ -14,17 +14,9 @@ This file tracks external access blockers, missing system-level software requiri
 
 ---
 
-## 2. Missing System Software (Required for Milestone M2)
+## 2. Missing System Software
 
-### B2. Missing `kicad` / `kicad-cli` / `gerbv`
-- **Status:** Not installed on host (`command -v kicad kicad-cli gerbv` returns non-zero); installing system packages requires `sudo`.
-- **Impact:**
-  - **Milestone M1 (Current):** **Not blocked.** Schematic capture (`schemdraw` + `inkscape` vector PDF/PNG export) and SPICE/tolerance circuit simulation (`ngspice` + `scipy`) run completely in user-space.
-  - **Milestone M2 (PCB Design & Manufacturing Outputs):** Automated Electrical Rules Check (`kicad-cli sch erc`), Design Rules Check (`kicad-cli pcb drc`), Gerber/Excellon export (`kicad-cli pcb export gerbers/drill`), and Gerber visual inspection (`gerbv`) require KiCad and `gerbv` (or a user-space AppImage/extracted package if viable).
-- **Resolution Command (requires `sudo`):**
-  ```bash
-  sudo apt update && sudo apt install -y kicad gerbv
-  ```
+*(None currently blocking — all required EDA, schematic, simulation, and Gerber tools are provisioned in user-space without `sudo`; see Section 3.)*
 
 ---
 
@@ -35,3 +27,15 @@ This file tracks external access blockers, missing system-level software requiri
 - **Location:** `/home/alimuldal/.local/share/lepiled-tools/bin/ngspice` (extracted from Ubuntu `ngspice_45.2+ds-1_amd64.deb` with `spinit` codemodel paths patched and `SPICE_SCRIPTS` wrapper).
 - **Python Environment:** `/home/alimuldal/.local/share/lepiled-venv` (`Python 3.14.4`, `numpy 2.5.5`, `scipy 1.18.1`, `matplotlib 3.11.2`, `schemdraw 0.23`, `cairosvg 2.9.1`).
 - **Verification:** `ngspice -v` and batch netlist runs (`ngspice -b`) execute with exit code 0 and zero warnings/errors.
+
+### B2 / M2. Open-Source PCB EDA & Gerber Viewer (`KiCad 9.0.8` + `gerbv 2.10.0`) — **RESOLVED IN USER-SPACE (NO BLOCKER)**
+- **Status:** System `/usr/bin/kicad`, `/usr/bin/kicad-cli`, and `/usr/bin/gerbv` are not installed (`sudo` unavailable), **but KiCad `9.0.8+dfsg-1` (`kicad-cli`, Python `pcbnew` 9.0.8), `kicad-symbols 9.0.7-1`, `kicad-footprints 9.0.7-1`, and `gerbv 2.10.0-2build1` are provisioned and verified in user-space** without root privileges.
+- **Location & Wrappers:**
+  - Extracted packages: `/home/alimuldal/.local/share/lepiled-kicad/` (downloaded via `https://mirrors.edge.kernel.org/ubuntu/` with `sha512sum` verification against `apt-get download --print-uris`).
+  - `/home/alimuldal/.local/share/lepiled-tools/bin/kicad-cli` (`bwrap --ro-overlay /usr/share` + `LD_LIBRARY_PATH` + `XDG_CONFIG_HOME` isolation).
+  - `/home/alimuldal/.local/share/lepiled-tools/bin/kicad-python` (`bwrap --ro-overlay /usr/share` + `PYTHONPATH` exposing `pcbnew` 9.0.8 inside `/home/alimuldal/.local/share/lepiled-venv/bin/python`).
+  - `/home/alimuldal/.local/share/lepiled-tools/bin/gerbv` (`LD_LIBRARY_PATH` wrapper for `/home/alimuldal/.local/share/lepiled-kicad/usr/bin/gerbv`).
+- **Verification:**
+  - `kicad-cli --version` -> `9.0.8` (exit code `0`).
+  - `kicad-python -c "import pcbnew; print(pcbnew.Version())"` -> `9.0.8` (exit code `0`).
+  - `gerbv --version` -> `gerbv version` (exit code `0`).

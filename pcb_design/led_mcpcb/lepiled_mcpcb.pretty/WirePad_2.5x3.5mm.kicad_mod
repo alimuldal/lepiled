@@ -1,0 +1,63 @@
+(footprint "WirePad_2.5x3.5mm"
+	(version 20241229)
+	(generator "pcbnew")
+	(generator_version "9.0")
+	(layer "F.Cu")
+	(property "Reference" "J_PAD"
+		(at 0 -2.6 0)
+		(layer "F.Fab")
+		(uuid "7481383d-cd20-4629-a8f6-bacd890a5df7")
+		(effects
+			(font
+				(size 0.85 0.85)
+				(thickness 0.14)
+			)
+		)
+	)
+	(property "Value" "WirePad_2.5x3.5mm"
+		(at 0 2.6 0)
+		(layer "F.Fab")
+		(uuid "910631a8-67b2-4695-9faa-99840d5d9444")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "99470e6c-00a0-42b8-b4e3-0eef167cd793")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "58b96db6-b436-4d60-94b7-ecf7f1b78c2b")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr smd exclude_from_pos_files exclude_from_bom)
+	(pad "1" smd roundrect
+		(at 0 0)
+		(size 2.5 3.5)
+		(layers "F.Cu" "F.Mask")
+		(roundrect_rratio 0.1968503937)
+		(solder_mask_margin 0.05)
+		(thermal_bridge_angle 45)
+		(uuid "aabffefe-43bd-4886-bb1d-bca218a0e5cc")
+	)
+	(embedded_fonts no)
+)
