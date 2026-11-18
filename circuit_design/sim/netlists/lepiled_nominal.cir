@@ -5,33 +5,43 @@
 .INCLUDE circuit_design/sim/netlists/models.lib
 .INCLUDE circuit_design/sim/netlists/lm3410xmy.lib
 
-* --- 5V USB Power Supply + Realistic Cable/Source ESR ---
+* --- 5V USB Power Supply + Realistic 18 AWG <= 1.0 m Cable & J1 Contact Resistance ---
 V_USB VUSB_SRC 0 DC 5.0
-R_CABLE VUSB_SRC VBUS 0.08
+R_CABLE VUSB_SRC VBUS 0.022
 L_CABLE VBUS VBUS_IN 0.5u
-R_J1 VBUS_IN VBUS_PCB 0.02
+R_J1 VBUS_IN VBUS_PCB 0.040
 
 * USB-C CC1 / CC2 5.1k Rd Pulldowns & ESD Bypass Cap (C12)
 R1 CC1 0 5.1k
 R2 CC2 0 5.1k
 C12 VBUS_PCB 0 100n IC=5.0
 
-* --- Input Protection: F1 (MF-LSMF400/16X), Back-to-Back Q1A/Q1B (DMG2305UX), Q2/Q3 (MMBT3904), D15, D11 downstream ---
-R_F1 VBUS_PCB VBUS_FUSED 0.020
+* --- Input Protection: F1 (MF-LSMF500/16X), Back-to-Back Q1A/Q1B (DMG2305UX), U3 (TL431), Q2/Q3/Q4, D15/D16, D11 downstream ---
+R_F1 VBUS_PCB VBUS_FUSED 0.015
 M_Q1A VBUS_FUSED Q1_GATE V_MID V_MID M_DMG2305UX
 M_Q1B VIN_PROT   Q1_GATE V_MID V_MID M_DMG2305UX
 D11 0 VIN_PROT D_SMBJ5
+D15 Q1_GATE V_MID D_Z5V6
 
-* Gate Pull-Up, Soft-Start Sink (warm pre-charged steady state; cold IC=0 tested in lepiled_fault_input_prot.cir) & OVP Sense
+* Gate Pull-Up, Soft-Start Sink (warm pre-charged steady state; cold IC=0 tested in lepiled_fault_input_prot.cir) & TL431 OVP Sense
 R10 V_MID Q1_GATE 10k
 Q3 Q1_GATE Q3_BASE Q3_EMIT Q_MMBT3904
 R11 Q3_EMIT 0 1.5k
 R14 V_MID Q3_BASE 220k
 C11 Q3_BASE 0 100n IC=1.20
-D15 OVP_SENSE V_MID D_Z5V6
-R12 OVP_SENSE Q2_BASE 470
-R13 Q2_BASE 0 1.2k
-Q2 Q3_BASE Q2_BASE 0 Q_MMBT3904
+R12 V_MID OVP_SENSE 13.7k
+R13 OVP_SENSE 0 10.0k
+X_U3 OVP_K OVP_SENSE 0 TL431_AI VREF=2.495 IREF_BIAS=2u
+R15 V_MID Q2_BASE 10k
+R16 Q2_BASE OVP_K 5.6k
+Q2 OVP_DRV Q2_BASE V_MID Q_MMBT3906
+R17 OVP_DRV Q4_BASE 10k
+R20 Q4_BASE 0 100k
+Q4 Q3_BASE Q4_BASE 0 Q_MMBT3904
+D16A OVP_DRV OVP_DRV_GATE D_BAV70
+R18 OVP_DRV_GATE Q1_GATE 220
+D16B OVP_DRV OVP_HYS D_BAV70
+R19 OVP_HYS OVP_SENSE 27k
 
 * --- Input Bulk & Decoupling MLCCs (Effective Capacitance at 5V DC bias) ---
 C1 VIN_PROT C1_ESR 8.0u IC=4.9
@@ -103,7 +113,8 @@ D7 VIS_N2 VIS_N3 D_XPE2_GR
 D8 VIS_N3 VIS_SENS2 D_XPE2_CW
 V_SENS_VIS VIS_SENS2 VIS_RET DC 0
 
-* --- Simulation Control (9.5 ms total) ---
+* --- Simulation Control (9.5 ms warm-started steady state) ---
+.IC V(VBUS_PCB)=5.0 V(VBUS_FUSED)=5.0 V(V_MID)=5.0 V(Q2_BASE)=5.0 V(OVP_K)=5.0 V(OVP_SENSE)=2.11 V(OVP_DRV)=0 V(Q4_BASE)=0 V(Q1_GATE)=0.7
 .TRAN 40n 9.5m 0 40n UIC
 
 .CONTROL

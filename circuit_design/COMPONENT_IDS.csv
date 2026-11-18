@@ -1,11 +1,13 @@
 RefDes,Qty,Category,MPN,Value_Rating,Package_Footprint,Mounting,Nets,Function,Datasheet_Ref
 U1,1,Boost CC IC,TI LM3410XMY/NOPB,1.6 MHz; 2.1 A min Icl; 24 V,HVSSOP-8 (MSOP-8-1EP),On-PCB,"VIN_PROT,SW1_NODE,FB1_NET,EN1_NET,GND",Ch1 4S UV constant-current boost driver,datasheets/lm3410.pdf
 U2,1,Boost CC IC,TI LM3410XMY/NOPB,1.6 MHz; 2.1 A min Icl; 24 V,HVSSOP-8 (MSOP-8-1EP),On-PCB,"VIN_PROT,SW2_NODE,FB2_NET,DIM2_NET,GND",Ch2 4S Vis constant-current boost driver,datasheets/lm3410.pdf
+U3,1,Precision Shunt Reference,TI TL431AIDBZR,2.495 V +/-1%; 36 V; SOT-23-3 DBZ,SOT-23-3,On-PCB,"OVP_K,OVP_SENSE,GND",Precision OVP reference comparator (trips V_MID in [5.75; 6.14] V),datasheets/tl431.pdf
 Q1A,1,P-MOSFET,Diodes DMG2305UX-7,-20 V; -4.2 A steady; 52 mOhm max @ -4.5 V,SOT-23-3,On-PCB,"VBUS_FUSED,V_MID,Q1_GATE",Reverse-polarity blocking P-MOSFET (Drain=VBUS_FUSED; Source=V_MID),datasheets/DMG2305UX.pdf
 Q1B,1,P-MOSFET,Diodes DMG2305UX-7,-20 V; -4.2 A steady; 52 mOhm max @ -4.5 V,SOT-23-3,On-PCB,"V_MID,VIN_PROT,Q1_GATE",OVP cutoff and soft-start P-MOSFET (Source=V_MID; Drain=VIN_PROT),datasheets/DMG2305UX.pdf
-Q2,1,NPN BJT,onsemi MMBT3904LT1G,40 V; 200 mA; hFE>=70,SOT-23-3,On-PCB,"Q3_BASE,Q2_BASE,GND",OVP cutoff comparator (clamps Q3_BASE to GND when V_MID > ~6.2 V),datasheets/mmbt3904lt1-d.pdf
+Q2,1,PNP BJT,onsemi MMBT3906LT1G,-40 V; -200 mA; hFE>=80,SOT-23-3,On-PCB,"OVP_DRV,Q2_BASE,V_MID",OVP pull-up driver (drives Q1_GATE via D16A/R18 and Q4 via R17 when U3 trips),datasheets/mmbt3906lt1-d.pdf
 Q3,1,NPN BJT,onsemi MMBT3904LT1G,40 V; 200 mA; hFE>=70,SOT-23-3,On-PCB,"Q1_GATE,Q3_BASE,Q3_EMIT",Soft-start gate driver (pulls Q1_GATE low via R11; off in <2 us on OVP),datasheets/mmbt3904lt1-d.pdf
-F1,1,PTC Polyfuse,Bourns MF-LSMF400/16X,16 V; 4.0 A hold (2.64 A @ 60C); 8.0 A trip; 40 mOhm max,2920,On-PCB,"VBUS,VBUS_FUSED",Input overcurrent resettable polyfuse,datasheets/MF-LSMF.pdf
+Q4,1,NPN BJT,onsemi MMBT3904LT1G,40 V; 200 mA; hFE>=70,SOT-23-3,On-PCB,"Q3_BASE,Q4_BASE,GND",OVP latch clamp (clamps Q3_BASE to GND when Q2 asserts OVP_DRV),datasheets/mmbt3904lt1-d.pdf
+F1,1,PTC Polyfuse,Bourns MF-LSMF500/16X,16 V; 5.0 A hold (3.30 A @ 60C); 10.0 A trip; 25 mOhm max,2920,On-PCB,"VBUS,VBUS_FUSED",Input overcurrent resettable polyfuse,datasheets/MF-LSMF.pdf
 D1,1,UV LED,Luminus SST-10-UV-A130-G365-00,365 nm; 339 mA nom; 1.0 A max,3535 SMD (A130),Off-Board,"VOUT1,UV_N1",Ch1 UV LED 1 on MECH-MCPCB-1,datasheets/Luminus_SST-10-UV_Datasheet.pdf
 D2,1,UV LED,Luminus SST-10-UV-A130-G365-00,365 nm; 339 mA nom; 1.0 A max,3535 SMD (A130),Off-Board,"UV_N1,UV_N2",Ch1 UV LED 2 on MECH-MCPCB-2,datasheets/Luminus_SST-10-UV_Datasheet.pdf
 D3,1,UV LED,Luminus SST-10-UV-A130-G365-00,365 nm; 339 mA nom; 1.0 A max,3535 SMD (A130),Off-Board,"UV_N2,UV_N3",Ch1 UV LED 3 on MECH-MCPCB-3,datasheets/Luminus_SST-10-UV_Datasheet.pdf
@@ -20,7 +22,8 @@ D11,1,TVS Diode,Vishay SMBJ5.0A-E3/5B,5.0 V Vrwm; 6.40-7.07 V Vbr; 600 W,DO-214A
 D12,1,Dual Diode (Common Cathode),onsemi BAV70LT1G,100 V; 200 mA; Common-Cathode,SOT-23-3,On-PCB,"SW_UV_EN,EN2_NET,EN1_NET",Maxi-Switch diode-OR steering (4-UV or 8-ALL -> U1.DIM),datasheets/BAV70_onsemi.pdf
 D13,1,OVP Zener Diode,Diodes BZT52C18-7-F,18 V nom (16.8-19.1 V); 500 mW,SOD-123,On-PCB,"VOUT1,FB1_NET",Ch1 open-load OVP clamp directly to FB1_NET (TI Fig. 14),datasheets/BZT52C.pdf
 D14,1,OVP Zener Diode,Diodes BZT52C18-7-F,18 V nom (16.8-19.1 V); 500 mW,SOD-123,On-PCB,"VOUT2,FB2_NET",Ch2 open-load OVP clamp directly to FB2_NET (TI Fig. 14),datasheets/BZT52C.pdf
-D15,1,OVP Sense Zener,Diodes BZT52C5V6-7-F,5.6 V nom (5.2-6.0 V); 500 mW,SOD-123,On-PCB,"V_MID,OVP_SENSE",OVP threshold Zener sensing V_MID > ~6.2 V into Q2,datasheets/BZT52C.pdf
+D15,1,Gate Clamp Zener,Diodes BZT52C5V6-7-F,5.6 V nom (5.2-6.0 V); 500 mW,SOD-123,On-PCB,"Q1_GATE,V_MID",Q1A/Q1B VGS gate-source clamp (< 6.0 V vs +/-8.0 V abs max),datasheets/BZT52C.pdf
+D16,1,Dual Diode (Common Anode),onsemi BAW56LT1G,70 V; 200 mA; Common-Anode,SOT-23-3,On-PCB,"OVP_DRV,OVP_DRV_GATE,OVP_HYS",OVP gate turn-off (K1) and hysteresis feedback (K2) steering,datasheets/BAW56_onsemi.pdf
 L1,1,Power Inductor,Bourns SRN6045-100M,10 uH +/-20%; Isat=3.0 A; DCR_max=58.6 mOhm,6.0x6.0x4.5 mm SMD,On-PCB,"VIN_PROT,SW1_NODE",Ch1 boost energy-storage inductor,datasheets/srn6045.pdf
 L2,1,Power Inductor,Bourns SRN6045-100M,10 uH +/-20%; Isat=3.0 A; DCR_max=58.6 mOhm,6.0x6.0x4.5 mm SMD,On-PCB,"VIN_PROT,SW2_NODE",Ch2 boost energy-storage inductor,datasheets/srn6045.pdf
 R1,1,Resistor,Vishay CRCW08055K10FKEA,5.1 kOhm +/-1%; 0.125 W std / 0.25 W ext,0805,On-PCB,"CC1,GND",USB-C CC1 Rd pulldown (5 V negotiation),datasheets/dcrcwe3.pdf
@@ -34,9 +37,15 @@ R8,1,Resistor,Vishay CRCW0603100RFKEA,100 Ohm +/-1%; 0.1 W,0603,On-PCB,"FB1_NET,
 R9,1,Resistor,Vishay CRCW0603100RFKEA,100 Ohm +/-1%; 0.1 W,0603,On-PCB,"FB2_NET,VIS_RET",Ch2 OVP feedback decoupling resistor (TI Fig. 14),datasheets/dcrcwe3.pdf
 R10,1,Resistor,Vishay CRCW060310K0FKEA,10 kOhm +/-1%; 0.1 W,0603,On-PCB,"V_MID,Q1_GATE",Q1A/Q1B gate pull-up to V_MID (fast OVP turn-off),datasheets/dcrcwe3.pdf
 R11,1,Resistor,Vishay CRCW06031K50FKEA,1.5 kOhm +/-1%; 0.1 W,0603,On-PCB,"Q3_EMIT,GND",Q3 emitter degeneration for controlled soft-start slew,datasheets/dcrcwe3.pdf
-R12,1,Resistor,Vishay CRCW0603470RFKEA,470 Ohm +/-1%; 0.1 W,0603,On-PCB,"OVP_SENSE,Q2_BASE",OVP Zener current-limiting resistor into Q2 base,datasheets/dcrcwe3.pdf
-R13,1,Resistor,Vishay CRCW06031K20FKEA,1.2 kOhm +/-1%; 0.1 W,0603,On-PCB,"Q2_BASE,GND",Q2 base-emitter pulldown (5.5 V / 85C immunity),datasheets/dcrcwe3.pdf
+R12,1,Resistor,Vishay CRCW060313K7FKEA,13.7 kOhm +/-1%; 0.1 W,0603,On-PCB,"V_MID,OVP_SENSE",TL431 OVP precision sense top divider resistor,datasheets/dcrcwe3.pdf
+R13,1,Resistor,Vishay CRCW060310K0FKEA,10.0 kOhm +/-1%; 0.1 W,0603,On-PCB,"OVP_SENSE,GND",TL431 OVP precision sense bottom divider resistor,datasheets/dcrcwe3.pdf
 R14,1,Resistor,Vishay CRCW0603220KFKEA,220 kOhm +/-1%; 0.1 W,0603,On-PCB,"V_MID,Q3_BASE",Q3 base soft-start pull-up with C11 (~4 ms cold ramp),datasheets/dcrcwe3.pdf
+R15,1,Resistor,Vishay CRCW060310K0FKEA,10 kOhm +/-1%; 0.1 W,0603,On-PCB,"V_MID,Q2_BASE",Q2 PNP emitter-base pull-up resistor,datasheets/dcrcwe3.pdf
+R16,1,Resistor,Vishay CRCW06035K60FKEA,5.6 kOhm +/-1%; 0.1 W,0603,On-PCB,"Q2_BASE,OVP_K",U3 TL431 cathode bias resistor into Q2 base (<= 29 mW @ 16 V),datasheets/dcrcwe3.pdf
+R17,1,Resistor,Vishay CRCW060310K0FKEA,10 kOhm +/-1%; 0.1 W,0603,On-PCB,"OVP_DRV,Q4_BASE",Q4 base drive resistor from Q2 OVP_DRV (<= 22 mW @ 16 V),datasheets/dcrcwe3.pdf
+R18,1,Resistor,Vishay CRCW0603220RFKEA,220 Ohm +/-1%; 0.1 W,0603,On-PCB,"OVP_DRV_GATE,Q1_GATE",Fast Q1_GATE turn-off current limiter from D16.K1,datasheets/dcrcwe3.pdf
+R19,1,Resistor,Vishay CRCW060327K0FKEA,27 kOhm +/-1%; 0.1 W,0603,On-PCB,"OVP_HYS,OVP_SENSE",TL431 OVP hysteresis feedback resistor from D16.K2,datasheets/dcrcwe3.pdf
+R20,1,Resistor,Vishay CRCW0603100KFKEA,100 kOhm +/-1%; 0.1 W,0603,On-PCB,"Q4_BASE,GND",Q4 base pulldown (prevents spurious latch turn-off),datasheets/dcrcwe3.pdf
 C1,1,MLCC Input,Murata GRM31CR71E106KA12L,10 uF +/-10%; 25 V; X7R,1206,On-PCB,"VIN_PROT,GND",Input bus bulk ceramic capacitor,datasheets/datasheets_summary.json
 C2,1,MLCC Input,Murata GRM31CR71E106KA12L,10 uF +/-10%; 25 V; X7R,1206,On-PCB,"VIN_PROT,GND",U1 local VIN decoupling capacitor,datasheets/datasheets_summary.json
 C3,1,MLCC Input,Murata GRM31CR71E106KA12L,10 uF +/-10%; 25 V; X7R,1206,On-PCB,"VIN_PROT,GND",U2 local VIN decoupling capacitor,datasheets/datasheets_summary.json

@@ -20,15 +20,17 @@ All electrical, thermal, and mechanical parameters below are extracted directly 
 | `usb4085.pdf` | GCT `USB4085-GF-A` USB-C Receptacle | Rev B PCN (2023-02-28) | 3 | 197 KB |
 | `DMG2305UX.pdf` | Diodes Inc `DMG2305UX-7` P-MOSFET | DS36196 Rev. 8-2 (Jul 2021) | 6 | 411 KB |
 | `mmbt3904lt1-d.pdf` | onsemi `MMBT3904LT1G` NPN General-Purpose Transistor | Rev. 15 (Sept 2026) | 11 | 310 KB |
+| `mmbt3906lt1-d.pdf` | onsemi `MMBT3906LT1G` PNP General-Purpose Transistor | Rev. 15 (Sept 2026) | 11 | 319 KB |
+| `tl431.pdf` | TI `TL431AIDBZR` Precision Programmable Shunt Reference | SLVS543S (May 2024) | 85 | 2.9 MB |
 | `BZT52C.pdf` | Diodes Inc `BZT52C5V6` / `BZT52C18` Zener Diodes | DS18004 Rev. 38-2 (Oct 2017) | 5 | 386 KB |
-| `BAV70_onsemi.pdf` | onsemi `BAV70LT1G` Common-Cathode Dual Diode | Rev. BAV70LT1/D | 7 | 239 KB |
-| `BAW56_onsemi.pdf` | onsemi `BAW56L` Common-Anode Dual Diode (reference/pinout check) | Rev. BAW56LT1/D | 8 | 239 KB |
-| `MF-LSMF.pdf` | Bourns `MF-LSMF400/16X` 2920 16 V 4.0 A PTC Fuse | Current Rev. | 11 | 1.4 MB |
+| `BAV70_onsemi.pdf` | onsemi `BAV70LT1G` Common-Cathode Dual Diode (`D12`) | Rev. BAV70LT1/D | 7 | 239 KB |
+| `BAW56_onsemi.pdf` | onsemi `BAW56LT1G` Common-Anode Dual Diode (`D16`) | Rev. BAW56LT1/D | 8 | 239 KB |
+| `MF-LSMF.pdf` | Bourns `MF-LSMF500/16X` 2920 16 V 5.0 A PTC Fuse | Current Rev. | 11 | 1.4 MB |
 | `MF-MSMF.pdf` | Bourns `MF-MSMF` 1812 PTC Series (reference check) | Current Rev. | 16 | 1.3 MB |
 | `jst_xh.pdf` | JST `XH` Series Headers (`B2B-XH-A`, `B3B-XH-A`) | Current Rev. | 9 | 172 KB |
 
 > **Notes on Verified Datasheet Corrections:**
-> 1. **`F1` PTC Fuse (`MF-LSMF400/16X` vs `MF-LSMF300/24X` / `MF-MSMF300/24X`):** `MF-LSMF300/24X` (`I_hold = 2.15 A @ 60 °C`) lacked margin under `4.5–4.75 V` USB droop (`2.43–2.69 A`). Upgrading to **`MF-LSMF400/16X`** (`MF-LSMF.pdf` pp. 2–3: `16 V`, `4.0 A` hold @ `23 °C`, `3.00 A @ 50 °C`, `2.64 A @ 60 °C`, `8.0 A` trip, `R_1max = 40 mΩ`) restores positive hold margin while covering `±12 V` fault inputs (`< 16 V`).
+> 1. **`F1` PTC Fuse (`MF-LSMF500/16X`):** Upgraded to **`MF-LSMF500/16X`** (`MF-LSMF.pdf` pp. 2–3: `16 V`, `5.0 A` hold @ `23 °C`, `3.75 A @ 50 °C`, `3.525 A @ 55 °C`, `3.30 A @ 60 °C`, `10.0 A` trip, `R_1max = 25 mΩ`) so `I_in` maintains positive `60 °C` hold margin even under full stacked `datasheet_spec` USB droop (`3.11–3.24 A < 3.30 A`) while covering `±16 V` fault inputs.
 > 2. **Active Cree `XP-E2` Order Codes (`XLamp-XPE2.pdf` Rev 25B):** `XPEBRY-L1-0000-00S02` (Royal Blue, p. 10), `XPEBGR-L1-0000-00K01` (Green, p. 11), and `XPEBWT-L1-0000-00H51` (Cool White, p. 5) are all verified active "Order Codes Suggested for New Designs".
 > 3. **`D12` Diode-OR (`BAV70LT1G` vs `BAW56`):** `BAV70_onsemi.pdf` p. 1 confirms **`BAV70LT1G`** is **Common Cathode** (`BAW56` is Common Anode).
 
@@ -73,16 +75,19 @@ Extracted from `datasheets/lm3410.pdf` (`SNVS541H`, Sec. 5 p. 3, Sec. 6.1–6.5 
 | `L1`, `L2` | `Bourns SRN6045-100M` | `srn6045.pdf` p. 1: $10\text{ }\mu\text{H} \pm 20\%$ (`8.0 µH` min), $I_{\text{rms}} = 2.5\text{ A}$, $I_{\text{sat}} = 3.0\text{ A}$, $DCR_{\max} = 58.6\text{ m}\Omega$, SRF `15 MHz` typ, `-40 to +125 °C`. |
 | `R3`, `R4` | `Bourns CRL1206-FW-R560ELF` | `CRL.pdf` p. 1: `0.56 Ω ±1%`, `0.50 W @ 70 °C`, `±200 ppm/°C`, `-55 to +155 °C`, `1206` ($I_{\text{LED,typ}} = 339.3\text{ mA}$, $P = 64.5\text{ mW}$). |
 | `R1`, `R2` | `Vishay CRCW08055K10FKEA` | `dcrcwe3.pdf` p. 1: `5.1 kΩ ±1%`, `0805`, `0.125 W` Standard ($\le 1\%$ drift) / `0.25 W` Extended ($\le 2\%$ drift) @ `70 °C`, `±100 ppm/K`. |
-| `R5..R14` | `Vishay CRCW0603*FKEA` | `dcrcwe3.pdf` p. 1: `0603 ±1%`, `0.10 W` Standard / `0.125 W` Extended @ `70 °C`, `±100 ppm/K`. |
+| `R5..R20` | `Vishay CRCW0603*FKEA` | `dcrcwe3.pdf` p. 1: `0603 ±1%`, `0.10 W` Standard / `0.125 W` Extended @ `70 °C`, `±100 ppm/K`. |
 | `J1` | `GCT USB4085-GF-A` | `usb4085.pdf` pp. 1–2: `VBUS (A4/B4/A9/B9) 5.0 A`, `GND (A1/B1/A12/B12/SH) 6.25 A`, `CC1 (A5)`, `CC2 (B5)`, `48 V`, `40 mΩ` init, `20,000` cycles, `-40 to +85 °C`. |
 | `J2..J4` | `JST B2B-XH-A` / `B3B-XH-A` | `jst_xh.pdf` pp. 1–2, 5: `2.50 mm` pitch, `3 A AC/DC (AWG #22)`, `250 V`, `-25..+85 °C`, `10 mΩ` init, `7.0 mm` unmated (`9.8 mm` mated) height. |
-| `F1` | `Bourns MF-LSMF400/16X` | `MF-LSMF.pdf` pp. 2–3: `2920`, `16 V`, `40 A`, $I_{\text{hold}}=4.0\text{ A}$ @ $23^\circ\text{C}$ (`3.00 A` @ $50^\circ\text{C}$, `2.64 A` @ $60^\circ\text{C}$), $I_{\text{trip}}=8.0\text{ A}$, $R_{\min}=5\text{ m}\Omega$, $R_{1\max}=40\text{ m}\Omega$. |
+| `F1` | `Bourns MF-LSMF500/16X` | `MF-LSMF.pdf` pp. 2–3: `2920`, `16 V`, `40 A`, $I_{\text{hold}}=5.0\text{ A}$ @ $23^\circ\text{C}$ (`3.75 A` @ $50^\circ\text{C}$, `3.525 A` @ $55^\circ\text{C}$, `3.30 A` @ $60^\circ\text{C}$), $I_{\text{trip}}=10.0\text{ A}$, $R_{\min}=5\text{ m}\Omega$, $R_{1\max}=25\text{ m}\Omega$. |
 | `D11` | `Vishay SMBJ5.0A-E3/5B` | `smbj.pdf` pp. 1–2: `SMB`, $V_{RWM}=5.0\text{ V}$, $V_{BR}=6.40\text{–}7.07\text{ V}$ @ 10 mA, $V_C = 9.2\text{ V}$ @ `65.2 A`, `600 W`, $I_D \le 800\text{ }\mu\text{A}$ @ 5.0 V (downstream on `VIN_PROT`). |
 | `Q1A`, `Q1B` | `Diodes Inc DMG2305UX-7` | `DMG2305UX.pdf` pp. 1–2: `SOT-23-3` (`1=G, 2=S, 3=D`), $BV_{DSS}=-20\text{ V}$, $V_{GSS}=\pm 8\text{ V}$, $I_D = -4.2\text{ A}$ steady @ `25 °C` (`-3.3 A` @ `70 °C`; `-5.0 A` is `t<10 s`), $V_{GS(\text{th})} = -0.5\text{ to }-0.9\text{ V}$, $R_{DS(\text{on})} = 40\text{ m}\Omega$ typ / `52 mΩ` max @ $-4.5\text{ V}$, $R_{\theta JA} = 90^\circ\text{C/W}$. |
-| `Q2`, `Q3` | `onsemi MMBT3904LT1G` | `mmbt3904lt1-d.pdf` pp. 1–2, 7: `SOT-23-3` (`1=B, 2=E, 3=C`), $V_{CEO}=40\text{ V}$, $V_{CBO}=60\text{ V}$, $V_{EBO}=6.0\text{ V}$, $I_C=200\text{ mA}$, $h_{FE}\ge 70$ @ 1 mA (`100–300` @ 10 mA), $V_{CE(\text{sat})}\le 0.2\text{ V}$ @ 10 mA. |
+| `U3` | `TI TL431AIDBZR` | `tl431.pdf` pp. 4–5, 10: `SOT-23-3 DBZ` (`1=K, 2=REF, 3=A`), $V_{\text{ref}} = 2.495\text{ V} \pm 1\%$ ($2.470\text{–}2.520\text{ V}$ @ `25 °C`, $V_{I(\text{dev})} \le 34\text{ mV}$ over `-40..85 °C`), $I_{\text{ref}} \le 4\text{ }\mu\text{A}$, $I_{\min} \le 0.7\text{ mA}$, $V_{KA} \le 36\text{ V}$, $R_{\theta JA}=206^\circ\text{C/W}$. |
+| `Q2` | `onsemi MMBT3906LT1G` | `mmbt3906lt1-d.pdf` pp. 1–2: `SOT-23-3` (`1=B, 2=E, 3=C`), $V_{CEO}=-40\text{ V}$, $I_C=-200\text{ mA}$, $h_{FE}\ge 80$ @ 1 mA (`100–300` @ 10 mA), $V_{CE(\text{sat})}\ge -0.25\text{ V}$ @ 10 mA. |
+| `Q3`, `Q4` | `onsemi MMBT3904LT1G` | `mmbt3904lt1-d.pdf` pp. 1–2, 7: `SOT-23-3` (`1=B, 2=E, 3=C`), $V_{CEO}=40\text{ V}$, $V_{CBO}=60\text{ V}$, $V_{EBO}=6.0\text{ V}$, $I_C=200\text{ mA}$, $h_{FE}\ge 70$ @ 1 mA (`100–300` @ 10 mA), $V_{CE(\text{sat})}\le 0.2\text{ V}$ @ 10 mA. |
 | `D12` | `onsemi BAV70LT1G` | `BAV70_onsemi.pdf` pp. 1–2: `SOT-23-3` Common Cathode, `100 V`, `200 mA`, $V_F \le 715\text{ mV}$ @ 1 mA, $I_R \le 1\text{ }\mu\text{A}$ @ 100 V ($25^\circ\text{C}$). |
+| `D16` | `onsemi BAW56LT1G` | `BAW56_onsemi.pdf` pp. 1–2: `SOT-23-3` Common Anode (`3=A, 1=K1, 2=K2`), `70 V`, `200 mA`, $V_F \le 715\text{ mV}$ @ 1 mA. |
 | `D13`, `D14` | `Diodes Inc BZT52C18-7-F` | `BZT52C.pdf` p. 2: `SOD-123`, $V_Z = 16.8\text{–}19.1\text{ V}$ (`18.0 V` nom @ 5 mA), $Z_{ZT}\le 45\text{ }\Omega$, $I_R \le 0.1\text{ }\mu\text{A}$ @ 12.6 V, `500 mW @ 75 °C`. |
-| `D15` | `Diodes Inc BZT52C5V6-7-F` | `BZT52C.pdf` p. 2: `SOD-123`, $V_Z = 5.2\text{–}6.0\text{ V}$ (`5.6 V` nom @ 5 mA), $Z_{ZT}\le 40\text{ }\Omega$, `500 mW @ 75 °C`. |
+| `D15` | `Diodes Inc BZT52C5V6-7-F` | `BZT52C.pdf` p. 2: `SOD-123`, $V_Z = 5.2\text{–}6.0\text{ V}$ (`5.6 V` nom @ 5 mA), $Z_{ZT}\le 40\text{ }\Omega$, `500 mW @ 75 °C` (`Q1A/Q1B` $V_{GS}$ gate-source clamp). |
 | `C1..C3` | `Murata GRM31CR71E106KA12L` | `10 µF ±10%, 25 V, X7R, 1206` (`~8.0 µF` effective at 5 V DC bias). |
 | `C4..C5` | `Samsung CL32B106KBJNFNE` | `10 µF ±10%, 50 V, X7R, 1210` (`~7.5 µF` effective at 16 V DC bias). |
 | `C6..C8, C11..C12` | `Murata GRM188R71E104KA01D` | `100 nF ±10%, 25 V, X7R, 0603` (stagger, `VIN_PROT` bypass, soft-start, `VBUS` ESD bypass). |

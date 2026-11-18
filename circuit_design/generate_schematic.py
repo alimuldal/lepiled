@@ -274,231 +274,339 @@ def build_schematic(out_dir: Path) -> Path:
 
     # Title block
     d += elm.Label().at((-0.6, 17.8)).label(
-        "LepiLED DIY Maxi Switch — Complete Hardware Schematic (M1 Verified Rev 2.0)",
+        "LepiLED DIY Maxi Switch — Complete Hardware Schematic (M1 Verified Rev 3.0)",
         loc="right", halign="left", fontsize=14, color="#0F172A",
     )
     d += elm.Label().at((-0.6, 17.0)).label(
-        "5V USB-C Input + Back-to-Back PMOS OVP/Reverse/Soft-Start | SPDT On-Off-On Maxi-Switch | Dual LM3410XMY (DGN) Boost CC | BZT52C18 OVP | 62 RefDes",
-        loc="right", halign="left", fontsize=9.2, color="#334155",
+        "5V USB-C Input + Back-to-Back PMOS Reverse/Soft-Start + TL431 Precision OVP | SPDT Maxi-Switch | Dual LM3410XMY Boost CC | BZT52C18 OVP | 71 RefDes",
+        loc="right", halign="left", fontsize=9.0, color="#334155",
     )
 
     # =========================================================================
-    # BLOCK 1 (Top-Left): USB-C Power Input, Rd, Back-to-Back PMOS OVP/Reverse & Soft-Start
+    # BLOCK 1 (Top-Left): USB-C Power Input, Rd, Back-to-Back PMOS + TL431 OVP & Soft-Start
     # =========================================================================
     bx0, by0 = 0.0, 9.6
-    draw_box(d, bx0 - 0.6, by0 - 7.4, bx0 + 38.6, by0 + 6.0, "1. USB-C 5V Input, Rd Negotiation, +/-12V OVP/Reverse Cutoff and Soft-Start")
+    draw_box(d, bx0 - 0.6, by0 - 8.2, bx0 + 44.0, by0 + 6.0, "1. USB-C 5V Input, Rd Negotiation, +/-16V Reverse Cutoff, TL431 OVP and Soft-Start")
 
     j1_pts = draw_rect_block(
         d,
         bx0 + 0.1,
         by0 - 0.5,
-        4.6,
+        4.4,
         4.2,
         ["J1", "USB4085-GF-A", "USB-C (5A)"],
         right_pins=[("VBUS", 0.80, "A4/B4/A9/B9"), ("CC1", 0.50, "A5"), ("CC2", 0.20, "B5")],
         bot_pins=[("GND", 0.50, "A1/B1/A12/B12/SH")],
-        lead=0.45,
-        fontsize=7.6,
-        pin_fontsize=6.3,
+        lead=0.40,
+        fontsize=7.4,
+        pin_fontsize=6.2,
     )
     d += elm.Line().at(j1_pts["GND"]).down(0.6)
     d += elm.Ground()
 
     # CC1 & CC2 Rd pulldowns
-    d += elm.Line().at(j1_pts["CC1"]).right(2.4)
-    d += elm.Resistor().right(2.0).label("R1 5.1k 1% 0805", loc="top", ofst=0.16, fontsize=6.8)
+    d += elm.Line().at(j1_pts["CC1"]).right(1.8)
+    d += elm.Resistor().right(1.9).label("R1 5.1k 1% 0805", loc="top", ofst=0.14, fontsize=6.6)
     d += elm.Line().down(0.5)
     d += elm.Ground()
 
-    d += elm.Line().at(j1_pts["CC2"]).right(0.4)
-    d += elm.Resistor().right(2.0).label("R2 5.1k 1% 0805", loc="bottom", ofst=0.16, fontsize=6.8)
+    d += elm.Line().at(j1_pts["CC2"]).right(0.3)
+    d += elm.Resistor().right(1.9).label("R2 5.1k 1% 0805", loc="bottom", ofst=0.14, fontsize=6.6)
     d += elm.Line().down(0.5)
     d += elm.Ground()
 
     # TP2 GND pad cleanly placed at bottom-left of Block 1
-    d += elm.Dot().at((bx0 + 0.8, by0 - 5.6)).label("TP2 (GND_EXT)", loc="right", ofst=0.18, fontsize=7.4, color="#475569")
+    d += elm.Dot().at((bx0 + 0.6, by0 - 6.8)).label("TP2 (GND_EXT)", loc="right", ofst=0.16, fontsize=7.2, color="#475569")
     d += elm.Line().down(0.5)
     d += elm.Ground()
 
     # VBUS -> TP1 -> C12 (ESD) -> F1 -> VBUS_FUSED -> Q1A -> V_MID -> Q1B -> VIN_PROT -> D11 -> C1
-    d += elm.Line().at(j1_pts["VBUS"]).right(1.3)
-    d += elm.Dot().label("VBUS", loc="top", ofst=0.18, fontsize=8.0, color="#B91C1C")
-    d += elm.Line().right(1.5)
+    d += elm.Line().at(j1_pts["VBUS"]).right(1.0)
+    d += elm.Dot().label("VBUS", loc="top", ofst=0.18, fontsize=7.8, color="#B91C1C")
+    d += elm.Line().right(1.3)
     p_tp1 = d.here
     d += elm.Dot()
     d.push()
-    d += elm.Line().up(1.4)
-    d += elm.Dot().label("TP1 (VBUS_EXT)", loc="right", ofst=0.16, fontsize=7.3, color="#475569")
+    d += elm.Line().up(1.3)
+    d += elm.Dot().label("TP1 (VBUS_EXT)", loc="right", ofst=0.14, fontsize=7.1, color="#475569")
     d.pop()
 
-    # C12 ESD bypass cap (placed cleanly between TP1 and F1, label on bottom/right)
-    d += elm.Line().at(p_tp1).right(1.8)
+    # C12 ESD bypass cap
+    d += elm.Line().at(p_tp1).right(1.6)
     d += elm.Dot()
     d.push()
-    d += elm.Capacitor().down(2.6).label("C12\n100nF\n25V 0603", loc="bottom", ofst=0.26, fontsize=6.7)
+    d += elm.Capacitor().down(2.4).label("C12\n100nF\n25V 0603", loc="bottom", ofst=0.22, fontsize=6.5)
     d += elm.Ground()
     d.pop()
 
-    # F1 PTC (MF-LSMF400/16X)
-    d += elm.Line().right(1.6)
-    d += elm.Fuse().right(3.6).label("F1 MF-LSMF400/16X\n4A/16V 2920 PTC", loc="top", ofst=0.20, fontsize=7.2)
-    d += elm.Dot().label("VBUS_FUSED", loc="top", ofst=0.20, fontsize=7.2)
+    # F1 PTC (MF-LSMF500/16X)
+    d += elm.Line().right(1.4)
+    d += elm.Fuse().right(3.2).label("F1 MF-LSMF500/16X\n5A/16V 2920 PTC", loc="top", ofst=0.18, fontsize=6.9)
+    d += elm.Dot().label("VBUS_FUSED", loc="top", ofst=0.18, fontsize=6.9)
 
-    # Q1A P-MOSFET (wide 3.6 box so pins don't overlap center text)
-    d += elm.Line().right(1.6)
+    # Q1A P-MOSFET
+    d += elm.Line().right(1.2)
     p_q1a_in = d.here
     q1a_pts = draw_rect_block(
         d,
-        p_q1a_in[0] + 0.40,
-        p_q1a_in[1] - 1.1,
-        3.6,
-        2.2,
+        p_q1a_in[0] + 0.35,
+        p_q1a_in[1] - 1.0,
+        3.4,
+        2.0,
         ["Q1A", "DMG2305UX-7", "Rev-Block"],
         left_pins=[("D", 0.50, "3")],
         right_pins=[("S", 0.50, "2")],
         bot_pins=[("G", 0.50, "1")],
-        lead=0.40,
-        fontsize=7.0,
-        pin_fontsize=6.4,
+        lead=0.35,
+        fontsize=6.8,
+        pin_fontsize=6.2,
     )
     d += elm.Line().at(p_q1a_in).to(q1a_pts["D"])
 
-    # V_MID rail between Q1A and Q1B (wide 4.4 span)
-    d += elm.Line().at(q1a_pts["S"]).right(2.2)
-    p_vmid = d.here
-    d += elm.Dot().label("V_MID", loc="top", ofst=0.22, fontsize=7.6, color="#B91C1C")
+    # V_MID rail between Q1A and Q1B (wide 10.6 span for spacious OVP + Soft-Start)
+    d += elm.Line().at(q1a_pts["S"]).right(2.0)
+    p_vmid_sub = d.here
+    d += elm.Dot()
+    d += elm.Line().right(2.6)
+    p_vmid_r14 = d.here
+    d += elm.Dot()
     d += elm.Line().right(2.2)
+    p_vmid = d.here
+    d += elm.Dot().label("V_MID", loc="top", ofst=0.20, fontsize=7.5, color="#B91C1C")
+    d += elm.Line().right(2.4)
+    p_vmid_d15 = d.here
+    d += elm.Dot()
+    d += elm.Line().right(4.0)
     p_q1b_in = d.here
 
     # Q1B P-MOSFET (S=V_MID, D=VIN_PROT, G=Q1_GATE)
     q1b_pts = draw_rect_block(
         d,
-        p_q1b_in[0] + 0.40,
-        p_q1b_in[1] - 1.1,
-        3.6,
-        2.2,
+        p_q1b_in[0] + 0.35,
+        p_q1b_in[1] - 1.0,
+        3.4,
+        2.0,
         ["Q1B", "DMG2305UX-7", "OVP-Cut"],
         left_pins=[("S", 0.50, "2")],
         right_pins=[("D", 0.50, "3")],
         bot_pins=[("G", 0.50, "1")],
-        lead=0.40,
-        fontsize=7.0,
-        pin_fontsize=6.4,
+        lead=0.35,
+        fontsize=6.8,
+        pin_fontsize=6.2,
     )
     d += elm.Line().at(p_q1b_in).to(q1b_pts["S"])
 
-    # Gate bus Q1_GATE joining Q1A.G and Q1B.G + R10 pull-up from V_MID
+    # Gate bus Q1_GATE joining Q1A.G and Q1B.G + R10 pull-up + D15 Vgs clamp
     gate_y = q1a_pts["G"][1] - 0.35
     d += elm.Line().at(q1a_pts["G"]).to((q1a_pts["G"][0], gate_y))
     d += elm.Line().to((q1b_pts["G"][0], gate_y))
     d += elm.Line().to(q1b_pts["G"])
     p_gate_mid = (p_vmid[0], gate_y)
+    p_gate_d15 = (p_vmid_d15[0], gate_y)
     d += elm.Dot().at(p_gate_mid)
-    d += elm.Label().at((p_gate_mid[0] + 1.4, gate_y + 0.22)).label("Q1_GATE", halign="left", valign="bottom", fontsize=6.9)
-    d += elm.Resistor().at(p_vmid).to(p_gate_mid).label("R10 10k\n0603", loc="top", ofst=0.22, fontsize=6.8)
+    d += elm.Dot().at(p_gate_d15)
+    d += elm.Label().at((p_gate_d15[0] + 0.30, gate_y + 0.16)).label("Q1_GATE", halign="left", valign="bottom", fontsize=6.6)
+    d += elm.Resistor().at(p_vmid).to(p_gate_mid).label("R10 10k\n0603", loc="top", ofst=0.18, fontsize=6.4)
+    d += elm.Zener().at(p_gate_d15).to(p_vmid_d15).label("D15\nBZT52C5V6\nVGS Clamp", loc="bottom", ofst=0.22, fontsize=6.2)
 
-    # Soft-start Q3 (MMBT3904) + R11 + R14 + C11 + OVP sense D15 + R12 + R13 + Q2 (MMBT3904)
-    q3_x0 = p_gate_mid[0] - 1.6
-    q3_y0 = by0 - 4.4
-    q3_pts = draw_rect_block(
+    # V_MID OVP sub-bus at y = gate_y - 0.80 = 9.7 from p_vmid_sub left to x = 11.4
+    vmid_bus_y = gate_y - 0.80
+    d += elm.Line().at(p_vmid_sub).to((p_vmid_sub[0], vmid_bus_y))
+    d += elm.Line().to((11.4, vmid_bus_y))
+    p_bus_r12 = (11.4, vmid_bus_y)
+    p_bus_r15 = (18.2, vmid_bus_y)
+    p_bus_q2e = (21.6, vmid_bus_y)
+    d += elm.Dot().at(p_bus_r15)
+    d += elm.Dot().at(p_bus_q2e)
+
+    # 1. Precision Divider R12 (13.7k) / R13 (10.0k) at x = 11.4
+    d += elm.Resistor().at(p_bus_r12).down(2.5).label("R12\n13.7k 1%\n0603", loc="top", ofst=0.22, fontsize=6.3)
+    p_ovp_sense = d.here
+    d += elm.Dot().label("OVP_SENSE", loc="left", ofst=0.16, fontsize=6.3)
+    d.push()
+    d += elm.Resistor().down(2.4).label("R13\n10.0k 1%\n0603", loc="top", ofst=0.22, fontsize=6.3)
+    d += elm.Ground()
+    d.pop()
+
+    # 2. U3 TL431AIDBZR (SOT-23-3 DBZ: 1=K, 2=REF, 3=A) at x = 13.6..16.2
+    u3_x0 = 13.6
+    u3_y0 = p_ovp_sense[1] - 0.85
+    u3_pts = draw_rect_block(
         d,
-        q3_x0,
-        q3_y0,
-        3.2,
-        2.0,
-        ["Q3", "MMBT3904", "Soft-Start"],
-        top_pins=[("C", 0.50, "3")],
-        left_pins=[("B", 0.50, "1")],
-        bot_pins=[("E", 0.50, "2")],
-        lead=0.35,
-        fontsize=6.9,
-        pin_fontsize=6.3,
+        u3_x0,
+        u3_y0,
+        2.6,
+        1.7,
+        ["U3", "TL431AI", "2.495V 1%"],
+        left_pins=[("REF", 0.50, "2")],
+        top_pins=[("K", 0.50, "1")],
+        bot_pins=[("A", 0.50, "3")],
+        lead=0.28,
+        fontsize=6.4,
+        pin_fontsize=5.9,
     )
-    d += elm.Line().at(q3_pts["C"]).to(p_gate_mid)
-    d += elm.Resistor().at(q3_pts["E"]).down(1.6).label("R11 1.5k\n0603", loc="bottom", ofst=0.24, fontsize=6.8)
+    d += elm.Line().at(p_ovp_sense).to(u3_pts["REF"])
+    d += elm.Line().at(u3_pts["A"]).down(0.6)
     d += elm.Ground()
 
-    # Q3_BASE node: fed from V_MID via R14 (220k), C11 (100nF) to GND, and clamped by Q2.C
-    d += elm.Line().at(q3_pts["B"]).left(1.6)
-    p_q3b = d.here
-    d += elm.Dot().label("Q3_BASE", loc="bottom", ofst=0.20, fontsize=6.7)
-    d.push()
-    d += elm.Line().left(0.6)
-    d += elm.Capacitor().down(1.9).label("C11\n100nF\n0603", loc="top", ofst=0.26, fontsize=6.8)
-    d += elm.Ground()
-    d.pop()
-
-    # R14 from V_MID tap (at x = p_vmid[0] + 1.1) down-left to Q3_BASE
-    p_vmid_tap = (p_vmid[0] + 1.1, p_vmid[1])
-    d += elm.Dot().at(p_vmid_tap)
-    d.push()
-    d += elm.Line().at(p_q3b).up(1.4)
-    d += elm.Resistor().right(2.4).label("R14 220k 0603", loc="top", ofst=0.16, fontsize=6.7)
-    d += elm.Line().to((p_vmid_tap[0], d.here[1]))
-    d += elm.Line().to(p_vmid_tap)
-    d.pop()
-
-    # Q2 (MMBT3904) OVP comparator
-    q2_x0 = p_q3b[0] - 5.2
-    q2_y0 = q3_y0
+    # 3. R15 (10k) + R16 (5.6k) + Q2 (MMBT3906 PNP) at x = 20.3..22.9, y = 7.1..8.8
+    q2_x0 = p_bus_q2e[0] - 1.3
+    q2_y0 = vmid_bus_y - 2.6
     q2_pts = draw_rect_block(
         d,
         q2_x0,
         q2_y0,
-        3.2,
-        2.0,
-        ["Q2", "MMBT3904", "OVP-Sense"],
+        2.6,
+        1.7,
+        ["Q2", "MMBT3906", "OVP PNP"],
+        top_pins=[("E", 0.50, "2")],
+        left_pins=[("B", 0.50, "1")],
+        bot_pins=[("C", 0.50, "3")],
+        lead=0.28,
+        fontsize=6.4,
+        pin_fontsize=5.9,
+    )
+    d += elm.Line().at(p_bus_q2e).to(q2_pts["E"])
+    p_q2b = (p_bus_r15[0], q2_pts["B"][1])
+    d += elm.Line().at(q2_pts["B"]).to(p_q2b)
+    d += elm.Dot().label("Q2_BASE", loc="bottom", ofst=0.14, fontsize=6.1)
+    d += elm.Resistor().at(p_bus_r15).to(p_q2b).label("R15 10k\n0603", loc="top", ofst=0.18, fontsize=6.2)
+    # Connect U3.K (OVP_K) via R16 (5.6k) to Q2_BASE (cleanly clear of U3 top pin)
+    d += elm.Line().at(u3_pts["K"]).to((u3_pts["K"][0], p_q2b[1] + 0.6))
+    d += elm.Line().to((u3_pts["K"][0], p_q2b[1]))
+    d += elm.Dot().label("OVP_K", loc="top", ofst=0.14, fontsize=6.0)
+    d += elm.Resistor().to(p_q2b).label("R16 5.6k\n0603", loc="bottom", ofst=0.20, fontsize=6.1)
+
+    # OVP_DRV node cleanly below Q2.C
+    p_ovp_drv = (q2_pts["C"][0], q2_pts["C"][1] - 0.35)
+    d += elm.Line().at(q2_pts["C"]).to(p_ovp_drv)
+    d += elm.Dot().label("OVP_DRV", loc="left", ofst=0.14, fontsize=6.2)
+
+    # 4. D16 (BAW56LT1G Common Anode) at x = 24.4..27.0, y = 5.7..7.3
+    d16_x0 = 24.4
+    d16_y0 = p_ovp_drv[1] - 0.85
+    d16_pts = draw_rect_block(
+        d,
+        d16_x0,
+        d16_y0,
+        2.6,
+        1.6,
+        ["D16", "BAW56", "Com-Anode"],
+        left_pins=[("A", 0.50, "3")],
+        top_pins=[("K1", 0.50, "1")],
+        bot_pins=[("K2", 0.50, "2")],
+        lead=0.28,
+        fontsize=6.3,
+        pin_fontsize=5.9,
+    )
+    d += elm.Line().at(p_ovp_drv).to(d16_pts["A"])
+    # K1 -> R18 (220R) -> Q1_GATE
+    d += elm.Resistor().at(d16_pts["K1"]).to((d16_pts["K1"][0], gate_y)).label("R18 220R\n0603", loc="top", ofst=0.18, fontsize=6.2)
+    d += elm.Dot()
+
+    # 5. Q4 (MMBT3904) OVP Latch at x = 21.4..24.0, y = 2.9..4.5
+    q4_x0 = 21.4
+    q4_y0 = 2.9
+    q4_pts = draw_rect_block(
+        d,
+        q4_x0,
+        q4_y0,
+        2.6,
+        1.6,
+        ["Q4", "MMBT3904", "OVP-Latch"],
         right_pins=[("C", 0.50, "3")],
         left_pins=[("B", 0.50, "1")],
         bot_pins=[("E", 0.50, "2")],
-        lead=0.35,
-        fontsize=6.9,
-        pin_fontsize=6.3,
+        lead=0.28,
+        fontsize=6.3,
+        pin_fontsize=5.9,
     )
-    d += elm.Line().at(q2_pts["C"]).to((p_q3b[0] - 0.6, p_q3b[1]))
-    d += elm.Line().at(q2_pts["E"]).down(0.6)
+    d += elm.Line().at(q4_pts["E"]).down(0.45)
     d += elm.Ground()
 
-    # OVP sense divider well right of C12
-    d += elm.Line().at(q2_pts["B"]).left(0.8)
-    p_q2b = d.here
-    d += elm.Dot()
-    d += elm.Label().at((p_q2b[0] - 0.15, p_q2b[1] + 0.22)).label("Q2_BASE", halign="right", valign="bottom", fontsize=6.6)
+    # R17 (10k) from OVP_DRV to Q4_BASE + R20 (100k) to GND
+    d += elm.Line().at(q4_pts["B"]).left(0.9)
+    p_q4b = d.here
+    d += elm.Dot().label("Q4_BASE", loc="bottom", ofst=0.16, fontsize=6.0)
     d.push()
-    d += elm.Resistor().down(1.9).label("R13 1.2k\n0603", loc="top", ofst=0.24, fontsize=6.8)
+    d += elm.Resistor().down(1.4).label("R20 100k\n0603", loc="top", ofst=0.24, fontsize=6.1)
     d += elm.Ground()
     d.pop()
-    d += elm.Resistor().up(1.9).label("R12 470R\n0603", loc="top", ofst=0.24, fontsize=6.8)
-    d += elm.Dot().label("OVP_SENSE", loc="left", ofst=0.16, fontsize=6.6)
-    d += elm.Zener().up(1.7).reverse().label("D15\nBZT52C5V6", loc="bottom", ofst=0.26, fontsize=6.8)
-    # Route D15 cathode cleanly BELOW Q1A/Q1_GATE (y = gate_y - 0.85) over to p_vmid_tap!
-    d += elm.Line().to((d.here[0], gate_y - 0.85))
-    d += elm.Line().to((p_vmid_tap[0], gate_y - 0.85))
-    d += elm.Line().to(p_vmid_tap)
+    d += elm.Line().at(p_ovp_drv).to((p_q4b[0], p_ovp_drv[1]))
+    d += elm.Resistor().to(p_q4b).label("R17 10k\n0603", loc="top", ofst=0.20, fontsize=6.1)
+
+    # 6. Soft-start Q3 (MMBT3904) at x = 29.0..31.8, y = 4.4..6.2 (Q3.C cleanly left of Q1B!)
+    q3_x0 = 29.0
+    q3_y0 = 4.4
+    q3_pts = draw_rect_block(
+        d,
+        q3_x0,
+        q3_y0,
+        2.8,
+        1.8,
+        ["Q3", "MMBT3904", "Soft-Start"],
+        top_pins=[("C", 0.50, "3")],
+        left_pins=[("B", 0.50, "1")],
+        bot_pins=[("E", 0.50, "2")],
+        lead=0.30,
+        fontsize=6.5,
+        pin_fontsize=6.0,
+    )
+    d += elm.Line().at(q3_pts["C"]).to((q3_pts["C"][0], gate_y))
+    d += elm.Dot()
+    d += elm.Resistor().at(q3_pts["E"]).down(1.7).label("R11 1.5k\n0603", loc="bottom", ofst=0.22, fontsize=6.3)
+    d += elm.Ground()
+
+    # Q3_BASE node: fed by Q4.C, C11, and R14 (220k)
+    d += elm.Line().at(q3_pts["B"]).left(1.4)
+    p_q3b = d.here
+    d += elm.Dot().label("Q3_BASE", loc="bottom", ofst=0.18, fontsize=6.2)
+    d.push()
+    d += elm.Capacitor().down(1.8).label("C11\n100nF\n0603", loc="bottom", ofst=0.22, fontsize=6.2)
+    d += elm.Ground()
+    d.pop()
+    # Q4.C -> Q3_BASE cleanly
+    d.push()
+    d += elm.Line().at(q4_pts["C"]).to((q4_pts["C"][0], p_q3b[1]))
+    d += elm.Line().to(p_q3b)
+    d.pop()
+    # R14 (220k) routed at y = 8.4 cleanly ABOVE D16 up to p_vmid_r14
+    d.push()
+    d += elm.Line().at(p_q3b).up(3.1)
+    d += elm.Resistor().to((p_vmid_r14[0], d.here[1])).label("R14 220k 0603", loc="bottom", ofst=0.14, fontsize=6.2)
+    d += elm.Line().to(p_vmid_r14)
+    d.pop()
+
+    # Hysteresis K2 -> R19 (27k) -> OVP_SENSE cleanly along bottom of Block 1 (y = 1.9)
+    hyst_y = 1.9
+    d += elm.Line().at(d16_pts["K2"]).to((d16_pts["K2"][0], hyst_y))
+    d += elm.Resistor().to((p_ovp_sense[0] + 1.2, hyst_y)).label("R19 27k 1% 0603 (Hyst)", loc="bottom", ofst=0.14, fontsize=6.2)
+    d += elm.Line().to((p_ovp_sense[0] + 1.2, p_ovp_sense[1]))
+    d += elm.Line().to(p_ovp_sense)
 
     # Downstream of Q1B.D -> VIN_PROT -> D11 (downstream TVS) -> C1 -> To Ch1/Ch2
-    d += elm.Line().at(q1b_pts["D"]).right(1.4)
+    d += elm.Line().at(q1b_pts["D"]).right(1.1)
     p_vin_prot = d.here
-    d += elm.Dot().label("VIN_PROT", loc="top", ofst=0.20, fontsize=8.0, color="#B91C1C")
+    d += elm.Dot().label("VIN_PROT", loc="top", ofst=0.20, fontsize=7.8, color="#B91C1C")
     d.push()
-    d += elm.Zener().down(3.3).reverse().label("D11\nSMBJ5.0A\n600W TVS", loc="top", ofst=0.30, fontsize=7.0)
+    d += elm.Zener().down(3.3).reverse().label("D11\nSMBJ5.0A\n600W TVS", loc="top", ofst=0.28, fontsize=6.8)
     d += elm.Ground()
     d.pop()
 
-    d += elm.Line().at(p_vin_prot).right(2.4)
+    d += elm.Line().at(p_vin_prot).right(2.2)
     d += elm.Dot()
     d.push()
-    d += elm.Capacitor().down(3.3).label("C1\n10uF 25V\nX7R 1206", loc="bottom", ofst=0.30, fontsize=7.0)
+    d += elm.Capacitor().down(3.3).label("C1\n10uF 25V\nX7R 1206", loc="bottom", ofst=0.28, fontsize=6.8)
     d += elm.Ground()
     d.pop()
-    d += elm.Line().right(1.0)
-    d += elm.Dot().label("To Ch1/Ch2", loc="right", fontsize=7.6, color="#B91C1C")
+    d += elm.Line().right(0.9)
+    d += elm.Dot().label("To Ch1/Ch2", loc="right", fontsize=7.4, color="#B91C1C")
 
     # =========================================================================
     # BLOCK 2 (Bottom-Left): Maxi-Switch Logic & Mechanical Mounting Holes
     # =========================================================================
-    sx0, sy0 = 0.0, -5.0
-    draw_box(d, sx0 - 0.6, sy0 - 7.0, sx0 + 38.6, sy0 + 6.6, "2. Maxi-Switch Logic (4-UV / OFF / 8-ALL) and Ch2 1.0ms Stagger")
+    sx0, sy0 = 0.0, -5.8
+    draw_box(d, sx0 - 0.6, sy0 - 7.0, sx0 + 44.0, sy0 + 6.6, "2. Maxi-Switch Logic (4-UV / OFF / 8-ALL) and Ch2 1.0ms Stagger")
 
     # Off-board SW1 + SW1_BOOT dashed box
     draw_box(d, sx0 - 0.2, sy0 - 2.8, sx0 + 5.5, sy0 + 4.8, "OFF-BOARD", dashed=True, color="#64748B", title_color="#475569", title_size=8)
@@ -602,7 +710,7 @@ def build_schematic(out_dir: Path) -> Path:
     # =========================================================================
     draw_boost_channel(
         d=d,
-        x0=40.8,
+        x0=46.2,
         y0=8.8,
         title="3. Channel 1: 4S UV-A Boost Constant-Current Driver (339mA nom)",
         u_ref="U1",
@@ -634,7 +742,7 @@ def build_schematic(out_dir: Path) -> Path:
     # =========================================================================
     draw_boost_channel(
         d=d,
-        x0=40.8,
+        x0=46.2,
         y0=-5.2,
         title="4. Channel 2: 4S Visible Boost Constant-Current Driver (339mA nom)",
         u_ref="U2",

@@ -1,0 +1,174 @@
+* LepiLED DIY Maxi Switch - Exhaustive 6.0..16.0 V Worst-Case OVP Sweep (ngspice)
+* Sweeps V_BUS across 6.0, 6.2, 6.4, 6.6, 6.7, 6.8, 6.9, 7.0, 12.0, 15.0, 16.0 V (5.0 V -> V_FAULT step at 6.5 ms)
+* at worst-case HIGH-trip corner (Vref=2.537 V, Iref=4 uA, R12 +1%, R13 -1%, D_SMBJ5_MIN Vbr=6.40 V, BF=70, TEMP=85 C)
+* proving max(P(D11)) < 0.05 W and VIN_PROT < 7.0 V across the ENTIRE 0..16 V band.
+
+.INCLUDE circuit_design/sim/netlists/models.lib
+
+.SUBCKT INPUT_PROT_SWEEP VBUS VIN_PROT GND PARAMS: RF1=0.025 VREF=2.537 IREF=4u R12V=13.837k R13V=9.90k R19V=26.73k
+C12 VBUS GND 100n IC=0
+R_F1 VBUS VBUS_FUSED {RF1}
+M_Q1A VBUS_FUSED Q1_GATE V_MID V_MID M_DMG2305UX_WC
+M_Q1B VIN_PROT   Q1_GATE V_MID V_MID M_DMG2305UX_WC
+D11 GND VIN_PROT D_SMBJ5_MIN
+D15 Q1_GATE V_MID D_Z5V6_MAX
+
+R10 V_MID Q1_GATE 10k
+Q3 Q1_GATE Q3_BASE Q3_EMIT Q_MMBT3904_MIN
+R11 Q3_EMIT GND 1.5k
+R14 V_MID Q3_BASE 220k
+C11 Q3_BASE GND 100n IC=0
+
+R12 V_MID OVP_SENSE {R12V}
+R13 OVP_SENSE GND {R13V}
+X_U3 OVP_K OVP_SENSE GND TL431_AI VREF={VREF} IREF_BIAS={IREF}
+R15 V_MID Q2_BASE 10k
+R16 Q2_BASE OVP_K 5.6k
+Q2 OVP_DRV Q2_BASE V_MID Q_MMBT3906_MIN
+R17 OVP_DRV Q4_BASE 10k
+R20 Q4_BASE GND 100k
+Q4 Q3_BASE Q4_BASE GND Q_MMBT3904_MIN
+D16A OVP_DRV OVP_DRV_GATE D_BAV70
+R18 OVP_DRV_GATE Q1_GATE 220
+D16B OVP_DRV OVP_HYS D_BAV70
+R19 OVP_HYS OVP_SENSE {R19V}
+.ENDS INPUT_PROT_SWEEP
+
+* Case 0: 5.5 V @ 85 C Hold ON (worst-case LOW-trip corner: Vref=2.453 V, Iref=0, R12 -1%, R13 +1%, 2.5 Ohm load)
+V_H55 IN_H55 0 PWL(0 0 200n 5.5 9.0m 5.5)
+R_H55 IN_H55 VB_H55 0.05
+X_PH55 VB_H55 VP_H55 0 INPUT_PROT_SWEEP VREF=2.453 IREF=0 R12V=13.563k R13V=10.10k R19V=27.27k
+C_H55 VP_H55 0 24.2u IC=0
+R_LH55 VP_H55 0 2.5
+
+V_SW60 IN_60 0 PWL(0 0 5u 5.0 6.5m 5.0 6.501m 6.0 9.0m 6.0)
+R_SW60 IN_60 VB_60 0.05
+X_SW60 VB_60 VP_60 0 INPUT_PROT_SWEEP
+C_SW60 VP_60 0 24.2u IC=0
+R_LSW60 VP_60 0 10k
+
+V_SW62 IN_62 0 PWL(0 0 5u 5.0 6.5m 5.0 6.501m 6.2 9.0m 6.2)
+R_SW62 IN_62 VB_62 0.05
+X_SW62 VB_62 VP_62 0 INPUT_PROT_SWEEP
+C_SW62 VP_62 0 24.2u IC=0
+R_LSW62 VP_62 0 10k
+
+V_SW64 IN_64 0 PWL(0 0 5u 5.0 6.5m 5.0 6.501m 6.4 9.0m 6.4)
+R_SW64 IN_64 VB_64 0.05
+X_SW64 VB_64 VP_64 0 INPUT_PROT_SWEEP
+C_SW64 VP_64 0 24.2u IC=0
+R_LSW64 VP_64 0 10k
+
+V_SW66 IN_66 0 PWL(0 0 5u 5.0 6.5m 5.0 6.501m 6.6 9.0m 6.6)
+R_SW66 IN_66 VB_66 0.05
+X_SW66 VB_66 VP_66 0 INPUT_PROT_SWEEP
+C_SW66 VP_66 0 24.2u IC=0
+R_LSW66 VP_66 0 10k
+
+V_SW67 IN_67 0 PWL(0 0 5u 5.0 6.5m 5.0 6.501m 6.7 9.0m 6.7)
+R_SW67 IN_67 VB_67 0.05
+X_SW67 VB_67 VP_67 0 INPUT_PROT_SWEEP
+C_SW67 VP_67 0 24.2u IC=0
+R_LSW67 VP_67 0 10k
+
+V_SW68 IN_68 0 PWL(0 0 5u 5.0 6.5m 5.0 6.501m 6.8 9.0m 6.8)
+R_SW68 IN_68 VB_68 0.05
+X_SW68 VB_68 VP_68 0 INPUT_PROT_SWEEP
+C_SW68 VP_68 0 24.2u IC=0
+R_LSW68 VP_68 0 10k
+
+V_SW69 IN_69 0 PWL(0 0 5u 5.0 6.5m 5.0 6.501m 6.9 9.0m 6.9)
+R_SW69 IN_69 VB_69 0.05
+X_SW69 VB_69 VP_69 0 INPUT_PROT_SWEEP
+C_SW69 VP_69 0 24.2u IC=0
+R_LSW69 VP_69 0 10k
+
+V_SW70 IN_70 0 PWL(0 0 5u 5.0 6.5m 5.0 6.501m 7.0 9.0m 7.0)
+R_SW70 IN_70 VB_70 0.05
+X_SW70 VB_70 VP_70 0 INPUT_PROT_SWEEP
+C_SW70 VP_70 0 24.2u IC=0
+R_LSW70 VP_70 0 10k
+
+V_SW12 IN_12 0 PWL(0 0 5u 5.0 6.5m 5.0 6.501m 12.0 9.0m 12.0)
+R_SW12 IN_12 VB_12 0.05
+X_SW12 VB_12 VP_12 0 INPUT_PROT_SWEEP
+C_SW12 VP_12 0 24.2u IC=0
+R_LSW12 VP_12 0 10k
+
+V_SW15 IN_15 0 PWL(0 0 5u 5.0 6.5m 5.0 6.501m 15.0 9.0m 15.0)
+R_SW15 IN_15 VB_15 0.05
+X_SW15 VB_15 VP_15 0 INPUT_PROT_SWEEP
+C_SW15 VP_15 0 24.2u IC=0
+R_LSW15 VP_15 0 10k
+
+V_SW16 IN_16 0 PWL(0 0 5u 5.0 6.5m 5.0 6.501m 16.0 9.0m 16.0)
+R_SW16 IN_16 VB_16 0.05
+X_SW16 VB_16 VP_16 0 INPUT_PROT_SWEEP
+C_SW16 VP_16 0 24.2u IC=0
+R_LSW16 VP_16 0 10k
+
+* Live +5.5 V -> +12.0 V (1 us) and +5.5 V -> +16.0 V (200 ns) steps under 2.5 Ohm load
+V_S12 IN_S12 0 PWL(0 0 5u 5.5 7.5m 5.5 7.501m 12.0 9.0m 12.0)
+R_S12 IN_S12 VB_S12 0.05
+X_PS12 VB_S12 VP_S12 0 INPUT_PROT_SWEEP
+C_S12 VP_S12 0 24.2u IC=0
+R_LS12 VP_S12 0 2.5
+
+V_S16 IN_S16 0 PWL(0 0 5u 5.5 7.5m 5.5 7.5002m 16.0 9.0m 16.0)
+R_S16 IN_S16 VB_S16 0.05
+X_PS16 VB_S16 VP_S16 0 INPUT_PROT_SWEEP
+C_S16 VP_S16 0 24.2u IC=0
+R_LS16 VP_S16 0 2.5
+
+.TEMP 85
+.TRAN 200n 9.0m 0 200n UIC
+
+.CONTROL
+run
+let pd11_60 = v(vp_60)*(-@d.x_sw60.d11[id])
+let pd11_62 = v(vp_62)*(-@d.x_sw62.d11[id])
+let pd11_64 = v(vp_64)*(-@d.x_sw64.d11[id])
+let pd11_66 = v(vp_66)*(-@d.x_sw66.d11[id])
+let pd11_67 = v(vp_67)*(-@d.x_sw67.d11[id])
+let pd11_68 = v(vp_68)*(-@d.x_sw68.d11[id])
+let pd11_69 = v(vp_69)*(-@d.x_sw69.d11[id])
+let pd11_70 = v(vp_70)*(-@d.x_sw70.d11[id])
+let pd11_12 = v(vp_12)*(-@d.x_sw12.d11[id])
+let pd11_15 = v(vp_15)*(-@d.x_sw15.d11[id])
+let pd11_16 = v(vp_16)*(-@d.x_sw16.d11[id])
+
+meas tran hold55_85c_vin_ss avg v(vp_h55) from=8.0m to=9.0m
+meas tran sw60_vp_pk max v(vp_60) from=6.4m to=9.0m
+meas tran sw60_pd11_pk max pd11_60 from=6.4m to=9.0m
+meas tran sw62_vp_pk max v(vp_62) from=6.4m to=9.0m
+meas tran sw62_pd11_pk max pd11_62 from=6.4m to=9.0m
+meas tran sw64_vp_pk max v(vp_64) from=6.4m to=9.0m
+meas tran sw64_pd11_pk max pd11_64 from=6.4m to=9.0m
+meas tran sw66_vp_pk max v(vp_66) from=6.4m to=9.0m
+meas tran sw66_pd11_pk max pd11_66 from=6.4m to=9.0m
+meas tran sw67_vp_pk max v(vp_67) from=6.4m to=9.0m
+meas tran sw67_pd11_pk max pd11_67 from=6.4m to=9.0m
+meas tran sw68_vp_pk max v(vp_68) from=6.4m to=9.0m
+meas tran sw68_pd11_pk max pd11_68 from=6.4m to=9.0m
+meas tran sw69_vp_pk max v(vp_69) from=6.4m to=9.0m
+meas tran sw69_pd11_pk max pd11_69 from=6.4m to=9.0m
+meas tran sw70_vp_pk max v(vp_70) from=6.4m to=9.0m
+meas tran sw70_pd11_pk max pd11_70 from=6.4m to=9.0m
+meas tran sw12_vp_pk max v(vp_12) from=6.4m to=9.0m
+meas tran sw12_pd11_pk max pd11_12 from=6.4m to=9.0m
+meas tran sw15_vp_pk max v(vp_15) from=6.4m to=9.0m
+meas tran sw15_pd11_pk max pd11_15 from=6.4m to=9.0m
+meas tran sw16_vp_pk max v(vp_16) from=6.4m to=9.0m
+meas tran sw16_pd11_pk max pd11_16 from=6.4m to=9.0m
+
+let vgs_s12 = v(x_ps12.q1_gate) - v(x_ps12.v_mid)
+let vgs_s16 = v(x_ps16.q1_gate) - v(x_ps16.v_mid)
+meas tran step_5to12_vin_pk max v(vp_s12) from=7.45m to=9.0m
+meas tran step_5to12_vin_ss avg v(vp_s12) from=8.5m to=9.0m
+meas tran step_5to12_vgs_min min vgs_s12 from=0 to=9.0m
+meas tran step_5to16_vin_pk max v(vp_s16) from=7.45m to=9.0m
+meas tran step_5to16_vin_ss avg v(vp_s16) from=8.5m to=9.0m
+meas tran step_5to16_vgs_min min vgs_s16 from=0 to=9.0m
+quit 0
+.ENDC
+.END

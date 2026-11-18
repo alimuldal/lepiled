@@ -1,42 +1,52 @@
 * LepiLED DIY Maxi Switch - Input Protection & Cold Hot-Plug Fault Suite (ngspice)
-* Verifies 5 critical scenarios directly on the back-to-back PMOS + OVP + soft-start architecture:
-*   1. Cold 0 -> 5 V hot-plug (IC=0 on all caps, SW1 in 8-ALL, dual LM3410XMY load): I_in_pk < 3.0 A, I_L1/L2 < 3.0 A I_sat
-*   2. -12 V reverse polarity: zero crowbar (|I_rev| < 1 mA, VIN_PROT ~ 0 V)
-*   3. +12 V stiff over-voltage fault: VIN_PROT_pk < 7.0 V abs max, minimal leakage
-*   4. +12 V 4.0 A current-limited over-voltage fault: VIN_PROT_pk < 7.0 V, D15 power << 370 mW
-*   5. +5 V -> +12 V live step during operation: VIN_PROT_pk < 7.0 V, clean shutoff (< 1 mV)
+* Verifies worst-case protection corners across -16 V .. +16 V at 85 C:
+*   1. Cold 0 -> 5.0 V hot-plug (IC=0 on all caps, SW1 in 8-ALL, dual LM3410XMY load): I_in_pk < 3.0 A, I_L1/L2 < 3.0 A I_sat
+*   2. 5.5 V @ 85 C worst-case LOW-trip corner (2.5 Ohm load): holds ON with zero false-trip
+*   3. -12 V & -16 V reverse polarity: zero crowbar (|I_rev| < 1 mA, VIN_PROT ~ 0 V, |Vgs| < 8.0 V)
+*   4. +12 V stiff, +12 V 4 A-limited, and +16 V worst-case LOW-trip corner: VIN_PROT_pk < 7.0 V, max(P(R*)) <= 50 mW
+*   5. Live +5.5 V -> +12.0 V (1 us) and +5.5 V -> +16.0 V (200 ns) steps & 6.0..16.0 V OVP sweep
+*      are verified in circuit_design/sim/netlists/lepiled_fault_ovp_sweep.cir
 
 .INCLUDE circuit_design/sim/netlists/models.lib
 .INCLUDE circuit_design/sim/netlists/lm3410xmy.lib
 
-* Reusable Input Protection Subcircuit (F1 + C12 + Q1A + Q1B + Q2 + Q3 + D15 + D11 + R10..R14 + C11)
-.SUBCKT INPUT_PROT VBUS VIN_PROT GND PARAMS: RF1=0.020
+* Worst-Case Input Protection Subcircuit (TL431AIDBZR + MMBT3906 + MMBT3904 + BAW56 + BZT52C5V6 + SMBJ5.0A_MIN)
+.SUBCKT INPUT_PROT_WC VBUS VIN_PROT GND PARAMS: RF1=0.025 VREF=2.495 IREF=2u R12V=13.7k R13V=10.0k R19V=27.0k
 C12 VBUS GND 100n IC=0
 R_F1 VBUS VBUS_FUSED {RF1}
-M_Q1A VBUS_FUSED Q1_GATE V_MID V_MID M_DMG2305UX
-M_Q1B VIN_PROT   Q1_GATE V_MID V_MID M_DMG2305UX
-D11 GND VIN_PROT D_SMBJ5
+M_Q1A VBUS_FUSED Q1_GATE V_MID V_MID M_DMG2305UX_WC
+M_Q1B VIN_PROT   Q1_GATE V_MID V_MID M_DMG2305UX_WC
+D11 GND VIN_PROT D_SMBJ5_MIN
+D15 Q1_GATE V_MID D_Z5V6_MAX
 
 R10 V_MID Q1_GATE 10k
-Q3 Q1_GATE Q3_BASE Q3_EMIT Q_MMBT3904
+Q3 Q1_GATE Q3_BASE Q3_EMIT Q_MMBT3904_MIN
 R11 Q3_EMIT GND 1.5k
 R14 V_MID Q3_BASE 220k
 C11 Q3_BASE GND 100n IC=0
 
-D15 OVP_SENSE V_MID D_Z5V6
-R12 OVP_SENSE Q2_BASE 470
-R13 Q2_BASE GND 1.2k
-Q2 Q3_BASE Q2_BASE GND Q_MMBT3904
-.ENDS INPUT_PROT
+R12 V_MID OVP_SENSE {R12V}
+R13 OVP_SENSE GND {R13V}
+X_U3 OVP_K OVP_SENSE GND TL431_AI VREF={VREF} IREF_BIAS={IREF}
+R15 V_MID Q2_BASE 10k
+R16 Q2_BASE OVP_K 5.6k
+Q2 OVP_DRV Q2_BASE V_MID Q_MMBT3906_MIN
+R17 OVP_DRV Q4_BASE 10k
+R20 Q4_BASE GND 100k
+Q4 Q3_BASE Q4_BASE GND Q_MMBT3904_MIN
+D16A OVP_DRV OVP_DRV_GATE D_BAV70
+R18 OVP_DRV_GATE Q1_GATE 220
+D16B OVP_DRV OVP_HYS D_BAV70
+R19 OVP_HYS OVP_SENSE {R19V}
+.ENDS INPUT_PROT_WC
 
-* --- CASE 1: Cold 0->5V Hot-Plug (IC=0 everywhere, 8-ALL pre-selected) ---
+* --- CASE 1: Cold 0->5.0V Hot-Plug (IC=0 everywhere, 8-ALL pre-selected, dual LM3410XMY load) ---
 V_C1 IN1 0 PWL(0 0 10u 5.0 7.5m 5.0)
-R_C1 IN1 VBUS1_A 0.08
+R_C1 IN1 VBUS1_A 0.062
 L_C1 VBUS1_A VBUS1 0.5u
-X_P1 VBUS1 VIN1 0 INPUT_PROT RF1=0.020
+X_P1 VBUS1 VIN1 0 INPUT_PROT_WC RF1=0.015 VREF=2.495 IREF=2u R12V=13.7k R13V=10.0k R19V=27.0k
 C1_1 VIN1 0 24.2u IC=0
 
-* Ch1 UV + Ch2 Vis boost load (IC=0)
 L1_1 VIN1 SW1_1 10u
 X_U1_1 VIN1 SW1_1 FB1_1 VIN1 0 LM3410XMY VFB=0.190 FSW=1.6e6 ICL=2.8 RDS=0.170 DMAX=0.92
 D9_1 SW1_1 VOUT1_1 D_B340A
@@ -63,56 +73,48 @@ D6_1 V1A_1 V1B_1 D_XPE2_RB
 D7_1 V1B_1 V1C_1 D_XPE2_GR
 D8_1 V1C_1 VR_1 D_XPE2_CW
 
-* --- CASE 2: -12V Reverse Polarity Fault ---
-V_C2 IN2 0 PWL(0 0 10u -12.0 7.5m -12.0)
-R_C2 IN2 VBUS2 0.05
-X_P2 VBUS2 VIN2 0 INPUT_PROT RF1=0.020
-C1_2 VIN2 0 24.2u IC=0
-R_LD2 VIN2 0 1k
+* --- CASE 2..4: -12V, -16V, +12V Stiff/4A, +16V Dissipation ---
+V_R12 IN_R12 0 PWL(0 0 10u -12.0 7.5m -12.0)
+R_R12 IN_R12 VB_R12 0.05
+X_PR12 VB_R12 VP_R12 0 INPUT_PROT_WC RF1=0.025
+C_R12 VP_R12 0 24.2u IC=0
+R_LR12 VP_R12 0 1k
 
-* --- CASE 3: +12V Stiff Fault ---
-V_C3 IN3 0 PWL(0 0 10u 12.0 7.5m 12.0)
-R_C3 IN3 VBUS3 0.05
-X_P3 VBUS3 VIN3 0 INPUT_PROT RF1=0.005
-C1_3 VIN3 0 24.2u IC=0
-R_LD3 VIN3 0 1k
+V_R16 IN_R16 0 PWL(0 0 10u -16.0 7.5m -16.0)
+R_R16 IN_R16 VB_R16 0.05
+X_PR16 VB_R16 VP_R16 0 INPUT_PROT_WC RF1=0.025
+C_R16 VP_R16 0 24.2u IC=0
+R_LR16 VP_R16 0 1k
 
-* --- CASE 4: +12V 4.0A Current-Limited Supply ---
+V_12S IN_12S 0 PWL(0 0 10u 12.0 7.5m 12.0)
+R_12S IN_12S VB_12S 0.05
+X_P12S VB_12S VP_12S 0 INPUT_PROT_WC RF1=0.005 VREF=2.453 IREF=0 R12V=13.563k R13V=10.10k
+C_12S VP_12S 0 24.2u IC=0
+R_L12S VP_12S 0 1k
+
 I_C4 0 IN4 DC 4.0
 D_CL4 IN4 CL4_N D_B340A
 V_CL4 CL4_N 0 DC 11.6
 R_C4 IN4 VBUS4 0.05
-X_P4 VBUS4 VIN4 0 INPUT_PROT RF1=0.040
+X_P4 VBUS4 VIN4 0 INPUT_PROT_WC RF1=0.025 VREF=2.453 IREF=0 R12V=13.563k R13V=10.10k
 C1_4 VIN4 0 24.2u IC=0
 R_LD4 VIN4 0 1k
 
-* --- CASE 5: +5V -> +12V Live Step (while running 2A load, Q1A/Q1B pre-enabled at 5V) ---
-V_C5 IN5 0 PWL(0 5.0 3.0m 5.0 3.01m 12.0 7.5m 12.0)
-R_C5 IN5 VBUS5 0.05
-C12_5 VBUS5 0 100n IC=5.0
-R_F1_5 VBUS5 VBUS5_F 0.020
-M_Q1A_5 VBUS5_F QG5 VMID5 VMID5 M_DMG2305UX
-M_Q1B_5 VIN5    QG5 VMID5 VMID5 M_DMG2305UX
-D11_5 0 VIN5 D_SMBJ5
-R10_5 VMID5 QG5 10k
-Q3_5 QG5 QB5 QE5 Q_MMBT3904
-R11_5 QE5 0 1.5k
-R14_5 VMID5 QB5 220k
-C11_5 QB5 0 100n IC=1.20
-D15_5 OS5 VMID5 D_Z5V6_MAX
-R12_5 OS5 Q2B5 470
-R13_5 Q2B5 0 1.2k
-Q2_5 QB5 Q2B5 0 Q_MMBT3904
-C1_5 VIN5 0 24.2u IC=4.8
-R_LD5 VIN5 0 2.5
+V_16L IN_16L 0 PWL(0 0 10u 16.0 7.5m 16.0)
+R_16L IN_16L VB_16L 0.05
+X_P16L VB_16L VP_16L 0 INPUT_PROT_WC RF1=0.005 VREF=2.453 IREF=0 R12V=13.563k R13V=10.10k R19V=27.27k
+C_16L VP_16L 0 24.2u IC=0
+R_L16L VP_16L 0 10k
 
 .TRAN 80n 7.5m 0 80n UIC
 
 .CONTROL
 run
 let i1_in = -i(v_c1)
-let i2_in = -i(v_c2)
-let i3_in = -i(v_c3)
+let ir12_in = -i(v_r12)
+let ir16_in = -i(v_r16)
+let i12s_in = -i(v_12s)
+let i16l_in = -i(v_16l)
 
 meas tran cold_iin_pk max i1_in from=0 to=7.5m
 meas tran cold_il1_pk max i(l1_1) from=0 to=7.5m
@@ -120,17 +122,33 @@ meas tran cold_il2_pk max i(l2_1) from=0 to=7.5m
 meas tran cold_vin_ss avg v(vin1) from=6.5m to=7.5m
 meas tran cold_vout1_ss avg v(vout1_1) from=6.5m to=7.5m
 
-meas tran rev12_iin_ss avg i2_in from=3.0m to=7.5m
-meas tran rev12_vin_min min v(vin2) from=0 to=7.5m
+meas tran rev12_iin_ss avg ir12_in from=5.0m to=7.5m
+meas tran rev12_vin_min min v(vp_r12) from=0 to=7.5m
+meas tran rev16_iin_ss avg ir16_in from=5.0m to=7.5m
+meas tran rev16_vin_min min v(vp_r16) from=0 to=7.5m
 
-meas tran ov12_stiff_vin_pk max v(vin3) from=0 to=7.5m
-meas tran ov12_stiff_iin_ss avg i3_in from=3.0m to=7.5m
-
+meas tran ov12_stiff_vin_pk max v(vp_12s) from=0 to=7.5m
+meas tran ov12_stiff_iin_ss avg i12s_in from=5.0m to=7.5m
 meas tran ov12_4a_vin_pk max v(vin4) from=0 to=7.5m
-meas tran ov12_4a_vbus_ss avg v(vbus4) from=3.0m to=7.5m
+meas tran ov12_4a_vbus_ss avg v(vbus4) from=5.0m to=7.5m
+meas tran ov16_stiff_vin_pk max v(vp_16l) from=0 to=7.5m
+meas tran ov16_stiff_iin_ss avg i16l_in from=5.0m to=7.5m
 
-meas tran step_5to12_vin_pk max v(vin5) from=0 to=7.5m
-meas tran step_5to12_vin_ss avg v(vin5) from=6.5m to=7.5m
+* Power dissipation of every bias/OVP resistor at +16.0 V steady-state
+let p16_r12 = (v(x_p16l.v_mid)-v(x_p16l.ovp_sense))*(v(x_p16l.v_mid)-v(x_p16l.ovp_sense))/13.563k
+let p16_r13 = v(x_p16l.ovp_sense)*v(x_p16l.ovp_sense)/10.10k
+let p16_r14 = (v(x_p16l.v_mid)-v(x_p16l.q3_base))*(v(x_p16l.v_mid)-v(x_p16l.q3_base))/220k
+let p16_r15 = (v(x_p16l.v_mid)-v(x_p16l.q2_base))*(v(x_p16l.v_mid)-v(x_p16l.q2_base))/10k
+let p16_r16 = (v(x_p16l.q2_base)-v(x_p16l.ovp_k))*(v(x_p16l.q2_base)-v(x_p16l.ovp_k))/5.6k
+let p16_r17 = (v(x_p16l.ovp_drv)-v(x_p16l.q4_base))*(v(x_p16l.ovp_drv)-v(x_p16l.q4_base))/10k
+let p16_r19 = (v(x_p16l.ovp_hys)-v(x_p16l.ovp_sense))*(v(x_p16l.ovp_hys)-v(x_p16l.ovp_sense))/27.27k
+meas tran ov16_pr12_W avg p16_r12 from=6.5m to=7.5m
+meas tran ov16_pr13_W avg p16_r13 from=6.5m to=7.5m
+meas tran ov16_pr14_W avg p16_r14 from=6.5m to=7.5m
+meas tran ov16_pr15_W avg p16_r15 from=6.5m to=7.5m
+meas tran ov16_pr16_W avg p16_r16 from=6.5m to=7.5m
+meas tran ov16_pr17_W avg p16_r17 from=6.5m to=7.5m
+meas tran ov16_pr19_W avg p16_r19 from=6.5m to=7.5m
 quit 0
 .ENDC
 .END

@@ -236,7 +236,7 @@
       "power_rating_70C_standard_W": 0.10,
       "power_rating_70C_extended_W": 0.125,
       "tcr_ppm_per_C": 100,
-      "citation": "p. 1 Technical Specifications (R5..R14)"
+      "citation": "p. 1 Technical Specifications (R5..R20)"
     }
   },
   "protection_and_input": {
@@ -284,24 +284,67 @@
       "vce_sat_10mA_max_V": 0.2,
       "pd_fr5_25C_mW": 225.0,
       "r_theta_ja_fr5_C_per_W": 556.0,
-      "citation": "p. 1-2 Maximum Ratings & Electrical Characteristics, p. 7 Ordering Information (Q2 OVP sense, Q3 soft-start gate driver)"
+      "citation": "p. 1-2 Maximum Ratings & Electrical Characteristics, p. 7 Ordering Information (Q3 soft-start gate driver, Q4 OVP latch clamp)"
     },
-    "MF-LSMF400/16X": {
+    "MMBT3906LT1G": {
+      "manufacturer": "onsemi",
+      "datasheet_pdf": "datasheets/mmbt3906lt1-d.pdf",
+      "revision": "Rev. 15 (Sept 2026)",
+      "package": "SOT-23-3 (Case 318 Style 6: 1=Base, 2=Emitter, 3=Collector)",
+      "vceo_V": -40.0,
+      "vcbo_V": -40.0,
+      "vebo_V": -5.0,
+      "ic_max_mA": -200.0,
+      "hfe_1mA_min": 80.0,
+      "hfe_10mA": {"min": 100.0, "max": 300.0},
+      "vce_sat_10mA_max_V": -0.25,
+      "pd_fr5_25C_mW": 225.0,
+      "r_theta_ja_fr5_C_per_W": 556.0,
+      "citation": "p. 1-2 Maximum Ratings & Electrical Characteristics (Q2 PNP OVP pull-up driver)"
+    },
+    "TL431AIDBZR": {
+      "manufacturer": "Texas Instruments",
+      "datasheet_pdf": "datasheets/tl431.pdf",
+      "revision": "SLVS543S (May 2024)",
+      "package": "SOT-23-3 (DBZ: 1=CATHODE, 2=REF, 3=ANODE)",
+      "vka_max_V": 36.0,
+      "vref_25C_V": {"min": 2.470, "typ": 2.495, "max": 2.520},
+      "vi_dev_mV_max_over_temp": 34.0,
+      "iref_uA": {"typ": 2.0, "max": 4.0},
+      "imin_mA": {"typ": 0.4, "max": 0.7},
+      "ioff_uA": {"typ": 0.1, "max": 0.5},
+      "ika_max_mA": 100.0,
+      "z_ka_ohm": {"typ": 0.2, "max": 0.5},
+      "temp_range_C": [-40.0, 85.0],
+      "r_theta_ja_C_per_W": 206.0,
+      "citation": "Sec. 5 Table 5-1 p. 4 (DBZ pinout), Sec. 6.1-6.4 p. 5, Sec. 6.9 p. 10 (U3 precision OVP comparator)"
+    },
+    "MF-LSMF500/16X": {
       "manufacturer": "Bourns",
       "datasheet_pdf": "datasheets/MF-LSMF.pdf",
       "pages": 11,
       "package": "2920",
       "vmax_V": 16.0,
       "imax_A": 40.0,
-      "ihold_23C_A": 4.0,
-      "ihold_50C_A": 3.00,
-      "ihold_55C_A": 2.82,
-      "ihold_60C_A": 2.64,
-      "itrip_23C_A": 8.0,
+      "ihold_23C_A": 5.0,
+      "ihold_50C_A": 3.75,
+      "ihold_55C_A": 3.525,
+      "ihold_60C_A": 3.30,
+      "itrip_23C_A": 10.0,
       "r_min_ohm": 0.005,
-      "r_1max_ohm": 0.040,
+      "r_1max_ohm": 0.025,
       "pd_tripped_W": 1.5,
-      "citation": "p. 2-3 Electrical Characteristics & Thermal Derating (upgraded from MF-LSMF300/24X for >=2.64 A @ 60C hold margin and 40 mOhm R1max; 16 V rating covers 12 V faults)"
+      "citation": "p. 2-3 Electrical Characteristics & Thermal Derating (upgraded from MF-LSMF400/16X for >=3.30 A @ 60C hold margin across full datasheet worst-case USB droop)"
+    },
+    "BAW56LT1G": {
+      "manufacturer": "onsemi",
+      "datasheet_pdf": "datasheets/BAW56_onsemi.pdf",
+      "package": "SOT-23-3 (Style 12 Common Anode: 1=K1, 2=K2, 3=Anode)",
+      "vr_max_V": 70.0,
+      "if_max_mA": 200.0,
+      "vf_max_mV_1mA": 715.0,
+      "ir_max_uA_70V_25C": 2.5,
+      "citation": "p. 1-2 Maximum Ratings & Electrical Characteristics (D16 dual common-anode OVP gate-turn-off & hysteresis steering)"
     },
     "BAV70LT1G": {
       "manufacturer": "onsemi",
@@ -312,7 +355,7 @@
       "vf_max_mV_1mA": 715.0,
       "ir_max_uA_100V_25C": 1.0,
       "ir_max_uA_25V_150C": 60.0,
-      "citation": "p. 1-2 Maximum Ratings & Electrical Characteristics (corrects BAW56 common-anode pinout conflict)"
+      "citation": "p. 1-2 Maximum Ratings & Electrical Characteristics (D12 Maxi-Switch diode-OR)"
     },
     "BZT52C5V6-7-F": {
       "manufacturer": "Diodes Incorporated",
@@ -323,7 +366,7 @@
       "zzt_max_ohm": 40.0,
       "pd_75C_mW": 500.0,
       "r_theta_ja_C_per_W": 338.0,
-      "citation": "p. 2 Thermal & Electrical Characteristics (D15 OVP sense Zener driving Q2)"
+      "citation": "p. 2 Thermal & Electrical Characteristics (D15 Q1A/Q1B gate-source VGS <= 6.0 V clamp)"
     },
     "BZT52C18-7-F": {
       "manufacturer": "Diodes Incorporated",

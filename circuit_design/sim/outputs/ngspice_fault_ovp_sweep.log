@@ -1,0 +1,71 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: * lepiled diy maxi switch - exhaustive 6.0..16.0 v worst-case ovp sweep (ngspice)
+
+Doing analysis at TEMP = 85.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+Operating point simulation skipped by 'uic',
+  now using transient initial conditions.
+ Reference value :  3.00457e-04
+ Reference value :  6.23057e-04
+ Reference value :  9.49257e-04
+ Reference value :  1.28186e-03
+ Reference value :  1.60986e-03
+ Reference value :  1.93526e-03
+ Reference value :  2.26246e-03
+ Reference value :  2.59566e-03
+ Reference value :  2.92446e-03
+ Reference value :  3.24986e-03
+ Reference value :  3.57866e-03
+ Reference value :  3.90726e-03
+ Reference value :  4.23986e-03
+ Reference value :  4.57346e-03
+ Reference value :  4.90106e-03
+ Reference value :  5.22786e-03
+ Reference value :  5.55726e-03
+ Reference value :  5.88126e-03
+ Reference value :  6.20826e-03
+ Reference value :  6.50031e-03
+ Reference value :  6.50391e-03
+ Reference value :  6.57830e-03
+ Reference value :  6.90170e-03
+ Reference value :  7.22570e-03
+ Reference value :  7.50038e-03
+ Reference value :  7.77087e-03
+ Reference value :  8.09447e-03
+ Reference value :  8.41847e-03
+ Reference value :  8.74307e-03
+No. of Data Rows : 45456
+hold55_85c_vin_ss   =  5.127342e+00 from=  8.000000e-03 to=  9.000000e-03
+sw60_vp_pk          =  5.999802e+00 at=  6.580100e-03
+sw60_pd11_pk        =  1.056159e-05 at=  6.580100e-03
+sw62_vp_pk          =  6.105604e+00 at=  6.512070e-03
+sw62_pd11_pk        =  2.535778e-05 at=  6.512070e-03
+sw64_vp_pk          =  6.030069e+00 at=  6.506594e-03
+sw64_pd11_pk        =  5.320306e-06 at=  6.506594e-03
+sw66_vp_pk          =  5.953417e+00 at=  6.504678e-03
+sw66_pd11_pk        =  1.000077e-06 at=  6.504678e-03
+sw67_vp_pk          =  5.913621e+00 at=  6.504061e-03
+sw67_pd11_pk        =  4.084986e-07 at=  6.504061e-03
+sw68_vp_pk          =  5.873901e+00 at=  6.503581e-03
+sw68_pd11_pk        =  1.579366e-07 at=  6.503581e-03
+sw69_vp_pk          =  5.833409e+00 at=  6.503189e-03
+sw69_pd11_pk        =  5.034190e-08 at=  6.503189e-03
+sw70_vp_pk          =  5.792394e+00 at=  6.502866e-03
+sw70_pd11_pk        =  5.200438e-09 at=  6.502866e-03
+sw12_vp_pk          =  5.211234e+00 at=  6.500614e-03
+sw12_pd11_pk        =  -1.443874e-08 at=  6.500000e-03
+sw15_vp_pk          =  5.168417e+00 at=  6.500614e-03
+sw15_pd11_pk        =  -1.433538e-08 at=  6.500000e-03
+sw16_vp_pk          =  5.158225e+00 at=  6.500692e-03
+sw16_pd11_pk        =  -1.431071e-08 at=  6.500000e-03
+step_5to12_vin_pk   =  5.291394e+00 at=  7.500495e-03
+step_5to12_vin_ss   =  4.284703e-08 from=  8.500000e-03 to=  9.000000e-03
+step_5to12_vgs_min  =  -4.669092e+00 at=  7.500446e-03
+step_5to16_vin_pk   =  5.182470e+00 at=  7.500122e-03
+step_5to16_vin_ss   =  4.171512e-08 from=  8.500000e-03 to=  9.000000e-03
+step_5to16_vgs_min  =  -4.737915e+00 at=  7.500067e-03
+ngspice-45.2 done

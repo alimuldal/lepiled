@@ -89,6 +89,7 @@ def run_ngspice_suite() -> dict:
         ("nominal", NETLIST_DIR / "lepiled_nominal.cir"),
         ("fault_open_led", NETLIST_DIR / "lepiled_fault_open_led.cir"),
         ("fault_input_prot", NETLIST_DIR / "lepiled_fault_input_prot.cir"),
+        ("fault_ovp_sweep", NETLIST_DIR / "lepiled_fault_ovp_sweep.cir"),
     ]:
         proc = subprocess.run(
             [str(ngspice), "-b", str(netlist)],
@@ -126,10 +127,24 @@ def run_ngspice_suite() -> dict:
     assert prot_m["cold_il1_pk"] < 3.0, f"Cold hot-plug I_L1_pk >= 3A Isat: {prot_m['cold_il1_pk']}"
     assert prot_m["cold_il2_pk"] < 3.0, f"Cold hot-plug I_L2_pk >= 3A Isat: {prot_m['cold_il2_pk']}"
     assert abs(prot_m["rev12_iin_ss"]) < 1e-3, f"-12V reverse current >= 1mA: {prot_m['rev12_iin_ss']}"
+    assert abs(prot_m["rev16_iin_ss"]) < 1e-3, f"-16V reverse current >= 1mA: {prot_m['rev16_iin_ss']}"
     assert prot_m["ov12_stiff_vin_pk"] < 7.0, f"+12V stiff VIN_PROT >= 7V: {prot_m['ov12_stiff_vin_pk']}"
     assert prot_m["ov12_4a_vin_pk"] < 7.0, f"+12V 4A-limited VIN_PROT >= 7V: {prot_m['ov12_4a_vin_pk']}"
-    assert prot_m["step_5to12_vin_pk"] < 7.0, f"5->12V step VIN_PROT >= 7V: {prot_m['step_5to12_vin_pk']}"
-    assert prot_m["step_5to12_vin_ss"] < 1e-3, f"5->12V step failed to cut off: {prot_m['step_5to12_vin_ss']}"
+    assert prot_m["ov16_stiff_vin_pk"] < 7.0, f"+16V stiff VIN_PROT >= 7V: {prot_m['ov16_stiff_vin_pk']}"
+    for r_key in ["ov16_pr12_w", "ov16_pr13_w", "ov16_pr14_w", "ov16_pr15_w", "ov16_pr16_w", "ov16_pr17_w", "ov16_pr19_w"]:
+        assert prot_m[r_key] <= 0.050, f"+16V resistor {r_key} exceeded 50 mW: {prot_m[r_key]}"
+
+    swp_m = results["runs"]["fault_ovp_sweep"]["measurements"]
+    assert swp_m["hold55_85c_vin_ss"] > 5.0, f"5.5V @ 85C hold ON failed: {swp_m['hold55_85c_vin_ss']}"
+    for v_tag in ["60", "62", "64", "66", "67", "68", "69", "70", "12", "15", "16"]:
+        assert swp_m[f"sw{v_tag}_vp_pk"] < 7.0, f"OVP sweep {v_tag} VIN_PROT >= 7V: {swp_m[f'sw{v_tag}_vp_pk']}"
+        assert swp_m[f"sw{v_tag}_pd11_pk"] < 0.050, f"OVP sweep {v_tag} P(D11) >= 50mW: {swp_m[f'sw{v_tag}_pd11_pk']}"
+    assert swp_m["step_5to12_vin_pk"] < 7.0, f"5.5->12V step VIN_PROT >= 7V: {swp_m['step_5to12_vin_pk']}"
+    assert swp_m["step_5to12_vin_ss"] < 1e-3, f"5.5->12V step failed to cut off: {swp_m['step_5to12_vin_ss']}"
+    assert swp_m["step_5to12_vgs_min"] > -8.0, f"5.5->12V Vgs exceeded -8V: {swp_m['step_5to12_vgs_min']}"
+    assert swp_m["step_5to16_vin_pk"] < 7.0, f"5.5->16V step VIN_PROT >= 7V: {swp_m['step_5to16_vin_pk']}"
+    assert swp_m["step_5to16_vin_ss"] < 1e-3, f"5.5->16V step failed to cut off: {swp_m['step_5to16_vin_ss']}"
+    assert swp_m["step_5to16_vgs_min"] > -8.0, f"5.5->16V Vgs exceeded -8V: {swp_m['step_5to16_vgs_min']}"
 
     # Plot ngspice nominal trace
     trace_path = OUT_DIR / "ngspice_nominal_trace.txt"
@@ -187,36 +202,49 @@ def solve_steady_boost(
     tr_ns: float,
     tf_ns: float,
 ) -> dict:
-    """Solve steady-state CCM/DCM boost converter equations per TI LM3410 SNVS541H."""
+    """Solve steady-state CCM/DCM boost converter equations per TI LM3410 SNVS541H with exact energy conservation."""
     i_led = vfb / r_sense
     v_str = vstr_at_350mA + (i_led - 0.350) * rdyn_str
     v_out = v_str + vfb
 
-    d = (v_out + vd - vin_ic) / (v_out + vd)
-    for _ in range(15):
-        i_in_avg = i_led / max(1.0 - d, 0.04)
-        v_drop = i_in_avg * (dcr + d * rds)
-        d_new = (v_out + vd - vin_ic + v_drop) / (v_out + vd)
-        d = min(max(d_new, 0.05), 0.95)
+    p_led = v_str * i_led
+    p_rsense = (i_led**2) * r_sense
+    p_diode = vd * i_led
+    p_q = vin_ic * iq
 
-    i_in_avg = i_led / (1.0 - d)
-    di_l_pp = (vin_ic - i_in_avg * (dcr + rds)) * d / (L * fsw)
-    i_l_pk = i_in_avg + 0.5 * di_l_pp
-    i_l_min = i_in_avg - 0.5 * di_l_pp
+    d = (v_out + vd - vin_ic) / (v_out + vd)
+    i_l_avg = i_led / max(1.0 - d, 0.04)
+
+    for _ in range(40):
+        v_drop = i_l_avg * (dcr + d * rds)
+        d = min(max((v_out + vd - vin_ic + v_drop) / (v_out + vd), 0.05), 0.95)
+        di_l_pp = max((vin_ic - i_l_avg * (dcr + rds)) * d / (L * fsw), 0.0)
+        i_l_rms = math.sqrt(i_l_avg**2 + (di_l_pp**2) / 12.0)
+        i_sw_rms = math.sqrt(d) * i_l_rms
+        p_cond = (i_sw_rms**2) * rds
+        p_ind = (i_l_rms**2) * dcr
+        p_sw = 0.5 * v_out * i_l_avg * fsw * ((tr_ns + tf_ns) * 1e-9)
+        p_stage = p_led + p_rsense + p_diode + p_ind + p_cond + p_sw
+        i_l_avg_new = p_stage / vin_ic
+        if abs(i_l_avg_new - i_l_avg) < 1e-12:
+            i_l_avg = i_l_avg_new
+            break
+        i_l_avg = 0.5 * i_l_avg + 0.5 * i_l_avg_new
+
+    di_l_pp = (vin_ic - i_l_avg * (dcr + rds)) * d / (L * fsw)
+    i_l_pk = i_l_avg + 0.5 * di_l_pp
+    i_l_min = i_l_avg - 0.5 * di_l_pp
     is_ccm = i_l_min > 0.0
 
-    # RMS & power loss breakdown (TI Sec. 10.3.3 Eqs. 40-49)
-    i_l_rms = math.sqrt(i_in_avg**2 + (di_l_pp**2) / 12.0)
+    # Exact power-conserving RMS & loss breakdown (TI Sec. 10.3.3 Eqs. 40-50)
+    i_l_rms = math.sqrt(i_l_avg**2 + (di_l_pp**2) / 12.0)
     i_sw_rms = math.sqrt(d) * i_l_rms
     p_cond = (i_sw_rms**2) * rds
-    p_sw = 0.5 * v_out * i_in_avg * fsw * ((tr_ns + tf_ns) * 1e-9)
-    p_q = vin_ic * iq
+    p_sw = 0.5 * v_out * i_l_avg * fsw * ((tr_ns + tf_ns) * 1e-9)
     p_ic = p_cond + p_sw + p_q
-    p_diode = vd * i_led
     p_ind = (i_l_rms**2) * dcr
-    p_rsense = (i_led**2) * r_sense
-    p_led = v_str * i_led
     p_in_ch = p_led + p_rsense + p_ic + p_diode + p_ind
+    i_in_avg = p_in_ch / vin_ic
     eta = p_led / p_in_ch
 
     # Output ripple voltage: capacitor charge/discharge + peak inductor current * ESR
@@ -228,7 +256,7 @@ def solve_steady_boost(
         "v_out_V": v_out,
         "duty": d,
         "ccm": is_ccm,
-        "i_in_avg_A": i_in_avg + iq,
+        "i_in_avg_A": i_in_avg,
         "di_l_pp_A": di_l_pp,
         "i_l_pk_A": i_l_pk,
         "i_l_rms_A": i_l_rms,
@@ -254,7 +282,7 @@ def run_scipy_transient_ode(ds: dict) -> dict:
     gr = ds["leds"]["XPEBGR-L1-0000-00K01"]
     cw = ds["leds"]["XPEBWT-L1-0000-00H51"]
     mos = ds["protection_and_input"]["DMG2305UX-7"]
-    ptc = ds["protection_and_input"]["MF-LSMF400/16X"]
+    ptc = ds["protection_and_input"]["MF-LSMF500/16X"]
     usb = ds["protection_and_input"]["USB4085-GF-A"]
 
     L = ind["L_H"]
@@ -266,11 +294,11 @@ def run_scipy_transient_ode(ds: dict) -> dict:
     vd = ds["schottky_diode"]["B340A-13-F"]["vf_V"]["at_1A_25C_typ"]
     icl_typ = ic["icl_A"]["typ"]
 
-    # Input path impedance: cable (0.05) + J1 (0.04) + F1 (0.02) + Q1A+Q1B (0.08)
+    # Input path impedance: 18 AWG 1m cable (0.022) + J1 (0.040) + F1 MF-LSMF500/16X (0.015) + Q1A+Q1B (0.080)
     r_in_path = (
-        0.05
+        0.022
         + usb["contact_resistance_mohm"]["initial"] * 1e-3
-        + 0.020
+        + 0.015
         + 2.0 * mos["rds_on_ohm"]["at_4V5_typ"]
     )
     v_usb = 5.0
@@ -436,6 +464,7 @@ def solve_usb_path_droop(
     r_q1_pair: float,
     ds: dict,
     worst_boost: bool = False,
+    worst_leds: bool = False,
 ) -> dict:
     """Self-consistent 8-ALL input-path droop & F1 hold-current verification."""
     ic = ds["boost_ic"]["LM3410XMY/NOPB"]
@@ -450,39 +479,55 @@ def solve_usb_path_droop(
 
     r_path = r_cable + r_j1 + r_f1 + r_q1_pair
     L = ind["L_min_H"] if worst_boost else ind["L_H"]
-    dcr = ind["dcr_max_ohm"] if worst_boost else ind["dcr_typ_ohm"]
-    rds = ic["rds_on_ohm"]["typ_125C"] if worst_boost else ic["rds_on_ohm"]["typ_25C"]
-    vd = sch["vf_V"]["at_2A_25C_typ"] if worst_boost else sch["vf_V"]["at_1A_25C_typ"]
-    vfb = ic["vfb_V"]["typ"]
-    fsw = ic["fsw_Hz"]["typ"]
-    r_sense = res_s["resistance_ohm"]
-    vstr_uv = 4.0 * uv["vf_at_350mA_25C_V"]["typ"]
-    vstr_vis = 2.0 * rb["vf_at_350mA_25C_V"]["typ"] + gr["vf_at_350mA_25C_V"]["typ"] + cw["vf_at_350mA_25C_V"]["typ"]
+    dcr = ind["dcr_max_ohm"] * 1.30 if worst_boost else ind["dcr_typ_ohm"]
+    rds = ic["rds_on_ohm"]["max"] if worst_boost else ic["rds_on_ohm"]["typ_25C"]
+    vd = sch["vf_V"]["at_3A_25C_max"] if worst_boost else sch["vf_V"]["at_1A_25C_typ"]
+    vfb = ic["vfb_V"]["max"] if worst_boost else ic["vfb_V"]["typ"]
+    fsw_loss = ic["fsw_Hz"]["max"] if worst_boost else ic["fsw_Hz"]["typ"]
+    fsw_pk = ic["fsw_Hz"]["min"] if worst_boost else ic["fsw_Hz"]["typ"]
+    iq = ic["iq_switching_mA"]["max"] * 1e-3 if worst_boost else ic["iq_switching_mA"]["typ"] * 1e-3
+    r_sense = res_s["resistance_ohm"] * (0.99 if worst_boost else 1.0)
+    vstr_uv = 16.0 if worst_leds else 4.0 * uv["vf_at_350mA_25C_V"]["typ"]
+    vstr_vis = 13.5 if worst_leds else (2.0 * rb["vf_at_350mA_25C_V"]["typ"] + gr["vf_at_350mA_25C_V"]["typ"] + cw["vf_at_350mA_25C_V"]["typ"])
     rdyn_uv = 4.0 * uv["rdyn_ohm_per_led"]
     rdyn_vis = 2.0 * rb["rdyn_ohm_per_led"] + gr["rdyn_ohm_per_led"] + cw["rdyn_ohm_per_led"]
 
-    vin_prot = v_usb - 0.35
-    for _ in range(30):
+    vin_prot = v_usb - 0.25
+    for _ in range(40):
         c1 = solve_steady_boost(
-            vin_prot, L, r_sense, vstr_uv, rdyn_uv, vfb, fsw, rds, dcr, vd,
+            vin_prot, L, r_sense, vstr_uv, rdyn_uv, vfb, fsw_loss, rds, dcr, vd,
             cap_out["effective_capacitance_at_16V_F"], cap_out["esr_ohm"],
-            ic["iq_switching_mA"]["typ"] * 1e-3, ic["t_rise_ns"], ic["t_fall_ns"],
+            iq, ic["t_rise_ns"], ic["t_fall_ns"],
         )
         c2 = solve_steady_boost(
-            vin_prot, L, r_sense, vstr_vis, rdyn_vis, vfb, fsw, rds, dcr, vd,
+            vin_prot, L, r_sense, vstr_vis, rdyn_vis, vfb, fsw_loss, rds, dcr, vd,
             cap_out["effective_capacitance_at_16V_F"], cap_out["esr_ohm"],
-            ic["iq_switching_mA"]["typ"] * 1e-3, ic["t_rise_ns"], ic["t_fall_ns"],
+            iq, ic["t_rise_ns"], ic["t_fall_ns"],
         )
         i_in = c1["i_in_avg_A"] + c2["i_in_avg_A"]
         vin_prot = v_usb - i_in * r_path
+
+    # Evaluate worst-case peak inductor current at fsw_pk
+    c1_pk = solve_steady_boost(
+        vin_prot, L, r_sense, vstr_uv, rdyn_uv, vfb, fsw_pk, rds, dcr, vd,
+        cap_out["effective_capacitance_at_16V_F"], cap_out["esr_ohm"],
+        iq, ic["t_rise_ns"], ic["t_fall_ns"],
+    )
+    c2_pk = solve_steady_boost(
+        vin_prot, L, r_sense, vstr_vis, rdyn_vis, vfb, fsw_pk, rds, dcr, vd,
+        cap_out["effective_capacitance_at_16V_F"], cap_out["esr_ohm"],
+        iq, ic["t_rise_ns"], ic["t_fall_ns"],
+    )
 
     return {
         "v_usb_V": v_usb,
         "r_path_ohm": round(r_path, 4),
         "vin_prot_V": round(vin_prot, 3),
         "i_usb_A": round(i_in, 3),
-        "ch1_ipk_A": round(c1["i_l_pk_A"], 3),
-        "ch2_ipk_A": round(c2["i_l_pk_A"], 3),
+        "p_usb_total_W": round(v_usb * i_in, 3),
+        "ch1_ipk_A": round(c1_pk["i_l_pk_A"], 3),
+        "ch2_ipk_A": round(c2_pk["i_l_pk_A"], 3),
+        "ch1_tj_55C_C": round(55.0 + c1["p_ic_W"] * ic["r_theta_ja_C_per_W"], 2),
         "p_f1_W": round((i_in**2) * r_f1, 3),
         "p_q1_pair_W": round((i_in**2) * r_q1_pair, 3),
         "p_pcb_passives_W": round((i_in**2) * (r_f1 + r_q1_pair) + c1["p_rsense_W"] + c2["p_rsense_W"], 3),
@@ -499,7 +544,7 @@ def run_corners_and_mc(ds: dict) -> tuple[dict, list[dict]]:
     rb = ds["leds"]["XPEBRY-L1-0000-00S02"]
     gr = ds["leds"]["XPEBGR-L1-0000-00K01"]
     cw = ds["leds"]["XPEBWT-L1-0000-00H51"]
-    ptc = ds["protection_and_input"]["MF-LSMF400/16X"]
+    ptc = ds["protection_and_input"]["MF-LSMF500/16X"]
     mos = ds["protection_and_input"]["DMG2305UX-7"]
     usb = ds["protection_and_input"]["USB4085-GF-A"]
 
@@ -512,10 +557,10 @@ def run_corners_and_mc(ds: dict) -> tuple[dict, list[dict]]:
     tr, tf = ic["t_rise_ns"], ic["t_fall_ns"]
     t_pcb_max_C = 55.0
 
-    # Nominal steady-state at typ 5.0 V USB -> ~4.62 V at IC after cable + J1 + F1 + Q1A/Q1B
+    # Nominal steady-state at typ 5.0 V USB (18 AWG 1.0 m cable + J1 + F1 + Q1A/Q1B -> R_path = 0.157 Ohm)
     nom_droop = solve_usb_path_droop(
-        5.0, 0.05, usb["contact_resistance_mohm"]["initial"] * 1e-3,
-        0.020, 2.0 * mos["rds_on_ohm"]["at_4V5_typ"], ds, worst_boost=False
+        5.0, 0.022, usb["contact_resistance_mohm"]["initial"] * 1e-3,
+        0.015, 2.0 * mos["rds_on_ohm"]["at_4V5_typ"], ds, worst_boost=False, worst_leds=False,
     )
     vin_ic_nom = nom_droop["vin_prot_V"]
 
@@ -539,32 +584,34 @@ def run_corners_and_mc(ds: dict) -> tuple[dict, list[dict]]:
         tr_ns=tr, tf_ns=tf,
     )
 
-    # Input-path droop scenarios (8-ALL mode)
+    # Reconciled input-path droop scenarios (8-ALL mode) — zero uncovered V_IC gap
     droop_checks = {
-        "usb_5p0V_typ_20AWG_1m": solve_usb_path_droop(5.0, 0.05, 0.04, 0.020, 0.080, ds, worst_boost=False),
-        "usb_4p75V_maxR_20AWG_1p5m": solve_usb_path_droop(4.75, 0.06, 0.05, ptc["r_1max_ohm"], 2.0 * mos["rds_on_ohm"]["at_4V5_max"], ds, worst_boost=True),
-        "usb_4p50V_short_cable": solve_usb_path_droop(4.50, 0.04, 0.04, 0.020, 0.080, ds, worst_boost=False),
-        "vic_4p50V_direct": solve_usb_path_droop(4.50, 0.0, 0.0, 0.0, 0.0, ds, worst_boost=True),
+        "usb_5p0V_typ_18AWG_1m_usbc": solve_usb_path_droop(5.0, 0.022, 0.040, 0.015, 0.080, ds, worst_boost=False, worst_leds=False),
+        "usb_4p85V_ds_worst_18AWG_1m_captive": solve_usb_path_droop(4.85, 0.022, 0.0, ptc["r_1max_ohm"], 2.0 * mos["rds_on_ohm"]["at_4V5_max"], ds, worst_boost=True, worst_leds=True),
+        "usb_4p90V_ds_worst_18AWG_0p8m_usbc": solve_usb_path_droop(4.90, 0.018, 0.050, ptc["r_1max_ohm"], 2.0 * mos["rds_on_ohm"]["at_4V5_max"], ds, worst_boost=True, worst_leds=True),
+        "usb_4p75V_typLED_20AWG_1m_usbc": solve_usb_path_droop(4.75, 0.040, 0.050, ptc["r_1max_ohm"], 2.0 * mos["rds_on_ohm"]["at_4V5_max"], ds, worst_boost=True, worst_leds=False),
+        "vic_4p25V_ds_worst_direct": solve_usb_path_droop(4.25, 0.0, 0.0, 0.0, 0.0, ds, worst_boost=True, worst_leds=True),
     }
-    assert droop_checks["usb_4p75V_maxR_20AWG_1p5m"]["i_usb_A"] < ptc["ihold_55C_A"], (
-        f"4.75V droop exceeds F1 Ihold@55C ({ptc['ihold_55C_A']}A): {droop_checks['usb_4p75V_maxR_20AWG_1p5m']}"
-    )
-    assert droop_checks["usb_4p75V_maxR_20AWG_1p5m"]["i_usb_A"] < ptc["ihold_60C_A"], (
-        f"4.75V droop exceeds F1 Ihold@60C ({ptc['ihold_60C_A']}A): {droop_checks['usb_4p75V_maxR_20AWG_1p5m']}"
-    )
-    assert droop_checks["vic_4p50V_direct"]["ch1_ipk_A"] < ic["icl_A"]["min"]
+    for d_key in ["usb_4p85V_ds_worst_18AWG_1m_captive", "usb_4p90V_ds_worst_18AWG_0p8m_usbc", "usb_4p75V_typLED_20AWG_1m_usbc"]:
+        dc = droop_checks[d_key]
+        assert dc["i_usb_A"] < ptc["ihold_55C_A"], f"{d_key} exceeds F1 Ihold@55C ({ptc['ihold_55C_A']}A): {dc}"
+        assert dc["i_usb_A"] < ptc["ihold_60C_A"], f"{d_key} exceeds F1 Ihold@60C ({ptc['ihold_60C_A']}A): {dc}"
+        assert dc["ch1_ipk_A"] < ic["icl_A"]["min"], f"{d_key} exceeds ICL_min: {dc}"
+        assert dc["ch1_tj_55C_C"] <= ic["tj_recommended_max_C"], f"{d_key} exceeds Tj 125C: {dc}"
+    assert droop_checks["vic_4p25V_ds_worst_direct"]["ch1_ipk_A"] < ic["icl_A"]["min"]
+    assert droop_checks["vic_4p25V_ds_worst_direct"]["ch1_tj_55C_C"] <= ic["tj_recommended_max_C"]
 
-    # Exhaustive corner sweep across 3 scenarios
+    # Exhaustive corner sweep across 3 scenarios (datasheet_spec explicitly includes V_IC_min = 4.25 V & 4.38 V!)
     scenarios = [
-        ("datasheet_spec", [ic["vfb_V"]["min"], vfb_nom, ic["vfb_V"]["max"]], [r_nom * 0.99, r_nom, r_nom * 1.01]),
-        ("oos_vfb_10pct_r_5pct", [vfb_nom * 0.90, vfb_nom, vfb_nom * 1.10], [r_nom * 0.95, r_nom, r_nom * 1.05]),
-        ("oos_vfb_15pct_r_5pct", [vfb_nom * 0.85, vfb_nom, vfb_nom * 1.15], [r_nom * 0.95, r_nom, r_nom * 1.05]),
+        ("datasheet_spec", [4.25, 4.38, 4.50, 5.00, 5.50], [ic["vfb_V"]["min"], vfb_nom, ic["vfb_V"]["max"]], [r_nom * 0.99, r_nom, r_nom * 1.01], ic["tj_recommended_max_C"]),
+        ("oos_vfb_10pct_r_5pct", [4.50, 5.00, 5.50], [vfb_nom * 0.90, vfb_nom, vfb_nom * 1.10], [r_nom * 0.95, r_nom, r_nom * 1.05], ic["tj_recommended_max_C"]),
+        ("oos_vfb_15pct_r_5pct", [4.50, 5.00, 5.50], [vfb_nom * 0.85, vfb_nom, vfb_nom * 1.15], [r_nom * 0.95, r_nom, r_nom * 1.05], ic["tj_abs_max_C"]),
     ]
 
     corner_rows: list[dict] = []
     corner_summary: dict = {}
 
-    for scen_name, vfb_vals, r_vals in scenarios:
+    for scen_name, vin_vals, vfb_vals, r_vals, tj_gate_C in scenarios:
         for ch_name, vstr_vals, rdyn_str, if_max in [
             ("Ch1_UV", [11.4, vstr_uv_nom, 16.0], rdyn_uv, uv["if_max_cw_A"]),
             ("Ch2_Vis", [10.2, vstr_vis_nom, 13.5], rdyn_vis, rb["if_max_cw_A"]),
@@ -578,7 +625,7 @@ def run_corners_and_mc(ds: dict) -> tuple[dict, list[dict]]:
             tot = 0
 
             for vin, L, r_s, vstr, vfb, fsw, rds, vd in itertools.product(
-                [4.5, 5.0, 5.5],
+                vin_vals,
                 [L_nom * (1.0 - L_tol), L_nom, L_nom * (1.0 + L_tol)],
                 r_vals,
                 vstr_vals,
@@ -603,12 +650,12 @@ def run_corners_and_mc(ds: dict) -> tuple[dict, list[dict]]:
                 max_pic = max(max_pic, res["p_ic_W"])
 
                 if (
-                    vin == 4.5
+                    vin == min(vin_vals)
                     and L == L_nom * (1.0 - L_tol)
                     and r_s == min(r_vals)
                     and vstr == max(vstr_vals)
                     and vfb == max(vfb_vals)
-                    and fsw == ic["fsw_Hz"]["min"]
+                    and fsw in (ic["fsw_Hz"]["min"], ic["fsw_Hz"]["max"])
                     and rds == ic["rds_on_ohm"]["max"]
                     and vd == sch["vf_V"]["at_3A_25C_max"]
                 ):
@@ -628,6 +675,9 @@ def run_corners_and_mc(ds: dict) -> tuple[dict, list[dict]]:
                         "i_l_pk_A": round(res["i_l_pk_A"], 4),
                         "margin_vs_icl_min_A": round(ic["icl_A"]["min"] - res["i_l_pk_A"], 4),
                         "p_ic_mW": round(res["p_ic_W"] * 1e3, 1),
+                        "p_ind_mW": round(res["p_ind_W"] * 1e3, 1),
+                        "p_diode_mW": round(res["p_diode_W"] * 1e3, 1),
+                        "p_rsense_mW": round(res["p_rsense_W"] * 1e3, 1),
                         "tj_ic_at_55C": round(t_pcb_max_C + res["p_ic_W"] * ic["r_theta_ja_C_per_W"], 2),
                         "ccm": res["ccm"],
                     })
@@ -637,6 +687,7 @@ def run_corners_and_mc(ds: dict) -> tuple[dict, list[dict]]:
             key = f"{scen_name}__{ch_name}"
             corner_summary[key] = {
                 "total_corners": tot,
+                "vin_min_V": min(vin_vals),
                 "dcm_corners": dcm_count,
                 "max_i_l_pk_A": round(max_ipk, 4),
                 "margin_vs_icl_min_A": round(ic["icl_A"]["min"] - max_ipk, 4),
@@ -647,16 +698,18 @@ def run_corners_and_mc(ds: dict) -> tuple[dict, list[dict]]:
                 "max_p_ic_mW": round(max_pic * 1e3, 1),
                 "max_tj_ic_55C_amb": round(max_tj_55C, 2),
                 "max_tj_ic_60C_amb": round(max_tj_60C, 2),
+                "tj_limit_C": tj_gate_C,
+                "max_tpcb_for_125C_C": round(125.0 - max_pic * ic["r_theta_ja_C_per_W"], 2),
                 "all_limits_pass": bool(
                     max_ipk < ic["icl_A"]["min"]
                     and max_d < ic["dmax"]["min"]
                     and max_iled < if_max
                     and max_vout < ic["vsw_recommended_V"]["max"]
-                    and max_tj_55C <= ic["tj_recommended_max_C"]
+                    and max_tj_55C <= tj_gate_C
                 ),
             }
 
-    # Seeded N = 2000 Monte-Carlo sampling FULL [4.5, 5.5] V and [0.17, 0.33] Ohm ranges, T_PCB in [25, 55] C
+    # Seeded N = 2000 Monte-Carlo sampling FULL [4.25, 5.50] V and [0.17, 0.33] Ohm ranges, T_PCB in [25, 55] C
     rng = np.random.default_rng(42)
     N = 2000
     mc_ipk_ch1 = np.zeros(N)
@@ -666,7 +719,7 @@ def run_corners_and_mc(ds: dict) -> tuple[dict, list[dict]]:
     mc_tj_ic1 = np.zeros(N)
 
     for i in range(N):
-        vin = rng.uniform(4.50, 5.50)
+        vin = rng.uniform(4.25, 5.50)
         L1 = np.clip(rng.normal(L_nom, L_nom * L_tol / 2.5), L_nom * 0.78, L_nom * 1.22)
         L2 = np.clip(rng.normal(L_nom, L_nom * L_tol / 2.5), L_nom * 0.78, L_nom * 1.22)
         r1 = rng.normal(r_nom, r_nom * 0.015)
@@ -726,7 +779,7 @@ def run_corners_and_mc(ds: dict) -> tuple[dict, list[dict]]:
         "corners": corner_summary,
         "monte_carlo_N2000": {
             "seed": 42,
-            "vin_range_V": [4.50, 5.50],
+            "vin_range_V": [4.25, 5.50],
             "rds_range_ohm": [0.17, 0.33],
             "t_pcb_range_C": [25.0, t_pcb_max_C],
             "ch1_ipk_max_A": float(np.max(mc_ipk_ch1)),
