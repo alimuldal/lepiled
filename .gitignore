@@ -8,4 +8,10 @@ venv/
 *.bak
 .DS_Store
 circuit_design/sim/outputs/*_trace.txt
-
+.mypy_cache/
+*-backups/
+*.kicad_pcb-bak
+*.kicad_sch-bak
+*.lck
+~*.lck
+_autosave-*

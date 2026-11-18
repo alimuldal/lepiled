@@ -39,3 +39,12 @@ This file tracks external access blockers, missing system-level software requiri
   - `kicad-cli --version` -> `9.0.8` (exit code `0`).
   - `kicad-python -c "import pcbnew; print(pcbnew.Version())"` -> `9.0.8` (exit code `0`).
   - `gerbv --version` -> `gerbv version` (exit code `0`).
+
+### B3 / M3. Parametric 3D CAD & FVM Thermal Toolchain (`build123d 0.13.0` + `lepiled-cad-venv`) — **RESOLVED IN USER-SPACE (NO BLOCKER)**
+- **Status:** System-wide CAD/mesh/rendering packages are not installed (`sudo` unavailable), **but a complete Python `3.14.4` CAD, B-Rep, mesh, and offscreen rendering environment is provisioned and verified in user-space** without root privileges.
+- **Location:** `/home/alimuldal/.local/share/lepiled-cad-venv/bin/python` (`Python 3.14.4`), paired with `/usr/bin/xvfb-run` for headless offscreen rendering.
+- **Installed Key Packages:** `build123d 0.13.0`, `cadquery-ocp-novtk 8.0.1.1.0`, `trimesh 5.2.1`, `manifold3d 3.5.5`, `pyvista 0.49.2`, `vtk 9.7.2`, `numpy-stl 4.1.4`, `numpy 2.5.5`, `scipy 1.18.1`, `matplotlib 3.11.2`.
+- **Verification:**
+  - `/home/alimuldal/.local/share/lepiled-cad-venv/bin/python mechanical_design/cad/params.py` -> `34/34` parametric checks `PASS` (exit code `0`).
+  - `/home/alimuldal/.local/share/lepiled-cad-venv/bin/python mechanical_design/cad/generate_cad.py` -> `0/612` all-pairs B-Rep overlaps, `84/84` insertion checks pass (exit code `0`).
+  - `xvfb-run -a /home/alimuldal/.local/share/lepiled-cad-venv/bin/python mechanical_design/cad/render_cad.py` -> renders 6 CAD PNGs (exit code `0`).
