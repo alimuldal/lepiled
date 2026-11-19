@@ -5,7 +5,7 @@
       "Application": "Pcbnew",
       "Version": "9.0.8+dfsg-1"
     },
-    "CreationDate": "2026-11-18T14:44:23+00:00"
+    "CreationDate": "2026-11-19T00:40:05+00:00"
   },
   "GeneralSpecs": {
     "ProjectId": {
@@ -17,7 +17,7 @@
       "X": 20.1,
       "Y": 80.1
     },
-    "LayerNumber": 2,
+    "LayerNumber": 1,
     "BoardThickness": 1.6,
     "Finish": "None"
   },
@@ -60,7 +60,8 @@
   "MaterialStackup": [
     {
       "Type": "Legend",
-      "Name": "Top Silk Screen"
+      "Name": "Top Silk Screen",
+      "Color": "Black"
     },
     {
       "Type": "SolderPaste",
@@ -68,8 +69,9 @@
     },
     {
       "Type": "SolderMask",
-      "Thickness": 0.01,
-      "Name": "Top Solder Mask"
+      "Thickness": 0.02,
+      "Name": "Top Solder Mask",
+      "Color": "White"
     },
     {
       "Type": "Copper",
@@ -78,15 +80,15 @@
     },
     {
       "Type": "Dielectric",
-      "Thickness": 1.52,
-      "Material": "FR4",
-      "Name": "F.Cu/B.Cu",
-      "Notes": "Type: dielectric layer 1 (from F.Cu to B.Cu)"
+      "Thickness": 0.1,
+      "Material": "Thermal Dielectric (1.0 W/m*K)",
+      "Name": "Thermal Dielectric"
     },
     {
-      "Type": "Copper",
-      "Thickness": 0.035,
-      "Name": "B.Cu"
+      "Type": "Dielectric",
+      "Thickness": 1.445,
+      "Material": "Aluminum 5052/6061 Base",
+      "Name": "Aluminum Core"
     }
   ]
 }

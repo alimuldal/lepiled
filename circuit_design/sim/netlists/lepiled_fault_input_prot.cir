@@ -1,160 +1,57 @@
-* LepiLED DIY Maxi Switch - Input Protection & Cold Hot-Plug Fault Suite (ngspice)
-* Verifies worst-case protection corners across -16 V .. +16 V at 85 C:
-*   1. Cold 0 -> 5.0 V hot-plug (IC=0 on all caps, SW1 in 8-ALL, dual LM3410XMY load): I_in_pk < 3.0 A, I_L1/L2 < 3.0 A I_sat
-*   2. 5.5 V @ 85 C worst-case LOW-trip corner (2.5 Ohm load): holds ON with zero false-trip
-*   3. -12 V & -16 V reverse polarity: zero crowbar (|I_rev| < 1 mA, VIN_PROT ~ 0 V, |Vgs| < 8.0 V)
-*   4. +12 V stiff, +12 V 4 A-limited, and +16 V worst-case LOW-trip corner: VIN_PROT_pk < 7.0 V, max(P(R*)) <= 50 mW
-*   5. Live +5.5 V -> +12.0 V (1 us) and +5.5 V -> +16.0 V (200 ns) steps & 6.0..16.0 V OVP sweep
-*      are verified in circuit_design/sim/netlists/lepiled_fault_ovp_sweep.cir
+* ==============================================================================
+* LepiLED Rev 4.0 — Fault 3: Input Protection Suite
+*   Case A: Aux DC TP1 Reverse Polarity (-30 V) -> D13 blocks, VIN_20V = 0 V
+*   Case B: Aux DC TP1 +24 V with J1 Unplugged -> Q1A/Q1B block back-feed to VBUS
+*   Case C: Inductive USB-C 21 V Hot-Plug (L=0.5 uH, R=0.15 Ohm) -> Overdamped
+*           C1+C10/R7 + SMBJ22CA keeps V_VBUS_FUSED << 30 V DMN3404L / 31 V AP33771C
+* ==============================================================================
+.include models.lib
 
-.INCLUDE circuit_design/sim/netlists/models.lib
-.INCLUDE circuit_design/sim/netlists/lm3410xmy.lib
+* --- CASE A: Aux DC Reverse Polarity (-30 V on TP1) ---
+V_rev a_aux_in 0 -30.0
+RF2_a a_aux_in a_aux_fused 0.060
+D13_a a_aux_fused a_vin20 D_B340A
+* Real board VIN_20V DC impedance: R14 (10k) || (R15+R16=69k) || R17 (22k) = 6.25 kOhm
+Rload_a a_vin20 0 6.25k
 
-* Worst-Case Input Protection Subcircuit (TL431AIDBZR + MMBT3906 + MMBT3904 + BAW56 + BZT52C5V6 + SMBJ5.0A_MIN)
-.SUBCKT INPUT_PROT_WC VBUS VIN_PROT GND PARAMS: RF1=0.025 VREF=2.495 IREF=2u R12V=13.7k R13V=10.0k R19V=68.0k
-C12 VBUS GND 100n IC=0
-R_F1 VBUS VBUS_FUSED {RF1}
-M_Q1A VBUS_FUSED Q1_GATE V_MID V_MID M_DMG2305UX_WC
-M_Q1B VIN_PROT   Q1_GATE V_MID V_MID M_DMG2305UX_WC
-D11 GND VIN_PROT D_SMBJ5_MIN
-D15 Q1_GATE V_MID D_Z5V6_MAX
+* --- CASE B: Aux DC +24 V on TP1 with J1 Unplugged (Back-Feed Test) ---
+V_aux b_aux_in 0 24.0
+RF2_b b_aux_in b_aux_fused 0.060
+D13_b b_aux_fused b_vin20 D_B340A
+* Q1A/Q1B common-source back-to-back with U3 unpowered (PWR_EN=0)
+R11_b 0 b_q1_gate 6.2k
+C13_b b_q1_gate b_q1_mid 47n
+MQ1B_b b_vin20 b_q1_gate b_q1_mid b_q1_mid DMN3404L
+MQ1A_b b_vbus_s b_q1_gate b_q1_mid b_q1_mid DMN3404L
+R8_b b_vbus_f b_vbus_s 0.005
+RF1_b b_vbus b_vbus_f 0.060
+R_j1_open b_vbus 0 100k
 
-R10 V_MID Q1_GATE 10k
-Q3 Q1_GATE Q3_BASE Q3_EMIT Q_MMBT3904_MIN
-R11 Q3_EMIT GND 1.5k
-C_PAR_Q3E Q3_EMIT GND 1p
-C_PAR_OK  OVP_K   GND 1p
-C_PAR_Q2B Q2_BASE GND 1p
-C_PAR_OD  OVP_DRV GND 1p
-C_PAR_OH  OVP_HYS GND 1p
-R14 V_MID Q3_BASE 220k
-C11 Q3_BASE GND 100n IC=0
+* --- CASE C: Inductive USB-C 21 V Hot-Plug (L=0.5 uH, R=0.15 Ohm) ---
+V_hp c_src 0 PULSE(0 21.0 10u 100n 100n 2m 10m)
+Rc_hp c_src c_n1 0.15
+Lc_hp c_n1 c_vbus 0.5u
+RF1_c c_vbus c_vbus_f 0.060
+XD11_c c_vbus_f 0 TVS_SMBJ22CA
+C1_c c_vbus_f 0 1.0u
+R7_c c_vbus_f c_damp 1.0
+C10_c c_damp 0 4.7u
+R8_c c_vbus_f c_vbus_s 0.005
+C11_c c_vbus_s 0 1.0u
 
-R12 V_MID OVP_SENSE {R12V}
-R13 OVP_SENSE GND {R13V}
-X_U3 OVP_K OVP_SENSE GND TL431_AI VREF={VREF} IREF_BIAS={IREF}
-R15 V_MID Q2_BASE 10k
-R16 Q2_BASE OVP_K 5.6k
-Q2 OVP_DRV Q2_BASE V_MID Q_MMBT3906_MIN
-R17 OVP_DRV Q4_BASE 10k
-R20 Q4_BASE GND 100k
-Q4 Q3_BASE Q4_BASE GND Q_MMBT3904_MIN
-D16A OVP_DRV OVP_DRV_GATE D_BAV70
-R18 OVP_DRV_GATE Q1_GATE 220
-D16B OVP_DRV OVP_HYS D_BAV70
-R19 OVP_HYS OVP_SENSE {R19V}
-.ENDS INPUT_PROT_WC
+.options method=gear reltol=1e-3 abstol=1e-10
+.tran 50n 200u 0 50n uic
 
-* --- CASE 1: Cold 0->5.0V Hot-Plug (IC=0 everywhere, 8-ALL pre-selected, dual LM3410XMY load) ---
-V_C1 IN1 0 PWL(0 0 10u 5.0 7.5m 5.0)
-R_C1 IN1 VBUS1_A 0.062
-L_C1 VBUS1_A VBUS1 0.5u
-X_P1 VBUS1 VIN1 0 INPUT_PROT_WC RF1=0.015 VREF=2.495 IREF=2u R12V=13.7k R13V=10.0k R19V=68.0k
-C1_1 VIN1 0 24.2u IC=0
-
-L1_1 VIN1 SW1_1 10u
-X_U1_1 VIN1 SW1_1 FB1_1 VIN1 0 LM3410XMY VFB=0.190 FSW=1.6e6 ICL=2.8 RDS=0.170 DMAX=0.92
-D9_1 SW1_1 VOUT1_1 D_B340A
-C4_1 VOUT1_1 0 7.6u IC=0
-R3_1 UR_1 0 0.56
-D13_1 FB1_1 VOUT1_1 D_Z18V
-R8_1 FB1_1 UR_1 100
-D1_1 VOUT1_1 U1A_1 D_SST10UV
-D2_1 U1A_1 U1B_1 D_SST10UV
-D3_1 U1B_1 U1C_1 D_SST10UV
-D4_1 U1C_1 UR_1 D_SST10UV
-
-R7_1 VIN1 DIM2_1 10k
-C6_1 DIM2_1 0 100n IC=0
-L2_1 VIN1 SW2_1 10u
-X_U2_1 VIN1 SW2_1 FB2_1 DIM2_1 0 LM3410XMY VFB=0.190 FSW=1.6e6 ICL=2.8 RDS=0.170 DMAX=0.92
-D10_1 SW2_1 VOUT2_1 D_B340A
-C5_1 VOUT2_1 0 7.6u IC=0
-R4_1 VR_1 0 0.56
-D14_1 FB2_1 VOUT2_1 D_Z18V
-R9_1 FB2_1 VR_1 100
-D5_1 VOUT2_1 V1A_1 D_XPE2_RB
-D6_1 V1A_1 V1B_1 D_XPE2_RB
-D7_1 V1B_1 V1C_1 D_XPE2_GR
-D8_1 V1C_1 VR_1 D_XPE2_CW
-
-* --- CASE 2..4: -12V, -16V, +12V Stiff/4A, +16V Dissipation ---
-V_R12 IN_R12 0 PWL(0 0 10u -12.0 7.5m -12.0)
-R_R12 IN_R12 VB_R12 0.05
-X_PR12 VB_R12 VP_R12 0 INPUT_PROT_WC RF1=0.025
-C_R12 VP_R12 0 24.2u IC=0
-R_LR12 VP_R12 0 1k
-
-V_R16 IN_R16 0 PWL(0 0 10u -16.0 7.5m -16.0)
-R_R16 IN_R16 VB_R16 0.05
-X_PR16 VB_R16 VP_R16 0 INPUT_PROT_WC RF1=0.025
-C_R16 VP_R16 0 24.2u IC=0
-R_LR16 VP_R16 0 1k
-
-V_12S IN_12S 0 PWL(0 0 10u 12.0 7.5m 12.0)
-R_12S IN_12S VB_12S 0.05
-X_P12S VB_12S VP_12S 0 INPUT_PROT_WC RF1=0.005 VREF=2.453 IREF=0 R12V=13.563k R13V=10.10k
-C_12S VP_12S 0 24.2u IC=0
-R_L12S VP_12S 0 1k
-
-I_C4 0 IN4 DC 4.0
-D_CL4 IN4 CL4_N D_B340A
-V_CL4 CL4_N 0 DC 11.6
-R_C4 IN4 VBUS4 0.05
-X_P4 VBUS4 VIN4 0 INPUT_PROT_WC RF1=0.025 VREF=2.453 IREF=0 R12V=13.563k R13V=10.10k
-C1_4 VIN4 0 24.2u IC=0
-R_LD4 VIN4 0 1k
-
-V_16L IN_16L 0 PWL(0 0 10u 16.0 7.5m 16.0)
-R_16L IN_16L VB_16L 0.05
-X_P16L VB_16L VP_16L 0 INPUT_PROT_WC RF1=0.005 VREF=2.453 IREF=0 R12V=13.563k R13V=10.10k R19V=68.68k
-C_16L VP_16L 0 24.2u IC=0
-R_L16L VP_16L 0 10k
-
-.TEMP 85
-.TRAN 80n 7.5m 0 80n UIC
-
-.CONTROL
+.control
+set filetype=ascii
 run
-let i1_in = -i(v_c1)
-let ir12_in = -i(v_r12)
-let ir16_in = -i(v_r16)
-let i12s_in = -i(v_12s)
-let i16l_in = -i(v_16l)
-
-meas tran cold_iin_pk max i1_in from=0 to=7.5m
-meas tran cold_il1_pk max i(l1_1) from=0 to=7.5m
-meas tran cold_il2_pk max i(l2_1) from=0 to=7.5m
-meas tran cold_vin_ss avg v(vin1) from=6.5m to=7.5m
-meas tran cold_vout1_ss avg v(vout1_1) from=6.5m to=7.5m
-
-meas tran rev12_iin_ss avg ir12_in from=5.0m to=7.5m
-meas tran rev12_vin_min min v(vp_r12) from=0 to=7.5m
-meas tran rev16_iin_ss avg ir16_in from=5.0m to=7.5m
-meas tran rev16_vin_min min v(vp_r16) from=0 to=7.5m
-
-meas tran ov12_stiff_vin_pk max v(vp_12s) from=0 to=7.5m
-meas tran ov12_stiff_iin_ss avg i12s_in from=5.0m to=7.5m
-meas tran ov12_4a_vin_pk max v(vin4) from=0 to=7.5m
-meas tran ov12_4a_vbus_ss avg v(vbus4) from=5.0m to=7.5m
-meas tran ov16_stiff_vin_pk max v(vp_16l) from=0 to=7.5m
-meas tran ov16_stiff_iin_ss avg i16l_in from=5.0m to=7.5m
-
-* Power dissipation of every bias/OVP resistor at +16.0 V steady-state
-let p16_r12 = (v(x_p16l.v_mid)-v(x_p16l.ovp_sense))*(v(x_p16l.v_mid)-v(x_p16l.ovp_sense))/13.563k
-let p16_r13 = v(x_p16l.ovp_sense)*v(x_p16l.ovp_sense)/10.10k
-let p16_r14 = (v(x_p16l.v_mid)-v(x_p16l.q3_base))*(v(x_p16l.v_mid)-v(x_p16l.q3_base))/220k
-let p16_r15 = (v(x_p16l.v_mid)-v(x_p16l.q2_base))*(v(x_p16l.v_mid)-v(x_p16l.q2_base))/10k
-let p16_r16 = (v(x_p16l.q2_base)-v(x_p16l.ovp_k))*(v(x_p16l.q2_base)-v(x_p16l.ovp_k))/5.6k
-let p16_r17 = (v(x_p16l.ovp_drv)-v(x_p16l.q4_base))*(v(x_p16l.ovp_drv)-v(x_p16l.q4_base))/10k
-let p16_r19 = (v(x_p16l.ovp_hys)-v(x_p16l.ovp_sense))*(v(x_p16l.ovp_hys)-v(x_p16l.ovp_sense))/68.68k
-meas tran ov16_pr12_w avg p16_r12 from=6.5m to=7.5m
-meas tran ov16_pr13_w avg p16_r13 from=6.5m to=7.5m
-meas tran ov16_pr14_w avg p16_r14 from=6.5m to=7.5m
-meas tran ov16_pr15_w avg p16_r15 from=6.5m to=7.5m
-meas tran ov16_pr16_w avg p16_r16 from=6.5m to=7.5m
-meas tran ov16_pr17_w avg p16_r17 from=6.5m to=7.5m
-meas tran ov16_pr19_w avg p16_r19 from=6.5m to=7.5m
-quit 0
-.ENDC
-.END
+wrdata ../outputs/fault_input_prot.txt v(a_vin20) i(v_rev) v(b_vbus) v(b_vin20) v(c_vbus_f) v(c_vbus_s)
+meas tran rev_vin20_min  MIN v(a_vin20)  FROM=50u TO=200u
+meas tran rev_irev_max   MAX i(v_rev)    FROM=50u TO=200u
+meas tran aux_vbus_leak  MAX v(b_vbus)   FROM=50u TO=200u
+meas tran aux_vin20_avg  AVG v(b_vin20)  FROM=50u TO=200u
+meas tran hp_vbus_peak   MAX v(c_vbus_f) FROM=0 TO=200u
+meas tran hp_vbus_final  AVG v(c_vbus_f) FROM=150u TO=200u
+quit
+.endc
+.end

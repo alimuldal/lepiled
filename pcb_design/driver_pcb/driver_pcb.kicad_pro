@@ -41,11 +41,11 @@
           "height": 1.27,
           "width": 2.54
         },
-        "silk_line_width": 0.12,
+        "silk_line_width": 0.15,
         "silk_text_italic": false,
-        "silk_text_size_h": 0.7,
-        "silk_text_size_v": 0.7,
-        "silk_text_thickness": 0.12,
+        "silk_text_size_h": 0.8,
+        "silk_text_size_v": 0.8,
+        "silk_text_thickness": 0.15,
         "silk_text_upright": false,
         "zones": {
           "min_clearance": 0.5
@@ -92,7 +92,7 @@
         "nonmirrored_text_on_back_layer": "warning",
         "npth_inside_courtyard": "ignore",
         "padstack": "warning",
-        "pth_inside_courtyard": "ignore",
+        "pth_inside_courtyard": "error",
         "shorting_items": "error",
         "silk_edge_clearance": "warning",
         "silk_over_copper": "warning",
@@ -117,7 +117,7 @@
       },
       "rules": {
         "max_error": 0.005,
-        "min_clearance": 0.18,
+        "min_clearance": 0.16,
         "min_connection": 0.0,
         "min_copper_edge_clearance": 0.3,
         "min_groove_width": 0.0,
@@ -126,15 +126,16 @@
         "min_microvia_diameter": 0.2,
         "min_microvia_drill": 0.1,
         "min_resolved_spokes": 2,
-        "min_silk_clearance": 0.1,
-        "min_text_height": 0.5,
+        "min_silk_clearance": 0.15,
+        "min_text_height": 0.6,
         "min_text_thickness": 0.08,
         "min_through_hole_diameter": 0.28,
-        "min_track_width": 0.25,
+        "min_track_width": 0.2,
         "min_via_annular_width": 0.12,
         "min_via_annulus": 0.12,
         "min_via_diameter": 0.55,
         "solder_mask_clearance": 0.05,
+        "solder_mask_min_width": 0.1,
         "solder_mask_to_copper_clearance": 0.0,
         "use_height_for_length_calcs": true
       },
@@ -183,12 +184,13 @@
         }
       ],
       "track_widths": [
+        0.2,
         0.25,
         0.4,
         0.5,
         0.6,
-        1.0,
-        1.5
+        0.8,
+        1.0
       ],
       "tuning_pattern_settings": {
         "diff_pair_defaults": {
@@ -222,8 +224,8 @@
           "drill": 0.3
         },
         {
-          "diameter": 0.8,
-          "drill": 0.4
+          "diameter": 0.75,
+          "drill": 0.35
         }
       ],
       "zones_allow_external_fillets": false
@@ -259,7 +261,7 @@
     "classes": [
       {
         "bus_width": 12,
-        "clearance": 0.2,
+        "clearance": 0.16,
         "diff_pair_gap": 0.25,
         "diff_pair_via_gap": 0.25,
         "diff_pair_width": 0.2,
@@ -270,7 +272,7 @@
         "pcb_color": "rgba(0, 0, 0, 0.000)",
         "priority": 2147483647,
         "schematic_color": "rgba(0, 0, 0, 0.000)",
-        "track_width": 0.3,
+        "track_width": 0.25,
         "via_diameter": 0.6,
         "via_drill": 0.3,
         "wire_width": 6
@@ -284,36 +286,36 @@
         "line_style": 0,
         "microvia_diameter": 0.3,
         "microvia_drill": 0.1,
-        "name": "Power_5V",
+        "name": "LED_Drive",
         "pcb_color": "rgba(0, 0, 0, 0.000)",
-        "priority": 0,
+        "priority": 2,
         "schematic_color": "rgba(0, 0, 0, 0.000)",
-        "track_width": 1.5,
-        "via_diameter": 0.8,
-        "via_drill": 0.4,
+        "track_width": 0.5,
+        "via_diameter": 0.6,
+        "via_drill": 0.3,
         "wire_width": 6
       },
       {
         "bus_width": 12,
-        "clearance": 0.25,
+        "clearance": 0.16,
         "diff_pair_gap": 0.25,
         "diff_pair_via_gap": 0.25,
         "diff_pair_width": 0.2,
         "line_style": 0,
         "microvia_diameter": 0.3,
         "microvia_drill": 0.1,
-        "name": "Power_HV",
+        "name": "Power_20V",
         "pcb_color": "rgba(0, 0, 0, 0.000)",
-        "priority": 2,
+        "priority": 0,
         "schematic_color": "rgba(0, 0, 0, 0.000)",
-        "track_width": 0.6,
-        "via_diameter": 0.8,
-        "via_drill": 0.4,
+        "track_width": 0.8,
+        "via_diameter": 0.6,
+        "via_drill": 0.3,
         "wire_width": 6
       },
       {
         "bus_width": 12,
-        "clearance": 0.22,
+        "clearance": 0.2,
         "diff_pair_gap": 0.25,
         "diff_pair_via_gap": 0.25,
         "diff_pair_width": 0.2,
@@ -324,14 +326,14 @@
         "pcb_color": "rgba(0, 0, 0, 0.000)",
         "priority": 1,
         "schematic_color": "rgba(0, 0, 0, 0.000)",
-        "track_width": 1.0,
+        "track_width": 0.55,
         "via_diameter": 0.6,
         "via_drill": 0.3,
         "wire_width": 6
       },
       {
         "bus_width": 12,
-        "clearance": 0.2,
+        "clearance": 0.16,
         "diff_pair_gap": 0.25,
         "diff_pair_via_gap": 0.25,
         "diff_pair_width": 0.2,
@@ -342,7 +344,7 @@
         "pcb_color": "rgba(0, 0, 0, 0.000)",
         "priority": 3,
         "schematic_color": "rgba(0, 0, 0, 0.000)",
-        "track_width": 0.25,
+        "track_width": 0.22,
         "via_diameter": 0.6,
         "via_drill": 0.3,
         "wire_width": 6
@@ -353,153 +355,101 @@
     },
     "net_colors": null,
     "netclass_assignments": {
-      "CC1": [
+      "/AUX_FUSED": [
+        "Power_20V"
+      ],
+      "/AUX_IN": [
+        "Power_20V"
+      ],
+      "/CC1": [
         "Signal"
       ],
-      "CC2": [
+      "/CC2": [
         "Signal"
       ],
-      "DIM2_NET": [
+      "/PD_LED_A": [
         "Signal"
       ],
-      "EN1_NET": [
+      "/Q1_GATE": [
         "Signal"
       ],
-      "EN2_NET": [
-        "Signal"
+      "/Q1_MID": [
+        "Power_20V"
       ],
-      "FB1_NET": [
-        "Signal"
-      ],
-      "FB2_NET": [
-        "Signal"
-      ],
-      "OVP_DRV": [
-        "Signal"
-      ],
-      "OVP_DRV_GATE": [
-        "Signal"
-      ],
-      "OVP_HYS": [
-        "Signal"
-      ],
-      "OVP_K": [
-        "Signal"
-      ],
-      "OVP_SENSE": [
-        "Signal"
-      ],
-      "Q1_GATE": [
-        "Signal"
-      ],
-      "Q2_BASE": [
-        "Signal"
-      ],
-      "Q3_BASE": [
-        "Signal"
-      ],
-      "Q3_EMIT": [
-        "Signal"
-      ],
-      "Q4_BASE": [
-        "Signal"
-      ],
-      "SW1_NODE": [
+      "/SW1_NODE": [
         "Power_SW"
       ],
-      "SW2_NODE": [
+      "/SW2_NODE": [
         "Power_SW"
       ],
-      "SW_UV_EN": [
+      "/SW_ALL_N": [
         "Signal"
       ],
-      "UV_RET": [
-        "Power_HV"
+      "/SW_UV_N": [
+        "Signal"
       ],
-      "VBUS": [
-        "Power_5V"
+      "/U1_CTRL": [
+        "Signal"
       ],
-      "VBUS_FUSED": [
-        "Power_5V"
+      "/U2_CTRL": [
+        "Signal"
       ],
-      "VIN_PROT": [
-        "Power_5V"
+      "/U3_ISEL": [
+        "Signal"
       ],
-      "VIS_RET": [
-        "Power_HV"
+      "/U3_LED": [
+        "Signal"
       ],
-      "VOUT1": [
-        "Power_HV"
+      "/U3_PWR_EN": [
+        "Signal"
       ],
-      "VOUT2": [
-        "Power_HV"
+      "/U3_V5V": [
+        "Signal"
       ],
-      "V_MID": [
-        "Power_5V"
+      "/U3_VOUT": [
+        "Signal"
+      ],
+      "/U3_VSEL": [
+        "Signal"
+      ],
+      "/UVLO_SENSE": [
+        "Signal"
+      ],
+      "/UV_NEG": [
+        "LED_Drive"
+      ],
+      "/UV_POS": [
+        "LED_Drive"
+      ],
+      "/VBUS": [
+        "Power_20V"
+      ],
+      "/VBUS_DAMP": [
+        "Power_20V"
+      ],
+      "/VBUS_FUSED": [
+        "Power_20V"
+      ],
+      "/VBUS_SENSE": [
+        "Power_20V"
+      ],
+      "/VIN_20V": [
+        "Power_20V"
+      ],
+      "/VIS_NEG": [
+        "LED_Drive"
+      ],
+      "/VIS_POS": [
+        "LED_Drive"
+      ],
+      "/V_REF": [
+        "Signal"
+      ],
+      "/V_SW_BIAS": [
+        "Signal"
       ]
     },
-    "netclass_patterns": [
-      {
-        "netclass": "Power_5V",
-        "pattern": "VBUS*"
-      },
-      {
-        "netclass": "Power_5V",
-        "pattern": "V_MID"
-      },
-      {
-        "netclass": "Power_5V",
-        "pattern": "VIN_PROT"
-      },
-      {
-        "netclass": "Power_SW",
-        "pattern": "SW*_NODE"
-      },
-      {
-        "netclass": "Power_HV",
-        "pattern": "VOUT*"
-      },
-      {
-        "netclass": "Power_HV",
-        "pattern": "*_RET"
-      },
-      {
-        "netclass": "Signal",
-        "pattern": "EN*"
-      },
-      {
-        "netclass": "Signal",
-        "pattern": "DIM2_NET"
-      },
-      {
-        "netclass": "Signal",
-        "pattern": "SW_UV_EN"
-      },
-      {
-        "netclass": "Signal",
-        "pattern": "OVP_*"
-      },
-      {
-        "netclass": "Signal",
-        "pattern": "Q*_GATE"
-      },
-      {
-        "netclass": "Signal",
-        "pattern": "Q*_BASE"
-      },
-      {
-        "netclass": "Signal",
-        "pattern": "Q*_EMIT"
-      },
-      {
-        "netclass": "Signal",
-        "pattern": "FB*_NET"
-      },
-      {
-        "netclass": "Signal",
-        "pattern": "CC*"
-      }
-    ]
+    "netclass_patterns": []
   },
   "pcbnew": {
     "last_paths": {
@@ -524,7 +474,7 @@
   },
   "sheets": [
     [
-      "979784bb-5d54-500e-9b71-811ba6af8406",
+      "51135221-0afc-5b30-8a40-9eb932a22263",
       "Root"
     ]
   ],

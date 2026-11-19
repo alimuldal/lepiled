@@ -1,71 +1,72 @@
 RefDes,Qty,Category,MPN,Value_Rating,Package_Footprint,Mounting,Nets,Function,Datasheet_Ref
-U1,1,Boost CC IC,TI LM3410XMY/NOPB,1.6 MHz; 2.1 A min Icl; 24 V,HVSSOP-8 (MSOP-8-1EP),On-PCB,"VIN_PROT,SW1_NODE,FB1_NET,EN1_NET,GND",Ch1 4S UV constant-current boost driver,datasheets/lm3410.pdf
-U2,1,Boost CC IC,TI LM3410XMY/NOPB,1.6 MHz; 2.1 A min Icl; 24 V,HVSSOP-8 (MSOP-8-1EP),On-PCB,"VIN_PROT,SW2_NODE,FB2_NET,DIM2_NET,GND",Ch2 4S Vis constant-current boost driver,datasheets/lm3410.pdf
-U3,1,Precision Shunt Reference,TI TL431AIDBZR,2.495 V +/-1%; 36 V; SOT-23-3 DBZ,SOT-23-3,On-PCB,"OVP_K,OVP_SENSE,GND",Precision OVP reference comparator (trips V_MID in [5.75; 6.14] V),datasheets/tl431.pdf
-Q1A,1,P-MOSFET,Diodes DMG2305UX-7,-20 V; -4.2 A steady; 52 mOhm max @ -4.5 V,SOT-23-3,On-PCB,"VBUS_FUSED,V_MID,Q1_GATE",Reverse-polarity blocking P-MOSFET (Drain=VBUS_FUSED; Source=V_MID),datasheets/DMG2305UX.pdf
-Q1B,1,P-MOSFET,Diodes DMG2305UX-7,-20 V; -4.2 A steady; 52 mOhm max @ -4.5 V,SOT-23-3,On-PCB,"V_MID,VIN_PROT,Q1_GATE",OVP cutoff and soft-start P-MOSFET (Source=V_MID; Drain=VIN_PROT),datasheets/DMG2305UX.pdf
-Q2,1,PNP BJT,onsemi MMBT3906LT1G,-40 V; -200 mA; hFE>=80,SOT-23-3,On-PCB,"OVP_DRV,Q2_BASE,V_MID",OVP pull-up driver (drives Q1_GATE via D16A/R18 and Q4 via R17 when U3 trips),datasheets/mmbt3906lt1-d.pdf
-Q3,1,NPN BJT,onsemi MMBT3904LT1G,40 V; 200 mA; hFE>=70,SOT-23-3,On-PCB,"Q1_GATE,Q3_BASE,Q3_EMIT",Soft-start gate driver (pulls Q1_GATE low via R11; off in <2 us on OVP),datasheets/mmbt3904lt1-d.pdf
-Q4,1,NPN BJT,onsemi MMBT3904LT1G,40 V; 200 mA; hFE>=70,SOT-23-3,On-PCB,"Q3_BASE,Q4_BASE,GND",OVP latch clamp (clamps Q3_BASE to GND when Q2 asserts OVP_DRV),datasheets/mmbt3904lt1-d.pdf
-F1,1,PTC Polyfuse,Bourns MF-LSMF500/16X,16 V; 5.0 A hold (3.30 A @ 60C); 10.0 A trip; 25 mOhm max,2920,On-PCB,"VBUS,VBUS_FUSED",Input overcurrent resettable polyfuse,datasheets/MF-LSMF.pdf
-D1,1,UV LED,Luminus SST-10-UV-A130-G365-00,365 nm; 339 mA nom; 1.0 A max,3535 SMD (A130),Off-Board,"VOUT1,UV_N1",Ch1 UV LED 1 on MECH-MCPCB-1,datasheets/Luminus_SST-10-UV_Datasheet.pdf
-D2,1,UV LED,Luminus SST-10-UV-A130-G365-00,365 nm; 339 mA nom; 1.0 A max,3535 SMD (A130),Off-Board,"UV_N1,UV_N2",Ch1 UV LED 2 on MECH-MCPCB-2,datasheets/Luminus_SST-10-UV_Datasheet.pdf
-D3,1,UV LED,Luminus SST-10-UV-A130-G365-00,365 nm; 339 mA nom; 1.0 A max,3535 SMD (A130),Off-Board,"UV_N2,UV_N3",Ch1 UV LED 3 on MECH-MCPCB-3,datasheets/Luminus_SST-10-UV_Datasheet.pdf
-D4,1,UV LED,Luminus SST-10-UV-A130-G365-00,365 nm; 339 mA nom; 1.0 A max,3535 SMD (A130),Off-Board,"UV_N3,UV_RET",Ch1 UV LED 4 on MECH-MCPCB-4,datasheets/Luminus_SST-10-UV_Datasheet.pdf
-D5,1,Royal Blue LED,Cree XPEBRY-L1-0000-00S02,455 nm (450-460 nm); 339 mA nom; 1.2 A max,3535 SMD (XP),Off-Board,"VOUT2,VIS_N1",Ch2 Vis LED 1 (Royal Blue) on MECH-MCPCB-1,datasheets/XLamp-XPE2.pdf
-D6,1,Royal Blue LED,Cree XPEBRY-L1-0000-00S02,455 nm (450-460 nm); 339 mA nom; 1.2 A max,3535 SMD (XP),Off-Board,"VIS_N1,VIS_N2",Ch2 Vis LED 2 (Royal Blue) on MECH-MCPCB-2,datasheets/XLamp-XPE2.pdf
-D7,1,Green LED,Cree XPEBGR-L1-0000-00K01,528 nm (520-535 nm); 339 mA nom; 1.5 A max,3535 SMD (XP),Off-Board,"VIS_N2,VIS_N3",Ch2 Vis LED 3 (Green) on MECH-MCPCB-3,datasheets/XLamp-XPE2.pdf
-D8,1,Cool White LED,Cree XPEBWT-L1-0000-00H51,6200 K; 339 mA nom; 1.5 A max,3535 SMD (XP),Off-Board,"VIS_N3,VIS_RET",Ch2 Vis LED 4 (Cool White) on MECH-MCPCB-4,datasheets/XLamp-XPE2.pdf
-D9,1,Schottky Diode,Diodes B340A-13-F,40 V; 3.0 A; 0.43 V @ 2 A,DO-214AC (SMA),On-PCB,"SW1_NODE,VOUT1",Ch1 boost catch diode,datasheets/ds13005.pdf
-D10,1,Schottky Diode,Diodes B340A-13-F,40 V; 3.0 A; 0.43 V @ 2 A,DO-214AC (SMA),On-PCB,"SW2_NODE,VOUT2",Ch2 boost catch diode,datasheets/ds13005.pdf
-D11,1,TVS Diode,Vishay SMBJ5.0A-E3/5B,5.0 V Vrwm; 6.40-7.07 V Vbr; 600 W,DO-214AA (SMB),On-PCB,"VIN_PROT,GND",Downstream ESD & surge clamp on VIN_PROT (protected from -12V/+12V by Q1A/Q1B),datasheets/smbj.pdf
-D12,1,Dual Diode (Common Cathode),onsemi BAV70LT1G,100 V; 200 mA; Common-Cathode,SOT-23-3,On-PCB,"SW_UV_EN,EN2_NET,EN1_NET",Maxi-Switch diode-OR steering (4-UV or 8-ALL -> U1.DIM),datasheets/BAV70_onsemi.pdf
-D13,1,OVP Zener Diode,Diodes BZT52C18-7-F,18 V nom (16.8-19.1 V); 500 mW,SOD-123,On-PCB,"VOUT1,FB1_NET",Ch1 open-load OVP clamp directly to FB1_NET (TI Fig. 14),datasheets/BZT52C.pdf
-D14,1,OVP Zener Diode,Diodes BZT52C18-7-F,18 V nom (16.8-19.1 V); 500 mW,SOD-123,On-PCB,"VOUT2,FB2_NET",Ch2 open-load OVP clamp directly to FB2_NET (TI Fig. 14),datasheets/BZT52C.pdf
-D15,1,Gate Clamp Zener,Diodes BZT52C5V6-7-F,5.6 V nom (5.2-6.0 V); 500 mW,SOD-123,On-PCB,"Q1_GATE,V_MID",Q1A/Q1B VGS gate-source clamp (< 6.0 V vs +/-8.0 V abs max),datasheets/BZT52C.pdf
-D16,1,Dual Diode (Common Anode),onsemi BAW56LT1G,70 V; 200 mA; Common-Anode,SOT-23-3,On-PCB,"OVP_DRV,OVP_DRV_GATE,OVP_HYS",OVP gate turn-off (K1) and hysteresis feedback (K2) steering,datasheets/BAW56_onsemi.pdf
-L1,1,Power Inductor,Bourns SRN6045-100M,10 uH +/-20%; Isat=3.0 A; DCR_max=58.6 mOhm,6.0x6.0x4.5 mm SMD,On-PCB,"VIN_PROT,SW1_NODE",Ch1 boost energy-storage inductor,datasheets/srn6045.pdf
-L2,1,Power Inductor,Bourns SRN6045-100M,10 uH +/-20%; Isat=3.0 A; DCR_max=58.6 mOhm,6.0x6.0x4.5 mm SMD,On-PCB,"VIN_PROT,SW2_NODE",Ch2 boost energy-storage inductor,datasheets/srn6045.pdf
-R1,1,Resistor,Vishay CRCW08055K10FKEA,5.1 kOhm +/-1%; 0.125 W std / 0.25 W ext,0805,On-PCB,"CC1,GND",USB-C CC1 Rd pulldown (5 V negotiation),datasheets/dcrcwe3.pdf
-R2,1,Resistor,Vishay CRCW08055K10FKEA,5.1 kOhm +/-1%; 0.125 W std / 0.25 W ext,0805,On-PCB,"CC2,GND",USB-C CC2 Rd pulldown (5 V negotiation),datasheets/dcrcwe3.pdf
-R3,1,Sense Resistor,Bourns CRL1206-FW-R560ELF,0.56 Ohm +/-1%; 0.50 W,1206,On-PCB,"UV_RET,GND",Ch1 UV current sense (339.3 mA typ),datasheets/CRL.pdf
-R4,1,Sense Resistor,Bourns CRL1206-FW-R560ELF,0.56 Ohm +/-1%; 0.50 W,1206,On-PCB,"VIS_RET,GND",Ch2 Vis current sense (339.3 mA typ),datasheets/CRL.pdf
-R5,1,Resistor,Vishay CRCW060310K0FKEA,10 kOhm +/-1%; 0.1 W,0603,On-PCB,"EN1_NET,GND",U1 DIM pulldown (prevents floating DIM),datasheets/dcrcwe3.pdf
-R6,1,Resistor,Vishay CRCW060310K0FKEA,10 kOhm +/-1%; 0.1 W,0603,On-PCB,"EN2_NET,GND",U2 DIM pulldown (prevents floating DIM),datasheets/dcrcwe3.pdf
-R7,1,Resistor,Vishay CRCW060310K0FKEA,10 kOhm +/-1%; 0.1 W,0603,On-PCB,"EN2_NET,DIM2_NET",Ch2 soft-enable stagger RC (tau_charge=1.0 ms; tau_discharge=2.0 ms with C6),datasheets/dcrcwe3.pdf
-R8,1,Resistor,Vishay CRCW0603100RFKEA,100 Ohm +/-1%; 0.1 W,0603,On-PCB,"FB1_NET,UV_RET",Ch1 OVP feedback decoupling resistor (TI Fig. 14),datasheets/dcrcwe3.pdf
-R9,1,Resistor,Vishay CRCW0603100RFKEA,100 Ohm +/-1%; 0.1 W,0603,On-PCB,"FB2_NET,VIS_RET",Ch2 OVP feedback decoupling resistor (TI Fig. 14),datasheets/dcrcwe3.pdf
-R10,1,Resistor,Vishay CRCW060310K0FKEA,10 kOhm +/-1%; 0.1 W,0603,On-PCB,"V_MID,Q1_GATE",Q1A/Q1B gate pull-up to V_MID (fast OVP turn-off),datasheets/dcrcwe3.pdf
-R11,1,Resistor,Vishay CRCW06031K50FKEA,1.5 kOhm +/-1%; 0.1 W,0603,On-PCB,"Q3_EMIT,GND",Q3 emitter degeneration for controlled soft-start slew,datasheets/dcrcwe3.pdf
-R12,1,Resistor,Vishay CRCW060313K7FKEA,13.7 kOhm +/-1%; 0.1 W,0603,On-PCB,"V_MID,OVP_SENSE",TL431 OVP precision sense top divider resistor,datasheets/dcrcwe3.pdf
-R13,1,Resistor,Vishay CRCW060310K0FKEA,10.0 kOhm +/-1%; 0.1 W,0603,On-PCB,"OVP_SENSE,GND",TL431 OVP precision sense bottom divider resistor,datasheets/dcrcwe3.pdf
-R14,1,Resistor,Vishay CRCW0603220KFKEA,220 kOhm +/-1%; 0.1 W,0603,On-PCB,"V_MID,Q3_BASE",Q3 base soft-start pull-up with C11 (~4 ms cold ramp),datasheets/dcrcwe3.pdf
-R15,1,Resistor,Vishay CRCW060310K0FKEA,10 kOhm +/-1%; 0.1 W,0603,On-PCB,"V_MID,Q2_BASE",Q2 PNP emitter-base pull-up resistor,datasheets/dcrcwe3.pdf
-R16,1,Resistor,Vishay CRCW06035K60FKEA,5.6 kOhm +/-1%; 0.1 W,0603,On-PCB,"Q2_BASE,OVP_K",U3 TL431 cathode bias resistor into Q2 base (<= 29 mW @ 16 V),datasheets/dcrcwe3.pdf
-R17,1,Resistor,Vishay CRCW060310K0FKEA,10 kOhm +/-1%; 0.1 W,0603,On-PCB,"OVP_DRV,Q4_BASE",Q4 base drive resistor from Q2 OVP_DRV (<= 22 mW @ 16 V),datasheets/dcrcwe3.pdf
-R18,1,Resistor,Vishay CRCW0603220RFKEA,220 Ohm +/-1%; 0.1 W,0603,On-PCB,"OVP_DRV_GATE,Q1_GATE",Fast Q1_GATE turn-off current limiter from D16.K1,datasheets/dcrcwe3.pdf
-R19,1,Resistor,Vishay CRCW060368K0FKEA,68.0 kOhm +/-1%; 0.1 W,0603,On-PCB,"OVP_HYS,OVP_SENSE",TL431 OVP hysteresis feedback resistor from D16.K2,datasheets/dcrcwe3.pdf
-R20,1,Resistor,Vishay CRCW0603100KFKEA,100 kOhm +/-1%; 0.1 W,0603,On-PCB,"Q4_BASE,GND",Q4 base pulldown (prevents spurious latch turn-off),datasheets/dcrcwe3.pdf
-C1,1,MLCC Input,Murata GRM31CR71E106KA12L,10 uF +/-10%; 25 V; X7R,1206,On-PCB,"VIN_PROT,GND",Input bus bulk ceramic capacitor,datasheets/datasheets_summary.json
-C2,1,MLCC Input,Murata GRM31CR71E106KA12L,10 uF +/-10%; 25 V; X7R,1206,On-PCB,"VIN_PROT,GND",U1 local VIN decoupling capacitor,datasheets/datasheets_summary.json
-C3,1,MLCC Input,Murata GRM31CR71E106KA12L,10 uF +/-10%; 25 V; X7R,1206,On-PCB,"VIN_PROT,GND",U2 local VIN decoupling capacitor,datasheets/datasheets_summary.json
-C4,1,MLCC Output,Samsung CL32B106KBJNFNE,10 uF +/-10%; 50 V; X7R,1210,On-PCB,"VOUT1,GND",Ch1 VOUT1 boost output capacitor,datasheets/datasheets_summary.json
-C5,1,MLCC Output,Samsung CL32B106KBJNFNE,10 uF +/-10%; 50 V; X7R,1210,On-PCB,"VOUT2,GND",Ch2 VOUT2 boost output capacitor,datasheets/datasheets_summary.json
-C6,1,MLCC Timing,Murata GRM188R71E104KA01D,100 nF +/-10%; 25 V; X7R,0603,On-PCB,"DIM2_NET,GND",Ch2 soft-enable stagger capacitor (tau_chg=1.0 ms / tau_dis=2.0 ms),datasheets/datasheets_summary.json
-C7,1,MLCC Bypass,Murata GRM188R71E104KA01D,100 nF +/-10%; 25 V; X7R,0603,On-PCB,"VIN_PROT,GND",U1 VIN HF bypass capacitor,datasheets/datasheets_summary.json
-C8,1,MLCC Bypass,Murata GRM188R71E104KA01D,100 nF +/-10%; 25 V; X7R,0603,On-PCB,"VIN_PROT,GND",U2 VIN HF bypass capacitor,datasheets/datasheets_summary.json
-C9,1,MLCC Bypass,Murata GRM188R71H104KA93D,100 nF +/-10%; 50 V; X7R,0603,On-PCB,"VOUT1,GND",Ch1 VOUT1 HF bypass capacitor,datasheets/datasheets_summary.json
-C10,1,MLCC Bypass,Murata GRM188R71H104KA93D,100 nF +/-10%; 50 V; X7R,0603,On-PCB,"VOUT2,GND",Ch2 VOUT2 HF bypass capacitor,datasheets/datasheets_summary.json
-C11,1,MLCC Timing,Murata GRM188R71E104KA01D,100 nF +/-10%; 25 V; X7R,0603,On-PCB,"Q3_BASE,GND",Input soft-start timing capacitor (holds Q3 OFF at +12V plug-in),datasheets/datasheets_summary.json
-C12,1,MLCC ESD Bypass,Murata GRM188R71E104KA01D,100 nF +/-10%; 25 V; X7R,0603,On-PCB,"VBUS,GND",Input J1 VBUS HF/ESD bypass capacitor (rated +/-25V),datasheets/datasheets_summary.json
-J1,1,USB-C Receptacle,GCT USB4085-GF-A,5.0 A VBUS; 6.25 A GND; 16-pin,GCT_USB4085,On-PCB,"VBUS,CC1,CC2,GND",5 V USB-C power input receptacle,datasheets/usb4085.pdf
-J2,1,LED String Header,JST B2B-XH-A,2-pin 2.50 mm; 3 A; 250 V,JST_XH_B2B_P2.50mm,On-PCB,"VOUT1,UV_RET",Ch1 4S UV LED string header (UV+ = VOUT1; UV- = UV_RET),datasheets/jst_xh.pdf
-J3,1,LED String Header,JST B2B-XH-A,2-pin 2.50 mm; 3 A; 250 V,JST_XH_B2B_P2.50mm,On-PCB,"VOUT2,VIS_RET",Ch2 4S Vis LED string header (VIS+ = VOUT2; VIS- = VIS_RET),datasheets/jst_xh.pdf
-J4,1,Switch Header,JST B3B-XH-A,3-pin 2.50 mm; 3 A; 250 V,JST_XH_B3B_P2.50mm,On-PCB,"SW_UV_EN,VIN_PROT,EN2_NET",Maxi-Switch header (1:UV_EN; 2:VIN_PROT; 3:ALL_EN),datasheets/jst_xh.pdf
-SW1,1,Toggle Switch,E-Switch 100SP3T1B1M1QEH,SPDT On-Off-On; 5 A; 1/4-40 bushing,Panel_Cutout_D6.35mm,Off-Board,"SW_UV_EN,VIN_PROT,EN2_NET",User mode switch (4-UV / OFF / 8-ALL) wired to J4,datasheets/datasheets_summary.json
+U1,1,Buck CC LED Driver,Diodes AL8860WT-7,4.5-40 V; 1.0 A; 100 mV Vsense; TSOT25,TSOT25,On-PCB,"SW1_NODE,GND,U1_CTRL,UV_POS,VIN_20V",Ch1 4S UV constant-current buck driver (333 mA nom),datasheets/AL8860.pdf
+U2,1,Buck CC LED Driver,Diodes AL8860WT-7,4.5-40 V; 1.0 A; 100 mV Vsense; TSOT25,TSOT25,On-PCB,"SW2_NODE,GND,U2_CTRL,VIS_POS,VIN_20V",Ch2 4S Vis constant-current buck driver (333 mA nom),datasheets/AL8860.pdf
+U3,1,USB-C PD 3.1 Sink IC,Diodes AP33771CFBZ-13-FA02,20 V / 1.0 A PDO; 3.3-31 V; W-DFN3030-14,W-DFN3030-14,On-PCB,"U3_VOUT,U3_PWR_EN,VBUS_SENSE,VBUS_FUSED,GND,U3_LED,U3_VSEL,U3_ISEL,CC2,CC1,U3_V5V",Standalone USB-C PD 3.1 sink controller requesting 20 V / 1.0 A,datasheets/AP33771C.pdf
+U4,1,Dual Comparator,TI LM393BIDR,2-36 V; Open-Collector; SOIC-8,SOIC-8,On-PCB,"U1_CTRL,V_REF,UVLO_SENSE,GND,U2_CTRL,VIN_20V",Hardware 17.25 V UVLO disabling U1/U2 on non-20V PD fallback,datasheets/LM393B.pdf
+U5,1,Shunt Voltage Reference,TI LM4040BIM3-2.5/NOPB,2.500 V +/-0.2%; 65 uA min; SOT-23-3 DBZ,SOT-23-3,On-PCB,"V_REF,GND",Precision 2.500 V reference for U4 UVLO comparator,datasheets/LM4040.pdf
+Q1A,1,N-MOSFET,Diodes DMN3404L-7,30 V; 4.8 A; 82 mOhm max @ 3 V / 42 mOhm @ 4.5 V,SOT-23-3,On-PCB,"Q1_GATE,Q1_MID,VBUS_SENSE",PD VBUS load switch FET 1 (common-source back-to-back with Q1B),datasheets/DMN3404L.pdf
+Q1B,1,N-MOSFET,Diodes DMN3404L-7,30 V; 4.8 A; 82 mOhm max @ 3 V / 42 mOhm @ 4.5 V,SOT-23-3,On-PCB,"Q1_GATE,Q1_MID,VIN_20V",PD VBUS reverse-blocking FET 2 (blocks Aux DC back-feed to J1),datasheets/DMN3404L.pdf
+Q2,1,N-MOSFET,onsemi BSS138,50 V; 220 mA; Vgs(th)=0.8-1.5 V; 6 Ohm @ 4.5 V,SOT-23-3,On-PCB,"SW_UV_N,GND,U1_CTRL",Ch1 UV active-low CTRL pull-down switch (OFF when SW_UV_N=GND),datasheets/BSS138.pdf
+Q3,1,N-MOSFET,onsemi BSS138,50 V; 220 mA; Vgs(th)=0.8-1.5 V; 6 Ohm @ 4.5 V,SOT-23-3,On-PCB,"SW_ALL_N,GND,U2_CTRL",Ch2 Vis active-low CTRL pull-down switch (OFF when SW_ALL_N=GND),datasheets/BSS138.pdf
+F1,1,PTC Polyfuse,Bourns MF-MSMF150/24X,24 V; 1.50 A hold (1.00 A @ 60C); 3.0 A trip,1812,On-PCB,"VBUS,VBUS_FUSED",USB-C input overcurrent resettable polyfuse,datasheets/MF-MSMF.pdf
+F2,1,PTC Polyfuse,Bourns MF-MSMF150/24X,24 V; 1.50 A hold (1.00 A @ 60C); 3.0 A trip,1812,On-PCB,"AUX_IN,AUX_FUSED",Aux 18-24 V DC input (TP1) overcurrent resettable polyfuse,datasheets/MF-MSMF.pdf
+D1,1,UV LED,Luminus SST-10-UV-A130-G365-00,365 nm; 333 mA nom; 1.0 A max,3535 SMD (A130),Off-Board,"UV_POS,UV_N1",Ch1 UV LED 1 on MECH-MCPCB-1,datasheets/Luminus_SST-10-UV_Datasheet.pdf
+D2,1,UV LED,Luminus SST-10-UV-A130-G365-00,365 nm; 333 mA nom; 1.0 A max,3535 SMD (A130),Off-Board,"UV_N1,UV_N2",Ch1 UV LED 2 on MECH-MCPCB-2,datasheets/Luminus_SST-10-UV_Datasheet.pdf
+D3,1,UV LED,Luminus SST-10-UV-A130-G365-00,365 nm; 333 mA nom; 1.0 A max,3535 SMD (A130),Off-Board,"UV_N2,UV_N3",Ch1 UV LED 3 on MECH-MCPCB-3,datasheets/Luminus_SST-10-UV_Datasheet.pdf
+D4,1,UV LED,Luminus SST-10-UV-A130-G365-00,365 nm; 333 mA nom; 1.0 A max,3535 SMD (A130),Off-Board,"UV_N3,UV_NEG",Ch1 UV LED 4 on MECH-MCPCB-4,datasheets/Luminus_SST-10-UV_Datasheet.pdf
+D5,1,Royal Blue LED,Cree XPEBRY-L1-0000-00R02,455 nm (450-460 nm); Bin 37; 333 mA nom; 1.2 A max,3535 SMD (XP),Off-Board,"VIS_POS,VIS_N1",Ch2 Vis LED 1 (Royal Blue) on MECH-MCPCB-1,datasheets/XLamp-XPE2.pdf
+D6,1,Royal Blue LED,Cree XPEBRY-L1-0000-00R02,455 nm (450-460 nm); Bin 37; 333 mA nom; 1.2 A max,3535 SMD (XP),Off-Board,"VIS_N1,VIS_N2",Ch2 Vis LED 2 (Royal Blue) on MECH-MCPCB-2,datasheets/XLamp-XPE2.pdf
+D7,1,Green LED,Cree XPEBGR-L1-0000-00F01,528 nm (520-535 nm); Bin R3; 333 mA nom; 1.5 A max,3535 SMD (XP),Off-Board,"VIS_N2,VIS_N3",Ch2 Vis LED 3 (Green) on MECH-MCPCB-3,datasheets/XLamp-XPE2.pdf
+D8,1,Cool White LED,Cree XPEBWT-L1-0000-00F51,6200 K; Bin R3; 333 mA nom; 1.5 A max,3535 SMD (XP),Off-Board,"VIS_N3,VIS_NEG",Ch2 Vis LED 4 (Cool White) on MECH-MCPCB-4,datasheets/XLamp-XPE2.pdf
+D9,1,Schottky Diode,Diodes B340A-13-F,40 V; 3.0 A; 0.35 V @ 0.33 A,DO-214AC (SMA),On-PCB,"SW1_NODE,VIN_20V",Ch1 buck freewheeling catch diode (SW1_NODE -> VIN_20V),datasheets/ds13005.pdf
+D10,1,Schottky Diode,Diodes B340A-13-F,40 V; 3.0 A; 0.35 V @ 0.33 A,DO-214AC (SMA),On-PCB,"SW2_NODE,VIN_20V",Ch2 buck freewheeling catch diode (SW2_NODE -> VIN_20V),datasheets/ds13005.pdf
+D11,1,TVS Diode (Bi-Dir),Vishay SMBJ22CA-E3/52,22 V Vrwm; 24.4-26.9 V Vbr; 600 W; Bidirectional,DO-214AA (SMB),On-PCB,"VBUS_FUSED,GND",Upstream VBUS hot-plug surge & ESD clamp,datasheets/smbj.pdf
+D12,1,Schottky Signal Diode,Diodes BAT54-7-F,30 V; 200 mA; Vf<=240 mV @ 0.1 mA,SOT-23-3,On-PCB,"SW_UV_N,SW_ALL_N",Maxi-Switch active-low steering (8-ALL pulls SW_UV_N low via D12),datasheets/BAT54.pdf
+D13,1,Schottky Diode,Diodes B340A-13-F,40 V; 3.0 A; 0.38 V @ 0.5 A,DO-214AC (SMA),On-PCB,"AUX_FUSED,VIN_20V",Aux DC reverse-polarity (-40 V) and back-feed blocking diode,datasheets/ds13005.pdf
+D14,1,Zener Diode,Diodes BZT52C5V1-7-F,5.1 V (4.8-5.4 V); 500 mW,SOD-123,On-PCB,"V_SW_BIAS,GND",5.1 V switch-bias shunt clamp protecting Q2/Q3 gates,datasheets/BZT52C.pdf
+D15,1,Indicator LED (Green),Lite-On LTST-C190GKT,Green 571 nm; 2.1 V; 20 mA max,0603,On-PCB,"PD_LED_A,GND",AP33771C USB-C PD negotiation status indicator LED,datasheets/AP33771C.pdf
+L1,1,Power Inductor,Bourns SRN6045-680M,68 uH +/-20%; Isat=1.0 A; Irms=0.9 A; DCR_max=0.351 Ohm,6.0x6.0x4.5 mm SMD,On-PCB,"UV_NEG,SW1_NODE",Ch1 UV buck energy-storage inductor,datasheets/srn6045.pdf
+L2,1,Power Inductor,Bourns SRN6045-680M,68 uH +/-20%; Isat=1.0 A; Irms=0.9 A; DCR_max=0.351 Ohm,6.0x6.0x4.5 mm SMD,On-PCB,"VIS_NEG,SW2_NODE",Ch2 Vis buck energy-storage inductor,datasheets/srn6045.pdf
+R1,1,Resistor,Vishay CRCW06035K10FKEA,5.1 kOhm +/-1%; 0.1 W,0603,On-PCB,"CC1,GND",USB-C CC1 dead-battery Rd pulldown (AP33771C Fig. 1),datasheets/dcrcwe3.pdf
+R2,1,Resistor,Vishay CRCW06035K10FKEA,5.1 kOhm +/-1%; 0.1 W,0603,On-PCB,"CC2,GND",USB-C CC2 dead-battery Rd pulldown (AP33771C Fig. 1),datasheets/dcrcwe3.pdf
+R3,1,Sense Resistor,Bourns CRL1206-FW-R300ELF,0.30 Ohm +/-1%; 0.50 W,1206,On-PCB,"VIN_20V,UV_POS",Ch1 UV high-side current sense (333.3 mA nom; 33 mW),datasheets/CRL.pdf
+R4,1,Sense Resistor,Bourns CRL1206-FW-R300ELF,0.30 Ohm +/-1%; 0.50 W,1206,On-PCB,"VIN_20V,VIS_POS",Ch2 Vis high-side current sense (333.3 mA nom; 33 mW),datasheets/CRL.pdf
+R5,1,Resistor,Vishay CRCW0603100KFKEA,100 kOhm +/-1%; 0.1 W,0603,On-PCB,"V_SW_BIAS,SW_UV_N",Q2 gate pull-up (defaults Ch1 OFF when SW1 open),datasheets/dcrcwe3.pdf
+R6,1,Resistor,Vishay CRCW0603100KFKEA,100 kOhm +/-1%; 0.1 W,0603,On-PCB,"V_SW_BIAS,SW_ALL_N",Q3 gate pull-up (defaults Ch2 OFF when SW1 open),datasheets/dcrcwe3.pdf
+R7,1,Resistor,Vishay CRCW08051R00FKEA,1.0 Ohm +/-1%; 0.125 W,0805,On-PCB,"VBUS_FUSED,VBUS_DAMP",Hot-plug RC damper series resistor with C10 (zeta~1.28),datasheets/dcrcwe3.pdf
+R8,1,Current Shunt,Vishay WSL12065L000FEA,5 mOhm +/-1%; 0.50 W,1206,On-PCB,"VBUS_FUSED,VBUS_SENSE",AP33771C Kelvin current-sense shunt (ISENP to VCC),datasheets/AP33771C.pdf
+R9,1,Resistor,Vishay CRCW060339K0FKEA,39.0 kOhm +/-1%; 0.1 W,0603,On-PCB,"U3_VSEL,GND",AP33771C VSEL = 20 V PDO selector (Table 2),datasheets/AP33771C.pdf
+R10,1,Resistor,Vishay CRCW060382K0FKEA,82.0 kOhm +/-1%; 0.1 W,0603,On-PCB,"U3_ISEL,GND",AP33771C ISEL = 1.0 A PDO / 1.1 A OCP selector (Table 2),datasheets/AP33771C.pdf
+R11,1,Resistor,Vishay CRCW06036K20FKEA,6.2 kOhm +/-1%; 0.1 W,0603,On-PCB,"U3_PWR_EN,Q1_GATE",Q1A/Q1B gate drive soft turn-on resistor (AP33771C Fig. 1),datasheets/dcrcwe3.pdf
+R12,1,Resistor,Vishay CRCW0805200RFKEA,200 Ohm +/-1%; 0.125 W,0805,On-PCB,"VIN_20V,U3_VOUT",AP33771C VOUT monitor & discharge-limit resistor (p. 7),datasheets/dcrcwe3.pdf
+R13,1,Resistor,Vishay CRCW06031K00FKEA,1.0 kOhm +/-1%; 0.1 W,0603,On-PCB,"U3_LED,PD_LED_A",AP33771C PD status LED current limiter (~2.9 mA),datasheets/dcrcwe3.pdf
+R14,1,Resistor,Vishay CRCW080510K0FKEA,10.0 kOhm +/-1%; 0.125 W,0805,On-PCB,"VIN_20V,V_REF",LM4040-2.5 shunt bias (250 uA @ 5 V; 1.75 mA @ 20 V),datasheets/dcrcwe3.pdf
+R15,1,Resistor,Vishay CRCW060359K0FKEA,59.0 kOhm +/-1%; 0.1 W,0603,On-PCB,"VIN_20V,UVLO_SENSE",UVLO divider top resistor (sets V_UVLO = 17.25 V nom),datasheets/dcrcwe3.pdf
+R16,1,Resistor,Vishay CRCW060310K0FKEA,10.0 kOhm +/-1%; 0.1 W,0603,On-PCB,"UVLO_SENSE,GND",UVLO divider bottom resistor (sets V_UVLO = 17.25 V nom),datasheets/dcrcwe3.pdf
+R17,1,Resistor,Vishay CRCW080522K0FKEA,22.0 kOhm +/-1%; 0.125 W,0805,On-PCB,"VIN_20V,V_SW_BIAS",D14 5.1 V Zener bias resistor (0.68 mA @ 20 V),datasheets/dcrcwe3.pdf
+C1,1,MLCC Input,Murata GRM21BR71H105KA12L,1.0 uF +/-10%; 50 V; X7R,0805,On-PCB,"VBUS_FUSED,GND",Upstream VBUS decoupling (C1+C10+C11 = 6.7 uF <= 10 uF USB-C spec),datasheets/datasheets_summary.json
+C2,1,MLCC Input,Samsung CL32B106KBJNNNE,10 uF +/-10%; 50 V; X7R,1210,On-PCB,"VIN_20V,GND",U1 local 20 V buck input decoupling capacitor,datasheets/datasheets_summary.json
+C3,1,MLCC Input,Samsung CL32B106KBJNNNE,10 uF +/-10%; 50 V; X7R,1210,On-PCB,"VIN_20V,GND",U2 local 20 V buck input decoupling capacitor,datasheets/datasheets_summary.json
+C4,1,MLCC Output,Murata GRM21BR71H105KA12L,1.0 uF +/-10%; 50 V; X7R,0805,On-PCB,"UV_POS,UV_NEG",Ch1 UV LED string AC ripple shunt across J2 (quiet DC harness),datasheets/datasheets_summary.json
+C5,1,MLCC Output,Murata GRM21BR71H105KA12L,1.0 uF +/-10%; 50 V; X7R,0805,On-PCB,"VIS_POS,VIS_NEG",Ch2 Vis LED string AC ripple shunt across J3 (quiet DC harness),datasheets/datasheets_summary.json
+C6,1,MLCC Timing,Murata GRM1885C1H102JA01D,1.0 nF +/-5%; 50 V; C0G,0603,On-PCB,"U1_CTRL,GND",U1 CTRL 1.5 ms soft-start capacitor,datasheets/datasheets_summary.json
+C7,1,MLCC Timing,Murata GRM188R71H472KA01D,4.7 nF +/-10%; 50 V; X7R,0603,On-PCB,"U2_CTRL,GND",U2 CTRL 7.0 ms staggered soft-start capacitor,datasheets/datasheets_summary.json
+C8,1,MLCC Bypass,Murata GRM188R71H104KA93D,100 nF +/-10%; 50 V; X7R,0603,On-PCB,"VIN_20V,GND",U1 VIN_20V HF decoupling capacitor,datasheets/datasheets_summary.json
+C9,1,MLCC Bypass,Murata GRM188R71H104KA93D,100 nF +/-10%; 50 V; X7R,0603,On-PCB,"VIN_20V,GND",U2 VIN_20V HF decoupling capacitor,datasheets/datasheets_summary.json
+C10,1,MLCC Damper,Murata GRM31CR71H475KA12L,4.7 uF +/-10%; 50 V; X7R,1206,On-PCB,"VBUS_DAMP,GND",Upstream RC hot-plug damper capacitor in series with R7 (1.0 Ohm),datasheets/datasheets_summary.json
+C11,1,MLCC Bypass,Murata GRM21BR71H105KA12L,1.0 uF +/-10%; 50 V; X7R,0805,On-PCB,"VBUS_SENSE,GND",U3 VCC local 1 uF decoupling (AP33771C Table 1),datasheets/datasheets_summary.json
+C12,1,MLCC Bypass,Murata GRM21BR71H105KA12L,1.0 uF +/-10%; 50 V; X7R,0805,On-PCB,"U3_V5V,GND",U3 internal 5 V LDO decoupling (AP33771C Table 1),datasheets/datasheets_summary.json
+C13,1,MLCC Timing,Murata GRM188R71H473KA61D,47 nF +/-10%; 50 V; X7R,0603,On-PCB,"Q1_GATE,Q1_MID",Q1A/Q1B gate-source soft turn-on slew cap (AP33771C Fig. 1),datasheets/datasheets_summary.json
+C14,1,MLCC Bypass,Murata GRM188R71H104KA93D,100 nF +/-10%; 50 V; X7R,0603,On-PCB,"VIN_20V,GND",U4 LM393B VCC local HF decoupling capacitor,datasheets/datasheets_summary.json
+C15,1,MLCC Filter,Murata GRM188R71H104KA93D,100 nF +/-10%; 50 V; X7R,0603,On-PCB,"UVLO_SENSE,GND",UVLO divider HF noise filter (fc = 186 Hz),datasheets/datasheets_summary.json
+J1,1,USB-C Receptacle,GCT USB4085-GF-A,5.0 A VBUS; 6.25 A GND; 48 V; 16-pin,GCT_USB4085,On-PCB,"VBUS,CC1,CC2,GND",USB-C PD 20 V power input receptacle,datasheets/usb4085.pdf
+J2,1,LED String Header,JST B2B-XH-A,2-pin 2.50 mm; 3 A; 250 V; 1.0 mm drill,JST_XH_B2B_P2.50mm,On-PCB,"UV_POS,UV_NEG",Ch1 4S UV LED string header (1:UV_POS; 2:UV_NEG),datasheets/jst_xh.pdf
+J3,1,LED String Header,JST B2B-XH-A,2-pin 2.50 mm; 3 A; 250 V; 1.0 mm drill,JST_XH_B2B_P2.50mm,On-PCB,"VIS_POS,VIS_NEG",Ch2 4S Vis LED string header (1:VIS_POS; 2:VIS_NEG),datasheets/jst_xh.pdf
+J4,1,Switch Header,JST B3B-XH-A,3-pin 2.50 mm; 3 A; 250 V; 1.0 mm drill,JST_XH_B3B_P2.50mm,On-PCB,"SW_UV_N,GND,SW_ALL_N",Ground-referenced Maxi-Switch header (1:UV; 2:GND; 3:ALL),datasheets/jst_xh.pdf
+SW1,1,Toggle Switch,E-Switch 100SP3T1B1M1QEH,SPDT On-Off-On; 5 A; 1/4-40 bushing,Panel_Cutout_D6.35mm,Off-Board,"SW_UV_N,GND,SW_ALL_N",User mode switch (4-UV / OFF / 8-ALL) wired to J4 (common=GND),datasheets/datasheets_summary.json
 SW1_BOOT,1,Toggle Switch Boot,C&K 759D02000,Full silicone waterproof boot; 1/4-40 thread,Panel_Cutout_D6.35mm,Off-Board,"SW1_MECH",Weatherproof silicone boot sealing SW1 actuator/bushing,datasheets/datasheets_summary.json
-TP1,1,Solder Pad (VBUS),Custom TH Pad,2.5 mm pad / 1.3 mm drill,TestPoint_Pad_D2.5mm,On-PCB,"VBUS",Optional captive M16 USB-A pigtail +5V solder pad,datasheets/datasheets_summary.json
-TP2,1,Solder Pad (GND),Custom TH Pad,2.5 mm pad / 1.3 mm drill,TestPoint_Pad_D2.5mm,On-PCB,"GND",Optional captive M16 USB-A pigtail GND solder pad,datasheets/datasheets_summary.json
+TP1,1,Solder Pad (AUX+),Custom TH Pad,2.5 mm pad / 1.3 mm drill,TestPoint_Pad_D2.5mm,On-PCB,"AUX_IN",Optional M16 captive 18-24 V DC / PD trigger pigtail (+) pad,datasheets/datasheets_summary.json
+TP2,1,Solder Pad (GND),Custom TH Pad,2.5 mm pad / 1.3 mm drill,TestPoint_Pad_D2.5mm,On-PCB,"GND",Optional M16 captive 18-24 V DC / PD trigger pigtail (GND) pad,datasheets/datasheets_summary.json
 H1,1,Mounting Hole,M2.5 Mounting Hole,2.7 mm drill / 5.5 mm pad,MountingHole_2.7mm_M2.5,On-PCB,"GND",PCB standoff mounting (-14.0 mm; +19.0 mm),datasheets/datasheets_summary.json
 H2,1,Mounting Hole,M2.5 Mounting Hole,2.7 mm drill / 5.5 mm pad,MountingHole_2.7mm_M2.5,On-PCB,"GND",PCB standoff mounting (+14.0 mm; +19.0 mm),datasheets/datasheets_summary.json
 H3,1,Mounting Hole,M2.5 Mounting Hole,2.7 mm drill / 5.5 mm pad,MountingHole_2.7mm_M2.5,On-PCB,"GND",PCB standoff mounting (-14.0 mm; -19.0 mm),datasheets/datasheets_summary.json

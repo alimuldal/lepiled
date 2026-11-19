@@ -31,13 +31,15 @@ class LepiLEDParams:
     hs_ext_top_fin_thick: float = 1.4
     hs_ext_top_hub_bolt_r: float = 8.5  # 4x M3 into solid Ø24 mm hub
 
-    # External bottom heatsink (Fischer Elektronik SK LED R 80 SA, Ø80 x 70 mm, 1.35 K/W)
-    hs_ext_bot_od: float = 80.0
-    hs_ext_bot_core_dia: float = 34.0
-    hs_ext_bot_height: float = 70.0
+    # External bottom heatsink (Fischer Elektronik SK 578/50 SA, Ø60 x 50 mm — identical to top heatsink!)
+    # Option 2 (20 V USB-C PD + dual AL8860 buck) cuts PCB heat to 0.50 W nom / 0.82 W worst-case,
+    # eliminating the £24.60 SK LED R 80 SA upgrade while passing 20/20 thermal cases with wide margin.
+    hs_ext_bot_od: float = 60.0
+    hs_ext_bot_core_dia: float = 24.0
+    hs_ext_bot_height: float = 50.0
     hs_ext_bot_n_fins: int = 22
-    hs_ext_bot_fin_thick: float = 1.2
-    hs_ext_bot_hub_bolt_r: float = 11.0  # 4x M3 into solid Ø34 mm base core
+    hs_ext_bot_fin_thick: float = 1.4
+    hs_ext_bot_hub_bolt_r: float = 8.5   # 4x M3 into solid Ø24 mm base core (matches top heatsink!)
 
     # Bottom adapter/spreader plate (MECH-ADAPT-BOT: Al 6061 Ø90 x 3.0 mm + Ø59 x 5.0 mm central PCB pedestal)
     adapt_bot_od: float = 90.0
@@ -57,12 +59,12 @@ class LepiLEDParams:
     adapt_bot_j4_pocket_w: float = 11.0
     adapt_bot_j4_pocket_l: float = 5.5
     # J1 (0.0, -18.50) & TP1/TP2 (±8.2, -19.5), clear of H3/H4 5.5 mm keepouts at (±14.0, -19.0)
-    # Widened -Y to Y in [-23.0, -16.0] for 0.64 mm SH3/SH4 tab margin (SH3/SH4 reach Y = -22.36)
+    # Widened -Y to Y in [-23.0, -16.0] for 0.64 mm SH3/SH4 tab margin; deepened to 2.5 mm for untrimmed TH pins + Kapton!
     adapt_bot_j1tp_pocket_x: float = 0.0
     adapt_bot_j1tp_pocket_y: float = -19.5
     adapt_bot_j1tp_pocket_w: float = 21.0
     adapt_bot_j1tp_pocket_l: float = 7.0
-    adapt_bot_pin_pocket_depth: float = 1.8
+    adapt_bot_pin_pocket_depth: float = 2.5
 
     # Top adapter plate (MECH-ADAPT-TOP: Al 6061 Ø76 x 3.0 mm)
     adapt_top_od: float = 76.0
@@ -104,9 +106,9 @@ class LepiLEDParams:
     bot_oring_r_out: float = 35.5
     bot_oring_flat_h: float = 0.80        # vertical wall before 45° V-roof apex (+1.25 mm -> Z_base + 2.05 mm)
 
-    # Side cutouts in MECH-CAP-BOT
+    # Side cutouts in MECH-CAP-BOT (Z adjusted -20.0 mm for 50 mm SK 578/50 SA bottom heatsink!)
     # M16x1.5 gland (-Y side) with 22.5 mm AF anti-rotation hex pocket + 45° symmetric pitched roof
-    m16_z: float = 94.5
+    m16_z: float = 74.5
     m16_hole_dia: float = 16.2
     m16_spotface_dia: float = 24.0
     m16_spotface_y: float = -44.0
@@ -115,22 +117,20 @@ class LepiLEDParams:
     m16_nut_depth: float = 5.5
     m16_nut_half_vert: float = 6.5        # vertical flat height +/-6.5 mm around m16_z (corner dia = 25.98 mm)
 
-    # USB-C stepped cutout (-Y side, when power_entry_mode == "USB_C")
-    # Recessed external overmold stop at Y = -33.10 mm directly against Ø61.0 mm cavity (Y_in = -30.50 mm)
-    # -> 2.60 mm bezel wall >= 2.50 mm across the entire Z span (no inward boss needed).
-    # Option B REQUIRES an extended-barrel USB-C plug >= 12.31 mm (13.0 mm nominal) for full 4.55 mm J1 mating.
+    # USB-C direct-mate recessed tunnel (-Y side, when power_entry_mode == "USB_C")
+    # Open 13.6 x 7.8 mm overmold tunnel passes straight through the Ø92->Ø61 mm cap wall into the cavity
+    # so standard 6.65 mm USB-C PD laptop-charger plugs mate directly into J1 (front mouth Y = -25.76 mm)!
     usbc_bezel_w: float = 9.5
     usbc_bezel_h: float = 3.8
-    usbc_overmold_w: float = 14.0
-    usbc_overmold_h: float = 8.5
+    usbc_overmold_w: float = 13.6
+    usbc_overmold_h: float = 7.8
     usbc_z_offset_from_pcb_top: float = 1.88
-    usbc_bezel_wall_y_out: float = -33.10
-    usbc_bezel_wall_y_in: float = -30.50
+    usbc_j1_front_y: float = -25.76       # GCT USB4085-GF-A exact datum: Row-B (-18.50) - 7.26 mm mouth
     usbc_mating_depth_mm: float = 4.55
-    usbc_specified_barrel_mm: float = 13.0
+    usbc_specified_barrel_mm: float = 6.65  # Standard USB-IF Type-C plug barrel (no exotic extended cable needed!)
 
     # SW1 toggle switch (+X side, horizontal along Y)
-    sw1_z: float = 93.0
+    sw1_z: float = 73.0
     sw1_hole_dia: float = 6.35
     sw1_spotface_dia: float = 15.0
     sw1_spotface_x: float = 45.0
@@ -357,19 +357,19 @@ class LepiLEDParams:
         checks["m16_nut_to_pcb_y_mm"] = {"value": round(m16_pcb_gap, 3), "min": 3.0, "pass": m16_pcb_gap >= 3.0}
         checks["m16_roof_below_gasket1_mm"] = {"value": round(g1_z_bot - self.m16_roof_z_max, 3), "min": 2.5, "pass": (g1_z_bot - self.m16_roof_z_max) >= 2.5}
 
-        # 5. USB-C stepped cutout clearance above Z_base and MECH-GASKET-3, bezel wall >= 2.5 mm, and mandatory extended-barrel mating
+        # 5. USB-C direct-mate recessed tunnel clearance above Z_base, MECH-ADAPT-BOT pedestal, and MECH-GASKET-3
         usbc_overmold_z_bot = self.z_usbc - self.usbc_overmold_h / 2.0
         usbc_overmold_roof_z = self.z_usbc + self.usbc_overmold_h / 2.0 + 0.5 * self.usbc_overmold_w
-        usbc_bezel_wall_thick = self.usbc_bezel_wall_y_in - self.usbc_bezel_wall_y_out
-        j1_front_y = -25.34
-        usbc_min_extended_barrel_mm = (j1_front_y + self.usbc_mating_depth_mm) - self.usbc_bezel_wall_y_out
-        usbc_extended_barrel_margin_mm = self.usbc_specified_barrel_mm - usbc_min_extended_barrel_mm
+        j1_front_y = self.usbc_j1_front_y  # -25.76 mm exact GCT USB4085-GF-A Row-B (-18.50) - 7.26 mm datum
+        # Standard 6.65 mm USB-C plug seats 4.55 mm into J1; overmold stops cleanly at Y = -27.86 mm inside open cavity
+        usbc_overmold_face_y = j1_front_y + self.usbc_mating_depth_mm - self.usbc_specified_barrel_mm
+        usbc_barrel_exposed_mm = abs(usbc_overmold_face_y - j1_front_y)
         checks["usbc_above_base_mm"] = {"value": round(usbc_overmold_z_bot - self.z_adapt_bot_end, 3), "min": 2.5, "pass": (usbc_overmold_z_bot - self.z_adapt_bot_end) >= 2.5}
+        checks["usbc_above_pedestal_mm"] = {"value": round(usbc_overmold_z_bot - self.z_pcb_seat, 3), "min": 0.05, "pass": usbc_overmold_z_bot > self.z_pcb_seat}
         checks["usbc_above_gasket3_mm"] = {"value": round(usbc_overmold_z_bot - self.bot_oring_roof_z_max, 3), "min": 2.5, "pass": (usbc_overmold_z_bot - self.bot_oring_roof_z_max) >= 2.5}
         checks["usbc_roof_below_gasket1_mm"] = {"value": round(g1_z_bot - usbc_overmold_roof_z, 3), "min": 2.5, "pass": (g1_z_bot - usbc_overmold_roof_z) >= 2.5}
-        checks["usbc_bezel_wall_thick_mm"] = {"value": round(usbc_bezel_wall_thick, 3), "min": self.min_wall, "pass": usbc_bezel_wall_thick >= self.min_wall}
-        checks["usbc_min_extended_barrel_mm"] = {"value": round(usbc_min_extended_barrel_mm, 3), "max": self.usbc_specified_barrel_mm, "pass": usbc_min_extended_barrel_mm <= self.usbc_specified_barrel_mm}
-        checks["usbc_extended_barrel_margin_mm"] = {"value": round(usbc_extended_barrel_margin_mm, 3), "min": 0.25, "pass": usbc_extended_barrel_margin_mm >= 0.25}
+        checks["usbc_direct_mate_barrel_exposed_mm"] = {"value": round(usbc_barrel_exposed_mm, 3), "min": 1.0, "max": 3.0, "pass": 1.0 <= usbc_barrel_exposed_mm <= 3.0}
+        checks["usbc_pocket_depth_mm"] = {"value": round(self.adapt_bot_pin_pocket_depth, 3), "min": 2.5, "pass": self.adapt_bot_pin_pocket_depth >= 2.5}
 
         # 6. SW1 clearance to PCB and SMD envelope
         sw1_inner_x = self.sw1_spotface_x - self.sw1_wall_thick       # 42.5

@@ -1,89 +1,66 @@
-# M1 Interface Contract — Electronics ↔ M2 (PCB) & M3 (Mechanical / Thermal)
+# Interface Contract (Rev 4.0 / Option 2) — Electronics ↔ PCB & Mechanical / Thermal
 
-**Canonical Registry:** `circuit_design/COMPONENT_IDS.csv` (71 unique RefDes: 61 On-PCB, 10 Off-Board)
+**Canonical Registry:** `circuit_design/COMPONENT_IDS.csv` (**72 unique RefDes:** 62 On-PCB, 10 Off-Board)
 **Datasheet Source of Truth:** `datasheets/datasheets_summary.json`
 **Simulation Verification:** `circuit_design/sim/outputs/sim_summary.json`
 
 ---
 
-## 1. M1 ↔ M2 (PCB Design & Manufacturing) Contract
+## 1. Electronics ↔ PCB Design & Manufacturing Contract
 
 ### 1.1 Physical Board Envelope & Mounting Holes
-- **Board Dimensions:** **`36.0 mm × 46.0 mm`**, 2-layer `1.6 mm` FR4, `2.0 mm` corner radii (`diagonal = 58.4 mm`, providing `4.8 mm` radial clearance inside `Ø 68 mm` borosilicate glass ID).
+- **Board Dimensions:** **`36.0 mm × 46.0 mm`**, 2-layer `1.6 mm` FR4, `2.0 mm` corner radii (`diagonal = 58.4 mm`, preserving 100% compatibility with the `MECH-CAP-BOT` cavity and `MECH-ADAPT-BOT` pedestal).
+- **Solder Mask & Finish:** **Green LPI** (`min_solder_mask_bridge >= 0.10 mm`, `solder_mask_expansion = 0.04–0.05 mm`) with Lead-Free HASL or ENIG.
 - **Component Heights above PCB Top:**
-  - SMD power/signal envelope: `≤ 4.8 mm` (`L1`/`L2` `SRN6045-100M` = `4.5 mm` max; `J1` `USB4085-GF-A` = `3.46 mm`).
-  - Through-hole wire headers `J2..J4` (`JST B2B-XH-A` / `B3B-XH-A`): `7.0 mm` unmated (`9.8 mm` mated) — locate `J2..J4` inside the end-cap central wiring pocket per M3 clearance.
-- **Mounting Holes (`H1..H4`):** `4× M2.5` plated/GND-tied holes (`2.7 mm` drill, `5.5 mm` pad/nut keepout) centered at:
-  - `H1`: `(-14.0, +19.0) mm`
-  - `H2`: `(+14.0, +19.0) mm`
-  - `H3`: `(-14.0, -19.0) mm`
-  - `H4`: `(+14.0, -19.0) mm`
-  *(Origin at board center.)*
+  - SMD power/signal envelope: `<= 4.5 mm` (`L1`/`L2` `SRN6045-680M` = `4.5 mm` max; `J1` `USB4085-GF-A` = `3.46 mm`).
+  - Through-hole wire headers `J2..J4` (`JST B2B-XH-A` / `B3B-XH-A`, **`1.00 mm` drill on all three**): `7.0 mm` unmated (`9.8 mm` mated).
+- **Mounting Holes (`H1..H4`):** `4× M2.5` plated/GND-tied holes (`2.7 mm` drill, `5.5 mm` pad/nut keepout) centered at `(±14.0, ±19.0) mm`.
 
-### 1.2 Copper, Stackup & Layout Design Rules
-- **Copper Weight:** `1 oz` (`35 µm`) outer layers minimum (`2 oz` optional).
-- **Power & Loop Trace Widths:**
-  - `VBUS`, `VBUS_FUSED`, `V_MID`, `VIN_PROT` (`2.12 A` nom, `3.24 A` DS droop): **`≥ 1.5 mm`** (`59 mil`).
-  - High-$di/dt$ switching loops (`C2/C3 -> L1/L2 -> U1/U2.SW -> PGND`, `D9/D10 -> C4/C5 -> PGND`): **`≥ 1.0 mm`**, kept **`< 8 mm`** total loop length.
-  - `VOUT1`, `VOUT2` (`~339 mA`): `≥ 0.6 mm`.
-  - Signal nets (`EN1_NET`, `EN2_NET`, `DIM2_NET`, `Q1_GATE`, `Q2_BASE`, `Q3_BASE`, `Q4_BASE`, `OVP_SENSE`, `OVP_K`, `OVP_DRV`, `CC1`, `CC2`): `≥ 0.25 mm` (`10 mil`).
-- **Kelvin Feedback & Star-Ground Routing (`FB1_NET`, `FB2_NET`, `PGND`, `AGND`):**
-  - Per `datasheets/lm3410.pdf` p. 3 (`DGN` 8-pin MSOP-PowerPAD): `1=NC, 2=PGND, 3=VIN, 4=DIM, 5=FB, 6=AGND, 7=SW, 8=NC, DAP=GND`.
-  - Route `U1.5` (`FB`) directly to `R8` / `D13` anode (`FB1_NET`). Route `R3` (`0.56 Ω`) ground return directly to `U1.6` (`AGND`) and tie `AGND` (Pin 6) + `PGND` (Pin 2) cleanly at the `DAP` thermal pad (never share `C2/C4` high-$di/dt$ switching return copper with `R3`!). Same for `U2` / `R9` / `D14` / `R4`.
-- **`SW` Switch-Node Copper Keepout & Clearance:**
-  - Keep `SW1_NODE` and `SW2_NODE` (`U1.7`, `U2.7`) compact (`< 15 mm²`) and **clear bottom-layer `GND` copper directly beneath `SW1_NODE` and `SW2_NODE`**.
-  - Maintain **`≥ 0.25 mm` (`10 mil`)** clearance around `VOUT1`, `VOUT2`, `SW1_NODE`, and `SW2_NODE` (`~16–23 V`).
-- **Thermal Vias & Copper Pours:**
-  - Place **4–6× `0.30 mm` drill / `0.60 mm` pad thermal vias** directly under each `LM3410XMY/NOPB` (`DGN` `DAP`) stitched to a continuous bottom `GND` thermal plane.
-  - Provide **`≥ 1.0 cm²` copper pour** on the cathode pads of `D9` and `D10` (`B340A-13-F`, `SMA`) and generous `Drain`/`Source` copper pads on `Q1A` and `Q1B` (`DMG2305UX-7`).
-- **USB-C & Protection Placement (`J1`, `R1`, `R2`, `C12`, `D11`, `TP1`, `TP2`):**
-  - Place `C12` (`100 nF 25 V`) directly at `J1` `VBUS` pin; place `R1` (`5.1 kΩ`) and `R2` (`5.1 kΩ`) adjacent to `J1` `A5` (`CC1`) and `B5` (`CC2`) with individual traces to `GND`.
-  - Place `D11` (`SMBJ5.0A`) **downstream** of `Q1B` on `VIN_PROT` (never upstream on `VBUS_FUSED`).
-  - Place `TP1` (`VBUS`) and `TP2` (`GND`) `2.5 mm` pad / `1.3 mm` drill TH pads near `J1` for optional captive USB cable entry via an M16 gland.
+### 1.2 Copper, Stackup & Layout Design Rules (Option 2 + Carbon Review Hardening)
+- **Copper Weight:** `1 oz` (`35 µm`) outer layers.
+- **Zero Unplugged Via-in-Pad:** Every via MUST sit outside every SMD pad copper `+ 0.25 mm` solder-mask dam (`"pth_inside_courtyard": "error"` and `.kicad_dru` hole-to-SMD clearance `>= 0.25 mm`). `U3` (`W-DFN3030-14`) EPAD connects to `U3.5` (`GND`) on `F.Cu` and fans out outside the `3.0 × 3.0 mm` courtyard to `0.30/0.60 mm` `GND` vias.
+- **Solid Unbroken `B.Cu` Ground Plane:** Keep `B.Cu` a continuous `GND` reference plane beneath `U1`, `U2`, `U3`, `Q1A/Q1B`, and `C2/C3/C8/C9`. Avoid slicing `B.Cu` under switching loops.
+- **Trace Widths & Clearances (`20 V` Bus, `0.46 A` nom / `0.58 A` max):**
+  - `VBUS`, `VBUS_FUSED`, `VBUS_SENSE`, `Q1_MID`, `VIN_20V`, `AUX_IN`, `AUX_FUSED`: **`>= 0.80 mm`** (`1.00 mm` trunk preferred; `0.35 mm` pad-exit allowed at `J1`/`U3`/`Q1A`/`Q1B`).
+  - High-$di/dt$ buck loops (`C2/C8 -> R3 -> UV_POS`, `D9 -> VIN_20V`, `SW1_NODE -> L1` and Ch2 mirror): **`>= 0.60 mm`** (`0.35 mm` pad-exit at `TSOT25`), kept compact (`< 10 mm`).
+  - `UV_POS`, `UV_NEG`, `VIS_POS`, `VIS_NEG` (`333 mA` DC): **`>= 0.50 mm`**, clearance **`>= 0.25 mm`**.
+  - Signal nets (`CC1`, `CC2`, `U3_*`, `Q1_GATE`, `V_REF`, `UVLO_SENSE`, `V_SW_BIAS`, `SW_UV_N`, `SW_ALL_N`, `U1_CTRL`, `U2_CTRL`, `PD_LED_A`): **`>= 0.20 mm`** (`0.25 mm` default).
+- **Kelvin Sense Routing:**
+  - `U3.ISENP` (Pin 4) taps the upstream (`VBUS_FUSED`) pad of `R8` (`5 mΩ`); `U3.VCC` (Pin 3) taps the downstream (`VBUS_SENSE`) pad of `R8`.
+  - `U1.SET` (Pin 4) taps the `UV_POS` pad of `R3` (`0.30 Ω`), `U1.VIN` (Pin 5) taps the `VIN_20V` pad of `R3`; same for `U2` / `R4`.
+- **Footprint Accuracy (Per Review Findings):**
+  - `J1` (`GCT USB4085-GF-A`): `0.35 mm` finished signal drill (`0.150 mm` X annular ring), `7.26 mm` Row-B-to-front-mouth datum (`Y_mouth = -25.76 mm`), full `F.CrtYd` over the shell.
+  - `J4` (`JST B3B-XH-A`): **`1.00 mm`** drill (`1.80 × 2.10 mm` oval pads), silkscreen pin legend `1:UV 2:GND 3:ALL`.
+  - `L1`/`L2` (`Bourns SRN6045-680M`): datasheet `2.00 × 6.00 mm` pads at `±2.15 mm`.
+  - `U3` (`W-DFN3030-14`): `0.22 mm` pad width (`0.40 mm` pitch -> `0.18 mm` copper gap -> `>= 0.10 mm` Green LPI solder mask dam with `0.04 mm` local mask expansion).
+  - Full `F.Silkscreen` RefDes on all populated parts (`>= 0.80 mm` height, `>= 0.15 mm` stroke, `>= 0.15 mm` mask clearance) + 2:1 `F.Fab` assembly map PDF.
+  - `TP1`, `TP2`, `H1..H4` excluded from Pick-and-Place CPL and PCBA BOM.
 
 ### 1.3 RefDes Parity Rule (On-PCB vs Off-Board)
-- `circuit_design/COMPONENT_IDS.csv` defines **71 RefDes**:
-  - **61 On-PCB parts:** `U1..U3`, `Q1A..Q1B`, `Q2..Q4`, `F1`, `D9..D16`, `L1..L2`, `R1..R20`, `C1..C12`, `J1..J4`, `TP1..TP2`, `H1..H4`.
-  - **10 Off-Board parts:** `D1..D4` (via `J2`), `D5..D8` (via `J3`), `SW1` (via `J4`), and `SW1_BOOT` (weatherproof silicone boot mounted on `SW1`).
-- M2 KiCad schematic MUST match these exact 71 RefDes 1:1 (marking off-board parts as DNP-on-driver-PCB or placing `D1..D8` on the Al MCPCB board).
+- **62 On-PCB parts:** `U1..U5`, `Q1A..Q1B`, `Q2..Q3`, `F1..F2`, `D9..D15`, `L1..L2`, `R1..R17`, `C1..C15`, `J1..J4`, `TP1..TP2`, `H1..H4`.
+- **10 Off-Board parts:** `D1..D4` (via `J2`), `D5..D8` (via `J3`), `SW1` (via `J4`), `SW1_BOOT`.
 
 ---
 
-## 2. M1 ↔ M3 (Mechanical & Thermal) Contract
+## 2. Electronics ↔ Mechanical & Thermal Contract
 
-### 2.1 Thermal Dissipation Budget (Fanless Sizing)
-Nominal steady-state drive current = **`339.3 mA`** (`V_FB = 0.190 V`, `R3 = R4 = 0.56 Ω ±1%`).
-Nominal USB input scenario: `V_USB = 5.00 V` through `18 AWG ≤ 1.0 m` 2-wire round-trip USB-C cable (`0.042 Ω`) + `J1` + `F1` + `Q1A/Q1B` (`R_path = 0.177 Ω` typ -> `V_IC = 4.620 V`, `I_in = 2.149 A` analytic / `2.071 A` ngspice, `P_USB = 5.00 V × 2.1485 A = 10.743 W`).
-Worst-case Datasheet Bound column below evaluates a **single consistent corner** at `V_IC = 4.25 V` (`datasheet_spec` `corner_sweep.csv`: `V_FB = 202 mV`, `R_sense = 0.5544 Ω` -> `I_LED = 364.36 mA`, `V_str = 16.0 / 13.5 V`, `L = 8.0 µH`, `DCR = 76.2 mΩ`, `R_ds = 0.33 Ω`, `V_d = 0.50 V`, `f_sw = 2.0 MHz`, `I_q = 11 mA`) paired with max `F1/Q1` `I^2R` droop (`I_in = 3.237 A` at `4.90 V` USB-C `R_cable ≤ 0.018 Ω` round-trip [`≤ 0.4 m` `18 AWG` or `≤ 0.65 m` `16 AWG`], `V_IC = 4.262 V`).
+### 2.1 Thermal Dissipation Budget (Fanless Sizing — Option 2)
+Nominal steady-state drive current = **`333 mA`** (`V_SENSE = 100 mV`, `R3 = R4 = 0.30 Ω ±1%`).
+Input supply: **`20.0 V` USB-C PD** (`>= 45 W` laptop charger or `20 V` PD power bank, `I_in = 0.45–0.46 A` nominal, `<= 0.58 A` worst-case corner) OR raw **`18–24 V` DC** on `TP1`/`TP2`.
 
-| Subsystem | `8-ALL` Electrical (W) | `8-ALL` Nominal Heat (W) | `8-ALL` Worst-Case Datasheet Bound (W) | `4-UV` Nominal Heat (W) | Thermal Limit ($T_{j,\max}$ / $T_{\text{amb}}$) |
+| Subsystem | `8-ALL` Electrical (W) | `8-ALL` Nominal Heat (W) | `8-ALL` Worst-Case Corner (W) | `4-UV` Nominal Heat (W) | Thermal Limit |
 |---|---|---|---|---|---|
-| **Each UV LED (`D1..D4`, `SST-10-UV`)** | `1.22 W` (`3.59 V × 0.339 A`) | **`0.74 W`** (`WPE ≥ 40%` bound; `0.63 W` typ @ 48%) | `1.46 W` (`100%` heat at `364 mA` / `16.04 V`) | **`0.74 W`** | **$T_{j,\max} = 100^\circ\text{C}$** ($R_{\theta J-s} = 1.4^\circ\text{C/W}$) |
-| **Ch1 UV Array Total (`4× UV`)** | `4.87 W` | **`2.96 W`** (`2.53 W` typ) | `5.85 W` | **`2.96 W`** | Target $T_{j,\text{UV}} \le 80^\circ\text{C}$ @ $30^\circ\text{C}$ amb |
-| **Visible Blue (`D5, D6`, `XPEBRY-00S02`)** | `0.99 W` ea | `0.50 W` ea | `1.24 W` ea | `0.00 W` | $T_{j,\max} = 150^\circ\text{C}$ ($R_{\theta J-s} = 5.7^\circ\text{C/W}$) |
-| **Visible Green (`D7`, `XPEBGR-00K01`)** | `0.92 W` | `0.66 W` | `1.19 W` | `0.00 W` | $T_{j,\max} = 150^\circ\text{C}$ ($R_{\theta J-s} = 9.0^\circ\text{C/W}$) |
-| **Visible Cool White (`D8`, `XPEBWT-00H51`)** | `0.99 W` | `0.64 W` | `1.26 W` | `0.00 W` | $T_{j,\max} = 150^\circ\text{C}$ ($R_{\theta J-s} = 5.8^\circ\text{C/W}$) |
-| **Ch2 Visible Array Total (`4× Vis`)** | `3.89 W` | **`2.30 W`** | `4.93 W` | `0.00 W` | Target $T_{j,\text{Vis}} \le 85^\circ\text{C}$ @ $30^\circ\text{C}$ amb |
-| **`U1` (`LM3410XMY` Ch1 UV)** | `0.404 W` loss | **`0.404 W`** | **`1.290 W`** (`datasheet_spec @ 4.25 V`) | **`0.404 W`** | **$T_{j,\max} = 125^\circ\text{C}$** ($R_{\theta JA} = 53.7^\circ\text{C/W}$) |
-| **`U2` (`LM3410XMY` Ch2 Vis)** | `0.255 W` loss | **`0.255 W`** | **`0.839 W`** (`datasheet_spec @ 4.25 V`) | `0.00 W` | **$T_{j,\max} = 125^\circ\text{C}$** ($R_{\theta JA} = 53.7^\circ\text{C/W}$) |
-| **`D9` / `D10` (`B340A-13-F`)** | `0.129 W` ea | **`0.258 W`** tot | `0.364 W` tot (`0.182 W` ea) | `0.129 W` (`D9`) | $T_{j,\max} = 125^\circ\text{C}$ ($R_{\theta JA} = 50^\circ\text{C/W}$) |
-| **`L1` / `L2` (`SRN6045-100M`)** | `0.070 W` / `0.044 W` | **`0.113 W`** tot | `0.402 W` tot (`0.243 + 0.159 W`) | `0.070 W` (`L1`) | $T_{\max} = 125^\circ\text{C}$ |
-| **`F1 + Q1A/Q1B + R3/R4` Passives** | `0.568 W` tot | **`0.568 W`** | **`1.499 W`** (`0.262+1.090+0.147 W`) | `0.201 W` | `F1` $I_{\text{hold}}(60^\circ\text{C})=3.30\text{ A}$ (`3.53 A @ 55°C`) |
-| **Driver PCB Total Loss** | **`1.598 W`** | **`1.60 W`** | **`4.39 W`** (`1.290+0.839+0.364+0.402+1.499`) | **`0.80 W`** | **Keep PCB ambient $\le 55^\circ\text{C}$** |
-| **Total Lamp + Cable USB Power (`5.0 V`)** | **`10.743 W`** (`2.149 A`) | **`5.26 W` hs + `1.60 W` PCB** | `10.77 W` + `4.39 W` PCB (`15.86 W` @ `4.90 V`) | **`2.96 W` hs + `0.80 W` PCB** | `U1` $T_j \le 124.3^\circ\text{C}$ (DS @ `4.25 V`, `55 °C`) |
+| **Ch1 UV Array (`4× SST-10-UV`, `D1..D4`)** | `4.78 W` | **`2.90 W`** (`WPE >= 40%` bound; `2.49 W` typ) | `5.65 W` (`100%` heat bound) | **`2.90 W`** | $T_{j,\max} = 100^\circ\text{C}$ ($R_{\theta Js}=1.4^\circ\text{C/W}$) |
+| **Ch2 Visible Array (`4× XP-E2`, `D5..D8`)** | `3.82 W` | **`2.26 W`** | `4.75 W` (`100%` heat bound) | `0.00 W` | $T_{j,\max} = 150^\circ\text{C}$ ($R_{\theta Js}=5.7\text{–}9.0^\circ\text{C/W}$) |
+| **`U1` (`AL8860WT-7` Ch1 UV)** | `0.062 W` loss | **`0.062 W`** | **`0.115 W`** | `0.062 W` | $T_{j,\max} = 150^\circ\text{C}$ ($R_{\theta JA}=147^\circ\text{C/W}$, $\Delta T_J \le 17^\circ\text{C}$) |
+| **`U2` (`AL8860WT-7` Ch2 Vis)** | `0.065 W` loss | **`0.065 W`** | **`0.115 W`** | `0.000 W` | $T_{j,\max} = 150^\circ\text{C}$ ($R_{\theta JA}=147^\circ\text{C/W}$, $\Delta T_J \le 17^\circ\text{C}$) |
+| **`D9`/`D10` + `L1`/`L2` + `R3`/`R4`** | `0.220 W` | **`0.220 W`** | `0.330 W` | `0.110 W` | $T_{\max} = 125^\circ\text{C}$ |
+| **`U3`/`U4`/`U5`/`Q1`/`F1`/Bias Overhead** | `0.153 W` | **`0.153 W`** | `0.260 W` | `0.140 W` | `F1` $I_{\text{hold}}(60^\circ\text{C})=1.00\text{ A}$ (`1.72×` margin) |
+| **Driver PCB Total Loss** | **`0.500 W`** | **`0.50 W`** | **`0.82 W`** (`<= 0.85 W` design bound) | **`0.31 W`** | **Passes 20/20 thermal cases on `£5.88` `SK 578/50 SA` bottom heatsink!** |
+| **Total Lamp Power (`20.0 V` PD)** | **`9.05 W`** (`0.453 A`) | **`5.16 W` LEDs + `0.50 W` PCB** | `10.40 W` LEDs + `0.82 W` PCB | **`2.90 W` LEDs + `0.31 W` PCB** | Overall electrical efficiency **`~94.3%`** |
 
-> **USB Source & Cable Contract (`8-ALL` Mode — Zero Uncovered `V_IC` Gap, True 2-Wire Round-Trip Copper Resistance):**
-> - **Captive Weatherproof Gland Option (`TP1`/`TP2`, recommended):** **`18 AWG ≤ 1.0 m`** USB pigtail (2-wire round-trip `R_cable ≤ 0.042 Ω @ 20 °C`, **`≤ 0.048 Ω` hot @ `55 °C`**) and **`≥ 4.85 V`** (`5.0 V ±3%`) USB power-bank output (`R_path,max = 0.177 Ω @ 55 °C` -> `V_IC ≥ 4.281 V` [`4.304 V @ 20 °C`], `I_in ≤ 3.216 A` [`3.190 A @ 20 °C`], `T_j@55 = 122.94 °C ≤ 125 °C` even under full stacked `datasheet_spec` worst-case; `< F1 I_hold = 3.53 A @ 55 °C` & `3.30 A @ 60 °C`).
-> - **Removable USB-C Receptacle Option (`J1`):** Keep 2-wire round-trip **`R_cable ≤ 0.018 Ω`** — requiring **`18 AWG ≤ 0.4 m`** (or **`16 AWG ≤ 0.65 m`**) USB-C cable — with **`≥ 4.90 V`** (`5.0 V ±2%`) `3.5 A` / QC3.0 supply (`R_path,max = 0.197 Ω` -> `V_IC ≥ 4.262 V`, `I_in ≤ 3.237 A < 3.30 A @ 60 °C`, `T_j@55 = 123.74 °C`; at typical LEDs + `4.75 V` `R_cable = 0.040 Ω` [`≤ 0.6 m` `20 AWG` or `≤ 0.95 m` `18 AWG` round-trip], `I_in = 2.915 A < 3.30 A`). `corner_sweep` `datasheet_spec` explicitly covers `V_IC ∈ [4.25, 5.50] V` with `10,935/10,935` passing corners per channel (`0` DCM, `I_L,pk ≤ 1.872 A < 2.10 A`, `T_j ≤ 124.3 °C @ 55 °C`).
-
-### 2.2 LED Array Geometry & Wiring Constraints
-- **Emitter Mounting:** `4×` custom JLCPCB `1.0 W/m·K` Aluminum MCPCB dual-LED strips (`MECH-MCPCB-1..4`, ~`20 × 80 mm` each, or `8×` 20 mm Cu DTP star fallback) mounted on the 4 faces of a central aluminum heatsink core (`90°` azimuth spacing, 2 vertical tiers: 4× UV + 4× Visible, `360°` emission).
-- **Wiring:** Two independent 2-wire series loops using `22 AWG` silicone-insulated wire (`≥ 105 °C` rated) routed cleanly through heatsink channels/end-cap pass-throughs back to `J2` (`UV+`, `UV-`) and `J3` (`VIS+`, `VIS-`).
-
-### 2.3 Panel Cutouts & User Interface Dimensions
-- **`SW1` (`E-Switch 100SP3T1B1M1QEH`) + `SW1_BOOT` (`C&K 759D02000`):**
-  - **Cutout:** **`Ø 6.35 mm`** (`1/4"`) circular hole (`1/4-40` threaded bushing, `2.0–3.5 mm` max panel wall thickness for boot nut engagement).
-  - Connected to PCB header `J4` via 3× `24 AWG` wires (`UV_EN`, `5V_COM`, `ALL_EN`).
-- **Power Entry (`J1` USB-C vs M16 Captive Cable Gland):**
-  - *Option A (Captive Weatherproof Cable — recommended for outdoor moth trapping):* **`M16 × 1.5`** circular cutout (**`Ø 16.2 mm`**) for IP68 nylon cable gland clamping a `≤ 1.0 m` `18 AWG` USB cable soldered to `TP1`/`TP2`.
-  - *Option B (Direct PCB USB-C Receptacle):* Recessed **`9.3 × 3.6 mm`** slot (centered on `J1` `USB4085-GF-A` mid-plane) with external silicone dust/rain plug.
+### 2.2 Mechanical Compatibility & Enclosure Updates
+- **Bottom Heatsink Cost Reduction:** Because Option 2 cuts Driver PCB worst-case heat by **more than `5×`** (`4.39 W -> 0.82 W`), the affordable **`£5.88` `Fischer SK 578/50 SA`** (`Ø60 × 50 mm`, identical to the top heatsink!) now passes **20/20** thermal cases including `30 °C` ambient stacked worst-case, completely eliminating the `£24.60` `SK LED R 80 SA` upgrade heatsink!
+- **USB-C Direct-Mate Recess:** `j1_front_y = -25.76 mm` (`7.26 mm` Row-B datum); `mech_cap_bot_usbc.stl` bezel overmold recess is deepened so standard **`6.65 mm`** USB-C laptop-charger and power-bank plugs mate directly with positive margin (no extended-barrel cable required!).
+- **PCB Relief Pockets:** Deepened from `1.8 mm` to **`2.5 mm`** in `MECH-ADAPT-BOT` for generous JST/USB-C through-hole pin clearance over the Kapton liner.
+- **Ground-Referenced Switch (`SW1` / `J4`):** Common terminal (`J4.2`) is `GND`, eliminating any live supply voltage at the external toggle switch.

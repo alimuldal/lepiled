@@ -1,72 +1,73 @@
-Designator,Qty,Category,MPN,Comment,Footprint,Mounting,DNP
-U1,1,Boost CC IC,TI LM3410XMY/NOPB,1.6 MHz; 2.1 A min Icl; 24 V,HVSSOP-8 (MSOP-8-1EP),On-PCB,No
-U2,1,Boost CC IC,TI LM3410XMY/NOPB,1.6 MHz; 2.1 A min Icl; 24 V,HVSSOP-8 (MSOP-8-1EP),On-PCB,No
-U3,1,Precision Shunt Reference,TI TL431AIDBZR,2.495 V +/-1%; 36 V; SOT-23-3 DBZ,SOT-23-3,On-PCB,No
-Q1A,1,P-MOSFET,Diodes DMG2305UX-7,-20 V; -4.2 A steady; 52 mOhm max @ -4.5 V,SOT-23-3,On-PCB,No
-Q1B,1,P-MOSFET,Diodes DMG2305UX-7,-20 V; -4.2 A steady; 52 mOhm max @ -4.5 V,SOT-23-3,On-PCB,No
-Q2,1,PNP BJT,onsemi MMBT3906LT1G,-40 V; -200 mA; hFE>=80,SOT-23-3,On-PCB,No
-Q3,1,NPN BJT,onsemi MMBT3904LT1G,40 V; 200 mA; hFE>=70,SOT-23-3,On-PCB,No
-Q4,1,NPN BJT,onsemi MMBT3904LT1G,40 V; 200 mA; hFE>=70,SOT-23-3,On-PCB,No
-F1,1,PTC Polyfuse,Bourns MF-LSMF500/16X,16 V; 5.0 A hold (3.30 A @ 60C); 10.0 A trip; 25 mOhm max,2920,On-PCB,No
-D1,1,UV LED,Luminus SST-10-UV-A130-G365-00,365 nm; 339 mA nom; 1.0 A max,3535 SMD (A130),Off-Board,Yes
-D2,1,UV LED,Luminus SST-10-UV-A130-G365-00,365 nm; 339 mA nom; 1.0 A max,3535 SMD (A130),Off-Board,Yes
-D3,1,UV LED,Luminus SST-10-UV-A130-G365-00,365 nm; 339 mA nom; 1.0 A max,3535 SMD (A130),Off-Board,Yes
-D4,1,UV LED,Luminus SST-10-UV-A130-G365-00,365 nm; 339 mA nom; 1.0 A max,3535 SMD (A130),Off-Board,Yes
-D5,1,Royal Blue LED,Cree XPEBRY-L1-0000-00S02,455 nm (450-460 nm); 339 mA nom; 1.2 A max,3535 SMD (XP),Off-Board,Yes
-D6,1,Royal Blue LED,Cree XPEBRY-L1-0000-00S02,455 nm (450-460 nm); 339 mA nom; 1.2 A max,3535 SMD (XP),Off-Board,Yes
-D7,1,Green LED,Cree XPEBGR-L1-0000-00K01,528 nm (520-535 nm); 339 mA nom; 1.5 A max,3535 SMD (XP),Off-Board,Yes
-D8,1,Cool White LED,Cree XPEBWT-L1-0000-00H51,6200 K; 339 mA nom; 1.5 A max,3535 SMD (XP),Off-Board,Yes
-D9,1,Schottky Diode,Diodes B340A-13-F,40 V; 3.0 A; 0.43 V @ 2 A,DO-214AC (SMA),On-PCB,No
-D10,1,Schottky Diode,Diodes B340A-13-F,40 V; 3.0 A; 0.43 V @ 2 A,DO-214AC (SMA),On-PCB,No
-D11,1,TVS Diode,Vishay SMBJ5.0A-E3/5B,5.0 V Vrwm; 6.40-7.07 V Vbr; 600 W,DO-214AA (SMB),On-PCB,No
-D12,1,Dual Diode (Common Cathode),onsemi BAV70LT1G,100 V; 200 mA; Common-Cathode,SOT-23-3,On-PCB,No
-D13,1,OVP Zener Diode,Diodes BZT52C18-7-F,18 V nom (16.8-19.1 V); 500 mW,SOD-123,On-PCB,No
-D14,1,OVP Zener Diode,Diodes BZT52C18-7-F,18 V nom (16.8-19.1 V); 500 mW,SOD-123,On-PCB,No
-D15,1,Gate Clamp Zener,Diodes BZT52C5V6-7-F,5.6 V nom (5.2-6.0 V); 500 mW,SOD-123,On-PCB,No
-D16,1,Dual Diode (Common Anode),onsemi BAW56LT1G,70 V; 200 mA; Common-Anode,SOT-23-3,On-PCB,No
-L1,1,Power Inductor,Bourns SRN6045-100M,10 uH +/-20%; Isat=3.0 A; DCR_max=58.6 mOhm,6.0x6.0x4.5 mm SMD,On-PCB,No
-L2,1,Power Inductor,Bourns SRN6045-100M,10 uH +/-20%; Isat=3.0 A; DCR_max=58.6 mOhm,6.0x6.0x4.5 mm SMD,On-PCB,No
-R1,1,Resistor,Vishay CRCW08055K10FKEA,5.1 kOhm +/-1%; 0.125 W std / 0.25 W ext,0805,On-PCB,No
-R2,1,Resistor,Vishay CRCW08055K10FKEA,5.1 kOhm +/-1%; 0.125 W std / 0.25 W ext,0805,On-PCB,No
-R3,1,Sense Resistor,Bourns CRL1206-FW-R560ELF,0.56 Ohm +/-1%; 0.50 W,1206,On-PCB,No
-R4,1,Sense Resistor,Bourns CRL1206-FW-R560ELF,0.56 Ohm +/-1%; 0.50 W,1206,On-PCB,No
-R5,1,Resistor,Vishay CRCW060310K0FKEA,10 kOhm +/-1%; 0.1 W,0603,On-PCB,No
-R6,1,Resistor,Vishay CRCW060310K0FKEA,10 kOhm +/-1%; 0.1 W,0603,On-PCB,No
-R7,1,Resistor,Vishay CRCW060310K0FKEA,10 kOhm +/-1%; 0.1 W,0603,On-PCB,No
-R8,1,Resistor,Vishay CRCW0603100RFKEA,100 Ohm +/-1%; 0.1 W,0603,On-PCB,No
-R9,1,Resistor,Vishay CRCW0603100RFKEA,100 Ohm +/-1%; 0.1 W,0603,On-PCB,No
-R10,1,Resistor,Vishay CRCW060310K0FKEA,10 kOhm +/-1%; 0.1 W,0603,On-PCB,No
-R11,1,Resistor,Vishay CRCW06031K50FKEA,1.5 kOhm +/-1%; 0.1 W,0603,On-PCB,No
-R12,1,Resistor,Vishay CRCW060313K7FKEA,13.7 kOhm +/-1%; 0.1 W,0603,On-PCB,No
-R13,1,Resistor,Vishay CRCW060310K0FKEA,10.0 kOhm +/-1%; 0.1 W,0603,On-PCB,No
-R14,1,Resistor,Vishay CRCW0603220KFKEA,220 kOhm +/-1%; 0.1 W,0603,On-PCB,No
-R15,1,Resistor,Vishay CRCW060310K0FKEA,10 kOhm +/-1%; 0.1 W,0603,On-PCB,No
-R16,1,Resistor,Vishay CRCW06035K60FKEA,5.6 kOhm +/-1%; 0.1 W,0603,On-PCB,No
-R17,1,Resistor,Vishay CRCW060310K0FKEA,10 kOhm +/-1%; 0.1 W,0603,On-PCB,No
-R18,1,Resistor,Vishay CRCW0603220RFKEA,220 Ohm +/-1%; 0.1 W,0603,On-PCB,No
-R19,1,Resistor,Vishay CRCW060368K0FKEA,68.0 kOhm +/-1%; 0.1 W,0603,On-PCB,No
-R20,1,Resistor,Vishay CRCW0603100KFKEA,100 kOhm +/-1%; 0.1 W,0603,On-PCB,No
-C1,1,MLCC Input,Murata GRM31CR71E106KA12L,10 uF +/-10%; 25 V; X7R,1206,On-PCB,No
-C2,1,MLCC Input,Murata GRM31CR71E106KA12L,10 uF +/-10%; 25 V; X7R,1206,On-PCB,No
-C3,1,MLCC Input,Murata GRM31CR71E106KA12L,10 uF +/-10%; 25 V; X7R,1206,On-PCB,No
-C4,1,MLCC Output,Samsung CL32B106KBJNFNE,10 uF +/-10%; 50 V; X7R,1210,On-PCB,No
-C5,1,MLCC Output,Samsung CL32B106KBJNFNE,10 uF +/-10%; 50 V; X7R,1210,On-PCB,No
-C6,1,MLCC Timing,Murata GRM188R71E104KA01D,100 nF +/-10%; 25 V; X7R,0603,On-PCB,No
-C7,1,MLCC Bypass,Murata GRM188R71E104KA01D,100 nF +/-10%; 25 V; X7R,0603,On-PCB,No
-C8,1,MLCC Bypass,Murata GRM188R71E104KA01D,100 nF +/-10%; 25 V; X7R,0603,On-PCB,No
-C9,1,MLCC Bypass,Murata GRM188R71H104KA93D,100 nF +/-10%; 50 V; X7R,0603,On-PCB,No
-C10,1,MLCC Bypass,Murata GRM188R71H104KA93D,100 nF +/-10%; 50 V; X7R,0603,On-PCB,No
-C11,1,MLCC Timing,Murata GRM188R71E104KA01D,100 nF +/-10%; 25 V; X7R,0603,On-PCB,No
-C12,1,MLCC ESD Bypass,Murata GRM188R71E104KA01D,100 nF +/-10%; 25 V; X7R,0603,On-PCB,No
-J1,1,USB-C Receptacle,GCT USB4085-GF-A,5.0 A VBUS; 6.25 A GND; 16-pin,GCT_USB4085,On-PCB,No
-J2,1,LED String Header,JST B2B-XH-A,2-pin 2.50 mm; 3 A; 250 V,JST_XH_B2B_P2.50mm,On-PCB,No
-J3,1,LED String Header,JST B2B-XH-A,2-pin 2.50 mm; 3 A; 250 V,JST_XH_B2B_P2.50mm,On-PCB,No
-J4,1,Switch Header,JST B3B-XH-A,3-pin 2.50 mm; 3 A; 250 V,JST_XH_B3B_P2.50mm,On-PCB,No
-SW1,1,Toggle Switch,E-Switch 100SP3T1B1M1QEH,SPDT On-Off-On; 5 A; 1/4-40 bushing,Panel_Cutout_D6.35mm,Off-Board,Yes
-SW1_BOOT,1,Toggle Switch Boot,C&K 759D02000,Full silicone waterproof boot; 1/4-40 thread,Panel_Cutout_D6.35mm,Off-Board,Yes
-TP1,1,Solder Pad (VBUS),Custom TH Pad,2.5 mm pad / 1.3 mm drill,TestPoint_Pad_D2.5mm,On-PCB,No
-TP2,1,Solder Pad (GND),Custom TH Pad,2.5 mm pad / 1.3 mm drill,TestPoint_Pad_D2.5mm,On-PCB,No
-H1,1,Mounting Hole,M2.5 Mounting Hole,2.7 mm drill / 5.5 mm pad,MountingHole_2.7mm_M2.5,On-PCB,No
-H2,1,Mounting Hole,M2.5 Mounting Hole,2.7 mm drill / 5.5 mm pad,MountingHole_2.7mm_M2.5,On-PCB,No
-H3,1,Mounting Hole,M2.5 Mounting Hole,2.7 mm drill / 5.5 mm pad,MountingHole_2.7mm_M2.5,On-PCB,No
-H4,1,Mounting Hole,M2.5 Mounting Hole,2.7 mm drill / 5.5 mm pad,MountingHole_2.7mm_M2.5,On-PCB,No
+Comment,Designator,Footprint,MPN,Qty,Category,Mounting,DNP
+4.5-40 V; 1.0 A; 100 mV Vsense; TSOT25,U1,TSOT25,Diodes AL8860WT-7,1,Buck CC LED Driver,On-PCB,No
+4.5-40 V; 1.0 A; 100 mV Vsense; TSOT25,U2,TSOT25,Diodes AL8860WT-7,1,Buck CC LED Driver,On-PCB,No
+20 V / 1.0 A PDO; 3.3-31 V; W-DFN3030-14,U3,W-DFN3030-14,Diodes AP33771CFBZ-13-FA02,1,USB-C PD 3.1 Sink IC,On-PCB,No
+2-36 V; Open-Collector; SOIC-8,U4,SOIC-8,TI LM393BIDR,1,Dual Comparator,On-PCB,No
+2.500 V +/-0.2%; 65 uA min; SOT-23-3 DBZ,U5,SOT-23-3,TI LM4040BIM3-2.5/NOPB,1,Shunt Voltage Reference,On-PCB,No
+30 V; 4.8 A; 82 mOhm max @ 3 V / 42 mOhm @ 4.5 V,Q1A,SOT-23-3,Diodes DMN3404L-7,1,N-MOSFET,On-PCB,No
+30 V; 4.8 A; 82 mOhm max @ 3 V / 42 mOhm @ 4.5 V,Q1B,SOT-23-3,Diodes DMN3404L-7,1,N-MOSFET,On-PCB,No
+50 V; 220 mA; Vgs(th)=0.8-1.5 V; 6 Ohm @ 4.5 V,Q2,SOT-23-3,onsemi BSS138,1,N-MOSFET,On-PCB,No
+50 V; 220 mA; Vgs(th)=0.8-1.5 V; 6 Ohm @ 4.5 V,Q3,SOT-23-3,onsemi BSS138,1,N-MOSFET,On-PCB,No
+24 V; 1.50 A hold (1.00 A @ 60C); 3.0 A trip,F1,1812,Bourns MF-MSMF150/24X,1,PTC Polyfuse,On-PCB,No
+24 V; 1.50 A hold (1.00 A @ 60C); 3.0 A trip,F2,1812,Bourns MF-MSMF150/24X,1,PTC Polyfuse,On-PCB,No
+365 nm; 333 mA nom; 1.0 A max,D1,3535 SMD (A130),Luminus SST-10-UV-A130-G365-00,1,UV LED,Off-Board,Yes
+365 nm; 333 mA nom; 1.0 A max,D2,3535 SMD (A130),Luminus SST-10-UV-A130-G365-00,1,UV LED,Off-Board,Yes
+365 nm; 333 mA nom; 1.0 A max,D3,3535 SMD (A130),Luminus SST-10-UV-A130-G365-00,1,UV LED,Off-Board,Yes
+365 nm; 333 mA nom; 1.0 A max,D4,3535 SMD (A130),Luminus SST-10-UV-A130-G365-00,1,UV LED,Off-Board,Yes
+455 nm (450-460 nm); Bin 37; 333 mA nom; 1.2 A max,D5,3535 SMD (XP),Cree XPEBRY-L1-0000-00R02,1,Royal Blue LED,Off-Board,Yes
+455 nm (450-460 nm); Bin 37; 333 mA nom; 1.2 A max,D6,3535 SMD (XP),Cree XPEBRY-L1-0000-00R02,1,Royal Blue LED,Off-Board,Yes
+528 nm (520-535 nm); Bin R3; 333 mA nom; 1.5 A max,D7,3535 SMD (XP),Cree XPEBGR-L1-0000-00F01,1,Green LED,Off-Board,Yes
+6200 K; Bin R3; 333 mA nom; 1.5 A max,D8,3535 SMD (XP),Cree XPEBWT-L1-0000-00F51,1,Cool White LED,Off-Board,Yes
+40 V; 3.0 A; 0.35 V @ 0.33 A,D9,DO-214AC (SMA),Diodes B340A-13-F,1,Schottky Diode,On-PCB,No
+40 V; 3.0 A; 0.35 V @ 0.33 A,D10,DO-214AC (SMA),Diodes B340A-13-F,1,Schottky Diode,On-PCB,No
+22 V Vrwm; 24.4-26.9 V Vbr; 600 W; Bidirectional,D11,DO-214AA (SMB),Vishay SMBJ22CA-E3/52,1,TVS Diode (Bi-Dir),On-PCB,No
+30 V; 200 mA; Vf<=240 mV @ 0.1 mA,D12,SOT-23-3,Diodes BAT54-7-F,1,Schottky Signal Diode,On-PCB,No
+40 V; 3.0 A; 0.38 V @ 0.5 A,D13,DO-214AC (SMA),Diodes B340A-13-F,1,Schottky Diode,On-PCB,No
+5.1 V (4.8-5.4 V); 500 mW,D14,SOD-123,Diodes BZT52C5V1-7-F,1,Zener Diode,On-PCB,No
+Green 571 nm; 2.1 V; 20 mA max,D15,0603,Lite-On LTST-C190GKT,1,Indicator LED (Green),On-PCB,No
+68 uH +/-20%; Isat=1.0 A; Irms=0.9 A; DCR_max=0.351 Ohm,L1,6.0x6.0x4.5 mm SMD,Bourns SRN6045-680M,1,Power Inductor,On-PCB,No
+68 uH +/-20%; Isat=1.0 A; Irms=0.9 A; DCR_max=0.351 Ohm,L2,6.0x6.0x4.5 mm SMD,Bourns SRN6045-680M,1,Power Inductor,On-PCB,No
+5.1 kOhm +/-1%; 0.1 W,R1,0603,Vishay CRCW06035K10FKEA,1,Resistor,On-PCB,No
+5.1 kOhm +/-1%; 0.1 W,R2,0603,Vishay CRCW06035K10FKEA,1,Resistor,On-PCB,No
+0.30 Ohm +/-1%; 0.50 W,R3,1206,Bourns CRL1206-FW-R300ELF,1,Sense Resistor,On-PCB,No
+0.30 Ohm +/-1%; 0.50 W,R4,1206,Bourns CRL1206-FW-R300ELF,1,Sense Resistor,On-PCB,No
+100 kOhm +/-1%; 0.1 W,R5,0603,Vishay CRCW0603100KFKEA,1,Resistor,On-PCB,No
+100 kOhm +/-1%; 0.1 W,R6,0603,Vishay CRCW0603100KFKEA,1,Resistor,On-PCB,No
+1.0 Ohm +/-1%; 0.125 W,R7,0805,Vishay CRCW08051R00FKEA,1,Resistor,On-PCB,No
+5 mOhm +/-1%; 0.50 W,R8,1206,Vishay WSL12065L000FEA,1,Current Shunt,On-PCB,No
+39.0 kOhm +/-1%; 0.1 W,R9,0603,Vishay CRCW060339K0FKEA,1,Resistor,On-PCB,No
+82.0 kOhm +/-1%; 0.1 W,R10,0603,Vishay CRCW060382K0FKEA,1,Resistor,On-PCB,No
+6.2 kOhm +/-1%; 0.1 W,R11,0603,Vishay CRCW06036K20FKEA,1,Resistor,On-PCB,No
+200 Ohm +/-1%; 0.125 W,R12,0805,Vishay CRCW0805200RFKEA,1,Resistor,On-PCB,No
+1.0 kOhm +/-1%; 0.1 W,R13,0603,Vishay CRCW06031K00FKEA,1,Resistor,On-PCB,No
+10.0 kOhm +/-1%; 0.125 W,R14,0805,Vishay CRCW080510K0FKEA,1,Resistor,On-PCB,No
+59.0 kOhm +/-1%; 0.1 W,R15,0603,Vishay CRCW060359K0FKEA,1,Resistor,On-PCB,No
+10.0 kOhm +/-1%; 0.1 W,R16,0603,Vishay CRCW060310K0FKEA,1,Resistor,On-PCB,No
+22.0 kOhm +/-1%; 0.125 W,R17,0805,Vishay CRCW080522K0FKEA,1,Resistor,On-PCB,No
+1.0 uF +/-10%; 50 V; X7R,C1,0805,Murata GRM21BR71H105KA12L,1,MLCC Input,On-PCB,No
+10 uF +/-10%; 50 V; X7R,C2,1210,Samsung CL32B106KBJNNNE,1,MLCC Input,On-PCB,No
+10 uF +/-10%; 50 V; X7R,C3,1210,Samsung CL32B106KBJNNNE,1,MLCC Input,On-PCB,No
+1.0 uF +/-10%; 50 V; X7R,C4,0805,Murata GRM21BR71H105KA12L,1,MLCC Output,On-PCB,No
+1.0 uF +/-10%; 50 V; X7R,C5,0805,Murata GRM21BR71H105KA12L,1,MLCC Output,On-PCB,No
+1.0 nF +/-5%; 50 V; C0G,C6,0603,Murata GRM1885C1H102JA01D,1,MLCC Timing,On-PCB,No
+4.7 nF +/-10%; 50 V; X7R,C7,0603,Murata GRM188R71H472KA01D,1,MLCC Timing,On-PCB,No
+100 nF +/-10%; 50 V; X7R,C8,0603,Murata GRM188R71H104KA93D,1,MLCC Bypass,On-PCB,No
+100 nF +/-10%; 50 V; X7R,C9,0603,Murata GRM188R71H104KA93D,1,MLCC Bypass,On-PCB,No
+4.7 uF +/-10%; 50 V; X7R,C10,1206,Murata GRM31CR71H475KA12L,1,MLCC Damper,On-PCB,No
+1.0 uF +/-10%; 50 V; X7R,C11,0805,Murata GRM21BR71H105KA12L,1,MLCC Bypass,On-PCB,No
+1.0 uF +/-10%; 50 V; X7R,C12,0805,Murata GRM21BR71H105KA12L,1,MLCC Bypass,On-PCB,No
+47 nF +/-10%; 50 V; X7R,C13,0603,Murata GRM188R71H473KA61D,1,MLCC Timing,On-PCB,No
+100 nF +/-10%; 50 V; X7R,C14,0603,Murata GRM188R71H104KA93D,1,MLCC Bypass,On-PCB,No
+100 nF +/-10%; 50 V; X7R,C15,0603,Murata GRM188R71H104KA93D,1,MLCC Filter,On-PCB,No
+5.0 A VBUS; 6.25 A GND; 48 V; 16-pin,J1,GCT_USB4085,GCT USB4085-GF-A,1,USB-C Receptacle,On-PCB,No
+2-pin 2.50 mm; 3 A; 250 V; 1.0 mm drill,J2,JST_XH_B2B_P2.50mm,JST B2B-XH-A,1,LED String Header,On-PCB,No
+2-pin 2.50 mm; 3 A; 250 V; 1.0 mm drill,J3,JST_XH_B2B_P2.50mm,JST B2B-XH-A,1,LED String Header,On-PCB,No
+3-pin 2.50 mm; 3 A; 250 V; 1.0 mm drill,J4,JST_XH_B3B_P2.50mm,JST B3B-XH-A,1,Switch Header,On-PCB,No
+SPDT On-Off-On; 5 A; 1/4-40 bushing,SW1,Panel_Cutout_D6.35mm,E-Switch 100SP3T1B1M1QEH,1,Toggle Switch,Off-Board,Yes
+Full silicone waterproof boot; 1/4-40 thread,SW1_BOOT,Panel_Cutout_D6.35mm,C&K 759D02000,1,Toggle Switch Boot,Off-Board,Yes
+2.5 mm pad / 1.3 mm drill,TP1,TestPoint_Pad_D2.5mm,Custom TH Pad,1,Solder Pad (AUX+),On-PCB,Yes
+2.5 mm pad / 1.3 mm drill,TP2,TestPoint_Pad_D2.5mm,Custom TH Pad,1,Solder Pad (GND),On-PCB,Yes
+2.7 mm drill / 5.5 mm pad,H1,MountingHole_2.7mm_M2.5,M2.5 Mounting Hole,1,Mounting Hole,On-PCB,Yes
+2.7 mm drill / 5.5 mm pad,H2,MountingHole_2.7mm_M2.5,M2.5 Mounting Hole,1,Mounting Hole,On-PCB,Yes
+2.7 mm drill / 5.5 mm pad,H3,MountingHole_2.7mm_M2.5,M2.5 Mounting Hole,1,Mounting Hole,On-PCB,Yes
+2.7 mm drill / 5.5 mm pad,H4,MountingHole_2.7mm_M2.5,M2.5 Mounting Hole,1,Mounting Hole,On-PCB,Yes

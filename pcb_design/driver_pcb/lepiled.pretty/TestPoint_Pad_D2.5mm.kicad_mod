@@ -4,24 +4,24 @@
 	(generator_version "9.0")
 	(layer "F.Cu")
 	(property "Reference" "TP"
-		(at 0 -1.95 0)
-		(layer "F.SilkS")
-		(uuid "2452f5cc-5428-479b-9335-8d6c2a479fcd")
+		(at 0 -2.049999 0)
+		(layer "F.Fab")
+		(uuid "30f2464c-4485-4f3c-a0b1-9ea0065e817c")
 		(effects
 			(font
-				(size 0.65 0.65)
-				(thickness 0.11)
+				(size 0.8 0.8)
+				(thickness 0.15)
 			)
 		)
 	)
 	(property "Value" "TestPoint_D2.5mm"
-		(at 0 1.95 0)
+		(at 0 2.049999 0)
 		(layer "F.Fab")
-		(uuid "1103b0e8-9192-43e8-9b05-5bd106db7591")
+		(uuid "0f6cb195-88ba-45a0-a1e4-cd51e5d9bd21")
 		(effects
 			(font
 				(size 0.6 0.6)
-				(thickness 0.15)
+				(thickness 0.1)
 			)
 		)
 	)
@@ -29,7 +29,7 @@
 		(at 0 0 0)
 		(layer "F.Fab")
 		(hide yes)
-		(uuid "17f6757d-13fb-475d-aef4-2d977050aad5")
+		(uuid "c5f249a9-b292-41ee-889f-a17f4a147e97")
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -41,7 +41,7 @@
 		(at 0 0 0)
 		(layer "F.Fab")
 		(hide yes)
-		(uuid "4eef04a1-cc4c-410b-9cdf-2a710c091262")
+		(uuid "193419e5-beba-4449-9333-56f07200bf25")
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -49,17 +49,17 @@
 			)
 		)
 	)
-	(attr through_hole)
+	(attr through_hole exclude_from_pos_files exclude_from_bom)
 	(fp_circle
 		(center 0 0)
-		(end 1.4 0)
+		(end 1.45 0)
 		(stroke
 			(width 0.05)
 			(type default)
 		)
 		(fill no)
 		(layer "F.CrtYd")
-		(uuid "8accad5c-6a1a-4308-89b8-e5d6e77cf69f")
+		(uuid "ed9d7a23-246c-479b-ac2a-e6215e339a21")
 	)
 	(pad "1" thru_hole circle
 		(at 0 0)
@@ -68,7 +68,7 @@
 		(layers "*.Cu" "*.Mask")
 		(remove_unused_layers no)
 		(solder_mask_margin 0.05)
-		(uuid "d1b70594-5e95-484a-8e94-c68306087081")
+		(uuid "d511bae1-770c-43dc-ac6c-1e6bd4a64294")
 	)
 	(embedded_fonts no)
 )

@@ -4,24 +4,24 @@
 	(generator_version "9.0")
 	(layer "F.Cu")
 	(property "Reference" "H"
-		(at 0 3.4 0)
+		(at 0 3.5 0)
 		(layer "F.Fab")
-		(uuid "a9553edb-31a2-4300-a8c1-9be169f603f1")
+		(uuid "141ea3b4-0979-45e5-96f2-c6831c220db7")
 		(effects
 			(font
-				(size 0.65 0.65)
-				(thickness 0.11)
+				(size 0.8 0.8)
+				(thickness 0.15)
 			)
 		)
 	)
 	(property "Value" "MountingHole_2.7mm_M2.5"
-		(at 0 -3.4 0)
+		(at 0 -3.5 0)
 		(layer "F.Fab")
-		(uuid "9192d222-062a-492f-80e8-add4b3d55cbc")
+		(uuid "fec5b78d-5cd7-45e1-9962-6de2753ecd11")
 		(effects
 			(font
 				(size 0.6 0.6)
-				(thickness 0.15)
+				(thickness 0.1)
 			)
 		)
 	)
@@ -29,7 +29,7 @@
 		(at 0 0 0)
 		(layer "F.Fab")
 		(hide yes)
-		(uuid "47e596c9-6c19-4b31-b665-14e3a4f34e3f")
+		(uuid "70dfeb13-cf38-4eaf-957b-4079e9383097")
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -41,7 +41,7 @@
 		(at 0 0 0)
 		(layer "F.Fab")
 		(hide yes)
-		(uuid "d2364745-718a-4c44-a3fe-022c6193a555")
+		(uuid "dd8c49f2-3b0a-45aa-92c8-9076d3499b8d")
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -49,17 +49,17 @@
 			)
 		)
 	)
-	(attr through_hole exclude_from_pos_files)
+	(attr through_hole exclude_from_pos_files exclude_from_bom)
 	(fp_circle
 		(center 0 0)
-		(end 2.85 0)
+		(end 2.9 0)
 		(stroke
 			(width 0.05)
 			(type default)
 		)
 		(fill no)
 		(layer "F.CrtYd")
-		(uuid "f5de33fc-882c-4a27-8898-c96f0c7feaf4")
+		(uuid "59600f5a-1e77-470e-a8bf-be101308926e")
 	)
 	(pad "1" thru_hole circle
 		(at 0 0)
@@ -68,7 +68,7 @@
 		(layers "*.Cu" "*.Mask")
 		(remove_unused_layers no)
 		(solder_mask_margin 0.05)
-		(uuid "511bacd1-1263-4720-b470-1316a40417d0")
+		(uuid "284ecffd-f552-4b49-8044-7462581c10c0")
 	)
 	(embedded_fonts no)
 )

@@ -155,7 +155,7 @@ def build_cap_bot(p: LepiLEDParams) -> bd.Part:
     part = part - core_sock
 
     slot_offset = p.core_pocket_w / 2.0 + p.core_wire_slot_d / 2.0 - 0.1
-    z_slot_bot = 95.0  # opens cleanly below cavity cone (at R=23.9, Z_cone=97.8) -> zero overhang
+    z_slot_bot = p.z_adapt_bot_end + 22.0  # opens cleanly below cavity cone -> zero overhang
     h_slot = z_top - z_slot_bot
     for angle in (0.0, 90.0, 180.0, 270.0):
         wslot = bd.Box(p.core_wire_slot_d + 0.2, p.core_wire_slot_w, h_slot,
@@ -214,21 +214,16 @@ def build_cap_bot(p: LepiLEDParams) -> bd.Part:
         m16_hole = bd.extrude(m16_td, 10.0).rotate(bd.Axis.X, 90.0).translate((0.0, y_m16_in + 1.0, p.m16_z))
         part = part - m16_hole
     else:
-        # Option B: Stepped USB-C plug pocket centered on J1 mid-plane (Z = z_usbc = 81.98)
-        # Overmold stop at Y = -33.10 mm directly against Ø61.0 mm cavity wall (Y_in = -30.50 mm)
-        # -> 2.60 mm bezel wall >= 2.50 mm across the entire cutout Z span (no inward boss needed).
+        # Option B (Rev 4.0): Direct-mate recessed USB-C tunnel centered on J1 mid-plane (Z = z_usbc = 61.98)
+        # 13.6 x 7.8 mm + 45 deg pitched roof passes straight through the Ø92->Ø61 mm wall into the cavity
+        # so any standard 6.65 mm USB-C PD laptop-charger plug seats full 4.55 mm into J1 (front mouth Y = -25.76 mm)!
         z_usbc = p.z_usbc
-        y_bezel_in = p.usbc_bezel_wall_y_in + 2.0  # -28.50 mm, cleanly inside Ø61.0 mm cavity
-        bezel_len = abs((p.usbc_bezel_wall_y_out - 0.2) - y_bezel_in)
-        bezel_prof = _pitched_rect_profile(p.usbc_bezel_w, p.usbc_bezel_h, 45.0)
-        bezel = bd.extrude(bezel_prof, bezel_len).rotate(bd.Axis.X, 90.0)
-        bezel = bezel.translate((0.0, y_bezel_in, z_usbc - p.usbc_bezel_h / 2.0))
-
-        overmold_len = abs(-47.5 - p.usbc_bezel_wall_y_out)  # 14.40 mm (-47.50 .. -33.10)
-        overmold_prof = _pitched_rect_profile(p.usbc_overmold_w, p.usbc_overmold_h, 45.0)
+        y_tunnel_in = -24.00  # breaks cleanly inside cavity cone across full X=±6.8 width -> ~0.02 mm^2 overhang!
+        overmold_len = abs(-47.5 - y_tunnel_in)
+        overmold_prof = _pitched_rect_profile(p.usbc_overmold_w, p.usbc_overmold_h, 47.0)
         overmold = bd.extrude(overmold_prof, overmold_len).rotate(bd.Axis.X, 90.0)
-        overmold = overmold.translate((0.0, p.usbc_bezel_wall_y_out, z_usbc - p.usbc_overmold_h / 2.0))
-        part = part - bezel - overmold
+        overmold = overmold.translate((0.0, y_tunnel_in, z_usbc - p.usbc_overmold_h / 2.0))
+        part = part - overmold
 
     return part
 
@@ -354,18 +349,18 @@ def build_assembly_parts(p: LepiLEDParams, core_w_override: float | None = None,
         tim_pcb = tim_pcb - bd.Box(pw, pl, p.tim_pcb_thick + 0.5,
                                    align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((px, py, p.z_pcb_seat - 0.25))
 
-    # Driver PCB + exact M2 SMD, JST headers, J1 (with 2.34 mm overhang), and TH pins (J1, TP1, TP2, J2..J4)
+    # Driver PCB + exact Rev 4.0 SMD, JST headers, J1 (front mouth Y = -25.76 mm), and TH pins (inside 2.5 mm pockets)
     pcb_board = bd.Box(p.pcb_w, p.pcb_l, p.pcb_thick, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
     pcb_board = bd.fillet(pcb_board.edges().filter_by(bd.Axis.Z), p.pcb_corner_r).translate((0, 0, p.z_pcb_bot))
-    l1_smd = bd.Box(6.0, 6.0, 4.5, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((-13.8, 11.8, p.z_pcb_top))
-    l2_smd = bd.Box(6.0, 6.0, 4.5, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((5.2, 11.8, p.z_pcb_top))
+    l1_smd = bd.Box(6.0, 6.0, 4.5, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((-13.0, 11.8, p.z_pcb_top))
+    l2_smd = bd.Box(6.0, 6.0, 4.5, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((13.0, 11.8, p.z_pcb_top))
     j2_hdr = bd.Box(7.4, 5.8, p.pcb_jst_mated_h, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((-5.2, 19.2, p.z_pcb_top))
     j3_hdr = bd.Box(7.4, 5.8, p.pcb_jst_mated_h, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((5.2, 19.2, p.z_pcb_top))
     j4_hdr = bd.Box(9.9, 5.8, p.pcb_jst_mated_h, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((-1.4, -2.5, p.z_pcb_top))
-    # J1 body F_Fab spans Y in [-25.34, -16.17] (length 9.17 mm, width 8.94 mm, height 3.46 mm)
-    # Carve real 4.55 mm-deep mating pocket (8.34 x 4.55 x 2.56 mm, Y in [-25.34, -20.79], centered at Z = z_usbc)
-    j1_usbc_outer = bd.Box(8.94, 9.17, 3.46, align=(bd.Align.CENTER, bd.Align.MIN, bd.Align.MIN)).translate((0.0, -25.34, p.z_pcb_top))
-    j1_cavity = bd.Box(8.34, p.usbc_mating_depth_mm + 0.05, 2.56, align=(bd.Align.CENTER, bd.Align.MIN, bd.Align.CENTER)).translate((0.0, -25.39, p.z_usbc))
+    # J1 body F_Fab spans Y in [-25.76, -16.59] (exact GCT USB4085-GF-A Row-B (-18.50) - 7.26 mm mouth)
+    # Carve real 4.55 mm-deep mating pocket (8.34 x 4.55 x 2.56 mm, Y in [-25.76, -21.21], centered at Z = z_usbc)
+    j1_usbc_outer = bd.Box(8.94, 9.17, 3.46, align=(bd.Align.CENTER, bd.Align.MIN, bd.Align.MIN)).translate((0.0, p.usbc_j1_front_y, p.z_pcb_top))
+    j1_cavity = bd.Box(8.34, p.usbc_mating_depth_mm + 0.05, 2.56, align=(bd.Align.CENTER, bd.Align.MIN, bd.Align.CENTER)).translate((0.0, p.usbc_j1_front_y - 0.05, p.z_usbc))
     j1_usbc = j1_usbc_outer - j1_cavity
     # TH pin protrusions below PCB (1.8 mm) inside relief pockets (J1 SH3/SH4 tabs reach Y = -22.36)
     j23_pins = bd.Box(15.0, 2.0, p.pcb_jst_pin_protrude, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((0.0, 19.2, p.z_pcb_bot))
@@ -484,13 +479,13 @@ def build_assembly_parts(p: LepiLEDParams, core_w_override: float | None = None,
         m16_nut = bd.extrude(sk_hex.face(), 5.0).rotate(bd.Axis.X, 90.0).translate((0, y_m16_in + 5.1, p.m16_z))
         parts["m16_assy"] = bd.Compound([m16_ext, m16_nut])
     else:
-        # Mated extended-barrel USB-C plug (usbc_specified_barrel_mm = 13.0 mm >= 12.31 mm min),
-        # inserted full 4.55 mm inside J1 (tip at Y = -20.79 mm; overmold shoulder at Y = -33.79 mm,
-        # 0.69 mm clear of -33.10 mm bezel stop; 0.01 mm internal overlap ensures single contiguous OCCT solid).
-        y_plug_tip = -25.34 + p.usbc_mating_depth_mm
+        # Standard 6.65 mm USB-C PD laptop-charger plug (usbc_specified_barrel_mm = 6.65 mm),
+        # inserted full 4.55 mm inside J1 (tip at Y = -21.21 mm; overmold shoulder at Y = -27.86 mm,
+        # passing freely through the 13.6 x 7.8 mm direct-mate tunnel with zero collision!).
+        y_plug_tip = p.usbc_j1_front_y + p.usbc_mating_depth_mm
         y_overmold_front = y_plug_tip - p.usbc_specified_barrel_mm
         usbc_plug_shell = bd.Box(8.3, p.usbc_specified_barrel_mm + 0.01, 2.5, align=(bd.Align.CENTER, bd.Align.MAX, bd.Align.CENTER)).translate((0.0, y_plug_tip, p.z_usbc))
-        usbc_plug_overmold = bd.Box(12.5, 16.0, 7.2, align=(bd.Align.CENTER, bd.Align.MAX, bd.Align.CENTER)).translate((0.0, y_overmold_front, p.z_usbc))
+        usbc_plug_overmold = bd.Box(12.4, 24.0, 6.8, align=(bd.Align.CENTER, bd.Align.MAX, bd.Align.CENTER)).translate((0.0, y_overmold_front, p.z_usbc))
         usbc_plug_assy = usbc_plug_shell.fuse(usbc_plug_overmold)
         assert len(usbc_plug_assy.solids()) == 1, f"Expected 1 contiguous USB-C plug solid, got {len(usbc_plug_assy.solids())}"
         parts["usbc_plug_assy"] = usbc_plug_assy
@@ -568,38 +563,34 @@ def audit_stl_overhangs(stl_path: Path, print_up_axis: tuple[float, float, float
 
 def verify_usbc_bezel_wall_stl(stl_path: Path, p: LepiLEDParams) -> dict:
     """
-    Vectorized Möller-Trumbore STL ray-cast across X in [-7.0, +7.0] and Z in [77.5, 93.5]
-    (0.25 mm step) asserting min_bezel_wall >= 2.500 mm everywhere outside the 9.5 x 3.8 mm
-    bezel through-slot (with 45 deg pitched roof), and unobstructed through-slot inside it.
+    Vectorized Möller-Trumbore STL ray-cast across X in [-9.0, +9.0] and Z in [z_usbc - 6.0, z_usbc + 12.0]
+    (0.25 mm step) asserting unobstructed direct-mate tunnel inside the 13.6 x 7.8 mm (+45 deg roof) opening
+    and solid wall >= 2.500 mm everywhere outside it (above MECH-GASKET-3).
     """
     mesh = trimesh.load(str(stl_path), force="mesh")
     tris = mesh.triangles  # (T, 3, 3)
+    z_lo = p.bot_oring_roof_z_max + 0.5
+    z_hi = p.z_usbc + p.usbc_overmold_h / 2.0 + 0.5 * p.usbc_overmold_w + 3.0
     tri_xmin = tris[:, :, 0].min(axis=1)
     tri_xmax = tris[:, :, 0].max(axis=1)
     tri_ymin = tris[:, :, 1].min(axis=1)
     tri_zmin = tris[:, :, 2].min(axis=1)
     tri_zmax = tris[:, :, 2].max(axis=1)
-    # Pre-filter triangles near the front (-Y) USB-C cutout region
-    tri_mask = (tri_xmax >= -7.2) & (tri_xmin <= 7.2) & (tri_ymin < 0.0) & (tri_zmax >= 77.3) & (tri_zmin <= 93.7)
+    tri_mask = (tri_xmax >= -9.5) & (tri_xmin <= 9.5) & (tri_ymin < 0.0) & (tri_zmax >= z_lo - 0.5) & (tri_zmin <= z_hi + 0.5)
     tris_sub = tris[tri_mask]
 
     v0 = tris_sub[:, 0, :]
     e1 = tris_sub[:, 1, :] - v0
     e2 = tris_sub[:, 2, :] - v0
-    # For +Y ray D=(0, 1, 0): pvec = D x e2 = (e2_z, 0, -e2_x), det = e1 . pvec
     det = e1[:, 0] * e2[:, 2] - e1[:, 2] * e2[:, 0]
     valid_tri = np.abs(det) > 1e-12
-    v0 = v0[valid_tri]
-    e1 = e1[valid_tri]
-    e2 = e2[valid_tri]
-    inv_det = 1.0 / det[valid_tri]
+    v0, e1, e2, inv_det = v0[valid_tri], e1[valid_tri], e2[valid_tri], 1.0 / det[valid_tri]
 
-    xs = np.arange(-7.0, 7.0 + 1e-9, 0.25)
-    zs = np.arange(77.5, 93.5 + 1e-9, 0.25)
-    # Nudge exact vertical wall boundaries (x = +-7.0, +-4.75) by 1e-3 mm to avoid coplanar edge grazing
+    hw = p.usbc_overmold_w / 2.0
+    xs = np.arange(-9.0, 9.0 + 1e-9, 0.25)
+    zs = np.arange(z_lo, z_hi + 1e-9, 0.25)
     xs_eval = xs.copy()
-    xs_eval[np.isclose(np.abs(xs_eval), 7.0, atol=1e-6)] *= (6.999 / 7.0)
-    xs_eval[np.isclose(np.abs(xs_eval), 4.75, atol=1e-6)] *= (4.751 / 4.75)
+    xs_eval[np.isclose(np.abs(xs_eval), hw, atol=1e-3)] += 0.01
 
     gx, gz = np.meshgrid(xs_eval, zs, indexing="ij")
     gx_flat = gx.ravel()
@@ -620,11 +611,16 @@ def verify_usbc_bezel_wall_stl(stl_path: Path, p: LepiLEDParams) -> dict:
     hits_mask = (u >= -1e-7) & (v >= -1e-7) & (u + v <= 1.0 + 1e-7) & (t > 0.0)
     y_hits_all = y_orig + t
 
-    bezel_roof_z = p.z_usbc + p.usbc_bezel_h / 2.0 + np.maximum(0.0, p.usbc_bezel_w / 2.0 - np.abs(gx_flat))
-    in_bezel = (
-        (np.abs(gx_flat) <= p.usbc_bezel_w / 2.0)
-        & (gz_flat >= p.z_usbc - p.usbc_bezel_h / 2.0)
-        & (gz_flat <= bezel_roof_z)
+    tunnel_roof_z = p.z_usbc + p.usbc_overmold_h / 2.0 + np.maximum(0.0, hw - np.abs(gx_flat)) * math.tan(math.radians(47.0))
+    in_tunnel = (
+        (np.abs(gx_flat) < hw - 0.05)
+        & (gz_flat > p.z_usbc - p.usbc_overmold_h / 2.0 + 0.05)
+        & (gz_flat < tunnel_roof_z - 0.05)
+    )
+    outside_tunnel = (
+        (np.abs(gx_flat) > hw + 0.05)
+        | (gz_flat < p.z_usbc - p.usbc_overmold_h / 2.0 - 0.05)
+        | (gz_flat > tunnel_roof_z + 0.05)
     )
 
     min_wall_mm = float("inf")
@@ -635,18 +631,17 @@ def verify_usbc_bezel_wall_stl(stl_path: Path, p: LepiLEDParams) -> dict:
 
     for idx in range(len(gx_flat)):
         ys = np.sort(y_hits_all[idx, hits_mask[idx]])
-        # Deduplicate shared triangle-edge hits within 1e-4 mm
         dedup: list[float] = []
         for yv in ys:
             if not dedup or abs(float(yv) - dedup[-1]) > 1e-4:
                 dedup.append(float(yv))
         front_ys = [yv for yv in dedup if yv < 0.0]
 
-        if in_bezel[idx]:
+        if in_tunnel[idx]:
             slot_rays_checked += 1
             if len(front_ys) != 0:
                 anomalies += 1
-        else:
+        elif outside_tunnel[idx]:
             wall_rays_checked += 1
             if len(front_ys) < 2:
                 anomalies += 1

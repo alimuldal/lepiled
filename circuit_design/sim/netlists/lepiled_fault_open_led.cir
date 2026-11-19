@@ -1,50 +1,53 @@
-* LepiLED DIY Maxi Switch - Worst-Case Fault Simulation: Open-Load LED String (BZT52C18 OVP Clamp)
-* Worst-case corner: Vin=5.5V, L=8.0uH (-20%), C4=6.75uF, VFB=0.2185V (+15%), R3=0.532 (-5%), FSW=1.2MHz,
-* BZT52C18-7-F max Vz=19.1V @ 5mA, Zzt_max=45 Ohm (D_Z18V_MAX) -> verifies VOUT1_pk & VSW_pk < 24.0 V rec max!
+* ==============================================================================
+* LepiLED Rev 4.0 — Fault 1: Open-Circuit LED String (Ch1 J2 Unplugged at t=2.5 ms)
+* ==============================================================================
+.include models.lib
+.include al8860.lib
 
-.INCLUDE circuit_design/sim/netlists/models.lib
-.INCLUDE circuit_design/sim/netlists/lm3410xmy.lib
+Vin VIN_20V 0 20.0
 
-V_USB VUSB_SRC 0 DC 5.5
-R_CABLE VUSB_SRC VIN_PROT 0.05
+R3 VIN_20V UV_POS 0.30
+C6 U1_CTRL 0 0.5n
+XU1 SW1_NODE 0 U1_CTRL UV_POS VIN_20V AL8860_WT
+D9 SW1_NODE VIN_20V D_B340A
+L1 UV_NEG_L SW1_NODE 68u
+RL1 UV_NEG UV_NEG_L 0.29
+C4 UV_POS UV_NEG 1.0u
+V_open n_open 0 PULSE(1 0 2.5m 1u 1u 20m 50m)
+S_open UV_POS UV_SW n_open 0 SW_BRK
+.model SW_BRK SW(VT=0.5 VH=0.05 RON=0.01 ROFF=100Meg)
+V_iuv UV_SW UV_A1 0
+D1 UV_A1 UV_N1 D_SST10_UV
+D2 UV_N1 UV_N2 D_SST10_UV
+D3 UV_N2 UV_N3 D_SST10_UV
+D4 UV_N3 UV_NEG D_SST10_UV
 
-C1 VIN_PROT 0 24.0u IC=5.5
-L1 VIN_PROT SW1_L 8.0u
-R_DCR_L1 SW1_L SW1_NODE 0.0586
-V_EN1 EN1_NET 0 DC 5.5
+R4 VIN_20V VIS_POS 0.30
+C7 U2_CTRL 0 0.5n
+XU2 SW2_NODE 0 U2_CTRL VIS_POS VIN_20V AL8860_WT
+D10 SW2_NODE VIN_20V D_B340A
+L2 VIS_NEG_L SW2_NODE 68u
+RL2 VIS_NEG VIS_NEG_L 0.29
+C5 VIS_POS VIS_NEG 1.0u
+V_ivis VIS_POS VIS_A1 0
+D5 VIS_A1 VIS_N1 D_XPE2_RB
+D6 VIS_N1 VIS_N2 D_XPE2_RB
+D7 VIS_N2 VIS_N3 D_XPE2_GRN
+D8 VIS_N3 VIS_NEG D_XPE2_CW
 
-X_U1 VIN_PROT SW1_NODE FB1_NET EN1_NET 0 LM3410XMY VFB=0.2185 FSW=1.2e6 ICL=2.8 RDS=0.170 DMAX=0.92
-D9 SW1_NODE VOUT1 D_B340A
-C4 VOUT1 C4_ESR 6.75u IC=5.2
-R_ESR_C4 C4_ESR 0 0.005
-R3 UV_RET 0 0.532
-D13 FB1_NET VOUT1 D_Z18V_MAX
-R8 FB1_NET OVP1_S 101
-V_OVP_SENS OVP1_S UV_RET DC 0
+.options method=gear reltol=5e-3 abstol=1e-8 vntol=1e-4
+.tran 5u 5.0m 0 2u uic
 
-* 4S UV LED String with switch S_OPEN CLOSED 0..0.8ms and OPEN 0.8..2.0ms
-D1 VOUT1 UV_N1 D_SST10UV
-D2 UV_N1 UV_N2 D_SST10UV
-D3 UV_N2 UV_N3 D_SST10UV
-D4 UV_N3 UV_SW_IN D_SST10UV
-V_UV_SENS UV_SW_IN UV_SW DC 0
-S_OPEN UV_SW UV_RET CTL_OPEN 0 S_BRK
-V_CTL_OPEN CTL_OPEN 0 PWL(0 5 0.799m 5 0.800m 0 2.0m 0)
-.MODEL S_BRK SW(RON=0.05 ROFF=100Meg VT=2.5 VH=0.1)
-
-.TRAN 25n 2.0m 0 25n UIC
-
-.CONTROL
+.control
+set filetype=ascii
 run
-meas tran vout1_pre avg v(vout1) from=0.55m to=0.75m
-meas tran i_uv_pre avg i(v_uv_sens) from=0.55m to=0.75m
-meas tran vout1_open_peak max v(vout1) from=0.80m to=2.0m
-meas tran vsw_open_peak max v(sw1_node) from=0.80m to=2.0m
-meas tran vout1_open_ss avg v(vout1) from=1.6m to=2.0m
-meas tran iz_open_avg avg i(v_ovp_sens) from=1.6m to=2.0m
-set wr_vecnames
-set wr_singlescale
-wrdata circuit_design/sim/outputs/ngspice_fault_open_trace.txt v(vout1) v(sw1_node) v(fb1_net) i(l1) i(v_ovp_sens) i(v_uv_sens)
-quit 0
-.ENDC
-.END
+meas tran vsw1_pk_open  MAX v(sw1_node) FROM=2.5m TO=5.0m
+meas tran vuv_pos_open  AVG v(uv_pos)   FROM=3.5m TO=4.9m
+meas tran i_uv_open     AVG i(v_iuv)    FROM=3.5m TO=4.9m
+meas tran i_l1_open     AVG i(l1)       FROM=3.5m TO=4.9m
+meas tran i_vis_during  AVG i(v_ivis)   FROM=3.5m TO=4.9m
+linearize v(sw1_node) v(uv_pos) v(uv_neg) i(v_iuv) i(l1) i(v_ivis)
+wrdata ../outputs/fault_open_led.txt v(sw1_node) v(uv_pos) v(uv_neg) i(v_iuv) i(l1) i(v_ivis)
+quit
+.endc
+.end

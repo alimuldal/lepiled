@@ -100,17 +100,16 @@ def build_uv_thermal_poly():
         (+9.20, +2.35),
         (+9.20, +20.60),
         (+8.40, +21.30),
-        (+3.60, +21.30),
-        (+3.60, +17.50),
+        (+4.10, +21.30),
+        (+4.10, +17.50),
     ])
-    # Arc around MH1 (0, +14.0) radius 3.6 mm from +30 deg down to +150 deg? Wait:
-    # Let's carve MH1 from the top edge: (+3.6, +21.3) -> down to (+3.6, +14.0) -> semicircular bottom around (0, +14.0) R=3.6 -> (-3.6, +14.0) -> (-3.6, +21.3)
-    pts.pop()  # remove (+3.6, +17.5)
+    # Carve MH1 at (0, +14.0) with R=4.10 mm (>= 4.0 mm screw-head & dielectric clearance!)
+    pts.pop()  # remove (+4.10, +17.5)
     for deg in range(0, -181, -15):
         rad = math.radians(deg)
-        pts.append((3.60 * math.cos(rad), 14.0 + 3.60 * math.sin(rad)))
+        pts.append((4.10 * math.cos(rad), 14.0 + 4.10 * math.sin(rad)))
     pts.extend([
-        (-3.60, +21.30),
+        (-4.10, +21.30),
         (-8.40, +21.30),
         (-9.20, +20.60),
         (-9.20, +2.35),
@@ -182,16 +181,27 @@ def create_footprints():
     p2.SetLocalSolderMaskMargin(mm(0.05))
     fp_uv.Add(p2)
 
-    # Pad 3 (SMD opening strictly 1.30 x 3.25 mm)
+    # Pad 3 (SMD opening strictly 1.30 x 3.25 mm; F.Paste segmented below per Luminus p. 10)
     p3_smd = pcbnew.PAD(fp_uv)
     p3_smd.SetNumber("3")
     p3_smd.SetAttribute(pcbnew.PAD_ATTRIB_SMD)
     p3_smd.SetShape(pcbnew.PAD_SHAPE_RECT)
     p3_smd.SetPosition(lpt(0.0, 0.0))
     p3_smd.SetSize(pcbnew.VECTOR2I(mm(1.30), mm(3.25)))
-    p3_smd.SetLayerSet(lset(pcbnew.F_Cu, pcbnew.F_Mask, pcbnew.F_Paste))
+    p3_smd.SetLayerSet(lset(pcbnew.F_Cu, pcbnew.F_Mask))
     p3_smd.SetLocalSolderMaskMargin(mm(0.0))
     fp_uv.Add(p3_smd)
+
+    # Segmented F.Paste on D_UV thermal pad: 3 x (1.15 x 0.75 mm) = 61.2% coverage
+    for py_off in (-1.00, 0.00, +1.00):
+        pp = pcbnew.PAD(fp_uv)
+        pp.SetNumber("")
+        pp.SetAttribute(pcbnew.PAD_ATTRIB_SMD)
+        pp.SetShape(pcbnew.PAD_SHAPE_RECT)
+        pp.SetPosition(lpt(0.0, py_off))
+        pp.SetSize(pcbnew.VECTOR2I(mm(1.15), mm(0.75)))
+        pp.SetLayerSet(lset(pcbnew.F_Paste))
+        fp_uv.Add(pp)
 
     # Pad 3 (Custom thermal heat-spreading copper pour, F.Cu ONLY -> SMD-masked outside 1.30x3.25!)
     p3_wing = pcbnew.PAD(fp_uv)
@@ -276,7 +286,7 @@ def create_footprints():
         t.SetLayer(pcbnew.F_SilkS)
         t.SetPosition(lpt(tx, ty))
         t.SetTextSize(pcbnew.VECTOR2I(mm(0.85), mm(0.85)))
-        t.SetTextThickness(mm(0.14))
+        t.SetTextThickness(mm(0.15))
         fp_uv.Add(t)
 
     io.FootprintSave(str(FP_LIB_DIR), fp_uv)
@@ -314,9 +324,21 @@ def create_footprints():
     p3_smd.SetShape(pcbnew.PAD_SHAPE_RECT)
     p3_smd.SetPosition(lpt(0.0, 0.0))
     p3_smd.SetSize(pcbnew.VECTOR2I(mm(1.30), mm(3.30)))
-    p3_smd.SetLayerSet(lset(pcbnew.F_Cu, pcbnew.F_Mask, pcbnew.F_Paste))
+    p3_smd.SetLayerSet(lset(pcbnew.F_Cu, pcbnew.F_Mask))
     p3_smd.SetLocalSolderMaskMargin(mm(0.0))
     fp_vis.Add(p3_smd)
+
+    # Segmented windowpane F.Paste on D_VIS thermal pad: 2x3 x (0.50 x 0.90 mm) = 62.9% coverage (Cree p. 39)
+    for px_off in (-0.34, +0.34):
+        for py_off in (-1.05, 0.00, +1.05):
+            pp = pcbnew.PAD(fp_vis)
+            pp.SetNumber("")
+            pp.SetAttribute(pcbnew.PAD_ATTRIB_SMD)
+            pp.SetShape(pcbnew.PAD_SHAPE_RECT)
+            pp.SetPosition(lpt(px_off, py_off))
+            pp.SetSize(pcbnew.VECTOR2I(mm(0.50), mm(0.90)))
+            pp.SetLayerSet(lset(pcbnew.F_Paste))
+            fp_vis.Add(pp)
 
     p3_wing = pcbnew.PAD(fp_vis)
     p3_wing.SetNumber("3")
@@ -394,12 +416,12 @@ def create_footprints():
         t.SetLayer(pcbnew.F_SilkS)
         t.SetPosition(lpt(tx, ty))
         t.SetTextSize(pcbnew.VECTOR2I(mm(0.85), mm(0.85)))
-        t.SetTextThickness(mm(0.14))
+        t.SetTextThickness(mm(0.15))
         fp_vis.Add(t)
 
     io.FootprintSave(str(FP_LIB_DIR), fp_vis)
 
-    # 3. Wire Solder Pad 2.5 x 3.5 mm (SMD)
+    # 3. Wire Solder Pad 2.5 x 3.5 mm (SMD, with F.CrtYd per DFM review)
     fp_pad = pcbnew.FOOTPRINT(None)
     fp_pad.SetReference("J_PAD")
     fp_pad.SetValue("WirePad_2.5x3.5mm")
@@ -416,6 +438,16 @@ def create_footprints():
     pw.SetLayerSet(lset(pcbnew.F_Cu, pcbnew.F_Mask))
     pw.SetLocalSolderMaskMargin(mm(0.05))
     fp_pad.Add(pw)
+
+    for x0, y0, x1, y1 in [(-1.45, +1.95, +1.45, +1.95), (+1.45, +1.95, +1.45, -1.95),
+                           (+1.45, -1.95, -1.45, -1.95), (-1.45, -1.95, -1.45, +1.95)]:
+        seg = pcbnew.PCB_SHAPE(fp_pad)
+        seg.SetShape(pcbnew.SHAPE_T_SEGMENT)
+        seg.SetLayer(pcbnew.F_CrtYd)
+        seg.SetWidth(mm(0.05))
+        seg.SetStart(lpt(x0, y0))
+        seg.SetEnd(lpt(x1, y1))
+        fp_pad.Add(seg)
 
     fp_pad.Reference().SetPosition(lpt(0.0, +2.60))
     fp_pad.Reference().SetLayer(pcbnew.F_Fab)
@@ -492,7 +524,7 @@ def write_kicad_pro():
                     "silk_line_width": 0.15,
                     "silk_text_size_h": 0.85,
                     "silk_text_size_v": 0.85,
-                    "silk_text_thickness": 0.14,
+                    "silk_text_thickness": 0.15,
                 },
                 "diff_pair_dimensions": [],
                 "drc_exclusions": [],
@@ -636,6 +668,7 @@ def write_kicad_sch():
     def sym_inst(ref, lib_id, val, fp, mpn, ds, x, y, angle, pins, in_bom="yes"):
         s_uid = uid(f"sym_{ref}")
         pin_lines = "\n".join(f'    (pin "{p}" (uuid "{uid(f"pin_{ref}_{p}")}"))' for p in pins)
+        val_y = y + 8.89 if "LED_ThermalPad" in lib_id else y + 5.08
         return f"""  (symbol
     (lib_id "{lib_id}")
     (at {x:.2f} {y:.2f} {angle})
@@ -646,7 +679,7 @@ def write_kicad_sch():
     (dnp no)
     (uuid "{s_uid}")
     (property "Reference" "{ref}" (at {x:.2f} {y - 5.08:.2f} 0) (effects (font (size 1.27 1.27))))
-    (property "Value" "{val}" (at {x:.2f} {y + 6.35:.2f} 0) (effects (font (size 1.27 1.27))))
+    (property "Value" "{val}" (at {x:.2f} {val_y:.2f} 0) (effects (font (size 1.27 1.27))))
     (property "Footprint" "{fp}" (at {x:.2f} {y:.2f} 0) (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "{ds}" (at {x:.2f} {y:.2f} 0) (effects (font (size 1.27 1.27)) (hide yes)))
     (property "MPN" "{mpn}" (at {x:.2f} {y:.2f} 0) (effects (font (size 1.27 1.27)) (hide yes)))
@@ -829,7 +862,7 @@ def build_board(uv_area: float, vis_area: float):
     ds.m_CopperEdgeClearance = mm(0.50)
     ds.m_HoleClearance = mm(0.50)
     ds.m_SilkClearance = mm(0.15)
-    ds.m_SolderMaskMargin = mm(0.05)
+    ds.m_SolderMaskExpansion = mm(0.05)
     ds.SetAuxOrigin(kpt(0.0, 0.0))
 
     add_rounded_rect_edge_cuts(board, 20.0, 80.0, 1.0)
@@ -902,7 +935,7 @@ def build_board(uv_area: float, vis_area: float):
         t.SetLayer(pcbnew.F_SilkS)
         t.SetPosition(kpt(xm, ym))
         t.SetTextSize(pcbnew.VECTOR2I(mm(0.85), mm(0.85)))
-        t.SetTextThickness(mm(0.14))
+        t.SetTextThickness(mm(0.15))
         board.Add(t)
 
     pcbnew.SaveBoard(str(pcb_path), board)
@@ -910,9 +943,8 @@ def build_board(uv_area: float, vis_area: float):
 
 
 def run_verification_and_exports():
-    tbin = Path("/home/alimuldal/.local/share/lepiled-tools/bin")
-    kcli = str(tbin / "kicad-cli")
-    gerbv = str(tbin / "gerbv")
+    kcli = "/usr/bin/kicad-cli"
+    gerbv = "/home/alimuldal/.local/share/lepiled-tools/bin/gerbv"
 
     sch_path = BASE_DIR / "led_mcpcb.kicad_sch"
     pcb_path = BASE_DIR / "led_mcpcb.kicad_pcb"
@@ -967,6 +999,22 @@ def run_verification_and_exports():
         assert "B_Cu" not in bad.name and "B_Mask" not in bad.name and "PTH.drl" not in bad.name.replace("NPTH.drl", ""), \
             f"Unexpected back/PTH file in 1-layer MCPCB gerbers: {bad.name}"
 
+    # Patch led_mcpcb-job.gbrjob to strict 1-layer Aluminum MCPCB spec (1.0 W/m*K)
+    gbrjob_path = GERBER_DIR / "led_mcpcb-job.gbrjob"
+    if gbrjob_path.exists():
+        job = json.loads(gbrjob_path.read_text())
+        job.setdefault("GeneralSpecs", {})["LayerNumber"] = 1
+        job["GeneralSpecs"]["BoardThickness"] = 1.6
+        job["MaterialStackup"] = [
+            {"Type": "Legend", "Name": "Top Silk Screen", "Color": "Black"},
+            {"Type": "SolderPaste", "Name": "Top Solder Paste"},
+            {"Type": "SolderMask", "Thickness": 0.02, "Name": "Top Solder Mask", "Color": "White"},
+            {"Type": "Copper", "Thickness": 0.035, "Name": "F.Cu"},
+            {"Type": "Dielectric", "Thickness": 0.10, "Material": "Thermal Dielectric (1.0 W/m*K)", "Name": "Thermal Dielectric"},
+            {"Type": "Dielectric", "Thickness": 1.445, "Material": "Aluminum 5052/6061 Base", "Name": "Aluminum Core"},
+        ]
+        gbrjob_path.write_text(json.dumps(job, indent=2) + "\n")
+
     zip_path = GERBER_DIR / "led_mcpcb_gerbers.zip"
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
         for f in sorted(GERBER_DIR.iterdir()):
@@ -1002,7 +1050,7 @@ def run_verification_and_exports():
         ])
         writer.writerow([
             "Visible LED 3535 (2x RB, 1x GR, 1x CW)", "D_VIS", "LED_Cree_XP-E2",
-            "Cree XPEBRY-L1-0000-00S02 (2x) / XPEBGR-L1-0000-00K01 (1x) / XPEBWT-L1-0000-00H51 (1x)",
+            "Cree XPEBRY-L1-0000-00R02 (2x) / XPEBGR-L1-0000-00F01 (1x) / XPEBWT-L1-0000-00F51 (1x)",
             1, 4, "D5..D8 across MECH-MCPCB-1..4; bottom thermal pad notch = Anode"
         ])
 

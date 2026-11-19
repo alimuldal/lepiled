@@ -1,0 +1,32 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: * ==============================================================================
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+Operating point simulation skipped by 'uic',
+  now using transient initial conditions.
+ Reference value :  3.28876e-04
+ Reference value :  6.94154e-04
+ Reference value :  1.08119e-03
+ Reference value :  1.45796e-03
+ Reference value :  1.84383e-03
+ Reference value :  2.23729e-03
+ Reference value :  2.65575e-03
+ Reference value :  3.10766e-03
+ Reference value :  3.55023e-03
+ Reference value :  4.02191e-03
+ Reference value :  4.49062e-03
+ Reference value :  4.95634e-03
+No. of Data Rows : 98279
+vsw1_pk_open        =  2.061533e+01 at=  2.506168e-03
+vuv_pos_open        =  2.000000e+01 from=  3.500000e-03 to=  4.900191e-03
+i_uv_open           =  1.098416e-07 from=  3.500000e-03 to=  4.900191e-03
+i_l1_open           =  1.909923e-07 from=  3.500000e-03 to=  4.900191e-03
+i_vis_during        =  3.362724e-01 from=  3.500000e-03 to=  4.900191e-03
+ngspice-45.2 done
+
+--- STDERR ---

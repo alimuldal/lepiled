@@ -1,61 +1,67 @@
-* LepiLED DIY Maxi Switch - Semiconductor & Passive SPICE Models
-* Fitted directly from vendor PDFs archived in datasheets/
+* ==============================================================================
+* LepiLED Rev 4.0 (Option 2) — Verified Semiconductor & Protection SPICE Models
+* Grounded in local PDFs in datasheets/
+* ==============================================================================
 
-* --- LED Emitters ---
-* Luminus SST-10-UV-A130-G365-00 (365 nm UV-A): 3.59V @ 350mA, 3.70V @ 500mA, 4.00V @ 1.0A
-.MODEL D_SST10UV D(IS=5.3197e-11 N=5.9231 RS=0.3762 CJO=40p BV=5 IBV=10u)
+* --- Luminus SST-10-UV-A130-G365-00 (365 nm UV-A) ---
+* Vf = 3.59 V typ @ 333 mA (3.60 V @ 350 mA), Rdyn = 0.75 Ohm
+.model D_SST10_UV D(IS=1.2e-18 N=3.45 RS=0.75 CJO=120p BV=5.0 IBV=1m)
 
-* Cree XLamp XP-E2 Royal Blue (XPEBRY-L1-0000-00S02): 2.93V @ 350mA, 3.20V @ 1.0A
-.MODEL D_XPE2_RB D(IS=5.2359e-12 N=4.4210 RS=0.2308 CJO=40p BV=5 IBV=10u)
+* --- Cree XP-E2 Visible LEDs (BV=1.0 V honors Cree VR_max = 1.0 V rating!) ---
+* Royal Blue (455 nm): Vf = 2.92 V @ 333 mA, Rdyn = 0.45 Ohm
+.model D_XPE2_RB  D(IS=3.5e-16 N=3.20 RS=0.45 CJO=90p BV=1.0 IBV=100u)
+* Green (528 nm): Vf = 2.69 V @ 333 mA, Rdyn = 0.45 Ohm
+.model D_XPE2_GRN D(IS=2.8e-15 N=3.15 RS=0.45 CJO=90p BV=1.0 IBV=100u)
+* Cool White (6200 K): Vf = 2.92 V @ 333 mA (25 C), Rdyn = 0.45 Ohm
+.model D_XPE2_CW  D(IS=3.5e-16 N=3.20 RS=0.45 CJO=90p BV=1.0 IBV=100u)
 
-* Cree XLamp XP-E2 Green (XPEBGR-L1-0000-00K01): 2.70V @ 350mA, 3.01V @ 1.0A
-.MODEL D_XPE2_GR D(IS=3.4868e-12 N=3.9556 RS=0.3117 CJO=40p BV=5 IBV=10u)
+* --- Diodes Inc. B340A-13-F (40 V 3 A SMA Schottky) ---
+* Vf ~ 0.34 V @ 0.33 A, 0.38 V @ 1.0 A
+.model D_B340A D(IS=1.5e-5 N=1.18 RS=0.045 CJO=250p VJ=0.35 M=0.45 BV=40 IBV=500u)
 
-* Cree XLamp XP-E2 Cool White (XPEBWT-L1-0000-00H51): 2.93V @ 350mA, 3.12V @ 1.0A (25C)
-.MODEL D_XPE2_CW D(IS=7.6986e-22 N=2.3268 RS=0.1951 CJO=40p BV=5 IBV=10u)
+* --- Diodes Inc. BAT54-7-F (30 V 200 mA SOT-23 Schottky) ---
+* Vf <= 240 mV @ 0.1 mA (~200 mV @ 51 uA)
+.model D_BAT54 D(IS=1.2e-7 N=1.04 RS=1.5 CJO=10p BV=30 IBV=2u)
 
-* --- Schottky Catch Diode ---
-* Diodes Inc B340A-13-F (40V, 3A, SMA): 0.38V @ 1A, 0.43V @ 2A, 0.46V @ 3A (ds13005.pdf)
-.MODEL D_B340A D(IS=1.2366e-06 N=1.0182 RS=0.0249 CJO=250p VJ=0.45 M=0.35 BV=40 IBV=500u)
+* --- Diodes Inc. BZT52C5V1-7-F (5.1 V 500 mW Zener) ---
+.model D_BZT52C5V1 D(IS=1e-14 N=1.0 RS=1.0 BV=5.10 IBV=5m CJO=150p)
 
-* --- Switching & Protection Diodes ---
-* onsemi BAV70LT1G (100V, 200mA, Common-Cathode Dual Switching Diode)
-.MODEL D_BAV70 D(IS=4.8851e-09 N=2.0529 RS=0.8643 CJO=1.5p TT=6n BV=100 IBV=1u)
+* --- Green 0603 Indicator LED (LTST-C190GKT, Vf ~ 2.1 V @ 3 mA) ---
+.model D_LED_GRN_IND D(IS=1e-18 N=2.2 RS=5.0 CJO=15p BV=5.0)
 
-* Diodes Inc BZT52C18-7-F (18V nominal OVP Zener, 16.8-19.1V @ 5mA, Zzt<=45 Ohm, SOD-123)
-.MODEL D_Z18V     D(IS=1e-12 N=1.5 BV=18.0 IBV=5m RS=15 CJO=30p)
-.MODEL D_Z18V_MIN D(IS=1e-12 N=1.5 BV=16.8 IBV=5m RS=45 CJO=30p)
-.MODEL D_Z18V_MAX D(IS=1e-12 N=1.5 BV=19.1 IBV=5m RS=45 CJO=30p)
+* --- Vishay SMBJ22CA Bidirectional 22 V TVS (Vbr = 24.4-26.9 V, Vc = 35.5 V @ 16.9 A) ---
+.subckt TVS_SMBJ22CA p1 p2
+* Back-to-back avalanche clamps with dynamic impedance R_dyn ~ 0.55 Ohm
+Dpos mid p1 D_TVS22
+Dneg mid p2 D_TVS22
+Ctvs p1 p2 650p
+.model D_TVS22 D(IS=1e-12 N=1.2 RS=0.28 BV=24.8 IBV=1m)
+.ends TVS_SMBJ22CA
 
-* Diodes Inc BZT52C5V6-7-F (5.6V OVP Sense Zener, 5.2-6.0V @ 5mA, Zzt<=40 Ohm, SOD-123)
-.MODEL D_Z5V6     D(IS=1e-12 N=1.5 BV=5.6 IBV=5m RS=10 CJO=60p)
-.MODEL D_Z5V6_MIN D(IS=1e-12 N=1.5 BV=5.2 IBV=5m RS=10 CJO=60p)
-.MODEL D_Z5V6_MAX D(IS=1e-12 N=1.5 BV=6.0 IBV=5m RS=10 CJO=60p)
+* --- Diodes Inc. DMN3404L-7 (30 V N-MOSFET, Vth=1.5 V, Rds=42 mOhm @ 4.5 V / 63 mOhm @ 3.0 V) ---
+.model DMN3404L NMOS(LEVEL=1 VTO=1.45 KP=22.0 RD=0.015 RS=0.015 CBD=120p CBS=150p CGSO=180p CGDO=60p LAMBDA=0.01)
 
-* Vishay SMBJ5.0A-E3/5B (5.0V Vrwm, 6.40-7.07V Vbr, 9.2V Vc @ 65.2A)
-.MODEL D_SMBJ5     D(IS=1e-11 N=1.5 BV=6.73 IBV=10m RS=0.038 CJO=500p)
-.MODEL D_SMBJ5_MIN D(IS=1e-11 N=1.5 BV=6.40 IBV=10m RS=0.038 CJO=500p)
+* --- onsemi BSS138 (50 V N-MOSFET, Vth=1.1 V, Rds<=6 Ohm @ 4.5 V) ---
+.model BSS138_MOD NMOS(LEVEL=1 VTO=1.15 KP=0.25 RD=0.8 RS=0.8 CBD=15p CBS=20p CGSO=25p CGDO=8p LAMBDA=0.01)
 
-* --- Input Protection MOSFETs, NPN/PNP Transistors & TI TL431AIDBZR ---
-* Diodes Inc DMG2305UX-7 (-20V, -4.2A steady, Rds(on)=40mOhm typ @ -4.5V, Vth=-0.7V)
-.MODEL M_DMG2305UX    PMOS(LEVEL=1 VTO=-0.70 KP=45.0 RD=0.015 RS=0.015 CBD=150p CBS=150p CGSO=400p CGDO=120p)
-.MODEL M_DMG2305UX_WC PMOS(LEVEL=1 VTO=-0.70 KP=30.0 RD=0.021 RS=0.021 CBD=150p CBS=150p CGSO=400p CGDO=120p)
+* --- TI LM4040BIM3-2.5/NOPB (2.500 V +/-0.2% Shunt Voltage Reference, Ir_min=65 uA) ---
+.subckt LM4040_2V5 K A
+* Smooth behavioral shunt clamping K-A at 2.500 V for I >= 60 uA, Z_dyn = 0.5 Ohm
+Dref A K D_LM4040
+Rleak K A 10Meg
+Cref K A 10p
+.model D_LM4040 D(IS=1e-14 N=1.0 RS=0.50 BV=2.500 IBV=60u)
+.ends LM4040_2V5
 
-* onsemi MMBT3904LT1G (40V Vceo, 200mA, hFE=70 min @ 1mA, 100-300 @ 10mA, Vce(sat)<=0.2V)
-.MODEL Q_MMBT3904     NPN(IS=1e-14 BF=200 VAF=100 IKF=0.2 ISE=1e-13 NE=1.5 BR=4 CJE=8p CJC=4p RB=10 RC=1 RE=0.5 TF=0.35n TR=100n)
-.MODEL Q_MMBT3904_MIN NPN(IS=1e-14 BF=70  VAF=100 IKF=0.2 ISE=1e-13 NE=1.5 BR=4 CJE=8p CJC=4p RB=10 RC=1 RE=0.5 TF=0.35n TR=100n)
-
-* onsemi MMBT3906LT1G (-40V Vceo, -200mA, hFE=80 min @ 1mA, 100-300 @ 10mA, Vce(sat)>=-0.25V)
-.MODEL Q_MMBT3906     PNP(IS=1e-14 BF=200 VAF=100 IKF=0.2 ISE=1e-13 NE=1.5 BR=4 CJE=8p CJC=4p RB=10 RC=1 RE=0.5 TF=0.35n TR=100n)
-.MODEL Q_MMBT3906_MIN PNP(IS=1e-14 BF=70  VAF=100 IKF=0.2 ISE=1e-13 NE=1.5 BR=4 CJE=8p CJC=4p RB=10 RC=1 RE=0.5 TF=0.35n TR=100n)
-
-* TI TL431AIDBZR Precision Programmable Reference (SLVS543S Sec. 6.9 & Fig. 6-14)
-* Pins: K REF A (DBZ SOT-23-3: 1=K, 2=REF, 3=A)
-* Vref = 2.495 V typ (2.453 V min / 2.537 V max over -40..85 C), Iref <= 4 uA, Ioff <= 0.5 uA, ~0.5 us pulse response
-.SUBCKT TL431_AI K REF A PARAMS: VREF=2.495 IREF_BIAS=2u
-B_IREF REF A I = IREF_BIAS * 0.5 * (1 + tanh(10*(V(REF,A) - 0.6)))
-B_ERR ERR_RAW A V = 0.5 * (1 + tanh(1000 * (V(REF,A) - VREF)))
-R_BW ERR_RAW ERR_FILT 1k
-C_BW ERR_FILT A 250p
-B_IKA K A I = (0.5u * min(max(V(K,A), 0), 36)/36) + (V(ERR_FILT,A) * 0.1 * max(V(K,A) - 1.85, 0) / (0.2 + 0.01*max(V(K,A), 0))) * 0.5*(1+tanh(10*(V(K,A)-1.8)))
-.ENDS TL431_AI
+* --- TI LM393BIDR Open-Collector Comparator Channel ---
+* Pulls OUT to GND (< 20 mV @ 100 uA) when IN+ < IN-; high-Z when IN+ > IN-
+.subckt LM393B_CH INP INM OUT VCC GND
+Rin INP INM 2Meg
+* Supply quiescent current (~0.3 mA per channel)
+Rq VCC GND 65k
+* Smooth open-collector pull-down switch: ON when V(INP)-V(INM) < 0 (active even down to VCC=2V)
+B_drv drv GND V = { (V(VCC,GND) > 1.8) ? (0.5*(1 - tanh((V(INP,INM))/0.002))) : 0 }
+S_oc OUT GND drv GND SW_LM393
+R_leak OUT GND 100Meg
+.model SW_LM393 SW(VT=0.5 VH=0.05 RON=25 ROFF=100Meg)
+.ends LM393B_CH

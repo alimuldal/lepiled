@@ -1,87 +1,45 @@
-* LepiLED DIY Maxi Switch - Inductive 0 -> 5.5 V Cold Hot-Plug @ 85 C LOW Corner (dual LM3410XMY load)
-* Verifies that R19 = 68.0 kOhm (+1% = 68.68 kOhm) recovers cleanly from L_cable-C12 ringing at 85 C
-* (Vref = 2.453 V, Iref = 0, R12 -1%, R13 +1%, 200 ns edge, 0.062 Ohm + 0.5 uH, real dual-LM3410XMY 8-ALL load).
+* ==============================================================================
+* LepiLED Rev 4.0 — Fault 4: Worst-Case 85 C Hot-Plug (21 V, L=1.0 uH, -25% C bias)
+* Stress-tests input overdamped RC damper + SMBJ22CA + Q1A/Q1B soft turn-on
+* under extreme 1.0 uH cable inductance and DC-bias-derated ceramic capacitors.
+* ==============================================================================
+.include models.lib
 
-.INCLUDE circuit_design/sim/netlists/models.lib
-.INCLUDE circuit_design/sim/netlists/lm3410xmy.lib
+* 21.0 V hard step (USB PD max tolerance +5%) through 1.0 uH / 0.10 Ohm cable
+V_hp src 0 PULSE(0 21.0 10u 50n 50n 5m 10m)
+R_cab src n1 0.10
+L_cab n1 vbus 1.0u
+RF1 vbus vbus_f 0.030
+XD11 vbus_f 0 TVS_SMBJ22CA
 
-.SUBCKT INPUT_PROT_HP VBUS VIN_PROT GND PARAMS: RF1=0.015 VREF=2.453 IREF=0 R12V=13.563k R13V=10.10k R19V=68.68k
-C12 VBUS GND 100n IC=0
-R_F1 VBUS VBUS_FUSED {RF1}
-M_Q1A VBUS_FUSED Q1_GATE V_MID V_MID M_DMG2305UX_WC
-M_Q1B VIN_PROT   Q1_GATE V_MID V_MID M_DMG2305UX_WC
-D11 GND VIN_PROT D_SMBJ5_MIN
-D15 Q1_GATE V_MID D_Z5V6_MAX
+* DC-bias derated capacitors at 21 V (~65% of nominal for 50V X7R)
+C1 vbus_f 0 0.65u
+R7 vbus_f vbus_d 1.0
+C10 vbus_d 0 3.1u
+R8 vbus_f vbus_s 0.005
+C11 vbus_s 0 0.65u
 
-R10 V_MID Q1_GATE 10k
-Q3 Q1_GATE Q3_BASE Q3_EMIT Q_MMBT3904_MIN
-R11 Q3_EMIT GND 1.5k
-C_PAR_Q3E Q3_EMIT GND 1p
-C_PAR_OK  OVP_K   GND 1p
-C_PAR_Q2B Q2_BASE GND 1p
-C_PAR_OD  OVP_DRV GND 1p
-C_PAR_OH  OVP_HYS GND 1p
-R14 V_MID Q3_BASE 220k
-C11 Q3_BASE GND 100n IC=0
+* Q1A/Q1B soft turn-on after PD negotiation (t=100 us) into 20 uF VIN_20V bus
+B_pwren pwr_en vbus_s V = { (TIME > 100u) ? 4.5 : 0.0 }
+R11 pwr_en q1_gate 6.2k
+C13 q1_gate q1_mid 47n
+MQ1A vbus_s q1_gate q1_mid q1_mid DMN3404L
+MQ1B vin_20v q1_gate q1_mid q1_mid DMN3404L
+* Downstream buck decoupling (derated to 13 uF total) + 0.50 A load
+C23 vin_20v 0 13u
+Rload vin_20v 0 40.0
 
-R12 V_MID OVP_SENSE {R12V}
-R13 OVP_SENSE GND {R13V}
-X_U3 OVP_K OVP_SENSE GND TL431_AI VREF={VREF} IREF_BIAS={IREF}
-R15 V_MID Q2_BASE 10k
-R16 Q2_BASE OVP_K 5.6k
-Q2 OVP_DRV Q2_BASE V_MID Q_MMBT3906_MIN
-R17 OVP_DRV Q4_BASE 10k
-R20 Q4_BASE GND 100k
-Q4 Q3_BASE Q4_BASE GND Q_MMBT3904_MIN
-D16A OVP_DRV OVP_DRV_GATE D_BAV70
-R18 OVP_DRV_GATE Q1_GATE 220
-D16B OVP_DRV OVP_HYS D_BAV70
-R19 OVP_HYS OVP_SENSE {R19V}
-.ENDS INPUT_PROT_HP
+.options method=gear reltol=1e-3 abstol=1e-10
+.tran 100n 1.5m 0 100n uic
 
-V_C1B IN1B 0 PWL(0 0 200n 5.5 7.5m 5.5)
-R_C1B IN1B VBUS1B_A 0.062
-L_C1B VBUS1B_A VBUS1B 0.5u
-X_P1B VBUS1B VIN1B 0 INPUT_PROT_HP
-C1_1B VIN1B 0 24.2u IC=0
-
-L1_1B VIN1B SW1_1B 10u
-X_U1_1B VIN1B SW1_1B FB1_1B VIN1B 0 LM3410XMY VFB=0.190 FSW=1.6e6 ICL=2.8 RDS=0.170 DMAX=0.92
-D9_1B SW1_1B VOUT1_1B D_B340A
-C4_1B VOUT1_1B 0 7.6u IC=0
-R3_1B UR_1B 0 0.56
-D13_1B FB1_1B VOUT1_1B D_Z18V
-R8_1B FB1_1B UR_1B 100
-D1_1B VOUT1_1B U1A_1B D_SST10UV
-D2_1B U1A_1B U1B_1B D_SST10UV
-D3_1B U1B_1B U1C_1B D_SST10UV
-D4_1B U1C_1B UR_1B D_SST10UV
-
-R7_1B VIN1B DIM2_1B 10k
-C6_1B DIM2_1B 0 100n IC=0
-L2_1B VIN1B SW2_1B 10u
-X_U2_1B VIN1B SW2_1B FB2_1B DIM2_1B 0 LM3410XMY VFB=0.190 FSW=1.6e6 ICL=2.8 RDS=0.170 DMAX=0.92
-D10_1B SW2_1B VOUT2_1B D_B340A
-C5_1B VOUT2_1B 0 7.6u IC=0
-R4_1B VR_1B 0 0.56
-D14_1B FB2_1B VOUT2_1B D_Z18V
-R9_1B FB2_1B VR_1B 100
-D5_1B VOUT2_1B V1A_1B D_XPE2_RB
-D6_1B V1A_1B V1B_1B D_XPE2_RB
-D7_1B V1B_1B V1C_1B D_XPE2_GR
-D8_1B V1C_1B VR_1B D_XPE2_CW
-
-.TEMP 85
-.TRAN 80n 7.5m 0 80n UIC
-
-.CONTROL
+.control
+set filetype=ascii
 run
-let i1b_in = -i(v_c1b)
-meas tran hp55_200n_0u5_iin_pk max i1b_in from=0 to=7.5m
-meas tran hp55_200n_0u5_il1_pk max i(l1_1b) from=0 to=7.5m
-meas tran hp55_200n_0u5_il2_pk max i(l2_1b) from=0 to=7.5m
-meas tran hp55_200n_0u5_vin_ss avg v(vin1b) from=6.5m to=7.5m
-meas tran hp55_200n_0u5_vout1_ss avg v(vout1_1b) from=6.5m to=7.5m
-quit 0
-.ENDC
-.END
+wrdata ../outputs/fault_hotplug_85c.txt v(vbus_f) v(vin_20v) v(q1_gate) v(q1_mid) i(v_hp)
+meas tran vbus_85c_peak  MAX v(vbus_f)  FROM=0 TO=1.5m
+meas tran vin20_85c_peak MAX v(vin_20v) FROM=0 TO=1.5m
+meas tran inrush_pk      MAX abs(i(v_hp)) FROM=100u TO=1.5m
+meas tran vin20_settle   AVG v(vin_20v) FROM=1.2m TO=1.5m
+quit
+.endc
+.end

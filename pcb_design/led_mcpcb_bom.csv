@@ -1,3 +1,3 @@
 Comment,Designator,Footprint,MPN,Qty_Per_Strip,Qty_Per_Lamp_4x,Notes
 365nm UV LED 3535,D_UV,LED_Luminus_SST-10-UV_A130,Luminus SST-10-UV-A130-G365-00,1,4,D1..D4 across MECH-MCPCB-1..4; bottom thermal pad notch = Cathode
-"Visible LED 3535 (2x RB, 1x GR, 1x CW)",D_VIS,LED_Cree_XP-E2,Cree XPEBRY-L1-0000-00S02 (2x) / XPEBGR-L1-0000-00K01 (1x) / XPEBWT-L1-0000-00H51 (1x),1,4,D5..D8 across MECH-MCPCB-1..4; bottom thermal pad notch = Anode
+"Visible LED 3535 (2x RB, 1x GR, 1x CW)",D_VIS,LED_Cree_XP-E2,Cree XPEBRY-L1-0000-00R02 (2x) / XPEBGR-L1-0000-00F01 (1x) / XPEBWT-L1-0000-00F51 (1x),1,4,D5..D8 across MECH-MCPCB-1..4; bottom thermal pad notch = Anode

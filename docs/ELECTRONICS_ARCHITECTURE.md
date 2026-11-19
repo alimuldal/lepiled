@@ -1,71 +1,52 @@
-# LepiLED DIY Maxi Switch — Electronics Architecture & Design Rationale
+# LepiLED DIY Maxi Switch — Electronics Architecture (Rev 4.0 / Option 2)
 
-**Project:** LepiLED DIY Maxi Switch (Milestone M1)
-**Target Application:** Fanless, UK-sourced (~£100 lamp-parts BOM) moth-trapping lamp with Brehm-inspired `4-UV / OFF / 8-ALL` Maxi-Switch functionality powered from standard `5 V` USB power banks.
+## 1. Architectural Decision: Why `20 V` USB-C PD + Dual Constant-Current Buck
+Following independent circuit and PCB reviews of the initial `5 V` boost architecture, the design pivoted to **Option 2: `20 V` USB-C PD 3.1 sink (`AP33771CFBZ-13-FA02`) feeding dual `40 V` constant-current hysteretic buck LED drivers (`AL8860WT-7`)**.
 
----
-
-## 1. Architecture Comparison: Off-the-Shelf Modules vs Custom PCB (`2× LM3410XMY`)
-
-We evaluated three off-the-shelf (OTS) constant-current driver approaches against a custom 2-layer `36 × 46 mm` PCB hosting **2× TI `LM3410XMY/NOPB`** boost controllers:
-
-| Criterion | Generic `XL6009` CC-CV Module | `Adafruit TPS61169` Breakout | `Led Senser V2 Rev.2` (commercial) | **Custom PCB (`2× TI LM3410XMY/NOPB`)** |
-|---|---|---|---|---|
-| **Topology & String Support** | Single bulky CC-CV module (~50×25 mm); single-channel only | Single boost (`1.8 A` typ / **`1.2 A` min** switch limit). At `4.5 V` droop, 4S UV needs `~1.6 A` peak (`> 1.2 A` limit); 8S is impossible | Single 8S boost (`35 V`, `3 A` in). UV-only requires bypassing 4 visible LEDs, restricting $V_{\text{in}} \le 9\text{ V}$ | **Dual independent 4S CCM boosts** (`U1`: 4S UV `~14.5 V`; `U2`: 4S Vis `~11.7 V`), well below `24 V` `Vsw_max` and `2.10 A` `Icl_min` |
-| **UK Delivered Cost** | `~£3–£7 × 2` (plus hot-switch risk) | `~£9 × 2` (`£18`) + insufficient `Icl` margin | `€30–€50+` (`£35–£45+` delivered) — breaks £100 BOM | **`~£19–£24` total** (5× JLCPCB FR4 + 2× `LM3410XMY` + passives/USB-C/protection) |
-| **Efficiency & Thermal** | `~78–82%` @ 5 V; bulky trimpot vibration drift | Trips current limit / thermal foldback above `~4 W` from 5 V | `~80–85%` @ 5 V (Brehm 2017: `13.4 W` input) | **`~88–89%` converter eff.** (`10.74 W` total USB input in `8-ALL`, `~5.5 W` in `4-UV`), MSOP-PowerPAD $R_{\theta JA}=53.7^\circ\text{C/W}$ |
-| **Powerbank OCP Immunity** | Large `100–470 µF` electrolytic input caps trip USB OCP | Hits `1.2 A` switch limit on `5 V` cable droop | Requires `2.7–3.0 A` USB-A/C source | **Active soft-start (`Q1A/Q1B` + `Q3` `~4 ms` ramp)**: `IC=0` cold plug peak = **`2.51 A`** (`5.0 V`) / **`2.32 A`** (`5.5 V 200 ns 0.5 µH @ 85 °C`), `<< 3 A`; `2.07–2.15 A` steady `8-ALL` |
-| **Maxi-Switch & Fault Safety** | High-current output switching risks hot-open destruction | Output hot-switch hazard | Bypass switch cannot safely open boost loop | **Logic-level `DIM` switching + `BZT52C18` OVP (`< 22.6 V` peak) + back-to-back PMOS `±16 V` cutoff (`TL431` OVP, `VIN_PROT < 6.11 V`)** |
+| Metric | Old Rev 3 (`5 V` Dual `LM3410` Boost) | New Rev 4.0 (`20 V` PD Dual `AL8860` Buck) |
+|---|---|---|
+| Input Current (`8-ALL`, nominal) | `2.15 A` (`3.24 A` worst-case droop) | **`0.46 A`** (`0.58 A` worst-case corner) |
+| Driver PCB Power Loss (nominal / worst) | `1.60 W` / `4.39 W` | **`0.50 W`** / **`0.82 W`** (`5.3×` lower!) |
+| Overall System Efficiency | `~81%` | **`~94.3%`** |
+| Open-LED & Short-LED Protection | External Zener OVP (`D13/D14`) + `FB` risk | **Inherent inside `AL8860WT-7`** |
+| USB-C Cable & Laptop Charger Support | Required `<= 0.4 m 18 AWG` cable (`5 V 3.5 A`) | **Any `45 W+` USB-C PD laptop charger / `20 V` PD bank + standard `1–3 m` cable** |
+| External Bottom Heatsink Required | `£24.60` `SK LED R 80 SA` (`Ø80×70 mm`) | **`£5.88` `SK 578/50 SA` (`Ø60×50 mm`) — passes 20/20 thermal cases!** |
+| Active Protection / OVP Complexity | 19-part discrete `TL431` + 3-BJT latch | **Integrated `AP33771C` PD + 5-part `LM393B`/`LM4040` `17.25 V` UVLO** |
 
 ---
 
-## 2. Critical Datasheet-Driven Design Decisions
+## 2. Four Functional Subsystems (72 Unique RefDes in `COMPONENT_IDS.csv`)
 
-### 2.1 Package Thermal Catch: `LM3410XMY/NOPB` (MSOP-PowerPAD) vs `LM3410XMF` (SOT-23-5)
-- `datasheets/lm3410.pdf` (SNVS541H, Sec. 6.3–6.4 p. 4 & Sec. 10.3.5 p. 40) specifies **`RθJA = 164.2 °C/W`** and an explicit **`400 mW` internal dissipation ceiling** for `SOT-23-5` (`DBV`), warning designers to switch to `WSON-6` or **`8-pin MSOP-PowerPAD (DGN)`** whenever internal loss exceeds `400 mW`.
-- On Channel 1 (4S UV @ `339 mA`), worst-case `4.25 V` input droop with `Rds(on) = 0.33 Ω` produces `1.290 W` IC dissipation (`datasheet_spec` corner) — violating SOT-23-5 limits.
-- Using **`LM3410XMY/NOPB`** (`DGN` MSOP-PowerPAD, **`RθJA = 53.7 °C/W`**, `RθJC(bot) = 6.8 °C/W`, `1=NC, 2=PGND, 3=VIN, 4=DIM, 5=FB, 6=AGND, 7=SW, 8=NC, DAP=GND`) with 4–6 thermal vias keeps $T_J = 124.3^\circ\text{C} \le 125^\circ\text{C}$ across all `10,935` datasheet corners down to `4.25 V` at $T_{\text{PCB}} \le 55^\circ\text{C}$ (and $108.4^\circ\text{C}$ / $114.7^\circ\text{C}$ at `4.50 V`).
+### Block 1 — USB-C PD 3.1 `20 V / 1.0 A` Sink & Auxiliary `18–24 V` DC Entry
+- **USB-C Receptacle (`J1`, `GCT USB4085-GF-A`):** `R1, R2 = 5.1 kΩ ±1%` provide dead-battery `CC1`/`CC2` `R_d` pull-downs (`AP33771C` Fig. 1).
+- **Overcurrent & Hot-Plug Protection (`F1`, `D11`, `C1`, `R7`, `C10`):**
+  - `F1` (`Bourns MF-MSMF150/24X`, `24 V`, `1.50 A` hold / `1.00 A @ 60 °C`) gives `>= 1.72×` hold margin above the `0.58 A` worst-case input current.
+  - `D11` (`Vishay SMBJ22CA-E3/52`, `22 V` bidirectional TVS, `V_BR = 24.4–26.9 V`) pairs with an overdamped Middlebrook RC damper (`C1 = 1.0 µF`, `C10 = 4.7 µF` in series with `R7 = 1.0 Ω`, plus `C11 = 1.0 µF` on `U3.VCC`, totaling `6.7 µF <= 10 µF` USB-C PD limit). Even under a `21 V`, `1.0 µH` inductive hot-plug at `85 °C` with `-35%` DC-bias-derated ceramics, `V_VBUS_FUSED` peaks at **`26.65 V`** (`< 30 V` `DMN3404L` and `< 31 V` `AP33771C` abs max).
+- **PD Sink Controller (`U3`, `Diodes AP33771CFBZ-13-FA02`):**
+  - `R9 = 39.0 kΩ ±1%` (`VSEL`) requests a `20 V` PDO (`AP33771C` Table 2).
+  - `R10 = 82.0 kΩ ±1%` (`ISEL`) requests `>= 1.0 A` and sets hardware OCP at `1.1 A` across the `R8 = 5 mΩ` Kelvin shunt (`ISENP` upstream, `VCC` downstream).
+  - `Q1A, Q1B` (`DMN3404L-7`, `30 V`, `<= 82 mΩ @ 3 V` / `<= 42 mΩ @ 4.5 V`) wired back-to-back common-source provide soft turn-on (`R11 = 6.2 kΩ`, `C13 = 47 nF`) and block reverse current if `TP1` is powered while `J1` is unplugged (`< 0.001 mV` leakage).
+  - `R12 = 200 Ω` (`0805`) limits `U3.VOUT` discharge current; `R13 = 1.0 kΩ` drives the Green status LED `D15`. `DP`/`DN` are left open (`no_connect`) per Table 1 to waive moisture-detection false trips outdoors.
+- **Auxiliary `18–24 V` DC Input (`TP1`, `TP2`, `F2`, `D13`):** Accepts a captive M16 gland `20 V` PD trigger pigtail, `18–24 V` tool battery, or bench supply via `F2` (`MF-MSMF150/24X`) and `D13` (`B340A-13-F`, blocks `-40 V` reverse polarity and `J1` back-feed; `-30 V` fault keeps `VIN_20V = -0.094 V` well inside `-0.3 V` IC abs max).
 
-### 2.2 Inductor Evaluation: `Bourns SRN6045-100M` vs `SRN6045-6R8Y`
-In `datasheets/srn6045.pdf`, `SRN6045-100M` (`10 µH ±20%`, `8.0 µH` min, $I_{\text{sat}} = 3.0\text{ A}$, $I_{\text{rms}} = 2.5\text{ A}$, $DCR_{\max} = 58.6\text{ m}\Omega$) provides superior margin against `LM3410`'s `2.10 A` minimum switch current limit (`Icl_min`):
-- **Datasheet corners (`V_IC >= 4.25 V`, `VFB ±6.3%`, `Rsense ±1%`):** `I_L,pk,max = 1.872 A` (`+0.228 A` margin vs `2.10 A`), `0 / 10,935` DCM corners.
-- **Extreme OOS corners (`V_IC >= 4.50 V`, `VFB ±15%`, `Rsense ±5%`):** `I_L,pk,max = 2.005 A` (`+0.096 A` margin vs `2.10 A`).
+### Block 2 — Hardware `17.25 V` UVLO & Ground-Referenced Maxi-Switch
+- Because `AP33771C` has `V_VSELMIN = 5 V` and falls back to `5/9/12/15 V` on non-20 V sources, `U5` (`LM4040BIM3-2.5/NOPB`, `2.500 V ±0.2%`, biased by `R14 = 10 kΩ`) and `U4` (`LM393BIDR` dual open-collector comparator) monitor `VIN_20V` via `R15 = 59.0 kΩ` / `R16 = 10.0 kΩ` / `C15 = 100 nF` (`V_TH = 17.25 V`, Monte Carlo `[17.02, 17.47] V`).
+- Below `17.25 V`, `U4.1OUT` and `U4.2OUT` directly sink `U1_CTRL` and `U2_CTRL` to **`0.15 mV`** (`<< 200 mV` `AL8860` disable threshold), cleanly locking out `5/9/12/15/15.75 V` sources (`I_LED = 0.000 mA`) and enabling smoothly above `17.5 V` (`18.5–24 V`).
+- **Ground-Referenced Maxi-Switch (`J4`, `SW1`, `D14`, `R17`, `R5`, `R6`, `D12`, `Q2`, `Q3`):**
+  - `SW1` common pin (`J4.2`) is `GND` (touch-safe, zero live rail at the exterior toggle!).
+  - `R17 (22 kΩ)` + `D14 (BZT52C5V1, 5.1 V)` generate `V_SW_BIAS = 5.1 V`, pulling `Q2`/`Q3` (`BSS138`) gates high through `R5 = R6 = 100 kΩ` so both drivers default **OFF** when `SW1` is centered.
+  - **`4-UV` (`J4.1 = GND`):** `Q2` turns OFF -> `U1_CTRL` floats high (`U1` ON); `Q3` stays ON -> `U2` OFF.
+  - **`8-ALL` (`J4.3 = GND`):** `Q3` turns OFF (`U2` ON), and `D12` (`BAT54-7-F`, `V_F = 162 mV @ 51 µA << 800 mV` `BSS138` `V_GS(th)_min`) pulls `Q2.G` low -> `Q2` turns OFF (`U1` ON).
 
-### 2.3 Sense Resistor (`R3`, `R4`) & Catch Diode (`D9`, `D10`)
-- **`R3`, `R4` = `Bourns CRL1206-FW-R560ELF` (`0.56 Ω ±1%`, `0.50 W`, `1206`):** $I_{\text{LED,nom}} = 0.190 / 0.56 = \mathbf{339.3\text{ mA}}$ ($P = 64.5\text{ mW}$, `7.7×` derated below `0.50 W`).
-- **`D9`, `D10` = `Diodes Inc B340A-13-F` (`40 V`, `3.0 A`, `SMA`, `ds13005.pdf`):** `0.38 V` typ at `1 A`, `0.50 V` max at `3 A`, `RθJA = 50 °C/W`.
-
-### 2.4 Power Input, `±16 V` Precision `TL431` Fault Cutoff, Hold Margin & Cold Hot-Plug Soft-Start
-1. **USB-C & Optional Gland Entry (`J1`, `R1`, `R2`, `C12`, `TP1`, `TP2`):** `GCT USB4085-GF-A` (`VBUS A4/B4/A9/B9` `5.0 A`, `GND A1/B1/A12/B12/SH` `6.25 A`) with `100 nF 25 V` ESD cap `C12` and dedicated `5.1 kΩ ±1%` `Rd` pulldowns (`Vishay CRCW08055K10FKEA`, `0.125 W` std / `0.25 W` ext) on `CC1` (`R1`) and `CC2` (`R2`), plus `TP1`/`TP2` TH pads for the recommended captive `18 AWG ≤ 1.0 m` USB cable through an **M16 IP68 gland**.
-2. **Upgraded Polyfuse (`F1` = `Bourns MF-LSMF500/16X`):** `2920`, `16 V max` (covers `±16 V` faults), `40 A Imax`, `5.0 A` hold @ `23 °C`, **`3.75 A @ 50 °C`**, **`3.525 A @ 55 °C`**, **`3.30 A @ 60 °C`**, `R_1max = 25 mΩ` (`MF-LSMF.pdf` pp. 2–3). Under full stacked `datasheet_spec` worst-case USB droop with true 2-wire round-trip copper resistance (`4.85 V` `18 AWG ≤ 1.0 m` captive `R_cable = 0.042 Ω @ 20 °C / 0.048 Ω @ 55 °C` -> `I_in = 3.190 A / 3.216 A`, `V_IC = 4.304 V / 4.281 V`; or `4.90 V` USB-C `R_cable ≤ 0.018 Ω` [`18 AWG ≤ 0.4 m` or `16 AWG ≤ 0.65 m`] -> `I_in = 3.237 A`, `V_IC = 4.262 V`), `F1` maintains positive hold margin at `55 °C` and `60 °C` and `T_j@55 ≤ 123.7 °C ≤ 125 °C`.
-3. **Back-to-Back P-MOSFET Reverse-Polarity, `TL431` Precision OVP Cutoff & Soft-Start (`Q1A`, `Q1B`, `U3`, `Q2..Q4`, `D15`, `D16`, `D11`, `R10..R20`, `C11`):**
-   - `Q1A` (`DMG2305UX-7`, `D=VBUS_FUSED`, `S=V_MID`) blocks `-12 V / -16 V` reverse polarity (`-34.5 pA` at `85 °C`, `VIN_PROT ≈ -24 µV`; `D11` `SMBJ5.0A` sits **downstream** on `VIN_PROT`).
-   - `U3` (`TI TL431AIDBZR`, `2.495 V ±1%`, `tl431.pdf`) + `R12/R13` (`13.7 kΩ / 10.0 kΩ ±1%`) + `Q2` (`MMBT3906LT1G`) + `D16` (`BAW56LT1G` Common Anode) + `Q4` (`MMBT3904LT1G` latch clamp) + `R19` (**`68.0 kΩ ±1%`**, `CRCW060368K0FKEA` hysteresis) sets a tight OVP threshold in **`[5.75 V, 6.14 V]`** while raising the latched-OFF release threshold to `~5.34 V` LOW-corner (`~5.66 V` HIGH-corner). Thus inductive `0 -> 5.5 V` cold hot-plugs (`200 ns` & `1 µs`, `0.062 Ω + 0.5–1.0 µH` cable inductance at `85 °C` LOW corner `Vref = 2.453 V`) recover cleanly (`5.104–5.127 V` under `2.5 Ω` / `dual-LM3410XMY` load, `5.500 V` under `10 kΩ` load), while `6.2..16.0 V` OVP trips strictly below `D11` `Vbr_min = 6.40 V` and stays stably latched OFF (`max(P(D11)) = 25.3 µW << 50 mW`, `VIN_PROT_pk <= 6.11 V < 7.0 V`, `OVP_DRV_pp <= 0.43 mV <= 1 mV`, every `0603` resistor `<= 29.7 mW << 50 mW` at `+16.0 V`).
-   - `D15` (`BZT52C5V6-7-F`, `Q1_GATE -> V_MID`) clamps `Q1A/Q1B` `|VGS| <= 6.0 V < ±8.0 V` abs max even during `200 ns` `+5.5 -> +16.0 V` live steps at `85 °C` and `27 °C` (`VIN_PROT_pk <= 5.20 V`, `Vgs_min = -4.80 V`).
-   - `Q3` (`MMBT3904LT1G`) + `R11` (`1.5 kΩ`) + `R14` (`220 kΩ`) + `C11` (`100 nF`) slews `Q1_GATE` smoothly over `~4 ms` on cold hot-plug (`IC=0` everywhere), limiting peak inrush to **`2.32–2.51 A`** (`I_L1/I_L2 <= 1.57 A << 3.0 A` `I_sat`).
-   - `C4..C5` use `Samsung CL32B106KBJNFNE` (`10 µF, 50 V, X7R, 1210`, `~7.5 µF` eff. at `16 V`).
-
-### 2.5 `4-UV / OFF / 8-ALL` Maxi-Switch Logic & TI Fig. 14 `BZT52C18` OVP
-- **Mode Switch (`SW1` + `SW1_BOOT`):** `E-Switch 100SP3T1B1M1QEH` (`SPDT On-Off-On`, `Ø 6.35 mm` cutout) + `C&K 759D02000` full silicone boot, wired via `J4` (`JST B3B-XH-A`, `datasheets/jst_xh.pdf`).
-- **Diode-OR Steering (`D12` = `onsemi BAV70LT1G`, Common-Cathode):** `R5`/`R6` (`10 kΩ`) pull `DIM` pins cleanly to `0 V` in `OFF` mode; `R7` (`10 kΩ`) + `C6` (`100 nF`) gives `1.0 ms` Ch2 turn-on stagger and `2.0 ms` (`R6+R7`) turn-off discharge (`DIM2_NET = 0.22 V < 0.4 V` by `9.5 ms`, `I_L2_avg = -12 µA`, `4-UV` backfeed `= 35 nA`).
-- **Open-Load OVP (`D13`, `D14` = `Diodes Inc BZT52C18-7-F`, `R8`, `R9` = `100 Ω`):** Wired per **TI `lm3410.pdf` Fig. 14 (p. 15)**. `BZT52C18` (`16.8–19.1 V`, `Zzt <= 45 Ω`) replaces `BZT52C20`: at `-10 °C` max `Vf` (`~16.4 V`), Zener leakage is negligible (`< 100 µA`), while worst-case open-load (`19.1 V` Zener, `45 Ω`, `5.5 V` in, `8 µH`, `1.2 MHz`, `+15% VFB`) clamps `VOUT1_pk = 22.36 V` and `VSW_pk = 22.56 V` (**`< 24.0 V` recommended max**!).
-
-### 2.6 Active Emitter Selection (`8× 3535 SMD` on `4×` Al MCPCB Strips)
-- `4× Luminus SST-10-UV-A130-G365-00` (365 nm, `A130` `3.25×3.25 mm` pad)
-- `2× Cree XPEBRY-L1-0000-00S02` (Royal Blue, `450–460 nm`, `XLamp-XPE2.pdf` p. 10)
-- `1× Cree XPEBGR-L1-0000-00K01` (Green, `520–535 nm`, `XLamp-XPE2.pdf` p. 11)
-- `1× Cree XPEBWT-L1-0000-00H51` (Cool White, `6200 K`, `XLamp-XPE2.pdf` p. 5)
-- Mounted on **4× Custom JLCPCB `1.0 W/m·K` Al MCPCB dual-LED strips** (`MECH-MCPCB-1..4`), with 20 mm Cu DTP stars as electrical-equivalent fallback.
+### Blocks 3 & 4 — Dual `AL8860WT-7` Constant-Current Buck LED Drivers (`333 mA`)
+- **Topology (`U1`/`U2` `AL8860WT-7`, `TSOT25`):** High-side current sense `R3 = R4 = 0.30 Ω ±1%` (`Bourns CRL1206-FW-R300ELF`, `33 mW`) sets `I_LED = 0.100 V / 0.30 Ω = 333.3 mA`.
+- **Inductors & Freewheeling Diodes:** `L1 = L2 = 68 µH ±20%` (`Bourns SRN6045-680M`, `I_sat = 1.00 A` vs `0.408 A` peak -> `2.45×` saturation margin) + `D9 = D10 = B340A-13-F` (`40 V 3 A` SMA Schottky). Switching frequency is `~433 kHz` (Ch1 UV, `t_ON = 1.70 µs`) and `~540 kHz` (Ch2 Vis, `t_ON = 1.10 µs`), well inside `t_ON >= 500 ns` and `f_SW <= 1.0 MHz`.
+- **Staggered Soft-Start & Quiet LED Harness:** `C6 = 1.0 nF` (`1.5 ms`) on `U1.CTRL` and `C7 = 4.7 nF` (`7.0 ms`) on `U2.CTRL` stagger turn-on; `C4 = C5 = 1.0 µF 50 V X7R` directly across `J2`/`J3` attenuate off-board LED ripple to `5.35%` pp (`±2.7%`, UV) and `7.31%` pp (`±3.7%`, Vis).
+- **Inherent Fault Protection:** Verified in `ngspice` — open-LED halts `SW` at `V_SW <= 20.62 V` (`<< 42 V` abs max) with `I_UV = 0 mA`; shorted-LED regulates inductor current at `338.4 mA` (`419 mA` peak) with zero thermal runaway.
 
 ---
 
-## 3. Reproducing the M1 Environment & Simulations
-
-User-space tools outside `/home/alimuldal/src/lepiled`:
-- **`ngspice 45.2+ds-1`:** `/home/alimuldal/.local/share/lepiled-tools/bin/ngspice`
-- **Python `3.14.4` venv:** `/home/alimuldal/.local/share/lepiled-venv` (`numpy`, `scipy`, `matplotlib`, `schemdraw`, `cairosvg`)
-
-```bash
-/home/alimuldal/.local/share/lepiled-venv/bin/python circuit_design/generate_schematic.py
-/home/alimuldal/.local/share/lepiled-venv/bin/python circuit_design/sim/run_simulations.py
-```
+## 3. Verification Summary (`circuit_design/sim/outputs/sim_summary.json`)
+- **6/6 `ngspice` Nominal & Fault Benches:** **PASS** (`16/16` assertions passing).
+- **Datasheet Corner Sweep (`18.5–24.0 V`, `-10..+55 °C`, all tolerances):** **`2565 / 2565 PASS`** (`P_PCB_max = 0.819 W`, `I_in_max = 0.578 A`, `T_jmax = 71.9 °C`).
+- **Full-Parameter Monte Carlo (`N = 2000`):** **`2000 / 2000 (100.0%) PASS`** (`I_UV = 329.9 ± 4.5 mA`, `P_PCB = 0.520 W` mean / `0.574 W` max, `V_UVLO ∈ [17.015, 17.470] V`).

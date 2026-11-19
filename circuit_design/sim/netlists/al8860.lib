@@ -1,0 +1,44 @@
+* ==============================================================================
+* Diodes Inc. AL8860WT-7 — 40 V 1.0 A Hysteretic Buck LED Driver SPICE Subcircuit
+* Grounded in datasheets/AL8860.pdf (Rev. 8-2, April 2026)
+* Pins: SW (1), GND (2), CTRL (3), SET (4), VIN (5)
+* Parameters:
+*   VSENSE = 0.100 V (96-104 mV), HYS = 0.20 (+/-20%), RSW = 0.30 Ohm
+*   TPD = 50 ns comparator propagation delay
+* ==============================================================================
+.subckt AL8860_WT SW GND CTRL SET VIN PARAMS: VSENSE=0.100 HYS=0.20 RSW=0.30 TPD=50n
+
+* --- Quiescent / Shutdown Supply Current (0.55 mA active, 50 uA shutdown) ---
+B_iq VIN GND I = { (V(VIN,GND) > 4.2) ? ((V(CTRL,GND) > 0.22) ? 550u : 50u) : 10u }
+
+* --- Internal CTRL Pull-Up (3.3 V internal rail via 550 kOhm; dimming clamps to 100% >= 2.5 V) ---
+V_ctrl_ref n_cref GND 3.30
+R_ctrl_pu  n_cref CTRL 550k
+D_ctrl_clmp CTRL n_cref D_CLMP
+.model D_CLMP D(IS=1e-12 RS=50)
+
+* --- SET Pin Bias Current (8 uA typ) ---
+I_set SET GND 8u
+
+* --- Effective Sense Voltage Threshold from CTRL Analog Dimming (0.3 V..2.5 V -> 0..100%) ---
+B_en n_en GND V = { ((V(VIN,GND) > 4.3) && (V(CTRL,GND) > 0.23)) ? 1.0 : 0.0 }
+B_dim n_dim GND V = { min(1.0, max(0.0, (V(CTRL,GND) - 0.30) / 2.20)) }
+B_vth_hi n_vhi GND V = { VSENSE * (1.0 + HYS) * V(n_dim) }
+B_vth_lo n_vlo GND V = { VSENSE * (1.0 - HYS) * V(n_dim) }
+
+* --- High-Side Sense Voltage V(VIN, SET) ---
+B_vs n_vs GND V = { V(VIN,SET) }
+
+* --- Hysteretic Schmitt Latch with TPD Propagation Delay ---
+B_latch n_qraw GND V = { (V(n_en) > 0.5) ? ((V(n_qdel) > 0.5) ? ((V(n_vs) < V(n_vhi)) ? 1.0 : 0.0) : ((V(n_vs) < V(n_vlo)) ? 1.0 : 0.0)) : 0.0 }
+
+* Propagation delay RC filter (TPD = 50 ns -> R=1k, C=TPD/0.693/1k)
+R_pd n_qraw n_qdel 1k
+C_pd n_qdel GND {TPD / 0.693 / 1k}
+
+* --- Internal 40 V NDMOS Power Switch (SW to GND) ---
+S_sw SW GND n_qdel GND SW_AL8860
+C_sw SW GND 25p
+.model SW_AL8860 SW(VT=0.5 VH=0.05 RON={RSW} ROFF=10Meg)
+
+.ends AL8860_WT

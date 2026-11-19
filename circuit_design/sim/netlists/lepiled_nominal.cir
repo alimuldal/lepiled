@@ -1,154 +1,113 @@
-* LepiLED DIY Maxi Switch - Full Dual-Channel Transient SPICE Simulation
-* Sequence: OFF (0..0.2ms) -> 4-UV (0.2..3.5ms? wait: 4-UV 0.2..1.5ms -> 8-ALL 1.5..3.5ms -> 4-UV 3.5..9.5ms)
-* Verifies: switching ripple, Ch2 1ms stagger, steady-state LED currents, zero backfeed, complete U2 turn-off (DIM2 < 0.4V, I_VIS < 1uA)
+* ==============================================================================
+* LepiLED Rev 4.0 — Nominal Operating Mode Testbench (4-UV -> OFF -> 8-ALL)
+* Input: 20.0 V USB-C PD (through 1.0 m cable + J1 + F1 + R8 + Q1A/Q1B)
+*   0.0 -  3.5 ms: 4-UV mode (SW_UV_N = GND, SW_ALL_N = float)
+*   3.5 -  5.0 ms: OFF mode  (both floating -> Q2, Q3 ON -> U1, U2 OFF)
+*   5.0 - 13.5 ms: 8-ALL mode (SW_ALL_N = GND -> D12 pulls SW_UV_N low -> both ON)
+* ==============================================================================
+.include models.lib
+.include al8860.lib
 
-.INCLUDE circuit_design/sim/netlists/models.lib
-.INCLUDE circuit_design/sim/netlists/lm3410xmy.lib
+Vpd VPD_SRC 0 20.0
+Rcable VPD_SRC VBUS 0.106
+Lcable VBUS VBUS_IN 0.2u
 
-* --- 5V USB Power Supply + Realistic 18 AWG <= 1.0 m Round-Trip Cable (0.042 Ohm) & J1 Contact Resistance ---
-V_USB VUSB_SRC 0 DC 5.0
-R_CABLE VUSB_SRC VBUS 0.042
-L_CABLE VBUS VBUS_IN 0.5u
-R_J1 VBUS_IN VBUS_PCB 0.040
+RF1 VBUS_IN VBUS_FUSED 0.060
+XD11 VBUS_FUSED 0 TVS_SMBJ22CA
+C1 VBUS_FUSED 0 1.0u
+R7 VBUS_FUSED VBUS_DAMP 1.0
+C10 VBUS_DAMP 0 4.7u
+R8 VBUS_FUSED VBUS_SENSE 0.005
+C11 VBUS_SENSE 0 1.0u
+I_u3 VBUS_SENSE 0 3.3m
+E_pwren U3_PWR_EN VBUS_SENSE VALUE = { 4.5 }
+R11 U3_PWR_EN Q1_GATE 6.2k
+C13 Q1_GATE Q1_MID 47n
+MQ1A VBUS_SENSE Q1_GATE Q1_MID Q1_MID DMN3404L
+MQ1B VIN_20V Q1_GATE Q1_MID Q1_MID DMN3404L
 
-* USB-C CC1 / CC2 5.1k Rd Pulldowns & ESD Bypass Cap (C12)
-R1 CC1 0 5.1k
-R2 CC2 0 5.1k
-C12 VBUS_PCB 0 100n IC=5.0
+* 17.25 V Hardware UVLO (U5 LM4040-2.5 + U4 LM393B)
+R14 VIN_20V V_REF 10.0k
+XU5 V_REF 0 LM4040_2V5
+R15 VIN_20V UVLO_SENSE 59.0k
+R16 UVLO_SENSE 0 10.0k
+C15 UVLO_SENSE 0 100n
+C14 VIN_20V 0 100n
+XU4A UVLO_SENSE V_REF U1_CTRL VIN_20V 0 LM393B_CH
+XU4B UVLO_SENSE V_REF U2_CTRL VIN_20V 0 LM393B_CH
 
-* --- Input Protection: F1 (MF-LSMF500/16X), Back-to-Back Q1A/Q1B (DMG2305UX), U3 (TL431), Q2/Q3/Q4, D15/D16, D11 downstream ---
-R_F1 VBUS_PCB VBUS_FUSED 0.015
-M_Q1A VBUS_FUSED Q1_GATE V_MID V_MID M_DMG2305UX
-M_Q1B VIN_PROT   Q1_GATE V_MID V_MID M_DMG2305UX
-D11 0 VIN_PROT D_SMBJ5
-D15 Q1_GATE V_MID D_Z5V6
+* Ground-Referenced Maxi-Switch (5.1 V bias, R5/R6, D12 BAT54, Q2/Q3 BSS138)
+R17 VIN_20V V_SW_BIAS 22.0k
+D14 0 V_SW_BIAS D_BZT52C5V1
+R5 V_SW_BIAS SW_UV_N 100k
+R6 V_SW_BIAS SW_ALL_N 100k
+D12 SW_UV_N SW_ALL_N D_BAT54
+MQ2 U1_CTRL SW_UV_N 0 0 BSS138_MOD
+MQ3 U2_CTRL SW_ALL_N 0 0 BSS138_MOD
 
-* Gate Pull-Up, Soft-Start Sink (warm pre-charged steady state; cold IC=0 tested in lepiled_fault_input_prot.cir) & TL431 OVP Sense
-R10 V_MID Q1_GATE 10k
-Q3 Q1_GATE Q3_BASE Q3_EMIT Q_MMBT3904
-R11 Q3_EMIT 0 1.5k
-R14 V_MID Q3_BASE 220k
-C11 Q3_BASE 0 100n IC=1.20
-R12 V_MID OVP_SENSE 13.7k
-R13 OVP_SENSE 0 10.0k
-X_U3 OVP_K OVP_SENSE 0 TL431_AI VREF=2.495 IREF_BIAS=2u
-R15 V_MID Q2_BASE 10k
-R16 Q2_BASE OVP_K 5.6k
-Q2 OVP_DRV Q2_BASE V_MID Q_MMBT3906
-R17 OVP_DRV Q4_BASE 10k
-R20 Q4_BASE 0 100k
-Q4 Q3_BASE Q4_BASE 0 Q_MMBT3904
-D16A OVP_DRV OVP_DRV_GATE D_BAV70
-R18 OVP_DRV_GATE Q1_GATE 220
-D16B OVP_DRV OVP_HYS D_BAV70
-R19 OVP_HYS OVP_SENSE 68k
+* Mode sequence switches (SW_UV active 0..3.5 ms; OFF 3.5..5.0 ms; SW_ALL active 5.0..13.5 ms)
+Vsw_uv  ctrl_uv  0 PULSE(1 0 3.5m 1u 1u 50m 100m)
+Vsw_all ctrl_all 0 PULSE(0 1 5.0m 1u 1u 50m 100m)
+S_sw_uv  SW_UV_N  0 ctrl_uv  0 SW_MODE
+S_sw_all SW_ALL_N 0 ctrl_all 0 SW_MODE
+.model SW_MODE SW(VT=0.5 VH=0.05 RON=0.05 ROFF=100Meg)
 
-* --- Input Bulk & Decoupling MLCCs (Effective Capacitance at 5V DC bias) ---
-C1 VIN_PROT C1_ESR 8.0u IC=4.9
-R_ESR_C1 C1_ESR 0 0.005
-C2 VIN_PROT C2_ESR 8.0u IC=4.9
-R_ESR_C2 C2_ESR 0 0.005
-C3 VIN_PROT C3_ESR 8.0u IC=4.9
-R_ESR_C3 C3_ESR 0 0.005
-C7 VIN_PROT 0 100n IC=4.9
-C8 VIN_PROT 0 100n IC=4.9
+* Channel 1: 4S UV-A 365 nm Buck (AL8860WT-7, R3=0.30, L1=68uH)
+C2 VIN_20V 0 10u
+C8 VIN_20V 0 100n
+R3 VIN_20V UV_POS 0.30
+C6 U1_CTRL 0 1.0n
+XU1 SW1_NODE 0 U1_CTRL UV_POS VIN_20V AL8860_WT
+D9 SW1_NODE VIN_20V D_B340A
+L1 UV_NEG_L SW1_NODE 68u
+RL1 UV_NEG UV_NEG_L 0.29
+C4 UV_POS UV_NEG 1.0u
+V_iuv UV_POS UV_A1 0
+D1 UV_A1 UV_N1 D_SST10_UV
+D2 UV_N1 UV_N2 D_SST10_UV
+D3 UV_N2 UV_N3 D_SST10_UV
+D4 UV_N3 UV_NEG D_SST10_UV
 
-* --- Maxi-Switch SW1 (SPDT On-Off-On) via J4 + D12 (BAV70 Common Cathode) + R5..R7, C6 ---
-* Mode schedule:
-*   0.0 - 0.2 ms: OFF (both open)
-*   0.2 - 1.5 ms: 4-UV (SW_UV_EN = VIN_PROT)
-*   1.5 - 3.5 ms: 8-ALL (EN2_NET = VIN_PROT, SW_UV_EN open)
-*   3.5 - 9.5 ms: 4-UV (SW_UV_EN = VIN_PROT, EN2_NET open; verifies full 2.0ms RC discharge of DIM2_NET < 0.4V)
-V_CTL_UV  CTL_UV  0 PWL(0 0 0.195m 0 0.200m 5 1.495m 5 1.500m 0 3.495m 0 3.500m 5 9.5m 5)
-V_CTL_ALL CTL_ALL 0 PWL(0 0 1.495m 0 1.500m 5 3.495m 5 3.500m 0 9.5m 0)
-S_SW1_UV  VIN_PROT SW_UV_EN CTL_UV  0 S_TOGGLE
-S_SW1_ALL VIN_PROT EN2_NET  CTL_ALL 0 S_TOGGLE
-.MODEL S_TOGGLE SW(RON=0.05 ROFF=100Meg VT=2.5 VH=0.1)
-
-* D12 Common-Cathode Diode-OR: Anodes SW_UV_EN & EN2_NET -> Cathode EN1_NET
-D12A SW_UV_EN EN1_NET D_BAV70
-D12B EN2_NET  EN1_NET D_BAV70
-
-* DIM Pulldowns & Ch2 Stagger RC (R7=10k, C6=100n -> tau_chg=1.0ms, tau_dis=2.0ms via R7+R6)
-R5 EN1_NET 0 10k
-R6 EN2_NET 0 10k
-R7 EN2_NET DIM2_NET 10k
-C6 DIM2_NET 0 100n IC=0
-
-* --- Channel 1: 4S Luminus SST-10-UV (U1, L1, D9, C4, C9, R3, D13, R8, D1..D4) ---
-L1 VIN_PROT SW1_L 10u
-R_DCR_L1 SW1_L SW1_NODE 0.049
-X_U1 VIN_PROT SW1_NODE FB1_NET EN1_NET 0 LM3410XMY VFB=0.190 FSW=1.6e6 ICL=2.8 RDS=0.170 DMAX=0.92
-D9 SW1_NODE VOUT1 D_B340A
-C4 VOUT1 C4_ESR 7.5u IC=4.7
-R_ESR_C4 C4_ESR 0 0.005
-C9 VOUT1 0 100n IC=4.7
-R3 UV_RET 0 0.56
-D13 FB1_NET VOUT1 D_Z18V
-R8 FB1_NET UV_RET 100
-
-* 4S UV LED String (D1..D4)
-D1 VOUT1 UV_N1 D_SST10UV
-D2 UV_N1 UV_N2 D_SST10UV
-D3 UV_N2 UV_N3 D_SST10UV
-D4 UV_N3 UV_SENS1 D_SST10UV
-V_SENS_UV UV_SENS1 UV_RET DC 0
-
-* --- Channel 2: 4S Cree XP-E2 (U2, L2, D10, C5, C10, R4, D14, R9, D5..D8) ---
-L2 VIN_PROT SW2_L 10u
-R_DCR_L2 SW2_L SW2_NODE 0.049
-X_U2 VIN_PROT SW2_NODE FB2_NET DIM2_NET 0 LM3410XMY VFB=0.190 FSW=1.6e6 ICL=2.8 RDS=0.170 DMAX=0.92
-D10 SW2_NODE VOUT2 D_B340A
-C5 VOUT2 C5_ESR 7.5u IC=4.7
-R_ESR_C5 C5_ESR 0 0.005
-C10 VOUT2 0 100n IC=4.7
-R4 VIS_RET 0 0.56
-D14 FB2_NET VOUT2 D_Z18V
-R9 FB2_NET VIS_RET 100
-
-* 4S Visible LED String (D5,D6 Blue; D7 Green; D8 Cool White)
-D5 VOUT2 VIS_N1 D_XPE2_RB
+* Channel 2: 4S Visible Buck (AL8860WT-7, R4=0.30, L2=68uH)
+C3 VIN_20V 0 10u
+C9 VIN_20V 0 100n
+R4 VIN_20V VIS_POS 0.30
+C7 U2_CTRL 0 4.7n
+XU2 SW2_NODE 0 U2_CTRL VIS_POS VIN_20V AL8860_WT
+D10 SW2_NODE VIN_20V D_B340A
+L2 VIS_NEG_L SW2_NODE 68u
+RL2 VIS_NEG VIS_NEG_L 0.29
+C5 VIS_POS VIS_NEG 1.0u
+V_ivis VIS_POS VIS_A1 0
+D5 VIS_A1 VIS_N1 D_XPE2_RB
 D6 VIS_N1 VIS_N2 D_XPE2_RB
-D7 VIS_N2 VIS_N3 D_XPE2_GR
-D8 VIS_N3 VIS_SENS2 D_XPE2_CW
-V_SENS_VIS VIS_SENS2 VIS_RET DC 0
+D7 VIS_N2 VIS_N3 D_XPE2_GRN
+D8 VIS_N3 VIS_NEG D_XPE2_CW
 
-* --- Simulation Control (9.5 ms warm-started steady state) ---
-.IC V(VBUS_PCB)=5.0 V(VBUS_FUSED)=5.0 V(V_MID)=5.0 V(Q2_BASE)=5.0 V(OVP_K)=5.0 V(OVP_SENSE)=2.11 V(OVP_DRV)=0 V(Q4_BASE)=0 V(Q1_GATE)=0.7
-.TRAN 40n 9.5m 0 40n UIC
+.options method=gear reltol=5e-3 abstol=1e-8 vntol=1e-4
+.tran 5u 13.5m 0 2u uic
 
-.CONTROL
+.control
+set filetype=ascii
 run
-let iin = -i(v_usb)
-* Steady-state metrics in initial 4-UV (1.1-1.45ms) and 8-ALL (3.1-3.45ms)
-meas tran i_uv_4uv avg i(v_sens_uv) from=1.10m to=1.45m
-meas tran i_vis_backfeed max i(v_sens_vis) from=1.10m to=1.45m
-meas tran vout1_4uv avg v(vout1) from=1.10m to=1.45m
-meas tran vout2_4uv avg v(vout2) from=1.10m to=1.45m
-meas tran iin_4uv avg iin from=1.10m to=1.45m
-
-meas tran i_uv_8all avg i(v_sens_uv) from=3.10m to=3.45m
-meas tran i_vis_8all avg i(v_sens_vis) from=3.10m to=3.45m
-meas tran vout1_8all avg v(vout1) from=3.10m to=3.45m
-meas tran vout2_8all avg v(vout2) from=3.10m to=3.45m
-meas tran vout1_pp pp v(vout1) from=3.10m to=3.45m
-meas tran vout2_pp pp v(vout2) from=3.10m to=3.45m
-meas tran il1_max max i(l1) from=0.2m to=9.5m
-meas tran il2_max max i(l2) from=1.5m to=9.5m
-meas tran iin_8all avg iin from=3.10m to=3.45m
-meas tran iin_peak max iin from=0.2m to=9.5m
-meas tran vin_prot_min min v(vin_prot) from=0.2m to=9.5m
-meas tran dim2_cross when v(dim2_net)=1.8 rise=1
-
-* Verify complete U2 turn-off after 8-ALL -> 4-UV transition at 3.5 ms (check at 9.0-9.5 ms)
-meas tran dim2_end avg v(dim2_net) from=9.00m to=9.50m
-meas tran il2_end_avg avg i(l2) from=9.00m to=9.50m
-meas tran i_vis_end min i(v_sens_vis) from=9.00m to=9.50m
-meas tran i_uv_end avg i(v_sens_uv) from=9.00m to=9.50m
-
-set wr_vecnames
-set wr_singlescale
-wrdata circuit_design/sim/outputs/ngspice_nominal_trace.txt v(vin_prot) v(en1_net) v(dim2_net) v(vout1) v(vout2) v(fb1_net) v(fb2_net) i(l1) i(l2) i(v_sens_uv) i(v_sens_vis) i(v_usb)
-quit 0
-.ENDC
-.END
+meas tran i_uv_4uv   AVG i(v_iuv)  FROM=2.6m TO=3.4m
+meas tran i_vis_4uv  AVG i(v_ivis) FROM=2.6m TO=3.4m
+meas tran i_in_4uv   AVG i(vpd)    FROM=2.6m TO=3.4m
+meas tran i_uv_off   AVG i(v_iuv)  FROM=4.2m TO=4.9m
+meas tran i_vis_off  AVG i(v_ivis) FROM=4.2m TO=4.9m
+meas tran i_uv_8all  AVG i(v_iuv)  FROM=12.2m TO=13.4m
+meas tran i_vis_8all AVG i(v_ivis) FROM=12.2m TO=13.4m
+meas tran i_in_8all  AVG i(vpd)    FROM=12.2m TO=13.4m
+meas tran il1_pk     MAX i(l1)     FROM=12.2m TO=13.4m
+meas tran il2_pk     MAX i(l2)     FROM=12.2m TO=13.4m
+meas tran i_uv_pp    PP  i(v_iuv)  FROM=12.2m TO=13.4m
+meas tran i_vis_pp   PP  i(v_ivis) FROM=12.2m TO=13.4m
+meas tran vsw_uv_8   AVG v(sw_uv_n) FROM=12.2m TO=13.4m
+meas tran vin_8all   AVG v(vin_20v) FROM=12.2m TO=13.4m
+meas tran vsw1_max   MAX v(sw1_node) FROM=12.2m TO=13.4m
+meas tran vsw2_max   MAX v(sw2_node) FROM=12.2m TO=13.4m
+linearize v(vin_20v) i(v_iuv) i(v_ivis) i(vpd) v(u1_ctrl) v(u2_ctrl)
+wrdata ../outputs/nominal_waveforms.txt v(vin_20v) i(v_iuv) i(v_ivis) i(vpd) v(u1_ctrl) v(u2_ctrl)
+quit
+.endc
+.end

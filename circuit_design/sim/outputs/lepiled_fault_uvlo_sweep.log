@@ -1,0 +1,47 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: * ==============================================================================
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+Operating point simulation skipped by 'uic',
+  now using transient initial conditions.
+ Reference value :  6.61963e-03
+ Reference value :  6.88065e-03
+ Reference value :  7.18436e-03
+ Reference value :  7.49043e-03
+ Reference value :  7.79309e-03
+ Reference value :  8.08111e-03
+ Reference value :  8.35453e-03
+ Reference value :  8.62752e-03
+ Reference value :  8.90568e-03
+ Reference value :  9.17862e-03
+ Reference value :  9.44966e-03
+ Reference value :  9.71746e-03
+ Reference value :  9.99701e-03
+ Reference value :  1.02383e-02
+ Reference value :  1.04794e-02
+ Reference value :  1.07148e-02
+ Reference value :  1.09504e-02
+ Reference value :  1.11829e-02
+ Reference value :  1.14211e-02
+ Reference value :  1.16615e-02
+ Reference value :  1.19069e-02
+No. of Data Rows : 148818
+vctrl_5v            =  1.499933e-04 from=  5.000000e-04 to=  9.508091e-04
+vctrl_15v           =  1.499933e-04 from=  3.500000e-03 to=  3.951083e-03
+vctrl_1575v         =  1.499933e-04 from=  4.500000e-03 to=  4.951613e-03
+i_uv_1575v          =  1.022943e-11 from=  4.500000e-03 to=  4.951613e-03
+i_vis_1575v         =  7.671990e-12 from=  4.500000e-03 to=  4.951613e-03
+i_uv_185v           =  3.290801e-01 from=  7.000000e-03 to=  7.950427e-03
+i_vis_185v          =  3.368947e-01 from=  7.000000e-03 to=  7.950427e-03
+i_uv_20v            =  3.293104e-01 from=  9.000000e-03 to=  9.950007e-03
+i_vis_20v           =  3.361151e-01 from=  9.000000e-03 to=  9.950007e-03
+i_uv_24v            =  3.306498e-01 from=  1.100000e-02 to=  1.195002e-02
+i_vis_24v           =  3.359878e-01 from=  1.100000e-02 to=  1.195002e-02
+ngspice-45.2 done
+
+--- STDERR ---

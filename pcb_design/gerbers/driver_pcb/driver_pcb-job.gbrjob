@@ -5,7 +5,7 @@
       "Application": "Pcbnew",
       "Version": "9.0.8+dfsg-1"
     },
-    "CreationDate": "2026-11-18T15:58:34+00:00"
+    "CreationDate": "2026-11-19T01:55:27+00:00"
   },
   "GeneralSpecs": {
     "ProjectId": {
@@ -24,12 +24,12 @@
   "DesignRules": [
     {
       "Layers": "Outer",
-      "PadToPad": 0.2,
-      "PadToTrack": 0.2,
-      "TrackToTrack": 0.2,
-      "MinLineWidth": 0.25,
-      "TrackToRegion": 0.2,
-      "RegionToRegion": 0.2
+      "PadToPad": 0.16,
+      "PadToTrack": 0.16,
+      "TrackToTrack": 0.16,
+      "MinLineWidth": 0.2,
+      "TrackToRegion": 0.22,
+      "RegionToRegion": 0.22
     }
   ],
   "FilesAttributes": [
@@ -77,7 +77,8 @@
   "MaterialStackup": [
     {
       "Type": "Legend",
-      "Name": "Top Silk Screen"
+      "Name": "Top Silk Screen",
+      "Color": "White"
     },
     {
       "Type": "SolderPaste",
@@ -86,7 +87,8 @@
     {
       "Type": "SolderMask",
       "Thickness": 0.01,
-      "Name": "Top Solder Mask"
+      "Name": "Top Solder Mask",
+      "Color": "Green"
     },
     {
       "Type": "Copper",
@@ -108,7 +110,8 @@
     {
       "Type": "SolderMask",
       "Thickness": 0.01,
-      "Name": "Bottom Solder Mask"
+      "Name": "Bottom Solder Mask",
+      "Color": "Green"
     },
     {
       "Type": "SolderPaste",
@@ -116,7 +119,8 @@
     },
     {
       "Type": "Legend",
-      "Name": "Bottom Silk Screen"
+      "Name": "Bottom Silk Screen",
+      "Color": "White"
     }
   ]
 }
