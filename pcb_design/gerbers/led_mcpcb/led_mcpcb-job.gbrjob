@@ -5,13 +5,13 @@
       "Application": "Pcbnew",
       "Version": "9.0.8+dfsg-1"
     },
-    "CreationDate": "2026-11-19T00:40:05+00:00"
+    "CreationDate": "2026-11-19T09:47:26+00:00"
   },
   "GeneralSpecs": {
     "ProjectId": {
       "Name": "led_mcpcb",
-      "GUID": "6c65645f-6d63-4706-9362-2e6b69636164",
-      "Revision": "rev?"
+      "GUID": "aa28df72-cc2e-5502-baca-d5c26e0d65ad",
+      "Revision": "4.1"
     },
     "Size": {
       "X": 20.1,
@@ -19,7 +19,7 @@
     },
     "LayerNumber": 1,
     "BoardThickness": 1.6,
-    "Finish": "None"
+    "Finish": "ENIG"
   },
   "DesignRules": [
     {

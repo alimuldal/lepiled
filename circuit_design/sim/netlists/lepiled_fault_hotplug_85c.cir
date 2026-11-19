@@ -1,45 +1,51 @@
 * ==============================================================================
-* LepiLED Rev 4.0 — Fault 4: Worst-Case 85 C Hot-Plug (21 V, L=1.0 uH, -25% C bias)
-* Stress-tests input overdamped RC damper + SMBJ22CA + Q1A/Q1B soft turn-on
-* under extreme 1.0 uH cable inductance and DC-bias-derated ceramic capacitors.
+* LepiLED Rev 4.1 — Fault 4: True 85 C Hot-Plug & Slew-Controlled Q1 Turn-On Inrush
+* Fixes all 3 Opus A-M1/A-M5 issues:
+*   1. Genuine .temp 85 analysis
+*   2. PWR_EN referenced to GND (0 V during hot-plug -> VBUS+4.5 V at t=150 us)
+*   3. Clean V_isense inrush measurement proving C13-to-GND limits inrush < 0.8 A!
 * ==============================================================================
 .include models.lib
+.temp 85
 
 * 21.0 V hard step (USB PD max tolerance +5%) through 1.0 uH / 0.10 Ohm cable
 V_hp src 0 PULSE(0 21.0 10u 50n 50n 5m 10m)
-R_cab src n1 0.10
+V_isense src n0 0
+R_cab n0 n1 0.10
 L_cab n1 vbus 1.0u
-RF1 vbus vbus_f 0.030
-XD11 vbus_f 0 TVS_SMBJ22CA
+RF1 vbus vbus_f 0.050
+XD11 0 vbus_f TVS_SMBJ22A
 
-* DC-bias derated capacitors at 21 V (~65% of nominal for 50V X7R)
+* DC-bias derated upstream capacitors at 21 V (~65% of nominal 50V X7R)
 C1 vbus_f 0 0.65u
 R7 vbus_f vbus_d 1.0
 C10 vbus_d 0 3.1u
 R8 vbus_f vbus_s 0.005
 C11 vbus_s 0 0.65u
 
-* Q1A/Q1B soft turn-on after PD negotiation (t=100 us) into 20 uF VIN_20V bus
-B_pwren pwr_en vbus_s V = { (TIME > 100u) ? 4.5 : 0.0 }
+* Single 40 V Q1 (DMN4035L) OFF during hot-plug (t<150 us), then PWR_EN ramps ON!
+B_pwren pwr_en 0 V = { (TIME > 150u) ? (V(vbus_s) + 4.5) : 0.0 }
 R11 pwr_en q1_gate 6.2k
-C13 q1_gate q1_mid 47n
-MQ1A vbus_s q1_gate q1_mid q1_mid DMN3404L
-MQ1B vin_20v q1_gate q1_mid q1_mid DMN3404L
-* Downstream buck decoupling (derated to 13 uF total) + 0.50 A load
-C23 vin_20v 0 13u
-Rload vin_20v 0 40.0
+C13 q1_gate 0 47n
+R21 q1_gate 0 1.0Meg
+MQ1 vbus_s q1_gate vin_20v vin_20v DMN4035L
+V_iq1 vin_20v vin_20v_bus 0
+* Downstream decoupling: 2x 4.7 uF + 3x 100 nF derated (~6.5 uF eff at 21 V) + 0.50 A load
+C23 vin_20v_bus 0 6.5u
+Rload vin_20v_bus 0 40.0
 
 .options method=gear reltol=1e-3 abstol=1e-10
-.tran 100n 1.5m 0 100n uic
+.tran 200n 2.5m 0 200n uic
 
 .control
 set filetype=ascii
 run
-wrdata ../outputs/fault_hotplug_85c.txt v(vbus_f) v(vin_20v) v(q1_gate) v(q1_mid) i(v_hp)
-meas tran vbus_85c_peak  MAX v(vbus_f)  FROM=0 TO=1.5m
-meas tran vin20_85c_peak MAX v(vin_20v) FROM=0 TO=1.5m
-meas tran inrush_pk      MAX abs(i(v_hp)) FROM=100u TO=1.5m
-meas tran vin20_settle   AVG v(vin_20v) FROM=1.2m TO=1.5m
+wrdata ../outputs/fault_hotplug_85c.txt v(vbus_f) v(vin_20v_bus) v(q1_gate) i(v_iq1)
+meas tran vbus_85c_peak  MAX v(vbus_f)      FROM=0 TO=2.5m
+meas tran vin20_off_max  MAX v(vin_20v_bus) FROM=0 TO=140u
+meas tran vin20_85c_peak MAX v(vin_20v_bus) FROM=140u TO=2.5m
+meas tran q1_inrush_pk   MAX i(v_iq1)       FROM=150u TO=2.5m
+meas tran vin20_settle   AVG v(vin_20v_bus) FROM=2.1m TO=2.5m
 quit
 .endc
 .end

@@ -1,9 +1,9 @@
 * ==============================================================================
-* LepiLED Rev 4.0 — Nominal Operating Mode Testbench (4-UV -> OFF -> 8-ALL)
-* Input: 20.0 V USB-C PD (through 1.0 m cable + J1 + F1 + R8 + Q1A/Q1B)
-*   0.0 -  3.5 ms: 4-UV mode (SW_UV_N = GND, SW_ALL_N = float)
-*   3.5 -  5.0 ms: OFF mode  (both floating -> Q2, Q3 ON -> U1, U2 OFF)
-*   5.0 - 13.5 ms: 8-ALL mode (SW_ALL_N = GND -> D12 pulls SW_UV_N low -> both ON)
+* LepiLED Rev 4.1 — Nominal Operating Mode Testbench (OFF -> 4-UV -> 8-ALL)
+* Input: 20.0 V USB-C PD (through 1.0 m cable + J1 + F1 + R8 + single Q1)
+*   0.0 -  2.0 ms: OFF mode   (SW_UV_IN=GND, SW_VIS_IN=GND -> both OFF)
+*   2.0 -  5.5 ms: 4-UV mode  (SW_UV_IN=OPEN, SW_VIS_IN=GND -> Ch1 UV ON)
+*   5.5 - 14.5 ms: 8-ALL mode (SW_UV_IN=OPEN, SW_VIS_IN=OPEN -> both ON)
 * ==============================================================================
 .include models.lib
 .include al8860.lib
@@ -12,48 +12,51 @@ Vpd VPD_SRC 0 20.0
 Rcable VPD_SRC VBUS 0.106
 Lcable VBUS VBUS_IN 0.2u
 
-RF1 VBUS_IN VBUS_FUSED 0.060
-XD11 VBUS_FUSED 0 TVS_SMBJ22CA
+RF1 VBUS_IN VBUS_FUSED 0.080
+XD11 0 VBUS_FUSED TVS_SMBJ22A
 C1 VBUS_FUSED 0 1.0u
 R7 VBUS_FUSED VBUS_DAMP 1.0
 C10 VBUS_DAMP 0 4.7u
 R8 VBUS_FUSED VBUS_SENSE 0.005
 C11 VBUS_SENSE 0 1.0u
 I_u3 VBUS_SENSE 0 3.3m
-E_pwren U3_PWR_EN VBUS_SENSE VALUE = { 4.5 }
+* AP33771C PWR_EN = VBUS_SENSE + 4.5 V (referenced to GND)
+B_pwren U3_PWR_EN 0 V = { V(VBUS_SENSE) + 4.5 }
 R11 U3_PWR_EN Q1_GATE 6.2k
-C13 Q1_GATE Q1_MID 47n
-MQ1A VBUS_SENSE Q1_GATE Q1_MID Q1_MID DMN3404L
-MQ1B VIN_20V Q1_GATE Q1_MID Q1_MID DMN3404L
+C13 Q1_GATE 0 47n
+R21 Q1_GATE 0 1.0Meg
+MQ1 VBUS_SENSE Q1_GATE VIN_20V VIN_20V DMN4035L
 
-* 17.25 V Hardware UVLO (U5 LM4040-2.5 + U4 LM393B)
+* Hysteretic Hardware UVLO (17.54 V ON / 16.64 V OFF; 0.90 V hyst)
 R14 VIN_20V V_REF 10.0k
 XU5 V_REF 0 LM4040_2V5
 R15 VIN_20V UVLO_SENSE 59.0k
 R16 UVLO_SENSE 0 10.0k
 C15 UVLO_SENSE 0 100n
 C14 VIN_20V 0 100n
-XU4A UVLO_SENSE V_REF U1_CTRL VIN_20V 0 LM393B_CH
-XU4B UVLO_SENSE V_REF U2_CTRL VIN_20V 0 LM393B_CH
+XU4A UVLO_SENSE V_REF UVLO_OK VIN_20V 0 LM393B_CH
+R17 VIN_20V UVLO_OK 100k
+R18 UVLO_OK 0 100k
+R19 UVLO_OK UVLO_SENSE 510k
+XU4B V_REF UVLO_OK UVLO_FAULT VIN_20V 0 LM393B_CH
+R20 V_REF UVLO_FAULT 47.0k
+MQ2 U1_CTRL UVLO_FAULT 0 0 BSS138_MOD
+MQ3 U2_CTRL UVLO_FAULT 0 0 BSS138_MOD
 
-* Ground-Referenced Maxi-Switch (5.1 V bias, R5/R6, D12 BAT54, Q2/Q3 BSS138)
-R17 VIN_20V V_SW_BIAS 22.0k
-D14 0 V_SW_BIAS D_BZT52C5V1
-R5 V_SW_BIAS SW_UV_N 100k
-R6 V_SW_BIAS SW_ALL_N 100k
-D12 SW_UV_N SW_ALL_N D_BAT54
-MQ2 U1_CTRL SW_UV_N 0 0 BSS138_MOD
-MQ3 U2_CTRL SW_ALL_N 0 0 BSS138_MOD
-
-* Mode sequence switches (SW_UV active 0..3.5 ms; OFF 3.5..5.0 ms; SW_ALL active 5.0..13.5 ms)
-Vsw_uv  ctrl_uv  0 PULSE(1 0 3.5m 1u 1u 50m 100m)
-Vsw_all ctrl_all 0 PULSE(0 1 5.0m 1u 1u 50m 100m)
-S_sw_uv  SW_UV_N  0 ctrl_uv  0 SW_MODE
-S_sw_all SW_ALL_N 0 ctrl_all 0 SW_MODE
+* Direct Gold DPDT On-On-On Mode Switch via J4 + R5/R6 (1k) + D15/D16 ESD
+XD15 0 SW_UV_IN ESD_T05
+XD16 0 SW_VIS_IN ESD_T05
+R5 SW_UV_IN U1_CTRL 1.0k
+R6 SW_VIS_IN U2_CTRL 1.0k
+* SW_UV grounded 0..2.0 ms (OFF), open >= 2.0 ms; SW_VIS grounded 0..5.5 ms, open >= 5.5 ms
+Vsw_uv  ctrl_uv  0 PULSE(1 0 2.0m 1u 1u 50m 100m)
+Vsw_vis ctrl_vis 0 PULSE(1 0 5.5m 1u 1u 50m 100m)
+S_sw_uv  SW_UV_IN  0 ctrl_uv  0 SW_MODE
+S_sw_vis SW_VIS_IN 0 ctrl_vis 0 SW_MODE
 .model SW_MODE SW(VT=0.5 VH=0.05 RON=0.05 ROFF=100Meg)
 
-* Channel 1: 4S UV-A 365 nm Buck (AL8860WT-7, R3=0.30, L1=68uH)
-C2 VIN_20V 0 10u
+* Channel 1: 4S UV-A 365 nm Buck (AL8860WT-7, R3=0.30, L1=68uH, C2=4.7uF, C4=100n+6.8R)
+C2 VIN_20V 0 4.7u
 C8 VIN_20V 0 100n
 R3 VIN_20V UV_POS 0.30
 C6 U1_CTRL 0 1.0n
@@ -61,15 +64,16 @@ XU1 SW1_NODE 0 U1_CTRL UV_POS VIN_20V AL8860_WT
 D9 SW1_NODE VIN_20V D_B340A
 L1 UV_NEG_L SW1_NODE 68u
 RL1 UV_NEG UV_NEG_L 0.29
-C4 UV_POS UV_NEG 1.0u
+C4 UV_POS UV_C4_DAMP 100n
+R22 UV_C4_DAMP UV_NEG 6.8
 V_iuv UV_POS UV_A1 0
 D1 UV_A1 UV_N1 D_SST10_UV
 D2 UV_N1 UV_N2 D_SST10_UV
 D3 UV_N2 UV_N3 D_SST10_UV
 D4 UV_N3 UV_NEG D_SST10_UV
 
-* Channel 2: 4S Visible Buck (AL8860WT-7, R4=0.30, L2=68uH)
-C3 VIN_20V 0 10u
+* Channel 2: 4S Visible Buck (AL8860WT-7, R4=0.30, L2=68uH, C3=4.7uF, C5=100n+6.8R)
+C3 VIN_20V 0 4.7u
 C9 VIN_20V 0 100n
 R4 VIN_20V VIS_POS 0.30
 C7 U2_CTRL 0 4.7n
@@ -77,7 +81,8 @@ XU2 SW2_NODE 0 U2_CTRL VIS_POS VIN_20V AL8860_WT
 D10 SW2_NODE VIN_20V D_B340A
 L2 VIS_NEG_L SW2_NODE 68u
 RL2 VIS_NEG VIS_NEG_L 0.29
-C5 VIS_POS VIS_NEG 1.0u
+C5 VIS_POS VIS_C5_DAMP 100n
+R23 VIS_C5_DAMP VIS_NEG 6.8
 V_ivis VIS_POS VIS_A1 0
 D5 VIS_A1 VIS_N1 D_XPE2_RB
 D6 VIS_N1 VIS_N2 D_XPE2_RB
@@ -85,27 +90,28 @@ D7 VIS_N2 VIS_N3 D_XPE2_GRN
 D8 VIS_N3 VIS_NEG D_XPE2_CW
 
 .options method=gear reltol=5e-3 abstol=1e-8 vntol=1e-4
-.tran 5u 13.5m 0 2u uic
+.tran 5u 14.5m 0 2u uic
 
 .control
 set filetype=ascii
 run
-meas tran i_uv_4uv   AVG i(v_iuv)  FROM=2.6m TO=3.4m
-meas tran i_vis_4uv  AVG i(v_ivis) FROM=2.6m TO=3.4m
-meas tran i_in_4uv   AVG i(vpd)    FROM=2.6m TO=3.4m
-meas tran i_uv_off   AVG i(v_iuv)  FROM=4.2m TO=4.9m
-meas tran i_vis_off  AVG i(v_ivis) FROM=4.2m TO=4.9m
-meas tran i_uv_8all  AVG i(v_iuv)  FROM=12.2m TO=13.4m
-meas tran i_vis_8all AVG i(v_ivis) FROM=12.2m TO=13.4m
-meas tran i_in_8all  AVG i(vpd)    FROM=12.2m TO=13.4m
-meas tran il1_pk     MAX i(l1)     FROM=12.2m TO=13.4m
-meas tran il2_pk     MAX i(l2)     FROM=12.2m TO=13.4m
-meas tran i_uv_pp    PP  i(v_iuv)  FROM=12.2m TO=13.4m
-meas tran i_vis_pp   PP  i(v_ivis) FROM=12.2m TO=13.4m
-meas tran vsw_uv_8   AVG v(sw_uv_n) FROM=12.2m TO=13.4m
-meas tran vin_8all   AVG v(vin_20v) FROM=12.2m TO=13.4m
-meas tran vsw1_max   MAX v(sw1_node) FROM=12.2m TO=13.4m
-meas tran vsw2_max   MAX v(sw2_node) FROM=12.2m TO=13.4m
+meas tran i_uv_off   AVG i(v_iuv)   FROM=1.2m TO=1.9m
+meas tran i_vis_off  AVG i(v_ivis)  FROM=1.2m TO=1.9m
+meas tran i_uv_4uv   AVG i(v_iuv)   FROM=4.6m TO=5.4m
+meas tran i_vis_4uv  AVG i(v_ivis)  FROM=4.6m TO=5.4m
+meas tran i_in_4uv   AVG i(vpd)     FROM=4.6m TO=5.4m
+meas tran i_uv_8all  AVG i(v_iuv)   FROM=13.2m TO=14.4m
+meas tran i_vis_8all AVG i(v_ivis)  FROM=13.2m TO=14.4m
+meas tran i_in_8all  AVG i(vpd)     FROM=13.2m TO=14.4m
+meas tran il1_pk     MAX i(l1)      FROM=13.2m TO=14.4m
+meas tran il2_pk     MAX i(l2)      FROM=13.2m TO=14.4m
+meas tran i_uv_pp    PP  i(v_iuv)   FROM=13.2m TO=14.4m
+meas tran i_vis_pp   PP  i(v_ivis)  FROM=13.2m TO=14.4m
+meas tran vin_8all   AVG v(vin_20v) FROM=13.2m TO=14.4m
+meas tran vin_pp     PP  v(vin_20v) FROM=13.2m TO=14.4m
+meas tran vref_nom   AVG v(v_ref)   FROM=13.2m TO=14.4m
+meas tran vsw1_max   MAX v(sw1_node) FROM=13.2m TO=14.4m
+meas tran vsw2_max   MAX v(sw2_node) FROM=13.2m TO=14.4m
 linearize v(vin_20v) i(v_iuv) i(v_ivis) i(vpd) v(u1_ctrl) v(u2_ctrl)
 wrdata ../outputs/nominal_waveforms.txt v(vin_20v) i(v_iuv) i(v_ivis) i(vpd) v(u1_ctrl) v(u2_ctrl)
 quit

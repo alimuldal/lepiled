@@ -1,28 +1,32 @@
-# LepiLED DIY Maxi Switch — Mechanical Clearance & Verification Report (Rev 4.0 / Option 2)
+# LepiLED DIY Maxi Switch — Mechanical Clearance & Verification Report (Rev 4.1)
 
-All 34 parametric assertions ([params.py](file:///home/alimuldal/src/lepiled/mechanical_design/cad/params.py)), 5 watertight STEP/STL exports, overhang audits, 5,913-ray USB-C tunnel ray-cast, 84-waypoint kinematic insertion sweeps, and **612 all-pairs B-Rep solid intersection checks** ([generate_cad.py](file:///home/alimuldal/src/lepiled/mechanical_design/cad/generate_cad.py)) pass with **0.000 mm³** interference ([cad_verification.json](file:///home/alimuldal/src/lepiled/mechanical_design/cad/cad_verification.json)).
+All **35 parametric assertions** ([params.py](file:///home/alimuldal/src/lepiled/mechanical_design/cad/params.py)), **6 watertight STEP/STL exports** (`mech_lid_bot`, `mech_cap_bot`, `mech_cap_top` in FDM and SLS), support-free overhang audits, **3,249-ray `20 mm` grommet flange & USB-C tunnel STL ray-cast**, **72-waypoint kinematic insertion sweeps**, and **272 all-pairs B-Rep solid intersection checks** (`136` Nominal + `136` Worst-Case, including all 24 modeled fasteners, `20 mm` rubber grommet, and standard `6.65 mm` USB-C plug) ([generate_cad.py](file:///home/alimuldal/src/lepiled/mechanical_design/cad/generate_cad.py)) pass with **0.000000 mm³** interference ([cad_verification.json](file:///home/alimuldal/src/lepiled/mechanical_design/cad/cad_verification.json)).
 
-## 1. Rev 4.0 Mechanical & Interface Updates
+## 1. Rev 4.1 Mechanical & Interface Updates
 
-1. **Unified Dual `SK 578/50 SA` Heatsinks (`Ø60 × 50 mm` top & bottom):** Option 2's `0.50 W` nom / `0.82 W` max PCB loss allows identical `£5.88` `SK 578/50 SA` heatsinks top and bottom, reducing overall lamp height by `20.0 mm` (`330.0 mm` vs `350.0 mm`, excluding eye bolt) and standardizing both hub bolt circles to `4× M3` at `R = 8.5 mm`.
-2. **Exact `J1` Front Datum (`Y = -25.76 mm`):** Corrected from `-25.34 mm` to GCT `USB4085-GF-A`'s exact datasheet datum (`Row-B -18.50 mm - 7.26 mm = -25.76 mm`).
-3. **Deepened `MECH-ADAPT-BOT` Pin Relief Pockets (`2.5 mm`):** Increased from `1.8 mm` to `2.5 mm` under `J1/TP1/TP2`, `J2/J3`, and `J4` to clear untrimmed through-hole tails plus Kapton insulation (`5.5 mm` solid Al remains beneath the pockets).
-4. **Direct-Mate `6.65 mm` Standard USB-C Tunnel (`mech_cap_bot_usbc`):** Replaced the extended-barrel bezel with a clean `13.6 × 7.8 mm` (+47° self-supporting pitched roof) recessed tunnel opening into the `Ø61.0 mm` cavity, allowing any standard `6.65 mm` USB-C PD laptop-charger or power-bank plug to seat full `4.55 mm` into `J1` (`2.10 mm` exposed barrel, `0.000 mm³` interference across `153` B-Rep pairs).
-5. **Flat M2.5 Nylon PCB Washers (`MECH-FAST-2`):** Replaced nylon shoulder washers (which cannot fit `Ø2.7 mm` `H1..H4` holes) with flat M2.5 nylon washers (`Ø5.0 mm OD`).
+1. **Top-Heatsink-Only & Zero CNC Milling (`S1-A`):** Replaced bottom `SK 578/50 SA`, CNC-milled `MECH-ADAPT-BOT`, and gap pad with 3D-printed `MECH-LID-BOT` (`Ø92 × 4.0 mm` + `4×` integral `11.5 mm` `M2.5` PCB bosses), shortening overall lamp height by `42.0 mm` (`288.0 mm` vs `330.0 mm`, excluding `M6` eye bolt). Switched `MECH-ADAPT-TOP` to stock `Ø76.2 × 3.0 mm` Al disc and `MECH-ANCHOR-TOP/BOT` to stock `32 × 32 mm` Al square bar (`1.0 mm/side` slip fit inside the `34 × 34 mm` core bore).
+2. **Top Butt-Joint Preload (`Opus B-H3` Fix):** `MECH-ANCHOR-TOP` is recessed `0.50 mm` below `MECH-HS-CORE` top (`Z = 235.0 mm`) and pinned with tight `Ø4.2 mm` round bores, guaranteeing positive eye-bolt thermal preload into `MECH-ADAPT-TOP`.
+3. **Unified USB-C Entry with `20 mm` Rubber Membrane Grommet (`Option 3A` + `S2-A`):** Removed the obsolete M16 gland cap variant. `MECH-CAP-BOT` carries a flat `Ø26.0 mm` outer spotface (`Y = -43.5 mm`), `Ø20.2 × 2.5 mm` panel bore, and `Ø23.6 × 2.5 mm` internal back-lip relief groove for a standard off-the-shelf `20 mm` rubber membrane grommet (`MECH-GROMMET-1`) ahead of the direct-mate `13.6 × 7.8 mm` USB-C tunnel (`J1` datum `Y = -25.76 mm`).
+4. **Gold `DPDT On-On-On` Switch Alcove (`S3`):** Widened `+X` switch alcove to `15.0 × 13.5 mm` at `Z = 30.0 mm` (`2.50 mm` wall window) to house the `12.7 × 11.43 × 10.67 mm` `C&K 7211SYZBE` body and solder lugs cleanly above `driver_pcb`.
+5. **Isolated Nylon PCB Mounting (`Option 2A`):** `driver_pcb` mounts to `MECH-LID-BOT` bosses via `4×` nylon `M2.5 × 6 mm` screws into `M2.5 × 4.0 mm` brass heat-set inserts through isolated unplated `H1..H4` (`Ø2.7 mm`).
 
 ## 2. Key Verified Clearances & Checks
 
 | Check | Measured Value | Requirement | Status |
 |---|---:|---:|:---:|
 | Driver PCB radial clearance inside `Ø61 mm` cavity | `2.099 mm` | `>= 1.0 mm` | PASS |
-| Driver PCB rim on `Ø59 mm` aluminum pedestal | `1.099 mm` | `>= 0.5 mm` | PASS |
-| PCB vertical headroom above mated JST-XH (`J2..J4`) to cone | `6.775 mm` | `>= 5.0 mm` | PASS |
-| Bottom relief pocket depth (`J1/TP1/TP2`, `J2/J3`, `J4`) | `2.500 mm` | `>= 2.5 mm` | PASS |
-| USB-C tunnel above `MECH-ADAPT-BOT` pedestal / `MECH-GASKET-3` | `0.080 mm` / `3.030 mm` | `> 0.05` / `>= 2.5 mm` | PASS |
+| `MECH-LID-BOT` boss radial clearance to cavity wall | `3.799 mm` | `>= 2.0 mm` | PASS |
+| Open air below `driver_pcb` through-hole pins | `9.700 mm` | `>= 3.0 mm` | PASS |
+| PCB vertical headroom above mated JST-XH (`J2..J4`) to cone | `8.979 mm` | `>= 5.0 mm` | PASS |
+| `20 mm` grommet panel thickness (`Ø20.2 mm` bore) | `2.500 mm` | `2.0 – 3.2 mm` | PASS |
+| Grommet bore wall above `MECH-GASKET-3` / back-lip above lid | `2.830 / 3.180 mm` | `>= 2.5 mm` | PASS |
+| USB-C tunnel wall above `MECH-GASKET-3` / below `MECH-GASKET-1` | `9.030 / 37.178 mm` | `>= 2.5 mm` | PASS |
 | Standard `6.65 mm` USB-C plug exposed barrel at full `4.55 mm` mating | `2.100 mm` | `1.0 – 3.0 mm` | PASS |
-| `SW1` wall window / radial clearance to PCB / Z above SMD | `2.50` / `5.81` / `4.67 mm` | `2.0–3.5` / `>= 1.0` / `>= 2.0 mm` | PASS |
-| Worst-case `Ø66.5 mm` glass ID clearance to core corner / LED / M3 | `4.612` / `9.110` / `8.500 mm` | `>= 1.0 mm` | PASS |
+| `C&K 7211` wall window / radial to PCB / Z above SMD | `2.50 / 4.53 / 2.385 mm` | `2.0–3.5 / >= 1.0 / >= 2.0 mm` | PASS |
+| `MECH-ANCHOR-TOP` preload recess / stock bar slip fit | `0.500 / 1.000 mm` | `0.3–1.0 / >= 0.3 mm` | PASS |
+| Worst-case `Ø66.5 mm` glass ID clearance to core / LED / M3 | `4.612 / 9.110 / 8.500 mm` | `>= 1.0 mm` | PASS |
 | Glass axial O-ring squeeze (`149–151 mm` glass) & gland fill | `10.0% / 24.3% / 38.6%` (`91.3%` fill) | `10–45%`, `<= 92%` | PASS |
-| FDM off-bed `>46°` overhang (`cap_bot` / `cap_top` / `cap_bot_usbc`) | `0.02` / `0.01` / `0.62 mm²` | `< 1.0 mm²` | PASS |
-| Kinematic insertion sweeps (`SW1`, `M16` nut, `2× M4x16` CSK) | `0.000000 mm³` (84 waypoints) | `0.000 mm³` | PASS |
-| All-pairs B-Rep interference (`M16_NOM/WC`, `USBC_NOM/WC`) | `0 / 612` nonzero pairs | `0` | PASS |
+| FDM off-bed `>46°` overhang (`lid_bot` / `cap_bot` / `cap_top`) | `0.000 / 0.243 / 0.005 mm²` | `< 1.0 mm²` | PASS |
+| USB-C & `20 mm` grommet flange STL ray-cast (`3,249` rays) | `0` anomalies, `min_wall = 2.500 mm` | `>= 2.5 mm` | PASS |
+| Kinematic insertion (`C&K 7211`, `2× M4×16` CSK, USB-C plug) | `0.000000 mm³` (`72` waypoints) | `0.000 mm³` | PASS |
+| All-pairs B-Rep interference (`NOM` + `WC`, incl. `24` fasteners) | `0 / 272` nonzero pairs (`136 + 136`) | `0` | PASS |

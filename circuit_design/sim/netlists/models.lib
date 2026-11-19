@@ -1,6 +1,6 @@
 * ==============================================================================
-* LepiLED Rev 4.0 (Option 2) — Verified Semiconductor & Protection SPICE Models
-* Grounded in local PDFs in datasheets/
+* LepiLED Rev 4.1 — Verified Semiconductor & Protection SPICE Models
+* Grounded in local PDFs in datasheets/ (LM4040 BV calibrated to exact 2.500 V)
 * ==============================================================================
 
 * --- Luminus SST-10-UV-A130-G365-00 (365 nm UV-A) ---
@@ -8,58 +8,62 @@
 .model D_SST10_UV D(IS=1.2e-18 N=3.45 RS=0.75 CJO=120p BV=5.0 IBV=1m)
 
 * --- Cree XP-E2 Visible LEDs (BV=1.0 V honors Cree VR_max = 1.0 V rating!) ---
-* Royal Blue (455 nm): Vf = 2.92 V @ 333 mA, Rdyn = 0.45 Ohm
+* Royal Blue (455 nm, 00S02): Vf = 2.92 V @ 333 mA, Rdyn = 0.45 Ohm
 .model D_XPE2_RB  D(IS=3.5e-16 N=3.20 RS=0.45 CJO=90p BV=1.0 IBV=100u)
-* Green (528 nm): Vf = 2.69 V @ 333 mA, Rdyn = 0.45 Ohm
+* Green (528 nm, 00K01): Vf = 2.69 V @ 333 mA, Rdyn = 0.45 Ohm
 .model D_XPE2_GRN D(IS=2.8e-15 N=3.15 RS=0.45 CJO=90p BV=1.0 IBV=100u)
-* Cool White (6200 K): Vf = 2.92 V @ 333 mA (25 C), Rdyn = 0.45 Ohm
+* Cool White (6200 K, 00H51): Vf = 2.92 V @ 333 mA (25 C), Rdyn = 0.45 Ohm
 .model D_XPE2_CW  D(IS=3.5e-16 N=3.20 RS=0.45 CJO=90p BV=1.0 IBV=100u)
 
 * --- Diodes Inc. B340A-13-F (40 V 3 A SMA Schottky) ---
 * Vf ~ 0.34 V @ 0.33 A, 0.38 V @ 1.0 A
 .model D_B340A D(IS=1.5e-5 N=1.18 RS=0.045 CJO=250p VJ=0.35 M=0.45 BV=40 IBV=500u)
 
-* --- Diodes Inc. BAT54-7-F (30 V 200 mA SOT-23 Schottky) ---
-* Vf <= 240 mV @ 0.1 mA (~200 mV @ 51 uA)
-.model D_BAT54 D(IS=1.2e-7 N=1.04 RS=1.5 CJO=10p BV=30 IBV=2u)
-
-* --- Diodes Inc. BZT52C5V1-7-F (5.1 V 500 mW Zener) ---
-.model D_BZT52C5V1 D(IS=1e-14 N=1.0 RS=1.0 BV=5.10 IBV=5m CJO=150p)
-
 * --- Green 0603 Indicator LED (LTST-C190GKT, Vf ~ 2.1 V @ 3 mA) ---
 .model D_LED_GRN_IND D(IS=1e-18 N=2.2 RS=5.0 CJO=15p BV=5.0)
 
-* --- Vishay SMBJ22CA Bidirectional 22 V TVS (Vbr = 24.4-26.9 V, Vc = 35.5 V @ 16.9 A) ---
-.subckt TVS_SMBJ22CA p1 p2
-* Back-to-back avalanche clamps with dynamic impedance R_dyn ~ 0.55 Ohm
-Dpos mid p1 D_TVS22
-Dneg mid p2 D_TVS22
-Ctvs p1 p2 650p
-.model D_TVS22 D(IS=1e-12 N=1.2 RS=0.28 BV=24.8 IBV=1m)
-.ends TVS_SMBJ22CA
+* --- Vishay SMBJ22A Unidirectional 22 V TVS (Vbr = 24.4-26.9 V, Vc = 35.5 V @ 16.9 A) ---
+* Pin order: anode (GND), cathode (VBUS_FUSED) -> clamps negative spikes at -1 V!
+.subckt TVS_SMBJ22A anode cathode
+Dclamp anode cathode D_TVS22U
+Ctvs anode cathode 950p
+.model D_TVS22U D(IS=1e-12 N=1.2 RS=0.55 BV=24.8 IBV=1m)
+.ends TVS_SMBJ22A
 
-* --- Diodes Inc. DMN3404L-7 (30 V N-MOSFET, Vth=1.5 V, Rds=42 mOhm @ 4.5 V / 63 mOhm @ 3.0 V) ---
-.model DMN3404L NMOS(LEVEL=1 VTO=1.45 KP=22.0 RD=0.015 RS=0.015 CBD=120p CBS=150p CGSO=180p CGDO=60p LAMBDA=0.01)
+* --- Bourns CDSOD323-T24 (24 V Unidirectional 3 pF ESD Diode) ---
+.subckt ESD_T24 anode cathode
+Desd anode cathode D_ESD24
+Cesd anode cathode 3p
+.model D_ESD24 D(IS=1e-13 N=1.2 RS=1.5 BV=26.7 IBV=1m)
+.ends ESD_T24
+
+* --- Bourns CDSOD323-T05 (5.0 V Unidirectional 3 pF ESD Diode) ---
+.subckt ESD_T05 anode cathode
+Desd anode cathode D_ESD05
+Cesd anode cathode 3p
+.model D_ESD05 D(IS=1e-13 N=1.2 RS=0.8 BV=6.0 IBV=1m)
+.ends ESD_T05
+
+* --- Diodes Inc. DMN4035L-7 (40 V N-MOSFET, Vth=1.5 V, Rds<=52 mOhm @ 4.5 V / 42 mOhm @ 10 V) ---
+.model DMN4035L NMOS(LEVEL=1 VTO=1.45 KP=20.0 RD=0.018 RS=0.018 CBD=110p CBS=140p CGSO=170p CGDO=55p LAMBDA=0.01)
 
 * --- onsemi BSS138 (50 V N-MOSFET, Vth=1.1 V, Rds<=6 Ohm @ 4.5 V) ---
 .model BSS138_MOD NMOS(LEVEL=1 VTO=1.15 KP=0.25 RD=0.8 RS=0.8 CBD=15p CBS=20p CGSO=25p CGDO=8p LAMBDA=0.01)
 
 * --- TI LM4040BIM3-2.5/NOPB (2.500 V +/-0.2% Shunt Voltage Reference, Ir_min=65 uA) ---
+* Calibrated BV=2.421 yields exact V(K,A) = 2.500 V at I_R = 1.75 mA (fixes +3.36% Rev 4.0 offset!)
 .subckt LM4040_2V5 K A
-* Smooth behavioral shunt clamping K-A at 2.500 V for I >= 60 uA, Z_dyn = 0.5 Ohm
 Dref A K D_LM4040
 Rleak K A 10Meg
 Cref K A 10p
-.model D_LM4040 D(IS=1e-14 N=1.0 RS=0.50 BV=2.500 IBV=60u)
+.model D_LM4040 D(IS=1e-14 N=1.0 RS=0.50 BV=2.421 IBV=60u)
 .ends LM4040_2V5
 
 * --- TI LM393BIDR Open-Collector Comparator Channel ---
 * Pulls OUT to GND (< 20 mV @ 100 uA) when IN+ < IN-; high-Z when IN+ > IN-
 .subckt LM393B_CH INP INM OUT VCC GND
 Rin INP INM 2Meg
-* Supply quiescent current (~0.3 mA per channel)
 Rq VCC GND 65k
-* Smooth open-collector pull-down switch: ON when V(INP)-V(INM) < 0 (active even down to VCC=2V)
 B_drv drv GND V = { (V(VCC,GND) > 1.8) ? (0.5*(1 - tanh((V(INP,INM))/0.002))) : 0 }
 S_oc OUT GND drv GND SW_LM393
 R_leak OUT GND 100Meg

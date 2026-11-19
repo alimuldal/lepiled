@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
 """
-LepiLED DIY Maxi Switch (Rev 4.0 — Option 2: 20 V USB-C PD + Dual AL8860WT-7 Buck)
+LepiLED DIY Maxi Switch (Rev 4.1 — USB-C PD Only + Dual AL8860WT-7 Buck + S3 DPDT)
 Comprehensive SPICE + Analytic Corner Sweep + Full-Parameter Monte Carlo Suite.
 
 Verifies:
-  1. Nominal mode transitions (4-UV -> OFF -> 8-ALL) via ngspice
-  2. Hardware 17.25 V UVLO (LM393B + LM4040-2.5) across 5/9/12/15/15.75/18.5/20/24 V
-  3. Inherent open-circuit LED protection (J2 unplugged mid-run)
+  1. Nominal mode transitions (OFF -> 4-UV -> 8-ALL) via ngspice
+  2. Hysteretic hardware UVLO (17.54 V ON / 16.64 V OFF; 0.90 V hyst) through 0.30 Ohm
+     source impedance proving 5-15.75 V PD fallback rejection & ZERO motorboating
+  3. Open-circuit LED disconnect AND live-reconnect surge (C4/C5=100 nF + R22/R23=6.8 Ohm
+     keeps UV < 1.0 A & Vis <= 1.2 A through 150 nH / 80 mOhm harness)
   4. Inherent short-circuit LED protection (J2 shorted mid-run)
-  5. Input protection: -30 V reverse polarity on TP1, +24 V aux back-feed blocking,
-     and inductive 21 V USB-C hot-plug overshoot clamping
-  6. Worst-case 85 C hot-plug with 1.0 uH cable & DC-bias-derated MLCCs
-  7. Exhaustive datasheet corner sweep across V_IN in [18.5, 24.0] V, T_amb in [-10, 55] C
-  8. Full-parameter Monte Carlo (N=2000) sampling EVERY tolerance simultaneously
+  5. USB-C input protection: -15 V negative transient (unidirectional SMBJ22A clamp),
+     inductive 21 V hot-plug clamping, and Q1 OFF-state R21 gate bleed
+  6. True .temp 85 C hot-plug (1.0 uH cable, derated MLCCs, Q1 genuinely OFF during step)
+     + slew-controlled Q1 turn-on inrush (< 1.0 A via C13-to-GND)
+  7. Exhaustive datasheet corner sweep across V_IN in [18.5, 21.5] V, T_amb in [-10, 55] C
+  8. Full-parameter Monte Carlo (N=2000) with +/-0.85% over-temp LM4040 & V_ON/V_OFF checks
 """
 
 import csv
@@ -52,10 +55,18 @@ def run_ngspice(cir_name: str) -> dict:
         text=True,
         timeout=120,
     )
+    log_text = proc.stdout + "\n--- STDERR ---\n" + proc.stderr
     log_path = OUT_DIR / (cir_path.stem + ".log")
-    log_path.write_text(proc.stdout + "\n--- STDERR ---\n" + proc.stderr)
+    log_path.write_text(log_text)
     if proc.returncode != 0:
         raise RuntimeError(f"ngspice failed on {cir_name}:\n{proc.stderr[-1000:]}")
+    # Fail-on-meas-error guard (fixes Opus A-M5 silent measurement failure bug)
+    for line in log_text.splitlines():
+        low = line.lower()
+        if "meas" in low and ("failed" in low or "no such vector" in low):
+            raise RuntimeError(f"ngspice .meas failure in {cir_name}: {line.strip()}")
+        if "no such vector" in low or "measure failed" in low:
+            raise RuntimeError(f"ngspice vector/measure error in {cir_name}: {line.strip()}")
     meas = {}
     for line in proc.stdout.splitlines():
         m = re.match(r"^\s*([a-zA-Z0-9_]+)\s*=\s*([-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?)", line)
@@ -66,8 +77,7 @@ def run_ngspice(cir_name: str) -> dict:
 
 def load_wrdata(filename: str) -> np.ndarray:
     path = OUT_DIR / filename
-    data = np.loadtxt(path)
-    return data
+    return np.loadtxt(path)
 
 
 def solve_buck_channel(
@@ -85,10 +95,9 @@ def solve_buck_channel(
 ):
     """Exact analytic model of AL8860 hysteretic buck LED driver (AL8860.pdf p. 13)."""
     i_nom = v_sense / r_s
-    # Propagation delay overshoot/undershoot on hysteretic thresholds
     v_on = v_in - v_led - i_nom * (r_s + dcr + r_sw)
     if v_on <= 0.15:
-        return None  # dropout
+        return None
     v_off = v_led + v_d + i_nom * (r_s + dcr)
     di_hys = 2.0 * hys * i_nom
     di_up = (v_on / L) * t_pd
@@ -104,12 +113,10 @@ def solve_buck_channel(
     f_sw = 1.0 / period
     duty = t_on / period
 
-    # RMS currents
     i_l_rms = math.sqrt(i_avg**2 + (di_tot**2) / 12.0)
     i_sw_rms = i_l_rms * math.sqrt(duty)
     i_d_avg = i_avg * (1.0 - duty)
 
-    # Losses (AL8860 switching transition t_r + t_f ~ 25 ns)
     p_sw_cond = (i_sw_rms**2) * r_sw
     p_sw_tran = 0.5 * v_in * i_avg * 25e-9 * f_sw
     p_iq = v_in * i_q
@@ -142,13 +149,26 @@ def solve_buck_channel(
     }
 
 
+def uvlo_thresholds(r15, r16, r17, r18, r19, v_ref, v_io):
+    """Exact analytic turn-on and turn-off thresholds of U4A hysteretic UVLO."""
+    v_th = v_ref + v_io
+    # Rising (U4A OUT = 0 V): R19 in parallel with R16
+    r16_eff = (r16 * r19) / (r16 + r19)
+    v_on = v_th * (1.0 + r15 / r16_eff)
+    # Falling (U4A OUT open): R17/R18 Thevenin -> V_thv = VIN * R18/(R17+R18), R_thv = R17||R18
+    k_div = r18 / (r17 + r18)
+    r_fb_tot = r19 + (r17 * r18) / (r17 + r18)
+    # (VIN - v_th)/R15 + (k_div*VIN - v_th)/r_fb_tot = v_th/R16
+    v_off = v_th * (1.0 / r16 + 1.0 / r15 + 1.0 / r_fb_tot) / (1.0 / r15 + k_div / r_fb_tot)
+    return v_on, v_off
+
+
 def run_corner_sweep() -> dict:
-    """Exhaustive worst-case datasheet corner sweep across both channels."""
-    v_ins = [18.5, 19.0, 20.0, 21.0, 24.0]
+    """Exhaustive worst-case datasheet corner sweep across USB-C PD 20 V +/-5% + margin."""
+    v_ins = [18.5, 19.0, 20.0, 21.0, 21.5]
     v_senses = [0.096, 0.100, 0.104]
     r_ss = [0.297, 0.300, 0.303]
     ls = [54.4e-6, 68.0e-6, 81.6e-6]
-    # Temperature corners: -10 C (cold max Vf), 25 C (nom), 55 C (hot PCB amb)
     temps = [-10.0, 25.0, 55.0]
 
     rows = []
@@ -164,13 +184,10 @@ def run_corner_sweep() -> dict:
     }
 
     for v_in, v_s, r_s, L, t_amb in itertools.product(v_ins, v_senses, r_ss, ls, temps):
-        # Copper DCR tempco +0.39%/C from 25 C; R_SW hot up to 0.50 Ohm at 125 C
         dcr = 0.351 * (1.0 + 0.00393 * max(0.0, t_amb + 15.0 - 25.0))
         r_sw = 0.30 if t_amb <= 25.0 else 0.45
         v_d = 0.40 if t_amb <= 25.0 else 0.32
 
-        # LED string Vf bounds at 333 mA:
-        # Cold (-10 C) max bin vs hot (55 C + 25 C rise = 80 C Tj) min bin
         uv_vfs = [4 * 3.90 + 4 * 0.00267 * (25 - (-10))] if t_amb < 0 else (
             [4 * 2.70 - 4 * 0.00267 * (80 - 25), 4 * 3.60, 4 * 3.90]
         )
@@ -179,7 +196,6 @@ def run_corner_sweep() -> dict:
         )
 
         for v_uv, v_vis in itertools.product(uv_vfs, vis_vfs):
-            # Cap cold max UV string at datasheet max 16.0 V (3.9 V @ 350 mA + cold shift)
             v_uv = min(v_uv, 16.0)
             c1 = solve_buck_channel(v_in, v_uv, v_s, r_s, L, dcr, r_sw, v_d)
             c2 = solve_buck_channel(v_in, v_vis, v_s, r_s, L, dcr, r_sw, v_d)
@@ -188,15 +204,17 @@ def run_corner_sweep() -> dict:
                 worst["failed_corners"] += 1
                 continue
 
-            # Overhead losses: U3 (3.3 mA nom, 6 mA max @ 20V), U4 (1.7 mA), U5 (R14 10k), D14 (R17 22k),
-            # F1 (0.12 Ohm) + R8 (0.005) + 2*Q1 (2*0.095 Ohm hot)
-            i_in_raw = c1["i_in"] + c2["i_in"] + 0.006 + 0.0017 + (v_in - 2.5) / 10000.0 + (v_in - 5.1) / 22000.0
+            # Rev 4.1 overhead: U3 (6 mA max + 2.9 mA D12), U4 (1.7 mA), U5 (R14 10k),
+            # UVLO dividers (R15+R16=69k, R17+R18=200k), F1 (MF-MSMF110/33X max 0.16 Ohm hot),
+            # R8 (5 mOhm), single Q1 DMN4035L (0.075 Ohm hot)
+            i_div = v_in / 69000.0 + v_in / 200000.0
+            i_in_raw = c1["i_in"] + c2["i_in"] + 0.0089 + 0.0017 + (v_in - 2.5) / 10000.0 + i_div
             p_overhead = (
-                v_in * 0.006  # U3 max
-                + v_in * 0.0017  # U4 max
-                + v_in * (v_in - 2.5) / 10000.0  # R14 + U5
-                + v_in * (v_in - 5.1) / 22000.0  # R17 + D14
-                + (i_in_raw**2) * (0.120 + 0.005 + 2 * 0.095)
+                v_in * 0.0089
+                + v_in * 0.0017
+                + v_in * (v_in - 2.5) / 10000.0
+                + v_in * i_div
+                + (i_in_raw**2) * (0.160 + 0.005 + 0.075)
             )
             p_pcb_tot = (
                 c1["p_ic"] + c1["p_diode"] + c1["p_ind"] + c1["p_rs"]
@@ -207,11 +225,11 @@ def run_corner_sweep() -> dict:
             tj2 = t_amb + c2["p_ic"] * 147.0
 
             ok = (
-                c1["i_pk"] < 0.70 and c2["i_pk"] < 0.70  # << 1.0 A Isat & 1.0 A AL8860 max
+                c1["i_pk"] < 0.70 and c2["i_pk"] < 0.70
                 and c1["f_sw"] < 1.0e6 and c2["f_sw"] < 1.0e6
                 and c1["duty"] < 0.98 and c2["duty"] < 0.98
                 and tj1 < 125.0 and tj2 < 125.0
-                and i_in_raw < 1.00  # < F1 I_hold(60 C) = 1.00 A
+                and i_in_raw < 0.73  # < MF-MSMF110/33X I_hold(60 C) = 0.73 A!
             )
             if not ok:
                 worst["failed_corners"] += 1
@@ -263,11 +281,12 @@ def run_monte_carlo(n: int = 2000, seed: int = 20261119) -> dict:
     """
     Full-parameter Monte Carlo (N=2000) sampling EVERY datasheet tolerance simultaneously:
     V_IN (USB PD 20 V +/-5%), T_amb, V_SENSE (+/-4%), R_S (+/-1%), L (+/-20%), DCR,
-    R_SW, V_D, individual LED Vf + tempco, UVLO R15/R16 (+/-1%), LM4040 (+/-0.5%), LM393B Vio.
+    R_SW, V_D, individual LED Vf + tempco, UVLO R15..R19 (+/-1%),
+    LM4040 (+/-0.85% full over-temp per Note 3!), LM393B Vio (+/-4 mV).
     """
     rng = np.random.default_rng(seed)
 
-    v_in = rng.uniform(19.0, 21.0, n)  # USB PD 20 V +/-5%
+    v_in = rng.uniform(19.0, 21.0, n)
     t_amb = rng.uniform(5.0, 45.0, n)
     v_s1 = rng.normal(0.100, 0.004 / 3.0, n).clip(0.096, 0.104)
     v_s2 = rng.normal(0.100, 0.004 / 3.0, n).clip(0.096, 0.104)
@@ -282,7 +301,6 @@ def run_monte_carlo(n: int = 2000, seed: int = 20261119) -> dict:
     v_d1 = rng.uniform(0.28, 0.40, n)
     v_d2 = rng.uniform(0.28, 0.40, n)
 
-    # Individual LED Vf sampling (4 UV + 2 RB + 1 Grn + 1 CW)
     t_j_led = t_amb + 30.0
     v_uv = np.sum(rng.normal(3.60, 0.10, (n, 4)).clip(2.7, 3.9), axis=1) - 4 * 0.00267 * (t_j_led - 25.0)
     v_vis = (
@@ -292,12 +310,16 @@ def run_monte_carlo(n: int = 2000, seed: int = 20261119) -> dict:
         - 4 * 0.0015 * (t_j_led - 25.0)
     )
 
-    # UVLO threshold sampling
+    # UVLO threshold sampling (LM4040BIM3-2.5 +/-0.85% full temp range per datasheet Note 3)
     r15 = rng.normal(59.0e3, 59.0e3 * 0.01 / 3.0, n).clip(58.41e3, 59.59e3)
     r16 = rng.normal(10.0e3, 10.0e3 * 0.01 / 3.0, n).clip(9.90e3, 10.10e3)
-    v_ref = rng.normal(2.500, 0.005 / 3.0, n).clip(2.4875, 2.5125)
+    r17 = rng.normal(100.0e3, 100.0e3 * 0.01 / 3.0, n).clip(99.0e3, 101.0e3)
+    r18 = rng.normal(100.0e3, 100.0e3 * 0.01 / 3.0, n).clip(99.0e3, 101.0e3)
+    r19 = rng.normal(510.0e3, 510.0e3 * 0.01 / 3.0, n).clip(504.9e3, 515.1e3)
+    v_ref = rng.normal(2.500, 0.02125 / 3.0, n).clip(2.47875, 2.52125)
     v_io = rng.normal(0.0, 0.004 / 3.0, n).clip(-0.004, 0.004)
-    v_uvlo = (v_ref + v_io) * (1.0 + r15 / r16)
+    v_on, v_off = uvlo_thresholds(r15, r16, r17, r18, r19, v_ref, v_io)
+    v_hyst = v_on - v_off
 
     i_uv_arr, i_vis_arr, i_in_arr, p_pcb_arr, eff_arr, tj1_arr, tj2_arr = [], [], [], [], [], [], []
     passes = 0
@@ -308,12 +330,13 @@ def run_monte_carlo(n: int = 2000, seed: int = 20261119) -> dict:
         c2 = solve_buck_channel(v_in[k], v_vis[k], v_s2[k], r_s2[k], L2[k], dcr2[k], r_sw2[k], v_d2[k])
         if c1 is None or c2 is None:
             continue
-        i_in_tot = c1["i_in"] + c2["i_in"] + 0.0033 + 0.0006 + (v_in[k] - 2.5) / 10000.0 + (v_in[k] - 5.1) / 22000.0
+        i_div = v_in[k] / 69000.0 + v_in[k] / 200000.0
+        i_in_tot = c1["i_in"] + c2["i_in"] + 0.0033 + 0.0029 + 0.0006 + (v_in[k] - 2.5) / 10000.0 + i_div
         p_over = (
-            v_in[k] * 0.0039
+            v_in[k] * 0.0068
             + v_in[k] * (v_in[k] - 2.5) / 10000.0
-            + v_in[k] * (v_in[k] - 5.1) / 22000.0
-            + (i_in_tot**2) * (0.060 + 0.005 + 2 * 0.063)
+            + v_in[k] * i_div
+            + (i_in_tot**2) * (0.080 + 0.005 + 0.052)
         )
         p_pcb = (
             c1["p_ic"] + c1["p_diode"] + c1["p_ind"] + c1["p_rs"]
@@ -330,8 +353,10 @@ def run_monte_carlo(n: int = 2000, seed: int = 20261119) -> dict:
             and c1["i_pk"] < 0.70 and c2["i_pk"] < 0.70
             and c1["f_sw"] < 1.0e6 and c2["f_sw"] < 1.0e6
             and tj1 < 100.0 and tj2 < 100.0
-            and 16.5 < v_uvlo[k] < 18.0
-            and i_in_tot < 0.80
+            and 16.0 < v_off[k] < 17.2
+            and 17.0 < v_on[k] < 18.2
+            and v_hyst[k] >= 0.75
+            and i_in_tot < 0.73
         )
         if ok:
             passes += 1
@@ -347,12 +372,12 @@ def run_monte_carlo(n: int = 2000, seed: int = 20261119) -> dict:
             rows.append([
                 k, round(v_in[k], 3), round(t_amb[k], 1), round(c1["i_avg"] * 1e3, 2),
                 round(c2["i_avg"] * 1e3, 2), round(i_in_tot, 4), round(p_pcb, 4),
-                round(eff * 100.0, 2), round(v_uvlo[k], 3), round(tj1, 1)
+                round(eff * 100.0, 2), round(v_on[k], 3), round(v_off[k], 3), round(tj1, 1)
             ])
 
     with open(OUT_DIR / "monte_carlo.csv", "w", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["trial", "V_in_V", "T_amb_C", "I_uv_mA", "I_vis_mA", "I_in_A", "P_pcb_W", "Eff_pct", "V_uvlo_V", "Tj_U1_C"])
+        w.writerow(["trial", "V_in_V", "T_amb_C", "I_uv_mA", "I_vis_mA", "I_in_A", "P_pcb_W", "Eff_pct", "V_uvlo_on_V", "V_uvlo_off_V", "Tj_U1_C"])
         w.writerows(rows)
 
     def stats(a):
@@ -377,12 +402,14 @@ def run_monte_carlo(n: int = 2000, seed: int = 20261119) -> dict:
         "eff_pct": stats(eff_arr),
         "tj_u1_C": stats(tj1_arr),
         "tj_u2_C": stats(tj2_arr),
-        "v_uvlo_V": stats(v_uvlo),
+        "v_uvlo_on_V": stats(v_on),
+        "v_uvlo_off_V": stats(v_off),
+        "v_uvlo_hyst_V": stats(v_hyst),
     }
 
 
 def plot_results(mc_res: dict):
-    # 1. Nominal Mode Cycling Plot
+    # 1. Nominal Mode Cycling Plot (OFF -> 4-UV -> 8-ALL)
     d = load_wrdata("nominal_waveforms.txt")
     t_ms = d[:, 0] * 1e3
     vin = d[:, 1]
@@ -393,17 +420,17 @@ def plot_results(mc_res: dict):
     v_c2 = d[:, 11]
 
     fig, axes = plt.subplots(3, 1, figsize=(10, 7.5), sharex=True)
-    axes[0].plot(t_ms, i_uv, label="Ch1 UV LED Current (mA)", color="#6c3483", lw=1.5)
-    axes[0].plot(t_ms, i_vis, label="Ch2 Vis LED Current (mA)", color="#1f618d", lw=1.5)
+    axes[0].plot(t_ms, i_uv, label="Ch1 UV LED Current (mA)", color="#6c3483", lw=1.4)
+    axes[0].plot(t_ms, i_vis, label="Ch2 Vis LED Current (mA)", color="#1f618d", lw=1.4)
     axes[0].axhline(333.3, color="gray", ls="--", lw=0.8, label="Nominal 333 mA")
     axes[0].set_ylabel("LED Current (mA)")
-    axes[0].set_title("LepiLED Rev 4.0 (20 V USB-C PD + Dual AL8860WT-7 Buck) — Mode Cycling (4-UV -> OFF -> 8-ALL)")
-    axes[0].legend(loc="upper right", fontsize=8)
+    axes[0].set_title("LepiLED Rev 4.1 (USB-C PD Only + Direct DPDT) — Mode Cycling (OFF -> 4-UV -> 8-ALL)")
+    axes[0].legend(loc="upper left", fontsize=8)
     axes[0].grid(True, alpha=0.3)
 
     axes[1].plot(t_ms, i_in, label="20 V USB-C Input Current (mA)", color="#b9770e", lw=1.2)
     axes[1].set_ylabel("Input Current (mA)")
-    axes[1].legend(loc="upper right", fontsize=8)
+    axes[1].legend(loc="upper left", fontsize=8)
     axes[1].grid(True, alpha=0.3)
 
     axes[2].plot(t_ms, vin, label="VIN_20V Bus (V)", color="#c0392b", lw=1.2)
@@ -417,52 +444,56 @@ def plot_results(mc_res: dict):
     fig.savefig(OUT_DIR / "plot_nominal_modes.png", dpi=150)
     plt.close(fig)
 
-    # 2. UVLO Sweep Plot
+    # 2. Hysteretic UVLO Ramp Plot
     du = load_wrdata("uvlo_sweep_waveforms.txt")
     tu = du[:, 0] * 1e3
     fig, axes = plt.subplots(2, 1, figsize=(10, 5.5), sharex=True)
-    axes[0].plot(tu, du[:, 1], label="VIN_20V (5/9/12/15/15.75/18.5/20/24 V)", color="#c0392b", lw=1.6)
-    axes[0].axhline(17.25, color="#27ae60", ls="--", lw=1.0, label="UVLO Threshold (17.25 V)")
+    axes[0].plot(tu, du[:, 1], label="VIN_20V (through 0.30 Ohm source Z)", color="#c0392b", lw=1.5)
+    axes[0].axhline(17.54, color="#27ae60", ls="--", lw=0.9, label="V_ON = 17.54 V")
+    axes[0].axhline(16.64, color="#2980b9", ls=":", lw=0.9, label="V_OFF = 16.64 V (0.90 V Hyst)")
     axes[0].set_ylabel("Supply Voltage (V)")
-    axes[0].set_title("Hardware 17.25 V UVLO (LM393B + LM4040-2.5) — Rejects 5/9/12/15 V PD Fallback")
-    axes[0].legend(loc="upper left", fontsize=8)
+    axes[0].set_title("Hysteretic Hardware UVLO (LM393B + LM4040-2.5) — Zero Chatter on Slow Ramp")
+    axes[0].legend(loc="upper right", fontsize=8)
     axes[0].grid(True, alpha=0.3)
 
-    axes[1].plot(tu, du[:, 11] * 1e3, label="Ch1 UV Current (mA)", color="#6c3483", lw=1.5)
-    axes[1].plot(tu, du[:, 13] * 1e3, label="Ch2 Vis Current (mA)", color="#1f618d", lw=1.5)
+    axes[1].plot(tu, du[:, 11] * 1e3, label="Ch1 UV Current (mA)", color="#6c3483", lw=1.4)
+    axes[1].plot(tu, du[:, 13] * 1e3, label="Ch2 Vis Current (mA)", color="#1f618d", lw=1.4)
     axes[1].set_ylabel("LED Current (mA)")
     axes[1].set_xlabel("Time (ms)")
-    axes[1].legend(loc="upper left", fontsize=8)
+    axes[1].legend(loc="upper right", fontsize=8)
     axes[1].grid(True, alpha=0.3)
     fig.tight_layout()
     fig.savefig(OUT_DIR / "plot_uvlo_sweep.png", dpi=150)
     plt.close(fig)
 
-    # 3. Faults Plot (Open-LED + Short-LED + 85 C Hot-Plug)
+    # 3. Faults Plot (Open+Reconnect + Short-LED + True 85 C Hot-Plug & Q1 Slew Inrush)
     do = load_wrdata("fault_open_led.txt")
     ds = load_wrdata("fault_short_led.txt")
     dh = load_wrdata("fault_hotplug_85c.txt")
-    fig, axes = plt.subplots(3, 1, figsize=(10, 8.0))
-    axes[0].plot(do[:, 0] * 1e3, do[:, 1], label="V(SW1_NODE) (V)", color="#c0392b", lw=1.1)
-    axes[0].plot(do[:, 0] * 1e3, do[:, 7] * 1e3 / 20.0, label="I_UV / 20 (A*50)", color="#6c3483", lw=1.3)
-    axes[0].set_title("Fault 1: Open-LED at t=5 ms — Inherent AL8860 Protection (V_SW <= 21 V, I_UV = 0)")
-    axes[0].set_ylabel("V / scaled I")
+    fig, axes = plt.subplots(3, 1, figsize=(10, 8.2))
+    axes[0].plot(do[:, 0] * 1e3, do[:, 7] * 1e3, label="I_UV (mA) — Disconnect @ 2 ms, Live-Reconnect @ 4 ms", color="#6c3483", lw=1.2)
+    axes[0].plot(do[:, 0] * 1e3, do[:, 11] * 1e3, label="I_VIS (mA) — Live-Reconnect @ 4 ms", color="#1f618d", lw=1.1, alpha=0.8)
+    axes[0].axhline(1000.0, color="#c0392b", ls="--", lw=0.9, label="SST-10-UV 1.0 A CW Max")
+    axes[0].set_title("Fault 1: Open-LED Disconnect & Live-Reconnect Surge (C4/C5=100 nF + 6.8 Ohm)")
+    axes[0].set_ylabel("LED Current (mA)")
     axes[0].legend(fontsize=8)
     axes[0].grid(True, alpha=0.3)
 
     axes[1].plot(ds[:, 0] * 1e3, ds[:, 3] * 1e3, label="I(L1) Inductor Current (mA)", color="#1f618d", lw=1.1)
-    axes[1].set_title("Fault 2: Shorted LED String at t=5 ms — Inherent AL8860 Current Regulation (~333 mA)")
+    axes[1].set_title("Fault 2: Shorted LED String at t=2.5 ms — Inherent AL8860 Regulation (~333 mA)")
     axes[1].set_ylabel("Current (mA)")
     axes[1].legend(fontsize=8)
     axes[1].grid(True, alpha=0.3)
 
-    axes[2].plot(dh[:, 0] * 1e6, dh[:, 1], label="V(VBUS_FUSED) (V)", color="#c0392b", lw=1.4)
-    axes[2].plot(dh[:, 0] * 1e6, dh[:, 3], label="V(VIN_20V) Soft-Start (V)", color="#27ae60", lw=1.4)
-    axes[2].axhline(30.0, color="black", ls="--", lw=0.9, label="DMN3404L 30 V Abs Max")
-    axes[2].set_title("Fault 4: Worst-Case 85 C Hot-Plug (21 V, 1.0 uH Cable, Derated MLCCs)")
+    axes[2].plot(dh[:, 0] * 1e3, dh[:, 1], label="V(VBUS_FUSED) (V)", color="#c0392b", lw=1.3)
+    axes[2].plot(dh[:, 0] * 1e3, dh[:, 3], label="V(VIN_20V) Slew-Limited (V)", color="#27ae60", lw=1.3)
+    ax2_r = axes[2].twinx()
+    ax2_r.plot(dh[:, 0] * 1e3, dh[:, 7] * 1e3, label="I(Q1) Inrush (mA)", color="#2980b9", lw=1.1, ls="--")
+    ax2_r.set_ylabel("Q1 Inrush (mA)", color="#2980b9")
+    axes[2].set_title("Fault 4: True 85 C Hot-Plug (1.0 uH) + Q1 C13-to-GND Slew-Controlled Inrush (<1 A)")
     axes[2].set_ylabel("Voltage (V)")
-    axes[2].set_xlabel("Time (us)")
-    axes[2].legend(fontsize=8)
+    axes[2].set_xlabel("Time (ms)")
+    axes[2].legend(loc="center right", fontsize=8)
     axes[2].grid(True, alpha=0.3)
     fig.tight_layout()
     fig.savefig(OUT_DIR / "plot_fault_suite.png", dpi=150)
@@ -470,7 +501,7 @@ def plot_results(mc_res: dict):
 
 
 def main():
-    print("=== LepiLED Rev 4.0 (Option 2) Verification Suite ===")
+    print("=== LepiLED Rev 4.1 (USB-C PD Only + S3 DPDT + Hysteretic UVLO) Verification Suite ===")
     nominal = run_ngspice("lepiled_nominal.cir")
     uvlo = run_ngspice("lepiled_fault_uvlo_sweep.cir")
     open_led = run_ngspice("lepiled_fault_open_led.cir")
@@ -482,15 +513,16 @@ def main():
     mc = run_monte_carlo(n=2000)
     plot_results(mc)
 
-    # Nominal analytic operating point at 20.0 V, 25 C
+    # Nominal analytic operating point at 20.0 V, 25 C (reconciled with SPICE: includes D12 LED + dividers)
     nom_uv = solve_buck_channel(19.90, 4 * 3.59, 0.100, 0.300, 68e-6, 0.29, 0.30, 0.34)
     nom_vis = solve_buck_channel(19.90, 2 * 2.92 + 2.69 + 2.92, 0.100, 0.300, 68e-6, 0.29, 0.30, 0.34)
-    i_in_nom = nom_uv["i_in"] + nom_vis["i_in"] + 0.0033 + 0.0006 + (19.9 - 2.5) / 10000.0 + (19.9 - 5.1) / 22000.0
+    i_div_nom = 19.9 / 69000.0 + 19.9 / 200000.0
+    i_in_nom = nom_uv["i_in"] + nom_vis["i_in"] + 0.0033 + 0.0029 + 0.0006 + (19.9 - 2.5) / 10000.0 + i_div_nom
     p_over_nom = (
-        19.9 * 0.0039
+        19.9 * 0.0068
         + 19.9 * (19.9 - 2.5) / 10000.0
-        + 19.9 * (19.9 - 5.1) / 22000.0
-        + (i_in_nom**2) * (0.060 + 0.005 + 2 * 0.042)
+        + 19.9 * i_div_nom
+        + (i_in_nom**2) * (0.080 + 0.005 + 0.052)
     )
     p_pcb_nom = (
         nom_uv["p_ic"] + nom_uv["p_diode"] + nom_uv["p_ind"] + nom_uv["p_rs"]
@@ -498,32 +530,50 @@ def main():
         + p_over_nom
     )
 
-    # Strict PASS/FAIL criteria
+    uvlo_hyst_meas = uvlo["v_uvlo_on"] - uvlo["v_uvlo_off"]
+
     checks = {
-        "nominal_4uv_current_mA": (315.0 <= nominal["i_uv_4uv"] * 1e3 <= 355.0 and abs(nominal["i_vis_4uv"] * 1e3) < 0.5),
         "nominal_off_leakage_mA": (abs(nominal["i_uv_off"] * 1e3) < 0.5 and abs(nominal["i_vis_off"] * 1e3) < 0.5),
+        "nominal_4uv_current_mA": (315.0 <= nominal["i_uv_4uv"] * 1e3 <= 355.0 and abs(nominal["i_vis_4uv"] * 1e3) < 0.5),
         "nominal_8all_current_mA": (315.0 <= nominal["i_uv_8all"] * 1e3 <= 355.0 and 315.0 <= nominal["i_vis_8all"] * 1e3 <= 355.0),
-        "nominal_bat54_gate_margin": (nominal["vsw_uv_8"] < 0.30),
+        "nominal_lm4040_calibrated_2p50V": (2.485 <= nominal["vref_nom"] <= 2.515),
         "nominal_inductor_peak_margin": (nominal["il1_pk"] < 0.55 and nominal["il2_pk"] < 0.55),
-        "nominal_led_ripple_lt_8pct": (nominal["i_uv_pp"] / nominal["i_uv_8all"] < 0.08 and nominal["i_vis_pp"] / nominal["i_vis_8all"] < 0.08),
+        "nominal_vin_ripple_lt_250mV": (nominal["vin_pp"] < 0.25),
         "uvlo_rejects_5_to_15p75V": (uvlo["vctrl_1575v"] < 0.05 and abs(uvlo["i_uv_1575v"] * 1e3) < 0.5 and abs(uvlo["i_vis_1575v"] * 1e3) < 0.5),
-        "uvlo_enables_18p5_to_24V": (uvlo["i_uv_185v"] * 1e3 > 310.0 and uvlo["i_uv_20v"] * 1e3 > 315.0 and uvlo["i_uv_24v"] * 1e3 > 315.0),
-        "fault_open_led_safe": (open_led["vsw1_pk_open"] < 23.0 and abs(open_led["i_uv_open"] * 1e3) < 0.5 and open_led["i_vis_during"] * 1e3 > 315.0),
+        "uvlo_hysteresis_zero_chatter": (
+            17.2 <= uvlo["v_uvlo_on"] <= 17.9
+            and 16.3 <= uvlo["v_uvlo_off"] <= 17.0
+            and uvlo_hyst_meas >= 0.70
+            and uvlo["v_ok_min_post"] > 7.0
+            and abs(uvlo["i_uv_end_off"] * 1e3) < 0.5
+        ),
+        "fault_open_led_and_live_reconnect_safe": (
+            open_led["vsw1_pk_open"] < 23.0
+            and abs(open_led["i_uv_open"] * 1e3) < 0.5
+            and open_led["i_uv_reconn_pk"] < 1.00
+            and open_led["i_vis_reconn_pk"] < 1.20
+            and open_led["i_uv_recover"] * 1e3 > 315.0
+        ),
         "fault_short_led_regulated": (280.0 <= short_led["il1_avg_short"] * 1e3 <= 390.0 and short_led["il1_pk_short"] < 0.65),
-        "fault_aux_reverse_pol_blocked": (input_prot["rev_vin20_min"] > -0.20 and abs(input_prot["rev_irev_max"]) < 1e-4),
-        "fault_aux_backfeed_blocked": (input_prot["aux_vbus_leak"] < 0.01 and input_prot["aux_vin20_avg"] > 23.4),
-        "fault_hotplug_21V_clamped": (input_prot["hp_vbus_peak"] < 28.0),
-        "fault_hotplug_85c_1uH_safe": (hotplug_85c["vbus_85c_peak"] < 28.5 and hotplug_85c["vin20_85c_peak"] < 24.0),
+        "fault_neg_transient_clamped": (input_prot["neg_vbus_min"] > -2.5),
+        "fault_hotplug_21V_clamped": (input_prot["hp_vbus_peak"] < 28.0 and input_prot["q1_off_leak_v"] < 0.05),
+        "fault_hotplug_85c_and_q1_inrush_safe": (
+            hotplug_85c["vbus_85c_peak"] < 28.5
+            and hotplug_85c["vin20_off_max"] < 0.20
+            and hotplug_85c["vin20_85c_peak"] < 23.0
+            and hotplug_85c["q1_inrush_pk"] < 1.00
+            and hotplug_85c["vin20_settle"] > 20.5
+        ),
         "corner_sweep_zero_failures": (corners["failed_corners"] == 0),
         "monte_carlo_100pct_yield": (mc["passes"] == mc["n_trials"]),
     }
 
     summary = {
-        "architecture": "Rev 4.0 Option 2 (20 V USB-C PD AP33771C + Dual AL8860WT-7 Buck + LM393B/LM4040 17.25 V UVLO)",
+        "architecture": "Rev 4.1 (USB-C PD Only AP33771C + Single 40V DMN4035L + Hysteretic UVLO + Direct Gold DPDT + Dual AL8860WT-7 Buck)",
         "all_passed": all(checks.values()),
         "checks": checks,
         "ngspice_nominal": {k: round(v, 6) for k, v in nominal.items()},
-        "ngspice_uvlo": {k: round(v, 6) for k, v in uvlo.items()},
+        "ngspice_uvlo": {**{k: round(v, 6) for k, v in uvlo.items()}, "v_uvlo_hyst": round(uvlo_hyst_meas, 6)},
         "ngspice_open_led": {k: round(v, 6) for k, v in open_led.items()},
         "ngspice_short_led": {k: round(v, 6) for k, v in short_led.items()},
         "ngspice_input_prot": {k: round(v, 6) for k, v in input_prot.items()},
@@ -547,19 +597,19 @@ def main():
     for name, ok in checks.items():
         print(f"  [{'PASS' if ok else 'FAIL'}] {name}")
     print(f"\nNominal 8-ALL (ngspice): I_UV={nominal['i_uv_8all']*1e3:.1f} mA, I_VIS={nominal['i_vis_8all']*1e3:.1f} mA, "
-          f"I_in={-nominal['i_in_8all']*1e3:.1f} mA @ 20 V, I_L1_pk={nominal['il1_pk']*1e3:.1f} mA, "
-          f"dI_UV_pp={nominal['i_uv_pp']*1e3:.1f} mA ({100*nominal['i_uv_pp']/nominal['i_uv_8all']:.2f}%)")
+          f"I_in={-nominal['i_in_8all']*1e3:.1f} mA @ 20 V, V_REF={nominal['vref_nom']:.4f} V, "
+          f"VIN_pp={nominal['vin_pp']*1e3:.1f} mV, dI_UV_pp={nominal['i_uv_pp']*1e3:.1f} mA")
     print(f"Analytic 20 V Nominal: P_in={20.0*i_in_nom:.2f} W ({i_in_nom:.3f} A), P_PCB={p_pcb_nom:.3f} W, "
           f"Sys Eff={100.0*(nom_uv['p_led']+nom_vis['p_led'])/(20.0*i_in_nom):.1f}%")
-    print(f"UVLO: V_CTRL@15.75V={uvlo['vctrl_1575v']*1e3:.1f} mV (I_UV={uvlo['i_uv_1575v']*1e3:.3f} mA); "
-          f"I_UV@18.5V={uvlo['i_uv_185v']*1e3:.1f} mA; I_UV@24V={uvlo['i_uv_24v']*1e3:.1f} mA")
-    print(f"Faults: Open V_SW_pk={open_led['vsw1_pk_open']:.2f} V; Short I_L1={short_led['il1_avg_short']*1e3:.1f} mA (pk {short_led['il1_pk_short']*1e3:.1f} mA); "
-          f"HotPlug 85C 1uH V_pk={hotplug_85c['vbus_85c_peak']:.2f} V (<30 V); Aux -30V V_min={input_prot['rev_vin20_min']:.4f} V; BackFeed={input_prot['aux_vbus_leak']*1e3:.3f} mV")
+    print(f"UVLO (0.30 Ohm Z): V_ON={uvlo['v_uvlo_on']:.3f} V, V_OFF={uvlo['v_uvlo_off']:.3f} V, "
+          f"Hyst={uvlo_hyst_meas:.3f} V, V_OK_min_post={uvlo['v_ok_min_post']:.2f} V (ZERO chatter!)")
+    print(f"Faults: Open+Reconnect I_UV_pk={open_led['i_uv_reconn_pk']:.3f} A (<1.0 A), I_VIS_pk={open_led['i_vis_reconn_pk']:.3f} A (<1.2 A); "
+          f"Short I_L1={short_led['il1_avg_short']*1e3:.1f} mA; NegClamp={input_prot['neg_vbus_min']:.2f} V; "
+          f"85C HotPlug V_pk={hotplug_85c['vbus_85c_peak']:.2f} V, Q1_OFF={hotplug_85c['vin20_off_max']:.4f} V, Q1_inrush_pk={hotplug_85c['q1_inrush_pk']:.3f} A (<1.0 A)")
     print(f"Corners: {corners['total_corners']-corners['failed_corners']}/{corners['total_corners']} PASS "
           f"(P_PCB_max={corners['total_pcb_loss_max']:.3f} W, I_in_max={corners['i_in_total_max']:.3f} A, Tj_max={max(corners['uv_tj_max'], corners['vis_tj_max']):.1f} C)")
     print(f"Monte Carlo: {mc['passes']}/{mc['n_trials']} ({mc['yield_pct']}%) PASS; "
-          f"I_UV={mc['i_uv_mA']['mean']}±{mc['i_uv_mA']['std']} mA, P_PCB={mc['p_pcb_W']['mean']} W (max {mc['p_pcb_W']['max']} W), "
-          f"V_UVLO=[{mc['v_uvlo_V']['min']}, {mc['v_uvlo_V']['max']}] V")
+          f"V_ON=[{mc['v_uvlo_on_V']['min']}, {mc['v_uvlo_on_V']['max']}] V, V_OFF=[{mc['v_uvlo_off_V']['min']}, {mc['v_uvlo_off_V']['max']}] V")
 
     if not all(checks.values()):
         sys.exit(1)

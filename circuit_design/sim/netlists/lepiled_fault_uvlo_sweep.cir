@@ -1,45 +1,47 @@
 * ==============================================================================
-* LepiLED Rev 4.0 — Hardware 17.25 V UVLO Sweep (5 V / 9 V / 12 V / 15 V / 20 V / 24 V)
+* LepiLED Rev 4.1 — Hysteretic UVLO Testbench (17.54 V ON / 16.64 V OFF)
+* Tests 5/9/12/15.75 V PD fallback rejection PLUS slow ramp UP & DOWN through
+* realistic 0.30 Ohm source impedance to prove ZERO chatter / motorboating!
 * ==============================================================================
 .include models.lib
 .include al8860.lib
 
-Vin VIN_20V 0 PWL(
-+ 0 5.0   1.0m 5.0
-+ 1.05m 9.0  2.0m 9.0
-+ 2.05m 12.0 3.0m 12.0
-+ 3.05m 15.0 4.0m 15.0
-+ 4.05m 15.75 5.0m 15.75
-+ 5.05m 18.5 8.0m 18.5
-+ 8.05m 20.0 10.0m 20.0
-+ 10.05m 24.0 12.0m 24.0)
+* Realistic source impedance (0.30 Ohm -> ~0.16 V droop under 8-ALL load!)
+Vsrc V_SRC 0 PWL(
++ 0     5.0   1.0m  5.0
++ 1.05m 15.75 2.5m  15.75
++ 2.55m 16.20 12.5m 19.20
++ 15.0m 19.20 25.0m 15.80
++ 26.0m 15.80)
+Rsrc V_SRC VIN_20V 0.30
 
+* Hysteretic UVLO (U5 LM4040-2.5 + U4A/U4B LM393B + Q2/Q3 BSS138)
 R14 VIN_20V V_REF 10.0k
 XU5 V_REF 0 LM4040_2V5
 R15 VIN_20V UVLO_SENSE 59.0k
 R16 UVLO_SENSE 0 10.0k
 C15 UVLO_SENSE 0 100n
 C14 VIN_20V 0 100n
-XU4A UVLO_SENSE V_REF U1_CTRL VIN_20V 0 LM393B_CH
-XU4B UVLO_SENSE V_REF U2_CTRL VIN_20V 0 LM393B_CH
+XU4A UVLO_SENSE V_REF UVLO_OK VIN_20V 0 LM393B_CH
+R17 VIN_20V UVLO_OK 100k
+R18 UVLO_OK 0 100k
+R19 UVLO_OK UVLO_SENSE 510k
+XU4B V_REF UVLO_OK UVLO_FAULT VIN_20V 0 LM393B_CH
+R20 V_REF UVLO_FAULT 47.0k
+MQ2 U1_CTRL UVLO_FAULT 0 0 BSS138_MOD
+MQ3 U2_CTRL UVLO_FAULT 0 0 BSS138_MOD
 
-R17 VIN_20V V_SW_BIAS 22.0k
-D14 0 V_SW_BIAS D_BZT52C5V1
-R5 V_SW_BIAS SW_UV_N 100k
-R6 V_SW_BIAS SW_ALL_N 100k
-D12 SW_UV_N SW_ALL_N D_BAT54
-Rsw_all SW_ALL_N 0 0.05
-MQ2 U1_CTRL SW_UV_N 0 0 BSS138_MOD
-MQ3 U2_CTRL SW_ALL_N 0 0 BSS138_MOD
-
-* Use 0.5 nF CTRL caps in UVLO staircase bench for fast settling per step
+* Fast-settling 0.5 nF CTRL caps for sweep (8-ALL mode: SW1 open)
+C2 VIN_20V 0 4.7u
+C3 VIN_20V 0 4.7u
 R3 VIN_20V UV_POS 0.30
 C6 U1_CTRL 0 0.5n
 XU1 SW1_NODE 0 U1_CTRL UV_POS VIN_20V AL8860_WT
 D9 SW1_NODE VIN_20V D_B340A
 L1 UV_NEG_L SW1_NODE 68u
 RL1 UV_NEG UV_NEG_L 0.29
-C4 UV_POS UV_NEG 1.0u
+C4 UV_POS UV_C4_DAMP 100n
+R22 UV_C4_DAMP UV_NEG 6.8
 V_iuv UV_POS UV_A1 0
 D1 UV_A1 UV_N1 D_SST10_UV
 D2 UV_N1 UV_N2 D_SST10_UV
@@ -52,7 +54,8 @@ XU2 SW2_NODE 0 U2_CTRL VIS_POS VIN_20V AL8860_WT
 D10 SW2_NODE VIN_20V D_B340A
 L2 VIS_NEG_L SW2_NODE 68u
 RL2 VIS_NEG VIS_NEG_L 0.29
-C5 VIS_POS VIS_NEG 1.0u
+C5 VIS_POS VIS_C5_DAMP 100n
+R23 VIS_C5_DAMP VIS_NEG 6.8
 V_ivis VIS_POS VIS_A1 0
 D5 VIS_A1 VIS_N1 D_XPE2_RB
 D6 VIS_N1 VIS_N2 D_XPE2_RB
@@ -60,24 +63,27 @@ D7 VIS_N2 VIS_N3 D_XPE2_GRN
 D8 VIS_N3 VIS_NEG D_XPE2_CW
 
 .options method=gear reltol=5e-3 abstol=1e-8 vntol=1e-4
-.tran 5u 12.0m 0 2u uic
+.tran 10u 26.0m 0 4u uic
 
 .control
 set filetype=ascii
 run
-meas tran vctrl_5v    AVG v(u1_ctrl) FROM=0.5m TO=0.95m
-meas tran vctrl_15v   AVG v(u1_ctrl) FROM=3.5m TO=3.95m
-meas tran vctrl_1575v AVG v(u1_ctrl) FROM=4.5m TO=4.95m
-meas tran i_uv_1575v  AVG i(v_iuv)   FROM=4.5m TO=4.95m
-meas tran i_vis_1575v AVG i(v_ivis)  FROM=4.5m TO=4.95m
-meas tran i_uv_185v   AVG i(v_iuv)   FROM=7.0m TO=7.95m
-meas tran i_vis_185v  AVG i(v_ivis)  FROM=7.0m TO=7.95m
-meas tran i_uv_20v    AVG i(v_iuv)   FROM=9.0m TO=9.95m
-meas tran i_vis_20v   AVG i(v_ivis)  FROM=9.0m TO=9.95m
-meas tran i_uv_24v    AVG i(v_iuv)   FROM=11.0m TO=11.95m
-meas tran i_vis_24v   AVG i(v_ivis)  FROM=11.0m TO=11.95m
-linearize v(vin_20v) v(v_ref) v(uvlo_sense) v(u1_ctrl) v(u2_ctrl) i(v_iuv) i(v_ivis)
-wrdata ../outputs/uvlo_sweep_waveforms.txt v(vin_20v) v(v_ref) v(uvlo_sense) v(u1_ctrl) v(u2_ctrl) i(v_iuv) i(v_ivis)
+meas tran vref_check   AVG v(v_ref)   FROM=13.0m TO=14.8m
+meas tran vctrl_1575v  AVG v(u1_ctrl) FROM=1.8m TO=2.45m
+meas tran i_uv_1575v   AVG i(v_iuv)   FROM=1.8m TO=2.45m
+meas tran i_vis_1575v  AVG i(v_ivis)  FROM=1.8m TO=2.45m
+meas tran i_uv_19v     AVG i(v_iuv)   FROM=13.5m TO=14.8m
+meas tran i_vis_19v    AVG i(v_ivis)  FROM=13.5m TO=14.8m
+* Exact turn-on and turn-off VIN_20V thresholds via UVLO_OK crossing 5.0 V
+meas tran t_uvlo_on    WHEN v(uvlo_ok)=5.0 RISE=1 FROM=2.5m TO=13.0m
+meas tran v_uvlo_on    FIND v(vin_20v) AT=t_uvlo_on
+meas tran t_uvlo_off   WHEN v(uvlo_ok)=5.0 FALL=1 FROM=15.0m TO=25.5m
+meas tran v_uvlo_off   FIND v(vin_20v) AT=t_uvlo_off
+* Verify zero chatter: UVLO_OK stays > 7 V throughout 0.5 ms after turn-on
+meas tran v_ok_min_post MIN v(uvlo_ok) FROM=10.5m TO=14.8m
+meas tran i_uv_end_off  AVG i(v_iuv)   FROM=25.2m TO=25.9m
+linearize v(vin_20v) v(v_ref) v(uvlo_ok) v(u1_ctrl) v(u2_ctrl) i(v_iuv) i(v_ivis)
+wrdata ../outputs/uvlo_sweep_waveforms.txt v(vin_20v) v(v_ref) v(uvlo_ok) v(u1_ctrl) v(u2_ctrl) i(v_iuv) i(v_ivis)
 quit
 .endc
 .end

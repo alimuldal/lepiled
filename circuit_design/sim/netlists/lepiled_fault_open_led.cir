@@ -1,51 +1,62 @@
 * ==============================================================================
-* LepiLED Rev 4.0 — Fault 1: Open-Circuit LED String (Ch1 J2 Unplugged at t=2.5 ms)
+* LepiLED Rev 4.1 — Fault 1: Open-LED Disconnect (t=2.0 ms) & Live-Reconnect (t=4.0 ms)
+* Proves C4/C5 = 100 nF + R22/R23 = 6.8 Ohm keeps BOTH UV (<1.0 A) & Vis (<=1.2 A)
+* live-reconnect surge safely inside CW datasheet limits through 150 nH / 80 mOhm wire!
 * ==============================================================================
 .include models.lib
 .include al8860.lib
 
 Vin VIN_20V 0 20.0
 
+* Channel 1 UV: disconnects at 2.0 ms (C4 charges to 20 V), live-reconnects at 4.0 ms!
 R3 VIN_20V UV_POS 0.30
 C6 U1_CTRL 0 0.5n
 XU1 SW1_NODE 0 U1_CTRL UV_POS VIN_20V AL8860_WT
 D9 SW1_NODE VIN_20V D_B340A
 L1 UV_NEG_L SW1_NODE 68u
 RL1 UV_NEG UV_NEG_L 0.29
-C4 UV_POS UV_NEG 1.0u
-V_open n_open 0 PULSE(1 0 2.5m 1u 1u 20m 50m)
+C4 UV_POS UV_C4_DAMP 100n
+R22 UV_C4_DAMP UV_NEG 6.8
+* Harness inductance/resistance (150 nH, 80 mOhm) + disconnect/reconnect switch
+V_open n_open 0 PULSE(1 0 2.0m 100n 100n 2.0m 50m)
 S_open UV_POS UV_SW n_open 0 SW_BRK
-.model SW_BRK SW(VT=0.5 VH=0.05 RON=0.01 ROFF=100Meg)
-V_iuv UV_SW UV_A1 0
+.model SW_BRK SW(VT=0.5 VH=0.05 RON=0.08 ROFF=100Meg)
+L_harn1 UV_SW UV_H1 150n
+V_iuv UV_H1 UV_A1 0
 D1 UV_A1 UV_N1 D_SST10_UV
 D2 UV_N1 UV_N2 D_SST10_UV
 D3 UV_N2 UV_N3 D_SST10_UV
 D4 UV_N3 UV_NEG D_SST10_UV
 
+* Channel 2 Vis: also live-reconnects at 4.0 ms from open 20 V state!
 R4 VIN_20V VIS_POS 0.30
 C7 U2_CTRL 0 0.5n
 XU2 SW2_NODE 0 U2_CTRL VIS_POS VIN_20V AL8860_WT
 D10 SW2_NODE VIN_20V D_B340A
 L2 VIS_NEG_L SW2_NODE 68u
 RL2 VIS_NEG VIS_NEG_L 0.29
-C5 VIS_POS VIS_NEG 1.0u
-V_ivis VIS_POS VIS_A1 0
+C5 VIS_POS VIS_C5_DAMP 100n
+R23 VIS_C5_DAMP VIS_NEG 6.8
+S_open2 VIS_POS VIS_SW n_open 0 SW_BRK
+L_harn2 VIS_SW VIS_H1 150n
+V_ivis VIS_H1 VIS_A1 0
 D5 VIS_A1 VIS_N1 D_XPE2_RB
 D6 VIS_N1 VIS_N2 D_XPE2_RB
 D7 VIS_N2 VIS_N3 D_XPE2_GRN
 D8 VIS_N3 VIS_NEG D_XPE2_CW
 
 .options method=gear reltol=5e-3 abstol=1e-8 vntol=1e-4
-.tran 5u 5.0m 0 2u uic
+.tran 2u 5.2m 0 200n uic
 
 .control
 set filetype=ascii
 run
-meas tran vsw1_pk_open  MAX v(sw1_node) FROM=2.5m TO=5.0m
-meas tran vuv_pos_open  AVG v(uv_pos)   FROM=3.5m TO=4.9m
-meas tran i_uv_open     AVG i(v_iuv)    FROM=3.5m TO=4.9m
-meas tran i_l1_open     AVG i(l1)       FROM=3.5m TO=4.9m
-meas tran i_vis_during  AVG i(v_ivis)   FROM=3.5m TO=4.9m
+meas tran vsw1_pk_open     MAX v(sw1_node) FROM=2.0m TO=3.95m
+meas tran i_uv_open        AVG i(v_iuv)    FROM=2.5m TO=3.9m
+meas tran i_uv_reconn_pk   MAX i(v_iuv)    FROM=3.99m TO=4.20m
+meas tran i_vis_reconn_pk  MAX i(v_ivis)   FROM=3.99m TO=4.20m
+meas tran i_uv_recover     AVG i(v_iuv)    FROM=4.7m TO=5.15m
+meas tran i_vis_recover    AVG i(v_ivis)   FROM=4.7m TO=5.15m
 linearize v(sw1_node) v(uv_pos) v(uv_neg) i(v_iuv) i(l1) i(v_ivis)
 wrdata ../outputs/fault_open_led.txt v(sw1_node) v(uv_pos) v(uv_neg) i(v_iuv) i(l1) i(v_ivis)
 quit

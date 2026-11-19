@@ -355,12 +355,6 @@
     },
     "net_colors": null,
     "netclass_assignments": {
-      "/AUX_FUSED": [
-        "Power_20V"
-      ],
-      "/AUX_IN": [
-        "Power_20V"
-      ],
       "/CC1": [
         "Signal"
       ],
@@ -373,19 +367,16 @@
       "/Q1_GATE": [
         "Signal"
       ],
-      "/Q1_MID": [
-        "Power_20V"
-      ],
       "/SW1_NODE": [
         "Power_SW"
       ],
       "/SW2_NODE": [
         "Power_SW"
       ],
-      "/SW_ALL_N": [
+      "/SW_UV_IN": [
         "Signal"
       ],
-      "/SW_UV_N": [
+      "/SW_VIS_IN": [
         "Signal"
       ],
       "/U1_CTRL": [
@@ -412,8 +403,17 @@
       "/U3_VSEL": [
         "Signal"
       ],
+      "/UVLO_FAULT": [
+        "Signal"
+      ],
+      "/UVLO_OK": [
+        "Signal"
+      ],
       "/UVLO_SENSE": [
         "Signal"
+      ],
+      "/UV_C4_DAMP": [
+        "LED_Drive"
       ],
       "/UV_NEG": [
         "LED_Drive"
@@ -436,6 +436,9 @@
       "/VIN_20V": [
         "Power_20V"
       ],
+      "/VIS_C5_DAMP": [
+        "LED_Drive"
+      ],
       "/VIS_NEG": [
         "LED_Drive"
       ],
@@ -443,9 +446,6 @@
         "LED_Drive"
       ],
       "/V_REF": [
-        "Signal"
-      ],
-      "/V_SW_BIAS": [
         "Signal"
       ]
     },
@@ -474,7 +474,7 @@
   },
   "sheets": [
     [
-      "51135221-0afc-5b30-8a40-9eb932a22263",
+      "8bb02b33-e340-5362-8974-afdded8a1864",
       "Root"
     ]
   ],

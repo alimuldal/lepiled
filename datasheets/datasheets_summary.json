@@ -1,9 +1,9 @@
 {
   "metadata": {
-    "project": "LepiLED DIY Maxi Switch (Rev 4.0 — Option 2: 20 V USB-C PD + Dual AL8860 Buck)",
-    "milestone": "Rev 4.0",
-    "generated_utc": "2026-11-19T00:30:00Z",
-    "notes": "Single source of truth for Option 2 SPICE simulations, KiCad 9.0.8 schematics/PCBs, thermal verification, and UK GBP BOM. Every specification is grounded directly in verified PDF datasheets in datasheets/."
+    "project": "LepiLED DIY Maxi Switch (Rev 4.1 — USB-C PD Only + Dual AL8860 Buck + Hysteretic UVLO + Gold DPDT + S1-A Zero-CNC)",
+    "milestone": "Rev 4.1",
+    "generated_utc": "2026-11-19T11:06:00Z",
+    "notes": "Single source of truth for Rev 4.1 SPICE simulations, KiCad 9.0.8 schematics/PCBs, thermal verification, CAD, and UK GBP BOM. Every specification is grounded in verified PDF datasheets in datasheets/."
   },
   "leds": {
     "SST-10-UV-A130-G365-00": {
@@ -26,16 +26,16 @@
       "radiant_flux_500mA_mW": {"typ": 875, "bin_G_min": 900, "citation": "p. 2-3 Binning, p. 5"},
       "radiant_flux_350mA_mW": {"typ": 635, "bin_G_min": 648, "citation": "p. 6 Relative Flux vs Forward Current (~72% of 500 mA)"},
       "wpe_nominal_fraction": 0.48,
-      "package": "3535 SMD (A130 pad: 3.25x3.25 mm, electrically isolated thermal pad)",
+      "package": "3535 SMD (A130 pad: 3.25x3.25 mm, electrically isolated thermal pad; BTM NOTCH = Cathode K)",
       "footprint_citation": "p. 10 A130 Package Outline & Pad Layout (segmented 3-bar thermal paste stencil)"
     },
-    "XPEBRY-L1-0000-00R02": {
+    "XPEBRY-L1-0000-00S02": {
       "manufacturer": "Cree LED",
       "color": "Royal Blue",
       "datasheet_pdf": "datasheets/XLamp-XPE2.pdf",
       "revision": "CLD-DS56 Rev 25B (2026)",
-      "wavelength_nm": {"min": 450, "typ": 455, "max": 460, "citation": "p. 10 Bin 37 (D3-D4), stocked UK distributor MPN"},
-      "flux_min_350mA_mW": 625.0,
+      "wavelength_nm": {"min": 450, "typ": 455, "max": 460, "citation": "p. 10 Active Bin 38 (D3-D4), stocked UK distributor MPN"},
+      "flux_min_350mA_mW": 650.0,
       "vf_at_350mA_25C_V": {"min": 2.6, "typ": 2.93, "max": 3.40, "citation": "p. 4 Characteristics"},
       "vf_tempco_mV_per_C": -1.5,
       "rdyn_ohm_per_led": 0.45,
@@ -44,15 +44,16 @@
       "r_theta_js_C_per_W": 5.7,
       "vr_max_V": 1.0,
       "wpe_nominal_fraction": 0.58,
-      "citation": "p. 3-4 Characteristics; p. 10 Order Codes; pp. 38-39 XP Pad & Windowpane Paste Stencil"
+      "package": "3535 SMD (XP pad; BTM NOTCH = Anode A)",
+      "citation": "p. 3-4 Characteristics; p. 10 Active Order Codes; pp. 38-39 XP Pad & Windowpane Paste Stencil"
     },
-    "XPEBGR-L1-0000-00F01": {
+    "XPEBGR-L1-0000-00K01": {
       "manufacturer": "Cree LED",
       "color": "Green",
       "datasheet_pdf": "datasheets/XLamp-XPE2.pdf",
       "revision": "CLD-DS56 Rev 25B (2026)",
-      "wavelength_nm": {"min": 520, "typ": 528, "max": 535, "citation": "Bin R3 (G2-G4), stocked UK distributor MPN"},
-      "flux_min_350mA_lm": 122.0,
+      "wavelength_nm": {"min": 520, "typ": 528, "max": 535, "citation": "Active Bin S3 (G2-G4), +28% flux over legacy R3"},
+      "flux_min_350mA_lm": 156.0,
       "vf_at_350mA_25C_V": {"min": 2.5, "typ": 2.70, "max": 3.25, "citation": "p. 4 Characteristics (legacy pre-PCN up to 3.60 V max)"},
       "vf_at_350mA_legacy_max_V": 3.60,
       "vf_tempco_mV_per_C": -1.2,
@@ -62,15 +63,16 @@
       "r_theta_js_C_per_W": 9.0,
       "vr_max_V": 1.0,
       "wpe_nominal_fraction": 0.28,
-      "citation": "p. 3-4 Characteristics; stocked DigiKey/Mouser UK order code"
+      "package": "3535 SMD (XP pad; BTM NOTCH = Anode A)",
+      "citation": "p. 3-4 Characteristics; active stocked DigiKey/Mouser UK order code"
     },
-    "XPEBWT-L1-0000-00F51": {
+    "XPEBWT-L1-0000-00H51": {
       "manufacturer": "Cree LED",
       "color": "Cool White (6200 K)",
       "datasheet_pdf": "datasheets/XLamp-XPE2.pdf",
       "revision": "CLD-DS56 Rev 25B (2026)",
       "cct_K": 6200,
-      "flux_min_350mA_85C_lm": 122.0,
+      "flux_min_350mA_85C_lm": 139.0,
       "vf_at_350mA_85C_V": {"typ": 2.84, "max": 3.10, "citation": "p. 4 Characteristics (binned at Tj=85C)"},
       "vf_at_350mA_25C_V": {"min": 2.6, "typ": 2.93, "max": 3.19, "citation": "p. 4 adjusted by -1.5 mV/C from 85C to 25C"},
       "vf_tempco_mV_per_C": -1.5,
@@ -80,7 +82,8 @@
       "r_theta_js_C_per_W": 5.8,
       "vr_max_V": 1.0,
       "wpe_nominal_fraction": 0.35,
-      "citation": "p. 3-5 Characteristics & R3 Order Code (stocked UK distributor MPN)"
+      "package": "3535 SMD (XP pad; BTM NOTCH = Anode A)",
+      "citation": "p. 3-5 Characteristics & Active Bin R5 Order Code"
     }
   },
   "buck_ic": {
@@ -88,7 +91,7 @@
       "manufacturer": "Diodes Incorporated",
       "datasheet_pdf": "datasheets/AL8860.pdf",
       "revision": "DS39014 Rev. 8-2 (April 2026)",
-      "package": "TSOT25 (5-pin, 0.95 mm pitch, no underside EPAD)",
+      "package": "TSOT25 (5-pin, 0.95 mm pitch, 0.68 mm nominal pads, no underside EPAD)",
       "pinout_tsot25": {
         "1": "SW (Drain of internal 40 V NDMOS switch)",
         "2": "GND (Ground 0 V)",
@@ -128,15 +131,15 @@
       "manufacturer": "Diodes Incorporated",
       "datasheet_pdf": "datasheets/AP33771C.pdf",
       "revision": "DS46108 Rev. 11-2 (August 2026)",
-      "package": "W-DFN3030-14 (Type A1, 3.0x3.0 mm, 0.40 mm pitch, EPAD GND)",
+      "package": "W-DFN3030-14 (Type A1, 3.0x3.0 mm, 0.40 mm pitch, 1.80x2.70 mm EPAD GND)",
       "pinout": {
         "1": "VOUT (VOUT monitoring & discharge via 200 Ohm series resistor)",
-        "2": "PWR_EN (High-side gate drive for external back-to-back N-MOSFET switch)",
+        "2": "PWR_EN (High-side gate drive for external 40 V N-MOSFET load switch Q1)",
         "3": "VCC (Supply input downstream of 5 mOhm shunt, 1 uF to GND)",
         "4": "ISENP (Upstream of 5 mOhm current sense resistor)",
         "5": "GND",
         "6": "FLIP (NC)",
-        "7": "LED (5 V status LED output via 1 kOhm)",
+        "7": "LED (5 V status LED D12 via 1 kOhm: 4 s breathing = VOUT ON, steady = PDO mismatch)",
         "8": "VSEL (39.0 kOhm 1% -> 20 V PDO per Table 2)",
         "9": "ISEL (82.0 kOhm 1% -> 1.0 A PDO / 1.1 A OCP per Table 2)",
         "10": "CC2",
@@ -173,6 +176,7 @@
       "iq_mA": {"typ": 0.6, "max": 1.7},
       "vol_at_4mA_max_V": 0.4,
       "vol_at_100uA_typ_V": 0.015,
+      "usage": "U4A 0.90 V-hysteresis UVLO (V_ON = 17.54 V, V_OFF = 16.64 V); U4B UVLO_FAULT inverter driving Q2/Q3",
       "citation": "LM393B.pdf Electrical Characteristics"
     },
     "LM4040BIM3-2.5/NOPB": {
@@ -180,23 +184,22 @@
       "datasheet_pdf": "datasheets/LM4040.pdf",
       "revision": "SNOS633N (Aug 2025)",
       "package": "SOT-23-3 (DBZ: 1=Cathode, 2=Anode, 3=GND/NC)",
-      "vref_V": {"nom": 2.500, "tol_25C_pct": 0.2, "tol_over_temp_pct": 0.5},
+      "vref_V": {"nom": 2.500, "tol_25C_pct": 0.2, "tol_over_temp_pct": 0.85},
       "ir_min_uA": {"typ": 45.0, "max": 65.0},
       "ir_max_mA": 15.0,
       "citation": "Section 5.5 & Section 8.2.1"
     },
-    "DMN3404L-7": {
+    "DMN4035L-7": {
       "manufacturer": "Diodes Incorporated",
-      "datasheet_pdf": "datasheets/DMN3404L.pdf",
-      "revision": "DS31787 Rev. 9-2 (July 2021)",
+      "datasheet_pdf": "datasheets/DMN4035L.pdf",
       "package": "SOT-23-3 (1=Gate, 2=Source, 3=Drain)",
-      "bvdss_V": 30.0,
+      "bvdss_V": 40.0,
       "vgss_max_V": 20.0,
-      "vgs_th_V": {"min": 1.0, "typ": 1.5, "max": 2.0},
-      "rds_on_ohm": {"at_4V5_typ": 0.033, "at_4V5_max": 0.042, "at_3V0_typ": 0.063, "at_3V0_max": 0.082, "at_3V0_85C_max": 0.095},
-      "id_max_25C_A": 4.8,
-      "qg_4V5_nC": 5.3,
-      "citation": "pp. 1-2 Product Summary & Electrical Characteristics"
+      "vgs_th_V": {"min": 1.0, "typ": 1.7, "max": 2.5},
+      "rds_on_ohm": {"at_10V_max": 0.042, "at_4V5_max": 0.052},
+      "id_max_25C_A": 4.6,
+      "usage": "Q1 single 40 V USB-C PD high-side load switch (slew-controlled via R11=6.2k, C13=47nF, R21=1M)",
+      "citation": "datasheets/DMN4035L.pdf Product Summary & Electrical Characteristics"
     },
     "BSS138": {
       "manufacturer": "onsemi",
@@ -206,16 +209,8 @@
       "vgss_max_V": 20.0,
       "vgs_th_V": {"min": 0.8, "typ": 1.3, "max": 1.5, "tempco_mV_per_C": -2.0},
       "rds_on_ohm": {"at_10V_max": 3.5, "at_4V5_max": 6.0},
+      "usage": "Q2, Q3 UVLO_FAULT pull-down clamps on U1_CTRL / U2_CTRL",
       "citation": "pp. 1-2 Maximum Ratings & Electrical Characteristics"
-    },
-    "BAT54-7-F": {
-      "manufacturer": "Diodes Incorporated",
-      "datasheet_pdf": "datasheets/BAT54.pdf",
-      "package": "SOT-23-3 (1=Anode, 2=NC, 3=Cathode)",
-      "vrrm_V": 30.0,
-      "io_mA": 200.0,
-      "vf_max_mV": {"at_0p1mA": 240.0, "at_1mA": 320.0, "at_10mA": 400.0},
-      "citation": "pp. 1-2 Electrical Characteristics"
     }
   },
   "schottky_diode": {
@@ -240,7 +235,7 @@
       "tj_max_C": 125.0,
       "r_theta_ja_C_per_W": 50.0,
       "r_theta_jt_C_per_W": 10.0,
-      "usage": "D9 Ch1 freewheel, D10 Ch2 freewheel, D13 Aux DC reverse-polarity & back-feed blocker"
+      "usage": "D9 Ch1 buck freewheel, D10 Ch2 buck freewheel"
     }
   },
   "inductor": {
@@ -263,46 +258,52 @@
     }
   },
   "protection_and_input": {
-    "MF-MSMF150/24X": {
+    "MF-MSMF110/33X": {
       "manufacturer": "Bourns",
       "datasheet_pdf": "datasheets/MF-MSMF.pdf",
-      "package": "1812",
-      "vmax_V": 24.0,
-      "imax_A": 20.0,
-      "ihold_23C_A": 1.50,
-      "ihold_40C_A": 1.25,
-      "ihold_50C_A": 1.13,
-      "ihold_60C_A": 1.00,
-      "itrip_23C_A": 3.00,
-      "r_min_ohm": 0.030,
-      "r_1max_ohm": 0.120,
-      "pd_tripped_W": 1.0,
-      "usage": "F1 USB-C VBUS polyfuse, F2 Aux DC TP1 polyfuse",
+      "package": "1812 (Style-2 land pattern: 3.15x1.78 mm pads at +/-1.725 mm)",
+      "vmax_V": 33.0,
+      "imax_A": 40.0,
+      "ihold_23C_A": 1.10,
+      "ihold_40C_A": 0.92,
+      "ihold_50C_A": 0.83,
+      "ihold_60C_A": 0.73,
+      "itrip_23C_A": 2.20,
+      "r_min_ohm": 0.060,
+      "r_1max_ohm": 0.250,
+      "pd_tripped_W": 0.8,
+      "usage": "F1 USB-C VBUS resettable polyfuse (1.65x voltage derating at 20 V)",
       "citation": "MF-MSMF.pdf Electrical Characteristics & Thermal Derating Table"
     },
-    "SMBJ22CA-E3/52": {
+    "SMBJ22A-E3/52": {
       "manufacturer": "Vishay",
       "datasheet_pdf": "datasheets/smbj.pdf",
       "revision": "Doc 88392 (09-Jan-2024)",
-      "package": "DO-214AA (SMB), Bidirectional",
+      "package": "DO-214AA (SMB), Unidirectional",
       "vrwm_V": 22.0,
       "vbr_V": {"min": 24.4, "max": 26.9, "it_mA": 1.0},
       "vc_max_V": 35.5,
       "ipp_A": 16.9,
       "id_max_uA": 1.0,
       "pppm_W": 600.0,
+      "usage": "D11 upstream VBUS positive hot-plug surge & negative-transient clamp (zero-stub at F1)",
       "citation": "p. 2-3 Electrical Characteristics"
     },
-    "BZT52C5V1-7-F": {
-      "manufacturer": "Diodes Incorporated",
-      "datasheet_pdf": "datasheets/BZT52C.pdf",
-      "revision": "DS18004 Rev. 38-2",
-      "package": "SOD-123",
-      "vz_V": {"min": 4.8, "nom": 5.1, "max": 5.4, "izt_mA": 5.0},
-      "zzt_max_ohm": 60.0,
-      "pd_75C_mW": 500.0,
-      "usage": "D14 5.1 V switch-bias clamp for Q2/Q3 gates",
-      "citation": "p. 2 Electrical Characteristics"
+    "CDSOD323-T24": {
+      "manufacturer": "Bourns",
+      "package": "SOD-323, Unidirectional",
+      "vrwm_V": 24.0,
+      "capacitance_pF": 3.0,
+      "esd_iec61000_4_2_kV": {"air": 15.0, "contact": 8.0},
+      "usage": "D13 (CC1), D14 (CC2) VBUS-short-tolerant USB-C ESD clamps"
+    },
+    "CDSOD323-T05": {
+      "manufacturer": "Bourns",
+      "package": "SOD-323, Unidirectional",
+      "vrwm_V": 5.0,
+      "capacitance_pF": 3.0,
+      "esd_iec61000_4_2_kV": {"air": 15.0, "contact": 8.0},
+      "usage": "D15 (SW_UV_IN), D16 (SW_VIS_IN) J4 external switch harness ESD clamps"
     },
     "USB4085-GF-A": {
       "manufacturer": "GCT",
@@ -314,12 +315,12 @@
       "vbus_current_max_A": 5.0,
       "gnd_current_max_A": 6.25,
       "voltage_max_V": 48.0,
-      "signal_drill_mm": 0.35,
+      "signal_drill_mm": 0.40,
       "row_b_to_front_mouth_mm": 7.26,
       "contact_resistance_mohm": {"initial": 40.0, "post": 50.0},
       "mating_cycles": 20000,
       "temp_range_C": [-40.0, 85.0],
-      "citation": "p. 1-2 Product Drawing (Row B to front edge = 7.26 mm)"
+      "citation": "p. 1-2 Product Drawing (Row B to front edge = 7.26 mm; 0.40 mm signal drills for standard fab)"
     }
   },
   "resistors": {
@@ -335,11 +336,12 @@
     },
     "WSL12065L000FEA": {
       "manufacturer": "Vishay Dale",
+      "datasheet_pdf": "datasheets/WSL.pdf",
       "package": "1206",
       "resistance_ohm": 0.005,
       "tolerance_fraction": 0.01,
       "power_rating_70C_W": 0.50,
-      "usage": "R8 AP33771C 5 mOhm current-sense shunt"
+      "usage": "R8 AP33771C 5 mOhm Kelvin current-sense shunt"
     },
     "CRCW0805_series": {
       "manufacturer": "Vishay",
@@ -348,7 +350,7 @@
       "tolerance_fraction": 0.01,
       "power_rating_70C_W": 0.125,
       "tcr_ppm_per_C": 100,
-      "usage": "R7 (1.0 Ohm damper), R12 (200 Ohm VOUT bleed), R14 (10 kOhm LM4040 bias), R17 (22 kOhm Zener bias)"
+      "usage": "R7 (1.0 Ohm damper), R12 (200 Ohm VOUT bleed), R14/R16 (10.0 kOhm), R22/R23 (6.8 Ohm C4/C5 damping)"
     },
     "CRCW0603_series": {
       "manufacturer": "Vishay",
@@ -357,21 +359,10 @@
       "tolerance_fraction": 0.01,
       "power_rating_70C_W": 0.10,
       "tcr_ppm_per_C": 100,
-      "usage": "R1-R2 (5.1k), R5-R6 (100k), R9 (39.0k), R10 (82.0k), R11 (6.2k), R13 (1.0k), R15 (59.0k), R16 (10.0k)"
+      "usage": "R1-R2 (5.1k), R5-R6/R13 (1.0k), R9 (39.0k), R10 (82.0k), R11 (6.2k), R15 (59.0k), R17-R18 (100k), R19 (510k), R20 (47.0k), R21 (1.0M)"
     }
   },
   "capacitors": {
-    "CL32B106KBJNNNE": {
-      "manufacturer": "Samsung Electro-Mechanics",
-      "package": "1210",
-      "capacitance_F": 10.0e-6,
-      "tolerance_fraction": 0.10,
-      "voltage_rating_V": 50.0,
-      "dielectric": "X7R",
-      "esr_ohm": 0.005,
-      "effective_capacitance_at_20V_F": 6.5e-6,
-      "usage": "C2, C3 local AL8860 VIN_20V decoupling"
-    },
     "GRM31CR71H475KA12L": {
       "manufacturer": "Murata",
       "package": "1206",
@@ -380,7 +371,7 @@
       "voltage_rating_V": 50.0,
       "dielectric": "X7R",
       "esr_ohm": 0.006,
-      "usage": "C10 upstream RC hot-plug damper capacitor (with R7 = 1.0 Ohm); C1+C10+C11 = 6.7 uF <= 10 uF USB-C spec"
+      "usage": "C2, C3 local AL8860 VIN_20V bulk decoupling (total VOUT <= 10 uF); C10 upstream RC hot-plug damper with R7=1.0 Ohm"
     },
     "GRM21BR71H105KA12L": {
       "manufacturer": "Murata",
@@ -389,7 +380,7 @@
       "tolerance_fraction": 0.10,
       "voltage_rating_V": 50.0,
       "dielectric": "X7R",
-      "usage": "C1 VBUS_FUSED decoupling; C4, C5 LED string ripple bypass; C11 U3.VCC; C12 U3.V5V (5x consolidated)"
+      "usage": "C1 VBUS_FUSED decoupling; C11 U3.VCC; C12 U3.V5V (C1+C10+C11 = 6.7 uF <= 10 uF USB-C spec)"
     },
     "GRM188R71H104KA93D": {
       "manufacturer": "Murata",
@@ -398,7 +389,7 @@
       "tolerance_fraction": 0.10,
       "voltage_rating_V": 50.0,
       "dielectric": "X7R",
-      "usage": "C8, C9 AL8860 HF VIN bypass; C14 LM393B VCC bypass; C15 UVLO sense filter"
+      "usage": "C4, C5 damped LED output EMI shunts (with R22/R23 = 6.8 Ohm); C8, C9 AL8860 HF bypass; C14 LM393B VCC bypass; C15 UVLO sense filter"
     },
     "GRM188R71H473KA61D": {
       "manufacturer": "Murata",
@@ -407,7 +398,7 @@
       "tolerance_fraction": 0.10,
       "voltage_rating_V": 50.0,
       "dielectric": "X7R",
-      "usage": "C13 Q1A/Q1B gate-source soft turn-on capacitor"
+      "usage": "C13 Q1 gate-to-GND slew-rate limiter (inrush < 0.6 A)"
     },
     "GRM188R71H472KA01D": {
       "manufacturer": "Murata",
@@ -451,22 +442,31 @@
       "drill_hole_mm": 1.00,
       "height_unmated_mm": 7.0,
       "height_mated_mm": 9.8,
-      "citation": "p. 1-2, 5 JST XH Series (J4 Maxi-Switch; corrected to 1.00 mm drill per datasheet 0.9+0.1/-0)"
+      "citation": "p. 1-2, 5 JST XH Series (J4 direct DPDT switch header: 1:UV, 2:GND, 3:VIS)"
     }
   },
   "electromechanical": {
-    "100SP3T1B1M1QEH": {
-      "manufacturer": "E-Switch",
-      "type": "SPDT On-Off-On Panel Toggle Switch",
-      "rating": "5 A @ 120 VAC / 28 VDC",
-      "bushing": "1/4-40 threaded, 10.41 mm actuator",
-      "panel_cutout_mm": 6.35
+    "7211SYZBE": {
+      "manufacturer": "C&K",
+      "type": "DPDT On-On-On Gold Dry-Circuit Panel Toggle Switch",
+      "rating": "0.4 VA max @ 20 V AC/DC max (gold-over-nickel contacts)",
+      "body_mm": [12.7, 11.43, 10.67],
+      "bushing": "1/4-40 threaded, solder lugs",
+      "panel_cutout_mm": 6.35,
+      "wiring_to_J4": "Tie lugs 2+5 -> J4.2 (GND); lug 6 -> J4.1 (SW_UV_IN); lug 3 -> J4.3 (SW_VIS_IN); lugs 1 & 4 NC"
     },
     "759D02000": {
       "manufacturer": "C&K",
       "type": "Full Silicone Waterproof Toggle Boot",
       "thread": "1/4-40 threaded nut",
       "compatible_actuator_mm": 10.41
+    },
+    "KT-M20": {
+      "manufacturer": "Eaton / SES / RS Pro",
+      "type": "20 mm (M20) Rubber Membrane/Diaphragm Cable Grommet",
+      "panel_bore_mm": 20.2,
+      "panel_thick_mm": 2.5,
+      "usage": "MECH-GROMMET-1 radially slit around standard USB-C PD cable jacket"
     }
   }
 }

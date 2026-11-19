@@ -1,43 +1,38 @@
 * ==============================================================================
-* LepiLED Rev 4.0 — Fault 3: Input Protection Suite
-*   Case A: Aux DC TP1 Reverse Polarity (-30 V) -> D13 blocks, VIN_20V = 0 V
-*   Case B: Aux DC TP1 +24 V with J1 Unplugged -> Q1A/Q1B block back-feed to VBUS
-*   Case C: Inductive USB-C 21 V Hot-Plug (L=0.5 uH, R=0.15 Ohm) -> Overdamped
-*           C1+C10/R7 + SMBJ22CA keeps V_VBUS_FUSED << 30 V DMN3404L / 31 V AP33771C
+* LepiLED Rev 4.1 — Fault 3: USB-C Input Protection Suite (USB-C Only, S2-A)
+*   Case A: Negative -15 V transient on VBUS -> Unidirectional SMBJ22A clamps >= -1.5 V
+*   Case B: Inductive USB-C 21 V Hot-Plug (L=0.5 uH, R=0.15 Ohm) -> Overdamped
+*           C1+C10/R7 + SMBJ22A keeps V_VBUS_FUSED << 31 V AP33771C / 40 V Q1
+*   Case C: Q1 OFF-state bleed (R21=1M) holds VIN_20V near 0 V with PWR_EN=0
 * ==============================================================================
 .include models.lib
 
-* --- CASE A: Aux DC Reverse Polarity (-30 V on TP1) ---
-V_rev a_aux_in 0 -30.0
-RF2_a a_aux_in a_aux_fused 0.060
-D13_a a_aux_fused a_vin20 D_B340A
-* Real board VIN_20V DC impedance: R14 (10k) || (R15+R16=69k) || R17 (22k) = 6.25 kOhm
-Rload_a a_vin20 0 6.25k
+* --- CASE A: Negative -15 V Transient on VBUS (Unidirectional SMBJ22A Clamp) ---
+V_neg a_src 0 PULSE(0 -15.0 10u 100n 100n 40u 1m)
+Ra_src a_src a_vbus 5.0
+RF1_a a_vbus a_vbus_f 0.080
+XD11_a 0 a_vbus_f TVS_SMBJ22A
+C1_a a_vbus_f 0 1.0u
 
-* --- CASE B: Aux DC +24 V on TP1 with J1 Unplugged (Back-Feed Test) ---
-V_aux b_aux_in 0 24.0
-RF2_b b_aux_in b_aux_fused 0.060
-D13_b b_aux_fused b_vin20 D_B340A
-* Q1A/Q1B common-source back-to-back with U3 unpowered (PWR_EN=0)
-R11_b 0 b_q1_gate 6.2k
-C13_b b_q1_gate b_q1_mid 47n
-MQ1B_b b_vin20 b_q1_gate b_q1_mid b_q1_mid DMN3404L
-MQ1A_b b_vbus_s b_q1_gate b_q1_mid b_q1_mid DMN3404L
+* --- CASE B: Inductive USB-C 21 V Hot-Plug (L=0.5 uH, R=0.15 Ohm) ---
+V_hp b_src 0 PULSE(0 21.0 10u 100n 100n 2m 10m)
+Rb_hp b_src b_n1 0.15
+Lb_hp b_n1 b_vbus 0.5u
+RF1_b b_vbus b_vbus_f 0.080
+XD11_b 0 b_vbus_f TVS_SMBJ22A
+C1_b b_vbus_f 0 1.0u
+R7_b b_vbus_f b_damp 1.0
+C10_b b_damp 0 4.7u
 R8_b b_vbus_f b_vbus_s 0.005
-RF1_b b_vbus b_vbus_f 0.060
-R_j1_open b_vbus 0 100k
+C11_b b_vbus_s 0 1.0u
 
-* --- CASE C: Inductive USB-C 21 V Hot-Plug (L=0.5 uH, R=0.15 Ohm) ---
-V_hp c_src 0 PULSE(0 21.0 10u 100n 100n 2m 10m)
-Rc_hp c_src c_n1 0.15
-Lc_hp c_n1 c_vbus 0.5u
-RF1_c c_vbus c_vbus_f 0.060
-XD11_c c_vbus_f 0 TVS_SMBJ22CA
-C1_c c_vbus_f 0 1.0u
-R7_c c_vbus_f c_damp 1.0
-C10_c c_damp 0 4.7u
-R8_c c_vbus_f c_vbus_s 0.005
-C11_c c_vbus_s 0 1.0u
+* --- CASE C: Q1 OFF-State Leakage & R21 Gate Bleed (VBUS=20 V, PWR_EN=0 V) ---
+V_off c_vbus_s 0 20.0
+R11_c 0 c_q1_gate 6.2k
+C13_c c_q1_gate 0 47n
+R21_c c_q1_gate 0 1.0Meg
+MQ1_c c_vbus_s c_q1_gate c_vin20 c_vin20 DMN4035L
+Rload_c c_vin20 0 100k
 
 .options method=gear reltol=1e-3 abstol=1e-10
 .tran 50n 200u 0 50n uic
@@ -45,13 +40,11 @@ C11_c c_vbus_s 0 1.0u
 .control
 set filetype=ascii
 run
-wrdata ../outputs/fault_input_prot.txt v(a_vin20) i(v_rev) v(b_vbus) v(b_vin20) v(c_vbus_f) v(c_vbus_s)
-meas tran rev_vin20_min  MIN v(a_vin20)  FROM=50u TO=200u
-meas tran rev_irev_max   MAX i(v_rev)    FROM=50u TO=200u
-meas tran aux_vbus_leak  MAX v(b_vbus)   FROM=50u TO=200u
-meas tran aux_vin20_avg  AVG v(b_vin20)  FROM=50u TO=200u
-meas tran hp_vbus_peak   MAX v(c_vbus_f) FROM=0 TO=200u
-meas tran hp_vbus_final  AVG v(c_vbus_f) FROM=150u TO=200u
+wrdata ../outputs/fault_input_prot.txt v(a_vbus_f) v(b_vbus_f) v(b_vbus_s) v(c_vin20)
+meas tran neg_vbus_min   MIN v(a_vbus_f) FROM=0 TO=200u
+meas tran hp_vbus_peak   MAX v(b_vbus_f) FROM=0 TO=200u
+meas tran hp_vbus_final  AVG v(b_vbus_f) FROM=150u TO=200u
+meas tran q1_off_leak_v  MAX v(c_vin20)  FROM=50u TO=200u
 quit
 .endc
 .end

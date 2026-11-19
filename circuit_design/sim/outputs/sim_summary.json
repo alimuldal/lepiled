@@ -1,80 +1,83 @@
 {
-  "architecture": "Rev 4.0 Option 2 (20 V USB-C PD AP33771C + Dual AL8860WT-7 Buck + LM393B/LM4040 17.25 V UVLO)",
+  "architecture": "Rev 4.1 (USB-C PD Only AP33771C + Single 40V DMN4035L + Hysteretic UVLO + Direct Gold DPDT + Dual AL8860WT-7 Buck)",
   "all_passed": true,
   "checks": {
-    "nominal_4uv_current_mA": true,
     "nominal_off_leakage_mA": true,
+    "nominal_4uv_current_mA": true,
     "nominal_8all_current_mA": true,
-    "nominal_bat54_gate_margin": true,
+    "nominal_lm4040_calibrated_2p50V": true,
     "nominal_inductor_peak_margin": true,
-    "nominal_led_ripple_lt_8pct": true,
+    "nominal_vin_ripple_lt_250mV": true,
     "uvlo_rejects_5_to_15p75V": true,
-    "uvlo_enables_18p5_to_24V": true,
-    "fault_open_led_safe": true,
+    "uvlo_hysteresis_zero_chatter": true,
+    "fault_open_led_and_live_reconnect_safe": true,
     "fault_short_led_regulated": true,
-    "fault_aux_reverse_pol_blocked": true,
-    "fault_aux_backfeed_blocked": true,
+    "fault_neg_transient_clamped": true,
     "fault_hotplug_21V_clamped": true,
-    "fault_hotplug_85c_1uH_safe": true,
+    "fault_hotplug_85c_and_q1_inrush_safe": true,
     "corner_sweep_zero_failures": true,
     "monte_carlo_100pct_yield": true
   },
   "ngspice_nominal": {
-    "i_uv_4uv": 0.326279,
+    "i_uv_off": -0.0,
+    "i_vis_off": -0.0,
+    "i_uv_4uv": 0.33169,
     "i_vis_4uv": 0.0,
-    "i_in_4uv": -0.264157,
-    "i_uv_off": 0.000354,
-    "i_vis_off": 0.0,
-    "i_uv_8all": 0.329178,
-    "i_vis_8all": 0.336184,
-    "i_in_8all": -0.475436,
-    "il1_pk": 0.404078,
-    "il2_pk": 0.407538,
-    "i_uv_pp": 0.017604,
-    "i_vis_pp": 0.024586,
-    "vsw_uv_8": 0.161771,
-    "vin_8all": 19.87643,
-    "vsw1_max": 20.56588,
-    "vsw2_max": 20.58507
+    "i_in_4uv": -0.26843,
+    "i_uv_8all": 0.329864,
+    "i_vis_8all": 0.336223,
+    "i_in_8all": -0.475958,
+    "il1_pk": 0.403333,
+    "il2_pk": 0.406517,
+    "i_uv_pp": 0.101448,
+    "i_vis_pp": 0.111446,
+    "vin_8all": 19.88403,
+    "vin_pp": 0.025203,
+    "vref_nom": 2.508147,
+    "vsw1_max": 20.49564,
+    "vsw2_max": 20.49759
   },
   "ngspice_uvlo": {
-    "vctrl_5v": 0.00015,
-    "vctrl_15v": 0.00015,
-    "vctrl_1575v": 0.00015,
-    "i_uv_1575v": 0.0,
-    "i_vis_1575v": 0.0,
-    "i_uv_185v": 0.32908,
-    "i_vis_185v": 0.336895,
-    "i_uv_20v": 0.32931,
-    "i_vis_20v": 0.336115,
-    "i_uv_24v": 0.33065,
-    "i_vis_24v": 0.335988
+    "vref_check": 2.506797,
+    "vctrl_1575v": 2.7e-05,
+    "i_uv_1575v": -0.0,
+    "i_vis_1575v": -0.0,
+    "i_uv_19v": 0.330155,
+    "i_vis_19v": 0.335958,
+    "t_uvlo_on": 0.00798,
+    "v_uvlo_on": 17.83558,
+    "t_uvlo_off": 0.022805,
+    "v_uvlo_off": 16.36851,
+    "v_ok_min_post": 8.488753,
+    "i_uv_end_off": 7e-06,
+    "v_uvlo_hyst": 1.46707
   },
   "ngspice_open_led": {
-    "vsw1_pk_open": 20.61533,
-    "vuv_pos_open": 20.0,
+    "vsw1_pk_open": 0.085153,
     "i_uv_open": 0.0,
-    "i_l1_open": 0.0,
-    "i_vis_during": 0.336272
+    "i_uv_reconn_pk": 0.531611,
+    "i_vis_reconn_pk": 0.921588,
+    "i_uv_recover": 0.330522,
+    "i_vis_recover": 0.335029
   },
   "ngspice_short_led": {
-    "il1_avg_pre": 0.327973,
-    "il1_avg_short": 0.338421,
-    "il1_pk_short": 0.419385,
-    "vsw1_pk_short": 20.38166
+    "il1_avg_pre": 0.327946,
+    "il1_avg_short": 0.338692,
+    "il1_pk_short": 0.419224,
+    "vsw1_pk_short": 20.38163
   },
   "ngspice_input_prot": {
-    "rev_vin20_min": -0.09375,
-    "rev_irev_max": 1.5e-05,
-    "aux_vbus_leak": -0.0,
-    "aux_vin20_avg": 24.0,
-    "hp_vbus_peak": 23.48873,
-    "hp_vbus_final": 21.0
+    "neg_vbus_min": -2.264931,
+    "hp_vbus_peak": 22.87493,
+    "hp_vbus_final": 21.0,
+    "q1_off_leak_v": 2e-06
   },
   "ngspice_hotplug_85c": {
-    "vbus_85c_peak": 26.65464,
-    "vin20_85c_peak": 21.70349,
-    "vin20_settle": 20.8826
+    "vbus_85c_peak": 26.02053,
+    "vin20_off_max": 0.00013,
+    "vin20_85c_peak": 20.88876,
+    "q1_inrush_pk": 0.581689,
+    "vin20_settle": 20.88872
   },
   "analytic_nominal_20V": {
     "ch1_uv": {
@@ -113,31 +116,31 @@
       "i_in": 0.200151,
       "eff": 0.954184
     },
-    "i_in_8all_A": 0.4526,
-    "p_in_8all_W": 9.051,
-    "p_pcb_loss_nom_W": 0.5,
-    "p_overhead_W": 0.156,
-    "sys_efficiency_pct": 94.31
+    "i_in_8all_A": 0.4552,
+    "p_in_8all_W": 9.103,
+    "p_pcb_loss_nom_W": 0.55,
+    "p_overhead_W": 0.206,
+    "sys_efficiency_pct": 93.77
   },
   "corner_sweep": {
-    "uv_i_max": 0.351364,
+    "uv_i_max": 0.350215,
     "uv_i_min": 0.310234,
-    "uv_ipk_max": 0.432562,
-    "uv_fsw_max": 740351.375515,
+    "uv_ipk_max": 0.430265,
+    "uv_fsw_max": 682693.790651,
     "uv_ton_min": 1e-06,
     "uv_duty_max": 0.883254,
-    "uv_pic_max": 0.114742,
-    "uv_tj_max": 71.867042,
-    "vis_i_max": 0.351587,
+    "uv_pic_max": 0.099266,
+    "uv_tj_max": 69.592064,
+    "vis_i_max": 0.350438,
     "vis_i_min": 0.312553,
-    "vis_ipk_max": 0.432785,
-    "vis_fsw_max": 749261.518891,
+    "vis_ipk_max": 0.430488,
+    "vis_fsw_max": 682143.628886,
     "vis_ton_min": 1e-06,
     "vis_duty_max": 0.748973,
-    "vis_pic_max": 0.115107,
-    "vis_tj_max": 71.920744,
-    "total_pcb_loss_max": 0.818853,
-    "i_in_total_max": 0.578497,
+    "vis_pic_max": 0.100776,
+    "vis_tj_max": 69.814014,
+    "total_pcb_loss_max": 0.797252,
+    "i_in_total_max": 0.581149,
     "failed_corners": 0,
     "total_corners": 2565
   },
@@ -162,28 +165,28 @@
       "max": 346.918
     },
     "i_in_A": {
-      "mean": 0.445,
+      "mean": 0.447,
       "std": 0.014,
-      "min": 0.405,
-      "p01": 0.416,
-      "p99": 0.475,
-      "max": 0.488
+      "min": 0.408,
+      "p01": 0.419,
+      "p99": 0.478,
+      "max": 0.49
     },
     "p_pcb_W": {
-      "mean": 0.52,
-      "std": 0.018,
-      "min": 0.468,
-      "p01": 0.482,
-      "p99": 0.56,
-      "max": 0.574
+      "mean": 0.561,
+      "std": 0.019,
+      "min": 0.508,
+      "p01": 0.522,
+      "p99": 0.604,
+      "max": 0.618
     },
     "eff_pct": {
-      "mean": 94.575,
-      "std": 0.222,
-      "min": 93.902,
-      "p01": 94.056,
-      "p99": 95.057,
-      "max": 95.19
+      "mean": 94.022,
+      "std": 0.233,
+      "min": 93.317,
+      "p01": 93.476,
+      "p99": 94.523,
+      "max": 94.668
     },
     "tj_u1_C": {
       "mean": 35.313,
@@ -201,13 +204,29 @@
       "p99": 55.2,
       "max": 56.601
     },
-    "v_uvlo_V": {
-      "mean": 17.248,
-      "std": 0.069,
-      "min": 17.015,
-      "p01": 17.088,
-      "p99": 17.415,
-      "max": 17.47
+    "v_uvlo_on_V": {
+      "mean": 17.538,
+      "std": 0.084,
+      "min": 17.212,
+      "p01": 17.348,
+      "p99": 17.741,
+      "max": 17.842
+    },
+    "v_uvlo_off_V": {
+      "mean": 16.636,
+      "std": 0.079,
+      "min": 16.331,
+      "p01": 16.461,
+      "p99": 16.823,
+      "max": 16.917
+    },
+    "v_uvlo_hyst_V": {
+      "mean": 0.902,
+      "std": 0.007,
+      "min": 0.878,
+      "p01": 0.885,
+      "p99": 0.919,
+      "max": 0.929
     }
   }
 }

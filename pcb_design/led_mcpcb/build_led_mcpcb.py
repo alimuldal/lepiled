@@ -134,12 +134,12 @@ def build_vis_thermal_poly():
         (+2.30, +2.35),
         (+2.30, -1.65),
         (+3.40, -1.65),
-        (+3.40, -4.40),
-        (+7.20, -4.40),
+        (+3.40, -3.60),
+        (+7.20, -3.60),
         (+7.20, +17.20),
         (-7.20, +17.20),
-        (-7.20, -4.40),
-        (-3.40, -4.40),
+        (-7.20, -3.60),
+        (-3.40, -3.60),
         (-3.40, -1.65),
         (-2.30, -1.65),
         (-2.30, +2.35),
@@ -304,7 +304,7 @@ def create_footprints():
     p1.SetShape(pcbnew.PAD_SHAPE_RECT)
     p1.SetPosition(lpt(-1.40, 0.0))
     p1.SetSize(pcbnew.VECTOR2I(mm(0.50), mm(3.30)))
-    p1.SetLayerSet(lset(pcbnew.F_Cu, pcbnew.F_Mask, pcbnew.F_Paste))
+    p1.SetLayerSet(lset(pcbnew.F_Cu, pcbnew.F_Mask))
     p1.SetLocalSolderMaskMargin(mm(0.05))
     fp_vis.Add(p1)
 
@@ -314,9 +314,21 @@ def create_footprints():
     p2.SetShape(pcbnew.PAD_SHAPE_RECT)
     p2.SetPosition(lpt(+1.40, 0.0))
     p2.SetSize(pcbnew.VECTOR2I(mm(0.50), mm(3.30)))
-    p2.SetLayerSet(lset(pcbnew.F_Cu, pcbnew.F_Mask, pcbnew.F_Paste))
+    p2.SetLayerSet(lset(pcbnew.F_Cu, pcbnew.F_Mask))
     p2.SetLocalSolderMaskMargin(mm(0.05))
     fp_vis.Add(p2)
+
+    # Segmented electrode F.Paste on D_VIS A/K pads: 5 x (0.48 x 0.44 mm) = 64.0% coverage (Cree p. 39, fixes Opus B-L6)
+    for px_el in (-1.40, +1.40):
+        for py_el in (-1.30, -0.65, 0.00, +0.65, +1.30):
+            ppe = pcbnew.PAD(fp_vis)
+            ppe.SetNumber("")
+            ppe.SetAttribute(pcbnew.PAD_ATTRIB_SMD)
+            ppe.SetShape(pcbnew.PAD_SHAPE_RECT)
+            ppe.SetPosition(lpt(px_el, py_el))
+            ppe.SetSize(pcbnew.VECTOR2I(mm(0.48), mm(0.44)))
+            ppe.SetLayerSet(lset(pcbnew.F_Paste))
+            fp_vis.Add(ppe)
 
     p3_smd = pcbnew.PAD(fp_vis)
     p3_smd.SetNumber("3")
@@ -903,10 +915,11 @@ def build_board(uv_area: float, vis_area: float):
              {"1": "/VIS_P", "2": "/VIS_N", "3": "unconnected-(D_VIS-TH-Pad3)"}, pcbnew.FP_SMD)
 
     pad_attrs = pcbnew.FP_SMD | pcbnew.FP_EXCLUDE_FROM_BOM | pcbnew.FP_EXCLUDE_FROM_POS_FILES
-    place_fp("WirePad_2.5x3.5mm", "J_UV_P", "UV+", -6.75, -26.0, {"1": "/UV_P"}, pad_attrs)
-    place_fp("WirePad_2.5x3.5mm", "J_VIS_P", "VIS+", -2.25, -26.0, {"1": "/VIS_P"}, pad_attrs)
-    place_fp("WirePad_2.5x3.5mm", "J_VIS_N", "VIS-", +2.25, -26.0, {"1": "/VIS_N"}, pad_attrs)
-    place_fp("WirePad_2.5x3.5mm", "J_UV_N", "UV-", +6.75, -26.0, {"1": "/UV_N"}, pad_attrs)
+    # Shifted +2.0 mm north to Y=-24.0 mm -> 3.50 mm clearance to grounded MH2 M3 screw head (Carbon B-7 / Opus B-L17)
+    place_fp("WirePad_2.5x3.5mm", "J_UV_P", "UV+", -6.75, -24.0, {"1": "/UV_P"}, pad_attrs)
+    place_fp("WirePad_2.5x3.5mm", "J_VIS_P", "VIS+", -2.25, -24.0, {"1": "/VIS_P"}, pad_attrs)
+    place_fp("WirePad_2.5x3.5mm", "J_VIS_N", "VIS-", +2.25, -24.0, {"1": "/VIS_N"}, pad_attrs)
+    place_fp("WirePad_2.5x3.5mm", "J_UV_N", "UV-", +6.75, -24.0, {"1": "/UV_N"}, pad_attrs)
 
     mh_attrs = pcbnew.FP_EXCLUDE_FROM_BOM | pcbnew.FP_EXCLUDE_FROM_POS_FILES | pcbnew.FP_BOARD_ONLY
     place_fp("MountingHole_3.2mm_M3_NPTH", "MH1", "M3_NPTH", 0.0, +32.0, None, mh_attrs)
@@ -914,21 +927,21 @@ def build_board(uv_area: float, vis_area: float):
 
     # Planar F.Cu traces (0.48 mm exit from D_UV pads -> 0.80 mm trunk, 0.50 mm from D_VIS -> 0.80 mm)
     add_track(board, [(-1.385, +18.0), (-1.90, +18.0)], 0.48, nets["/UV_P"])
-    add_track(board, [(-1.90, +18.0), (-8.30, +18.0), (-8.30, -24.5), (-6.75, -26.0)], 0.80, nets["/UV_P"])
+    add_track(board, [(-1.90, +18.0), (-8.30, +18.0), (-8.30, -22.5), (-6.75, -24.0)], 0.80, nets["/UV_P"])
     add_track(board, [(+1.385, +18.0), (+1.90, +18.0)], 0.48, nets["/UV_N"])
-    add_track(board, [(+1.90, +18.0), (+8.30, +18.0), (+8.30, -24.5), (+6.75, -26.0)], 0.80, nets["/UV_N"])
+    add_track(board, [(+1.90, +18.0), (+8.30, +18.0), (+8.30, -22.5), (+6.75, -24.0)], 0.80, nets["/UV_N"])
     add_track(board, [(-1.400, -18.0), (-1.400, -20.0)], 0.50, nets["/VIS_P"])
-    add_track(board, [(-1.400, -20.0), (-1.400, -23.0), (-2.25, -26.0)], 0.80, nets["/VIS_P"])
+    add_track(board, [(-1.400, -20.0), (-1.400, -21.8), (-2.25, -24.0)], 0.80, nets["/VIS_P"])
     add_track(board, [(+1.400, -18.0), (+1.400, -20.0)], 0.50, nets["/VIS_N"])
-    add_track(board, [(+1.400, -20.0), (+1.400, -23.0), (+2.25, -26.0)], 0.80, nets["/VIS_N"])
+    add_track(board, [(+1.400, -20.0), (+1.400, -21.8), (+2.25, -24.0)], 0.80, nets["/VIS_N"])
 
-    # Board-level Silkscreen labels for solder pads & strip ID (clear of pads & MH2)
+    # Board-level Silkscreen labels for solder pads & strip ID (clear of pads & MH2 ring r=3.3mm -> y=-28.7)
     for txt_str, xm, ym in [
-        ("UV+", -6.75, -22.5),
-        ("VIS+", -2.25, -22.5),
-        ("VIS-", +2.25, -22.5),
-        ("UV-", +6.75, -22.5),
-        ("LEPILED MCPCB 20x80", 0.0, -37.2),
+        ("UV+", -6.75, -27.2),
+        ("VIS+", -2.25, -27.2),
+        ("VIS-", +2.25, -27.2),
+        ("UV-", +6.75, -27.2),
+        ("LEPILED MCPCB R4.1", 0.0, -37.2),
     ]:
         t = pcbnew.PCB_TEXT(board)
         t.SetText(txt_str)
@@ -999,12 +1012,15 @@ def run_verification_and_exports():
         assert "B_Cu" not in bad.name and "B_Mask" not in bad.name and "PTH.drl" not in bad.name.replace("NPTH.drl", ""), \
             f"Unexpected back/PTH file in 1-layer MCPCB gerbers: {bad.name}"
 
-    # Patch led_mcpcb-job.gbrjob to strict 1-layer Aluminum MCPCB spec (1.0 W/m*K)
+    # Patch led_mcpcb-job.gbrjob to strict 1-layer Aluminum MCPCB spec (1.0 W/m*K, ENIG finish, Rev 4.1)
     gbrjob_path = GERBER_DIR / "led_mcpcb-job.gbrjob"
     if gbrjob_path.exists():
         job = json.loads(gbrjob_path.read_text())
+        job.setdefault("Header", {}).setdefault("GenerationSoftware", {})
         job.setdefault("GeneralSpecs", {})["LayerNumber"] = 1
         job["GeneralSpecs"]["BoardThickness"] = 1.6
+        job["GeneralSpecs"]["Finish"] = "ENIG"
+        job["GeneralSpecs"]["ProjectId"] = {"Name": "led_mcpcb", "GUID": uid("led_mcpcb_proj"), "Revision": "4.1"}
         job["MaterialStackup"] = [
             {"Type": "Legend", "Name": "Top Silk Screen", "Color": "Black"},
             {"Type": "SolderPaste", "Name": "Top Solder Paste"},
@@ -1021,7 +1037,7 @@ def run_verification_and_exports():
             if f.name.endswith((".gbr", ".drl", ".gbrjob")):
                 zf.write(f, f.name)
 
-    # 4. CPL & BOM (JLCPCB format)
+    # 4. CPL & Color-Split BOM (JLCPCB format, opposite-notch tape rotation documented per Opus B-M11/B-L15)
     raw_pos = RENDER_DIR / "_raw_pos.csv"
     subprocess.run(
         [kcli, "pcb", "export", "pos", "--format", "csv", "--units", "mm",
@@ -1032,26 +1048,41 @@ def run_verification_and_exports():
     with raw_pos.open() as f_in, (PCB_DESIGN_DIR / "led_mcpcb_cpl.csv").open("w", newline="") as f_out:
         reader = csv.DictReader(f_in)
         writer = csv.writer(f_out)
-        writer.writerow(["Designator", "Mid X", "Mid Y", "Layer", "Rotation"])
+        writer.writerow(["Designator", "Mid X", "Mid Y", "Layer", "Rotation", "Polarity_Note"])
         for row in reader:
+            ref = row["Ref"]
+            rot = float(row["Rot"])
+            # D_UV (SST-10-UV: notch=K) vs D_VIS (XP-E2: notch=A) have opposite tape orientation -> +180 deg offset on D_VIS
+            if ref == "D_VIS":
+                rot = (rot + 180.0) % 360.0
+                pnote = "Cree XP-E2 BTM NOTCH=A (+180 deg tape offset vs SST-10-UV; verify on preview)"
+            else:
+                pnote = "Luminus SST-10-UV BTM NOTCH=K (verify on preview)"
             writer.writerow([
-                row["Ref"], f"{float(row['PosX']):.3f}", f"{float(row['PosY']):.3f}",
+                ref, f"{float(row['PosX']):.3f}", f"{float(row['PosY']):.3f}",
                 "Top" if row["Side"].lower() == "top" else "Bottom",
-                f"{float(row['Rot']):.1f}",
+                f"{rot:.1f}", pnote,
             ])
     raw_pos.unlink()
 
     with (PCB_DESIGN_DIR / "led_mcpcb_bom.csv").open("w", newline="") as f_out:
         writer = csv.writer(f_out)
-        writer.writerow(["Comment", "Designator", "Footprint", "MPN", "Qty_Per_Strip", "Qty_Per_Lamp_4x", "Notes"])
+        writer.writerow(["Variant_Strip", "Comment", "Designator", "Footprint", "MPN", "Qty_Per_Strip", "Qty_Per_Lamp_4x", "Notes"])
         writer.writerow([
-            "365nm UV LED 3535", "D_UV", "LED_Luminus_SST-10-UV_A130", "Luminus SST-10-UV-A130-G365-00",
-            1, 4, "D1..D4 across MECH-MCPCB-1..4; bottom thermal pad notch = Cathode"
+            "ALL (Strips 1-4)", "365nm UV LED 3535", "D_UV", "LED_Luminus_SST-10-UV_A130",
+            "Luminus SST-10-UV-A130-G365-00", 1, 4, "D1..D4 on MECH-MCPCB-1..4; bottom thermal pad notch = Cathode"
         ])
         writer.writerow([
-            "Visible LED 3535 (2x RB, 1x GR, 1x CW)", "D_VIS", "LED_Cree_XP-E2",
-            "Cree XPEBRY-L1-0000-00R02 (2x) / XPEBGR-L1-0000-00F01 (1x) / XPEBWT-L1-0000-00F51 (1x)",
-            1, 4, "D5..D8 across MECH-MCPCB-1..4; bottom thermal pad notch = Anode"
+            "Strips 1 & 2 (RB)", "455nm Royal Blue LED 3535", "D_VIS", "LED_Cree_XP-E2",
+            "Cree XPEBRY-L1-0000-00S02", 1, 2, "D5..D6 on MECH-MCPCB-1..2 (active Cree bin 38); bottom notch = Anode"
+        ])
+        writer.writerow([
+            "Strip 3 (GR)", "528nm Green LED 3535", "D_VIS", "LED_Cree_XP-E2",
+            "Cree XPEBGR-L1-0000-00K01", 1, 1, "D7 on MECH-MCPCB-3 (active Cree bin S3, +28% flux); bottom notch = Anode"
+        ])
+        writer.writerow([
+            "Strip 4 (CW)", "6200K Cool White LED 3535", "D_VIS", "LED_Cree_XP-E2",
+            "Cree XPEBWT-L1-0000-00H51", 1, 1, "D8 on MECH-MCPCB-4 (active Cree bin R5); bottom notch = Anode"
         ])
 
     # 5. Schematic PDF, SVG, 3D Top Render, Gerbv Top PNG

@@ -1,4 +1,4 @@
 (fp_lib_table
   (version 7)
-  (lib (name "lepiled")(type "KiCad")(uri "${KIPRJMOD}/lepiled.pretty")(options "")(descr "LepiLED Rev4 Driver footprints"))
+  (lib (name "lepiled")(type "KiCad")(uri "${KIPRJMOD}/lepiled.pretty")(options "")(descr "LepiLED Rev4.1 Driver footprints"))
 )

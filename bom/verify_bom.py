@@ -98,13 +98,13 @@ def main() -> int:
         if row["Include_In_Total"] not in {"Yes", "No"}:
             fail(f"{bid}: invalid Include_In_Total {row['Include_In_Total']!r}")
 
-    # 3. Electrical 72-RefDes 1:1 parity
+    # 3. Electrical 75-RefDes 1:1 parity (Rev 4.1: USB-C Only + S3 Gold DPDT + 0.90 V Hysteretic UVLO)
     comp_by_ref = {r["RefDes"].strip(): r for r in comp_rows}
     drv_by_ref = {r["Designator"].strip(): r for r in drv_rows}
     pcba_refs = {r["Designator"].strip() for r in pcba_rows}
 
-    if len(comp_rows) != 72:
-        fail(f"COMPONENT_IDS.csv expected 72 rows, got {len(comp_rows)}")
+    if len(comp_rows) != 75:
+        fail(f"COMPONENT_IDS.csv expected 75 rows, got {len(comp_rows)}")
     if set(comp_by_ref) != set(drv_by_ref):
         fail("COMPONENT_IDS.csv vs driver_pcb_bom.csv RefDes mismatch")
 
@@ -137,37 +137,30 @@ def main() -> int:
         extra = sorted(set(bom_elec_refs) - set(comp_by_ref))
         fail(f"Electrical RefDes set mismatch: missing={missing}, extra={extra}")
 
-    # Verify PCBA 56-part populated subset (62 On-PCB minus 6 PCB features TP1/TP2/H1..H4) and Off-Board 10-part subset
+    # Verify PCBA 61-part populated subset (65 On-PCB minus 4 NPTH H1..H4) and Off-Board 10-part subset
     off_board_expected = {"D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "SW1", "SW1_BOOT"}
-    pcb_features = {"TP1", "TP2", "H1", "H2", "H3", "H4"}
+    pcb_features = {"H1", "H2", "H3", "H4"}
     on_pcb_from_comp = {
         r["RefDes"].strip() for r in comp_rows if r["Mounting"].strip() == "On-PCB"
     }
-    if (on_pcb_from_comp - pcb_features) != pcba_refs or len(pcba_refs) != 56:
-        fail(f"Populated On-PCB 56-RefDes subset does not match driver_pcb_bom_pcba.csv (got {len(pcba_refs)})")
+    if (on_pcb_from_comp - pcb_features) != pcba_refs or len(pcba_refs) != 61:
+        fail(f"Populated On-PCB 61-RefDes subset does not match driver_pcb_bom_pcba.csv (got {len(pcba_refs)})")
     if set(comp_by_ref) - on_pcb_from_comp != off_board_expected:
         fail("Off-board RefDes subset mismatch")
 
-    # Verify led_mcpcb_bom.csv (D_UV = 4, D_VIS = 4)
-    mcpcb_by_des = {r["Designator"].strip(): r for r in mcpcb_rows}
-    if set(mcpcb_by_des) != {"D_UV", "D_VIS"}:
-        fail(f"led_mcpcb_bom.csv expected D_UV/D_VIS, got {set(mcpcb_by_des)}")
-    if int(mcpcb_by_des["D_UV"]["Qty_Per_Lamp_4x"]) != 4:
-        fail("led_mcpcb_bom.csv D_UV Qty_Per_Lamp_4x != 4")
-    if int(mcpcb_by_des["D_VIS"]["Qty_Per_Lamp_4x"]) != 4:
-        fail("led_mcpcb_bom.csv D_VIS Qty_Per_Lamp_4x != 4")
+    # Verify led_mcpcb_bom.csv (split by color: D_UV = 4, D_VIS = 2 RB + 1 GR + 1 CW = 4)
+    duv_qty = sum(int(r["Qty_Per_Lamp_4x"]) for r in mcpcb_rows if r["Designator"].strip() == "D_UV")
+    dvis_qty = sum(int(r["Qty_Per_Lamp_4x"]) for r in mcpcb_rows if r["Designator"].strip() == "D_VIS")
+    if duv_qty != 4 or dvis_qty != 4 or len(mcpcb_rows) != 4:
+        fail(f"led_mcpcb_bom.csv expected 4 rows (D_UV=4, D_VIS=4), got rows={len(mcpcb_rows)}, D_UV={duv_qty}, D_VIS={dvis_qty}")
 
-    # Check TP1/TP2 and H1..H4 are zero-cost excluded PCB features
-    for ref_group in ({"TP1", "TP2"}, {"H1", "H2", "H3", "H4"}):
-        matched = [
-            r
-            for r in bom_elec_rows
-            if set(x.strip() for x in r["RefDes_List"].split(";")) == ref_group
-        ]
-        if len(matched) != 1:
-            fail(f"Expected single BOM row for PCB feature {sorted(ref_group)}")
-        elif matched[0]["Include_In_Total"] != "No" or Decimal(matched[0]["Ext_Price_Amort_GBP_exVAT"]) != 0:
-            fail(f"PCB feature {sorted(ref_group)} must have Include_In_Total=No and £0.00")
+    # Check H1..H4 isolated NPTH holes are zero-cost excluded PCB features
+    matched_h = [
+        r for r in bom_elec_rows
+        if set(x.strip() for x in r["RefDes_List"].split(";")) == pcb_features
+    ]
+    if len(matched_h) != 1 or matched_h[0]["Include_In_Total"] != "No" or Decimal(matched_h[0]["Ext_Price_Amort_GBP_exVAT"]) != 0:
+        fail("PCB feature H1..H4 must have single BOM row with Include_In_Total=No and £0.00")
 
     # 4. PCB Fabrication rows & Zero Double-Counting Guard
     pcb_rows = {r["BOM_ID"]: r for r in bom_rows if r["Domain"] == "PCB_Fab"}
@@ -182,15 +175,15 @@ def main() -> int:
         or int(pcb02["Qty_Per_Lamp"]) != 4
         or Decimal(pcb02["Ext_Price_Amort_GBP_exVAT"]) != 0
         or Decimal(pcb02["Ext_Price_1Off_GBP_exVAT"]) != 0
-        or "MECH-10" not in pcb02["Notes"]
+        or "MECH-08" not in pcb02["Notes"]
         or "MECH-MCPCB-1..4" not in pcb02["Notes"]
     ):
-        fail("PCB-02 must cross-reference MECH-10 (MECH-MCPCB-1..4) with Include_In_Total=No and £0.00")
+        fail("PCB-02 must cross-reference MECH-08 (MECH-MCPCB-1..4) with Include_In_Total=No and £0.00")
 
-    # 5. Mechanical 29-Part 1:1 Parity
+    # 5. Mechanical 27-Part 1:1 Parity (Rev 4.1 S1-A: Top SK 578/50 Only + Zero CNC Milling)
     mech_by_id = {r["Part_ID"].strip(): r for r in mech_rows}
-    if len(mech_by_id) != 29:
-        fail(f"MECH_PARTS.csv expected 29 rows, got {len(mech_by_id)}")
+    if len(mech_by_id) != 27:
+        fail(f"MECH_PARTS.csv expected 27 rows, got {len(mech_by_id)}")
 
     bom_mech_primary = [r for r in bom_rows if r["Domain"] == "Mechanical"]
     bom_harn_rows = [r for r in bom_rows if r["Domain"] == "Harness"]
@@ -214,9 +207,9 @@ def main() -> int:
             fail(
                 f"{bid}: Ext_Price_Amort={row['Ext_Price_Amort_GBP_exVAT']} != MECH_PARTS sum={expected_amort}"
             )
-        if set(ids) & {"MECH-CAP-BOT", "MECH-CAP-TOP"}:
+        if set(ids) & {"MECH-LID-BOT", "MECH-CAP-BOT", "MECH-CAP-TOP"}:
             if row["Include_In_Total"] != "No" or Decimal(row["Ext_Price_Amort_GBP_exVAT"]) != 0:
-                fail(f"{bid}: R4 3D-printed cap must be Include_In_Total=No and £0.00")
+                fail(f"{bid}: R4 3D-printed part must be Include_In_Total=No and £0.00")
 
     if len(bom_mech_ids) != len(set(bom_mech_ids)):
         fail("Duplicate mechanical Source_IDs in BOM")
@@ -295,12 +288,12 @@ def main() -> int:
     mech_a_ex, mech_o_ex, mech_a_vr, mech_o_vr = summarize({"CORE"}, "Mechanical")
     tot_a_ex, tot_o_ex, tot_a_vr, tot_o_vr = summarize({"CORE"})
 
-    print("PASS: bom/bom.csv verified 1:1 across Rev 4.0 Option 2 (72 RefDes, 56 PCBA, 3 Harness, 2 PCB fab, 29 MECH-* IDs)")
-    print(f"  Electrical (72 RefDes):        Amort = £{elec_a_ex:.2f} ex VAT (inv incVAT £{round2(elec_a_ex * VAT_RATE):.2f}) | 1-Off = £{elec_o_ex:.2f} ex VAT (inv incVAT £{round2(elec_o_ex * VAT_RATE):.2f})")
+    print("PASS: bom/bom.csv verified 1:1 across Rev 4.1 (75 RefDes, 61 PCBA, 3 Harness, 2 PCB fab, 27 MECH-* IDs)")
+    print(f"  Electrical (75 RefDes):        Amort = £{elec_a_ex:.2f} ex VAT (inv incVAT £{round2(elec_a_ex * VAT_RATE):.2f}) | 1-Off = £{elec_o_ex:.2f} ex VAT (inv incVAT £{round2(elec_o_ex * VAT_RATE):.2f})")
     print(f"  Harness (JST-XH plugs/crimps): Amort = £{harn_a_ex:.2f} ex VAT (inv incVAT £{round2(harn_a_ex * VAT_RATE):.2f}) | 1-Off = £{harn_o_ex:.2f} ex VAT (inv incVAT £{round2(harn_o_ex * VAT_RATE):.2f})")
     print(f"  PCB Fab (PCB-01; PCB-02=£0):   Amort = £{pcb_a_ex:.2f} ex VAT (inv incVAT £{round2(pcb_a_ex * VAT_RATE):.2f}) | 1-Off = £{pcb_o_ex:.2f} ex VAT (inv incVAT £{round2(pcb_o_ex * VAT_RATE):.2f})")
-    print(f"  Mechanical (Dual SK 578/50):   Amort = £{mech_a_ex:.2f} ex VAT (inv incVAT £{round2(mech_a_ex * VAT_RATE):.2f}) | 1-Off = £{mech_o_ex:.2f} ex VAT (inv incVAT £{round2(mech_o_ex * VAT_RATE):.2f})")
-    print(f"  TOTAL Rev 4.0 Lamp Build:      Amort = £{tot_a_ex:.2f} ex VAT (inv incVAT £{round2(tot_a_ex * VAT_RATE):.2f}; row incVAT £{tot_a_vr:.2f}) | 1-Off = £{tot_o_ex:.2f} ex VAT (inv incVAT £{round2(tot_o_ex * VAT_RATE):.2f}; row incVAT £{tot_o_vr:.2f})")
+    print(f"  Mechanical (S1-A Top HS Only): Amort = £{mech_a_ex:.2f} ex VAT (inv incVAT £{round2(mech_a_ex * VAT_RATE):.2f}) | 1-Off = £{mech_o_ex:.2f} ex VAT (inv incVAT £{round2(mech_o_ex * VAT_RATE):.2f})")
+    print(f"  TOTAL Rev 4.1 Lamp Build:      Amort = £{tot_a_ex:.2f} ex VAT (inv incVAT £{round2(tot_a_ex * VAT_RATE):.2f}; row incVAT £{tot_a_vr:.2f}) | 1-Off = £{tot_o_ex:.2f} ex VAT (inv incVAT £{round2(tot_o_ex * VAT_RATE):.2f}; row incVAT £{tot_o_vr:.2f})")
     return 0
 
 
