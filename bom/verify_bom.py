@@ -139,6 +139,27 @@ def main() -> int:
     if len(matched_h) != 1 or matched_h[0]["Include_In_Total"] != "No" or Decimal(matched_h[0]["Ext_Price_Amort_GBP_exVAT"]) != 0:
         fail("PCB feature H1..H4 must have single BOM row with Include_In_Total=No and £0.00")
 
+    # 1b. Programmatic Hybrid JLCPCB PCBA parity gate (zero divergence vs canonical full BOM & CPL)
+    sys.path.insert(0, str(REPO_ROOT / "pcb_design"))
+    import generate_hybrid_pcba
+
+    for h_err in generate_hybrid_pcba.check():
+        fail(h_err)
+    if not generate_hybrid_pcba.check():
+        _, hyb_bom_rows = load_csv(generate_hybrid_pcba.HYBRID_BOM_PATH)
+        _, hyb_cpl_rows = load_csv(generate_hybrid_pcba.HYBRID_CPL_PATH)
+        _, diy_bom_rows = load_csv(generate_hybrid_pcba.DIY_BOM_PATH)
+        hyb_refs = {r["Designator"].strip() for r in hyb_bom_rows}
+        hyb_cpl_refs = {r["Designator"].strip() for r in hyb_cpl_rows}
+        diy_refs = {r["Designator"].strip() for r in diy_bom_rows}
+        if hyb_refs != hyb_cpl_refs:
+            fail(f"Hybrid BOM ({len(hyb_refs)}) vs Hybrid CPL ({len(hyb_cpl_refs)}) Designator mismatch")
+        if (hyb_refs & diy_refs) or ((hyb_refs | diy_refs) != pcba_refs):
+            fail(
+                f"Hybrid PCBA ({len(hyb_refs)}) + DIY hand-solder ({len(diy_refs)}) "
+                f"must partition canonical 61 PCBA RefDes cleanly"
+            )
+
     # 2. Single custom PCB (driver_pcb ONLY — led_mcpcb eliminated in Rev 4.2!)
     pcb_rows = {r["BOM_ID"]: r for r in bom_rows if r["Domain"] == "PCB_Fab"}
     if set(pcb_rows) != {"PCB-01"}:
@@ -252,7 +273,7 @@ def main() -> int:
     )
     net_o = tot_o - owned_ex
 
-    print("PASS: bom/bom.csv verified 1:1 across Rev 4.6 (75 RefDes, 61 PCBA, 4 Harness rows, 1 custom PCB, 22 MECH-* IDs)")
+    print("PASS: bom/bom.csv verified 1:1 across Rev 4.6 (75 RefDes, 61 Full PCBA = 50 Hybrid SMD + 11 DIY, 4 Harness rows, 1 custom PCB, 22 MECH-* IDs)")
     print(f"  Electrical (75 RefDes incl. 8x Cu DTP stars): 1-Off = £{elec_o:.2f} ex VAT (£{round2(elec_o * VAT_RATE):.2f} inc VAT) | Amort = £{elec_a:.2f} ex VAT")
     print(f"  Harness (JST-XH + UV silicone + 90° USB-C):   1-Off = £{harn_o:.2f} ex VAT (£{round2(harn_o * VAT_RATE):.2f} inc VAT) | Amort = £{harn_a:.2f} ex VAT")
     print(f"  PCB Fab + Economic PCBA (driver_pcb ONLY):    1-Off = £{pcb_o:.2f} ex VAT (£{round2(pcb_o * VAT_RATE):.2f} inc VAT) | Amort = £{pcb_a:.2f} ex VAT")

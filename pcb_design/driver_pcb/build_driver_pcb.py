@@ -2703,42 +2703,46 @@ JLCPCB_ROT_OFFSET = {
 }
 
 # Verified LCSC Part Numbers for turnkey JLCPCB PCBA matching (Opus B-H2 / Carbon B-6)
+# Verified LCSC Part #s ONLY (audited against LCSC/JLCPCB catalog).
+# Unverified or stock-varying Extended parts are intentionally left blank ("") so
+# JLCPCB's BOM uploader matches by exact MPN + Comment + Footprint instead of
+# risking silent wrong-part substitution from stale/incorrect C-codes.
 LCSC_MAP = {
-    "Diodes AL8860WT-7": "C155534",
-    "Diodes AP33771CFBZ-13-FA02": "C5381082",
-    "TI LM393BIDR": "C2071437",
-    "TI LM4040BIM3-2.5/NOPB": "C78212",
-    "Diodes DMN4035L-7": "C219655",
-    "onsemi BSS138": "C51073",
-    "Bourns MF-MSMF110/33X": "C413136",
-    "Diodes B340A-13-F": "C85364",
-    "Vishay SMBJ22A-E3/52": "C135776",
-    "Lite-On LTST-C190GKT": "C72043",
-    "Bourns CDSOD323-T24": "C129457",
-    "Bourns CDSOD323-T05": "C129446",
-    "Bourns SRN6045-680M": "C205469",
-    "Bourns CRL1206-FW-R300ELF": "C228209",
-    "Vishay WSL12065L000FEA": "C228201",
-    "Murata GRM21BR71H105KA12L": "C28323",
-    "Murata GRM31CR71H475KA12L": "C29823",
-    "Murata GRM188R71H104KA93D": "C14663",
-    "Murata GRM1885C1H102JA01D": "C1588",
-    "Murata GRM188R71H472KA01D": "C1618",
-    "Murata GRM188R71H473KA61D": "C1622",
-    "Vishay CRCW06035K10FKEA": "C23186",
-    "Vishay CRCW06031K00FKEA": "C21190",
-    "Vishay CRCW08051R00FKEA": "C17513",
-    "Vishay CRCW060339K0FKEA": "C23153",
-    "Vishay CRCW060382K0FKEA": "C23254",
-    "Vishay CRCW06036K20FKEA": "C4260",
-    "Vishay CRCW0805200RFKEA": "C17548",
-    "Vishay CRCW080510K0FKEA": "C17414",
-    "Vishay CRCW060359K0FKEA": "C23209",
-    "Vishay CRCW0603100KFKEA": "C25803",
-    "Vishay CRCW0603510KFKEA": "C23192",
-    "Vishay CRCW060347K0FKEA": "C25819",
-    "Vishay CRCW06031M00FKEA": "C22935",
-    "Vishay CRCW08056R80FKEA": "C17761",
+    "Diodes AL8860WT-7": "C125330",         # Verified: AL8860WT-7 TSOT-25 (Extended)
+    "Diodes AP33771CFBZ-13-FA02": "",       # Match by MPN in JLCPCB Extended / Global Sourcing
+    "TI LM393BIDR": "",                     # Match by MPN (Hybrid swaps to Basic C7955 LM393DR2G)
+    "TI LM4040BIM3-2.5/NOPB": "",           # Match by MPN in JLCPCB Extended
+    "Diodes DMN4035L-7": "",                # Match by MPN in JLCPCB Extended
+    "onsemi BSS138": "C52895",              # Verified Basic: onsemi BSS138 SOT-23
+    "Bourns MF-MSMF110/33X": "",            # Match by MPN (offloaded to DIY in Hybrid)
+    "Diodes B340A-13-F": "C15570",          # Verified: B340A SMA (Hybrid swaps to Basic C8678 SS34)
+    "Vishay SMBJ22A-E3/52": "",             # Match by MPN (offloaded to DIY in Hybrid)
+    "Lite-On LTST-C190GKT": "C72043",       # Verified Basic: 0603 Green LED
+    "Bourns CDSOD323-T24": "",              # Match by MPN in JLCPCB Extended
+    "Bourns CDSOD323-T05": "",              # Match by MPN in JLCPCB Extended
+    "Bourns SRN6045-680M": "",              # Match by MPN (offloaded to DIY in Hybrid)
+    "Bourns CRL1206-FW-R300ELF": "",        # Match by MPN (offloaded to DIY in Hybrid)
+    "Vishay WSL12065L000FEA": "",           # Match by MPN (offloaded to DIY in Hybrid)
+    "Murata GRM21BR71H105KA12L": "C28323",  # Verified Basic: 1uF 50V X7R 0805
+    "Murata GRM31CR71H475KA12L": "C29823",  # Verified Basic: 4.7uF 50V X7R 1206
+    "Murata GRM188R71H104KA93D": "C14663",  # Verified Basic: 100nF 50V X7R 0603
+    "Murata GRM1885C1H102JA01D": "C1588",   # Verified Basic: 1nF 50V X7R 0603
+    "Murata GRM188R71H472KA01D": "",        # Match 4.7nF 50V X7R 0603 Basic in JLCPCB BOM UI
+    "Murata GRM188R71H473KA61D": "C1622",   # Verified Basic: 47nF 50V X7R 0603
+    "Vishay CRCW06035K10FKEA": "C23186",    # Verified Basic: 5.1k 0603 1%
+    "Vishay CRCW06031K00FKEA": "C21190",    # Verified Basic: 1k 0603 1%
+    "Vishay CRCW08051R00FKEA": "",          # Match 1.0R 0805 1% Basic in JLCPCB BOM UI
+    "Vishay CRCW060339K0FKEA": "C23153",    # Verified Basic: 39k 0603 1%
+    "Vishay CRCW060382K0FKEA": "C23254",    # Verified Basic: 82k 0603 1%
+    "Vishay CRCW06036K20FKEA": "C4260",     # Verified Basic: 6.2k 0603 1%
+    "Vishay CRCW0805200RFKEA": "C966562",   # Verified: 200R 0805 1% (0805W8F2000T5E)
+    "Vishay CRCW080510K0FKEA": "C17414",    # Verified Basic: 10k 0805 1%
+    "Vishay CRCW060359K0FKEA": "",          # Match 59k 0603 1% in JLCPCB BOM UI (keeps UVLO corners)
+    "Vishay CRCW0603100KFKEA": "C25803",    # Verified Basic: 100k 0603 1%
+    "Vishay CRCW0603510KFKEA": "C23192",    # Verified Basic: 510k 0603 1%
+    "Vishay CRCW060347K0FKEA": "C25819",    # Verified Basic: 47k 0603 1%
+    "Vishay CRCW06031M00FKEA": "C22935",    # Verified Basic: 1M 0603 1%
+    "Vishay CRCW08056R80FKEA": "",          # Match 6.8R 0805 1% Basic in JLCPCB BOM UI
 }
 
 
@@ -2845,6 +2849,11 @@ def verify_and_export(comp_rows, fp_map, short_val):
             if r["Mounting"] == "On-PCB" and ref not in exclude_pcba:
                 asm = "THT Hand-Solder (DIY)" if ref in tht_refs else "SMD Turnkey PCBA"
                 w_pcba.writerow([short_val.get(ref, r["Value_Rating"]), ref, r["Package_Footprint"], lcsc, r["MPN"], asm])
+
+    # Automatically derive Hybrid JLCPCB PCBA + DIY hand-solder CSVs from canonical full PCBA outputs
+    sys.path.insert(0, str(PCB_DESIGN_DIR))
+    import generate_hybrid_pcba
+    generate_hybrid_pcba.generate()
 
     # 5. Schematic PDF/SVG + Scaled F.Fab Assembly Map PDF (5:1 fit-page-to-board, Carbon B-5!) + 3D & Gerbv Renders
     subprocess.run([KCLI, "sch", "export", "pdf", "-o", str(RENDER_DIR / "schematic.pdf"), str(sch_path)], check=True)
