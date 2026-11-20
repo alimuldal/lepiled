@@ -19,7 +19,7 @@
 
 ---
 
-An open-source DIY implementation of Gunnar Brehm's *LepiLED Maxi Switch*, engineered to run directly from any standard `45 W+` USB-C PD laptop charger or `20 V` USB-C PD power bank. With only **`0.55 W`** nominal driver PCB heat loss, the lamp runs fanless on a single top heatsink (`288 mm` tall), uses off-the-shelf aluminum bar/disc stock with **zero CNC milling**, prints support-free on a standard FDM printer, and comes in under **`£100` ex-VAT** amortized for all UK-sourced lamp parts.
+An open-source DIY implementation of Gunnar Brehm's *LepiLED* moth lamp ([Brehm, 2017, *Nota Lepidopterologica* 40(1): 87–108](https://doi.org/10.3897/nl.40.11887)), engineered to run directly from any standard `45 W+` USB-C PD laptop charger or `20 V` USB-C PD power bank. With only **`0.55 W`** nominal driver PCB heat loss, the lamp runs fanless on a single top heatsink (`288 mm` tall), uses off-the-shelf aluminum bar/disc stock with **zero CNC milling**, prints support-free on a standard FDM printer, and comes in under **`£100` ex-VAT** amortized for all UK-sourced lamp parts.
 
 ## Whole Lamp Assembly
 
@@ -79,6 +79,17 @@ An open-source DIY implementation of Gunnar Brehm's *LepiLED Maxi Switch*, engin
   <br />
   <sub>Click the schematic to open the full vector <a href="circuit_design/schematic.pdf">schematic.pdf</a> (KiCad 9.0.8, 0 ERC violations, 75 unique RefDes).</sub>
 </p>
+
+## Differences from Brehm (2017)
+
+Reference paper: **Brehm, G. (2017).** *A new LED lamp for the collection of nocturnal Lepidoptera and a spectral comparison of light-trapping lamps.* **Nota Lepidopterologica**, 40(1), 87–108. [doi:10.3897/nl.40.11887](https://doi.org/10.3897/nl.40.11887)
+
+This DIY build retains the paper's 8-LED insect-tuned spectrum (`4× UV-A`, `2× Royal Blue`, `1× Green`, `1× Cool White` at two vertical levels) while making four practical departures from the 2017 prototype:
+
+- **Fanless passive cooling:** Replaces the internal axial fan and gauze vents with a sealed, zero-moving-parts thermal path (borosilicate 3.3 cylinder, matte-black aluminum core, and top `SK 578/50 SA` radial heatsink).
+- **`20 V` USB-C PD + dual buck drivers:** Replaces the `5–12 V` boost constant-current source with a `20 V` USB-C PD sink (`AP33771C`) and two `AL8860WT-7` constant-current buck drivers (`333 mA` per channel, `93.8%` efficiency), eliminating high-current cable droop and running straight off modern laptop chargers or `20 V` PD power banks.
+- **Dual-mode switching (`OFF / 4-UV / 8-ALL`):** Splits the 8 LEDs into independent 4S UV-A and 4S Visible channels controlled by a sealed gold-contact `DPDT` toggle (matching Brehm's later *Maxi Switch* functionality, vs. single-mode operation in the 2017 prototype).
+- **Current emitters & zero-CNC DIY build:** Uses stocked `Luminus SST-10-UV` (`365 nm`) and `Cree XP-E2` LEDs on custom 1-layer aluminum MCPCB strips, support-free 3D-printed end caps, and off-the-shelf aluminum bar/disc hardware.
 
 ## Architecture Highlights
 
