@@ -151,13 +151,13 @@ def main() -> int:
     if len(bom_harn_rows) != 2:
         fail(f"Expected 2 Harness rows (2P & 3P pre-crimped JST-XH pigtails), got {len(bom_harn_rows)}")
 
-    # 4. Mechanical 14-Part 1:1 Parity (Rev 4.2)
+    # 4. Mechanical 16-Part 1:1 Parity (Rev 4.3)
     mech_by_id = {r["Part_ID"].strip(): r for r in mech_rows}
-    if len(mech_by_id) != 14:
-        fail(f"MECH_PARTS.csv expected 14 rows, got {len(mech_by_id)}")
+    if len(mech_by_id) != 16:
+        fail(f"MECH_PARTS.csv expected 16 rows, got {len(mech_by_id)}")
 
     bom_mech_primary = [r for r in bom_rows if r["Domain"] == "Mechanical"]
-    printed_ids = {"MECH-LID-BOT", "MECH-CAP-BOT", "MECH-CAP-TOP", "MECH-PLUG-TOP", "MECH-PLUG-BOT", "MECH-DRILL-JIG"}
+    printed_ids = {"MECH-BASE-RING", "MECH-LID-BOT", "MECH-CAP-BOT", "MECH-CAP-TOP", "MECH-PLUG-TOP", "MECH-RAIN-HAT", "MECH-PLUG-BOT", "MECH-DRILL-JIG"}
     bom_mech_ids: list[str] = []
     for row in bom_mech_primary:
         bid = row["BOM_ID"]
@@ -249,12 +249,12 @@ def main() -> int:
     )
     net_o = tot_o - owned_ex
 
-    print("PASS: bom/bom.csv verified 1:1 across Rev 4.2 (75 RefDes, 61 PCBA, 2 Harness pigtails, 1 custom PCB, 14 MECH-* IDs)")
+    print("PASS: bom/bom.csv verified 1:1 across Rev 4.3 (75 RefDes, 61 PCBA, 2 Harness pigtails, 1 custom PCB, 16 MECH-* IDs)")
     print(f"  Electrical (75 RefDes incl. 8x Cu DTP stars): 1-Off = £{elec_o:.2f} ex VAT (£{round2(elec_o * VAT_RATE):.2f} inc VAT) | Amort = £{elec_a:.2f} ex VAT")
     print(f"  Harness (Pre-crimped 22 AWG JST-XH pigtails): 1-Off = £{harn_o:.2f} ex VAT (£{round2(harn_o * VAT_RATE):.2f} inc VAT) | Amort = £{harn_a:.2f} ex VAT")
     print(f"  PCB Fab + Economic PCBA (driver_pcb ONLY):    1-Off = £{pcb_o:.2f} ex VAT (£{round2(pcb_o * VAT_RATE):.2f} inc VAT) | Amort = £{pcb_a:.2f} ex VAT")
-    print(f"  Mechanical (Protruding Bare Core, 14 IDs):    1-Off = £{mech_o:.2f} ex VAT (£{round2(mech_o * VAT_RATE):.2f} inc VAT) | Amort = £{mech_a:.2f} ex VAT")
-    print(f"  TOTAL Rev 4.2 1-Off Build (All Purchased):    1-Off = £{tot_o:.2f} ex VAT (£{round2(tot_o * VAT_RATE):.2f} inc VAT) | Amort = £{tot_a:.2f} ex VAT (£{round2(tot_a * VAT_RATE):.2f} inc VAT)")
+    print(f"  Mechanical (UVT PMMA + Bare Core, 16 IDs):    1-Off = £{mech_o:.2f} ex VAT (£{round2(mech_o * VAT_RATE):.2f} inc VAT) | Amort = £{mech_a:.2f} ex VAT")
+    print(f"  TOTAL Rev 4.3 1-Off Build (All Purchased):    1-Off = £{tot_o:.2f} ex VAT (£{round2(tot_o * VAT_RATE):.2f} inc VAT) | Amort = £{tot_a:.2f} ex VAT (£{round2(tot_a * VAT_RATE):.2f} inc VAT)")
     print(f"  NET 1-Off Spend (Using Owned M3 + PC Paste):  1-Off = £{net_o:.2f} ex VAT (£{round2(net_o * VAT_RATE):.2f} inc VAT)")
     return 0
 

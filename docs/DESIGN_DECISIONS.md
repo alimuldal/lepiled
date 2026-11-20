@@ -91,3 +91,21 @@ Following Rev 4.1, a second independent parallel adversarial review (**Carbon** 
 | **Mechanical CAD (`params.py` + `generate_cad.py`)** | **36/36 param checks**, **6 watertight support-free FDM STLs** (`0.000–0.387 mm²` `>46°` overhangs), `3,249`-ray flange check, `72` kinematic waypoints, **`156/156` B-Rep pairs `0.000000 mm³`** (Nom + WC) |
 | **Thermal (`thermal_analysis.py`)** | **10/10 PASS (`22 °C`)**, **16/16 Real-WPE PASS (`22–30 °C`)**, **4/4 Real-WPE PASS (`35 °C` horiz)** (`T_j,UV = 53.0 °C` @ `22 °C`, `60.3 °C` @ `30 °C`, `68.3 °C` @ `30 °C DS-RealWPE`) |
 | **UK 1-Off Hobby BOM (`bom/verify_bom.py`)** | **PASS (`75` RefDes, `61` PCBA, `2` Pigtails, `1` PCB, `14` MECH IDs):** **`£93.24` ex-VAT (`£111.89` inc-VAT)** all purchased new; **`£86.89` ex-VAT (`£104.27` inc-VAT)** using owned workshop `M3` hardware & PC thermal paste (down from `£176.51` + `£50–£80` unbudgeted reflow gear in Rev 4.1!) |
+
+---
+
+## 8. Rev 4.3 Field-Robustness, Waterproofing & Portability Upgrades
+
+Following Rev 4.2, four targeted mechanical and material refinements were implemented and verified while keeping the `driver_pcb`, `20 mm` Copper DTP LED stars, and robust `40 × 40 × 3.0 mm` bare protruding aluminum core unchanged:
+
+1. **Shatter-Resistant UV-Transmitting PMMA Shroud (`MECH-TUBE-1`, `-143 g`, `-£2.09` ex-VAT):**
+   - Thermal modeling showed the shroud wall operates at only **`30–46 °C`** across all realistic night ambients (`22–35 °C`)—far below acrylic's `~75–80 °C` continuous-service rating.
+   - Swapping `3.5 mm` borosilicate (`263 g`, brittle) for **`Ø75 × 69 × 3.0 mm × 150 mm` UV-transmitting cast PMMA** (`120 g`, `85–92%` @ `365 nm`, matching commercial *LepiLED* Plexiglas tubing) raises `T_j,UV` by only **`+0.28 °C`** (`60.88` vs `60.60 °C` at `30 °C` horiz). *(Polycarbonate is explicitly forbidden because it blocks `> 98%` of `365 nm` UV-A.)*
+2. **Bottom-Mounted Toggle Switch (`SW1`) + Bolt-On Protective Base Stand Ring (`MECH-BASE-RING`):**
+   - Moved `C&K 7211SYZBE` + `759D02000` silicone boot off the side wall onto the protected underside of `MECH-LID-BOT` (`X = 0, Y = +8.5 mm`, `4.03 mm` below `driver_pcb`, clear of all TH pins and bosses), leaving `MECH-CAP-BOT`'s `+X` wall 100% solid and unbroken.
+   - Added a support-free bolt-on standing ring (`MECH-BASE-RING`, `Ø92 × 68 × 18 mm`, `4×` wide drainage cutouts) clamped by the exact same `4× M3 × 16 mm` lid SHCS bolts, shielding the toggle boot by `3.0 mm` above flat ground.
+3. **Dual-Layer Rain Roof (`MECH-CAP-TOP` Drip-Brim + Detachable `MECH-RAIN-HAT`):**
+   - Added an integral `Ø108 × 3.5 mm` drip-brim flange to `MECH-CAP-TOP` (`0.000 mm²` overhang inverted) overhanging the entire lower housing and `-Y` USB-C grommet while shielding the `2× M3` core locking screws underneath and leaving `100%` of the `85.5 mm` Al core open to air.
+   - Added a detachable pack-flat `Ø136 × 7.5 mm` rain umbrella (`MECH-RAIN-HAT`, `0.000 mm²` overhang inverted) keyed onto `MECH-PLUG-TOP` and retained automatically by the hanging cord (`2× Ø6.0 mm` pass-through holes). Even under a conservative `+10%` top convection derating, `T_j,UV` remains `61.9 °C` nominal / `70.2 °C` `DS-RealWPE` at `30 °C` horizontal (`PASS`).
+4. **Contoured Lightweight `MECH-CAP-BOT` Shell (`3 mm` Al Core Retained):**
+   - Trimmed excess solid bulk out of `MECH-CAP-BOT` (`336.7 -> 228.4 cm³`, `-32%`) while maintaining robust `>= 3.5–8.5 mm` walls and keeping the `3.0 mm` Al core wall for full `M3` thread engagement. Total FDM lamp weight drops to **`891.7 g`** with rain hat (**`857.8 g`** without hat), and 1-off UK BOM drops to **`£91.35` ex-VAT (`£109.62` inc-VAT; `£84.80` ex-VAT / `£101.76` inc-VAT using owned M3 + PC paste)**.

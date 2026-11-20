@@ -1,36 +1,46 @@
-# LepiLED DIY Maxi Switch — Mechanical & Thermal Design (Rev 4.2 — Lean 1-Off Hobby Build)
+# LepiLED DIY Maxi Switch — Mechanical & Thermal Design (Rev 4.3 — Field-Robust, Lightweight & Weatherproofed)
 
-## 1. Architecture Summary (Single Stock Aluminum Tube + `20 mm` Copper DTP Stars)
+## 1. Architecture Summary
 
-Rev 4.2 strips the mechanical stack down to **one single stock metal part**—a `250.0 mm` length of bare mill-finish `40 × 40 × 3 mm` Al 6063 box section (`MECH-HS-CORE`, zero sawing, zero spray paint, zero CNC milling)—paired with a `75/68/3.5 × 150 mm` borosilicate 3.3 cylinder (`MECH-TUBE-1`) and `8×` off-the-shelf pre-mounted **`20 mm` Copper Direct-Thermal-Path (DTP) LED stars** (`4×` UV at `Z = 163.0 mm`, `4×` Vis at `Z = 127.0 mm`).
+Rev 4.3 builds on Rev 4.2's lean hobby architecture (single `250 mm` bare `40 × 40 × 3.0 mm` Al 6063 core, `8×` pre-mounted `20 mm` Copper DTP LED stars, zero brass heat-set inserts, single `M3` fastener size) with four targeted field-robustness, weatherproofing, and portability upgrades:
 
-- **Monolithic Protruding Core & Hanging Point:** `MECH-HS-CORE` protrudes **`85.5 mm`** above `MECH-CAP-TOP` (`324.0 mm` total height to top of rain cap), eliminating the separate `SK 578/50 SA` heatsink, aluminum adapter disc, internal aluminum anchors, `M6` eye bolt, shims, and bolted thermal joint. A drilled **`Ø8.0 mm` hanging hole** (`Z = 302.0 mm`) gives a direct metal-to-metal carabiner/cord attachment, while a 3D-printed press-fit rain plug (`MECH-PLUG-TOP`, sealed with silicone) weatherproofs the open tube end.
-- **Zero Brass Heat-Set Inserts & Single `M3` Fastener Size:**
-  - `MECH-CAP-BOT` uses `4×` side-entry **captive `M3` hex-nut pockets** for `MECH-LID-BOT` and a `6.0 mm` thermal isolation bulkhead (`R_bulkhead = 11.20 K/W`).
-  - `MECH-LID-BOT` carries `4×` integral `11.5 mm` bosses topped with **`Ø2.45 × 2.0 mm` printed locating pins** passing straight into `driver_pcb`'s isolated NPTH `H1..H4` (zero PCB screws, zero `M2.5` inserts).
-  - `MECH-PLUG-BOT` (3D-printed internal plug w/ captive `M3` nuts) replaces the aluminum bottom anchor; `MECH-CAP-TOP` locks onto the protruding tube via `2× M3 × 12 mm` horizontal screws + a `1.5 mm` top silicone-seal chamfer groove.
-  - `MECH-DRILL-JIG` clips onto the bottom of `MECH-HS-CORE` to guide all `16× M3` star mounting holes (`M3` nylon insulating washers under all 16 screw heads).
+- **Shatter-Resistant UV-Transmitting PMMA (Acrylic) Shroud (`MECH-TUBE-1`):** Replaces the brittle `263 g` borosilicate tube with a **`120 g` UV-transmitting cast PMMA cylinder** (`Ø75.0 × 69.0 × 3.0 mm × 150 mm`, `85–92%` @ `365 nm` — matching the commercial *LepiLED Maxi* material). Drops `143 g`, eliminates glass breakage in a rucksack, and saves `£2.09` ex-VAT while retaining standard `68 × 3.5 mm` VMQ70 silicone O-rings (`MECH-GASKET-1..2`). *(Never substitute polycarbonate, which blocks `> 98%` of `365 nm` UV-A.)*
+- **Bottom-Mounted Toggle Switch (`SW1`) + Protective Base Stand Ring (`MECH-BASE-RING`):** Relocates `C&K 7211SYZBE` + `759D02000` silicone boot from the exposed `+X` wall to the protected underside of `MECH-LID-BOT` (`X = 0, Y = +8.5 mm`, `4.03 mm` cleanly below `driver_pcb` and clear of all TH pins). `MECH-CAP-BOT`'s `+X` wall is now 100% solid and unbroken. A bolt-on support-free standing ring (`MECH-BASE-RING`, `Ø92 × 68 × 18 mm`, `4×` wide drainage cutouts) clamps with the **exact same `4× M3 × 16 mm` SHCS lid bolts**, shielding the silicone switch boot by `3.0 mm` so the lamp stands safely upright.
+- **Dual-Layer Rain Roof System:**
+  1. **Integral `Ø108 mm` Drip-Brim on `MECH-CAP-TOP`:** `3.5 mm` thick flange (`0.00 mm²` overhang when printed inverted) overhanging the entire lower housing and `-Y` USB-C grommet while shielding the `2× M3` core locking screws directly underneath and leaving `100%` of the `85.5 mm` bare Al core open to natural convection.
+  2. **Detachable Pack-Flat Rain Umbrella (`MECH-RAIN-HAT`):** `Ø136 × 7.5 mm` umbrella disc (`5.0 mm` downward drip lip, `0.00 mm²` overhang inverted) that slips onto `MECH-PLUG-TOP` and is automatically retained by the hanging cord passing through `2× Ø6.0 mm` holes (`12.55 mm` above the `Ø8 mm` hanging hole). Pops off in seconds to pack flat.
+- **Contoured Lightweight `MECH-CAP-BOT` Shell (Robust `3 mm` Al Core Retained):** Shapes excess solid bulk out of `MECH-CAP-BOT` (`336.7 cm³ -> 228.4 cm³`, `-32%`) while keeping every structural wall `>= 3.5–8.5 mm` thick and retaining the full `3.0 mm` Al tube wall for 6-thread `M3` engagement.
+
+### Verified Mass Budget (From B-Rep Volumes in [cad_verification.json](file:///home/alimuldal/src/lepiled/mechanical_design/cad/cad_verification.json))
+
+| Component | Rev 4.2 (FDM 60%) | Rev 4.3 (FDM 60% — 4 walls / 25% infill) | Rev 4.3 (100% Solid PETG) |
+|---|---:|---:|---:|
+| **3D-Printed Lamp Parts (`7` parts incl. `base_ring` & `rain_hat`)** | `~365 g` (`479 cm³`) | **`361.1 g`** (`473.9 cm³`; `327.2 g` w/o rain hat) | `601.9 g` |
+| **Bare Al 6063 Core (`250 mm`, `40 × 40 × 3.0 mm`)** | `298.5 g` | **`298.5 g`** | `298.5 g` |
+| **Transparent Shroud (`Ø75 × 150 mm`)** | `263.0 g` (borosilicate) | **`120.1 g`** (UVT PMMA `3.0 mm`) | `120.1 g` |
+| **`8×` Cu DTP Stars (`34 g`), Driver PCB, Switch, Wires, M3 & Seals** | `112.0 g` | **`112.0 g`** | `112.0 g` |
+| **TOTAL LAMP WEIGHT** | **`~1,039 g`** | **`891.7 g`** w/ rain hat (**`857.8 g`** w/o hat) | `1,132.5 g` |
 
 ## 2. Coupled Thermal Verification ([thermal_summary.json](file:///home/alimuldal/src/lepiled/mechanical_design/thermal/thermal_summary.json))
 
-Executed via [thermal_analysis.py](file:///home/alimuldal/src/lepiled/mechanical_design/thermal/thermal_analysis.py) modeling `20 mm` Copper DTP stars (`R_sub = 0.50 K/W`, `R_tim = 0.30 K/W` vs legacy `15.29–18.89 K/W` `1.0 W/m·K` MCPCB), the `85.5 mm` bare mill-finish (`ε = 0.20`) protruding core (Churchill-Chu convection + radiation, `r_int_top = 0.0 K/W`), borosilicate glass path, and sealed plastic bottom chamber (`75 °C` PETG limit):
+Executed via [thermal_analysis.py](file:///home/alimuldal/src/lepiled/mechanical_design/thermal/thermal_analysis.py) modeling `20 mm` Copper DTP stars (`R_sub = 0.50 K/W`, `R_tim = 0.30 K/W`), the `85.5 mm` bare mill-finish (`ε = 0.20`) protruding core, **UVT PMMA `3.0 mm` shroud** (`k = 0.19 W/(m·K)`, `ε = 0.93`), and sealed plastic bottom chamber (`75 °C` PETG limit):
 
-| Ambient & Orientation | Mode | `Q_PCB` (W) | `T_core` (°C) | `T_j,UV` (°C) (`<=100`) | `T_j,Vis` (°C) (`<=150`) | `T_PCB` (°C) (`<=75`) | Status |
-|---|---|---:|---:|---:|---:|---:|:---:|
-| `22 °C` Vertical (UK Night) | `4-UV Nom` | `0.320` | `39.7` | `41.4` | `39.4` | `39.6` | PASS |
-| `22 °C` Vertical (UK Night) | `8-ALL Nom (40%UV)` | `0.550` | `51.3` | `53.0` | `58.1` | `52.1` | PASS |
-| `22 °C` Horizontal | `8-ALL DS-RealWPE` | `0.797` | `58.8` | `60.9` | `67.5` | `61.8` | PASS |
-| `22 °C` Horizontal | `8-ALL DS-100%` (0% optical) | `0.797` | `75.2` | `78.4` | `87.1` | `72.7` | PASS |
-| `30 °C` Horizontal | `4-UV Nom` | `0.320` | `47.2` | `48.8` | `46.8` | `47.2` | PASS |
-| `30 °C` Horizontal | `8-ALL Nom (40%UV)` | `0.550` | `58.7` | `60.3` | `65.4` | `59.7` | PASS |
-| `30 °C` Horizontal | `8-ALL DS-RealWPE` | `0.797` | `66.2` | `68.3` | `75.0` | `69.5` | PASS |
-| `35 °C` Horizontal | `8-ALL Nom (40%UV)` | `0.550` | `63.4` | `65.0` | `70.1` | `64.5` | PASS |
-| `35 °C` Horizontal | `8-ALL DS-RealWPE` | `0.797` | `70.8` | `72.9` | `79.6` | `74.2` | PASS |
+| Ambient & Case | Mode | `T_core` (°C) | `T_j,UV` (°C) (`<=100`) | `T_shroud` (°C) (`<=75`) | `T_PCB` (°C) (`<=75`) | Status |
+|---|---|---:|---:|---:|---:|:---:|
+| `22 °C` Vertical (UK Night) | `4-UV Nom` | `40.0` | `41.6` | `26.9` | `39.8` | PASS |
+| `22 °C` Vertical (UK Night) | `8-ALL Nom (40%UV)` | `51.6` | `53.2` | `30.4` | `52.2` | PASS |
+| `22 °C` Horizontal | `8-ALL DS-RealWPE` | `59.4` | `61.5` | `33.0` | `62.3` | PASS |
+| `22 °C` Horizontal | `8-ALL DS-100%` (0% optical) | `75.7` | `79.0` | `38.3` | `73.1` | PASS |
+| `30 °C` Horizontal | `8-ALL Nom (40%UV)` | `59.3` | `60.9` | `38.6` | `60.0` | PASS |
+| `30 °C` Horizontal | `8-ALL DS-RealWPE` | `66.9` | `69.0` | `40.8` | `69.9` | PASS |
+| `30 °C` Horiz **w/ `MECH-RAIN-HAT`** (`+10%` top conv derating) | `8-ALL Nom / DS-RealWPE` | `60.2 / 68.1` | **`61.9 / 70.2`** | **`38.9 / 41.2`** | **`60.6 / 70.7`** | **PASS** |
+| `35 °C` Horizontal | `8-ALL Nom (40%UV)` | `64.0` | `65.6` | `43.5` | `64.8` | PASS |
+| `35 °C` Horizontal | `8-ALL DS-RealWPE` | `71.5` | `73.6` | `45.7` | `74.7` | PASS |
 
-**Result:** **10/10 PASS at `22 °C`**, **16/16 Real-WPE modes PASS across `22–30 °C`**, and **4/4 Real-WPE modes PASS at `35 °C` horizontal** (`~39–47 °C` UV junction margin at nominal, `~32 °C` margin under stacked datasheet worst-case tolerances). *(Only the artificial `0%-optical-efficiency` bound at `30–35 °C` reaches `80–85 °C` PCB vs `75 °C` PETG / `95 °C` ASA while keeping `T_j,UV <= 90.2 °C < 100 °C`.)*
+**Thermal Takeaway:** Switching from `3.5 mm` borosilicate (`k = 1.14`) to `3.0 mm` UVT PMMA (`k = 0.19`) raises `T_j,UV` by just **`+0.28 °C`** (`60.88` vs `60.60 °C` at `30 °C` horiz), and the acrylic shroud stays cool at **`30–46 °C`** across all realistic night conditions (`> 30 °C` below PMMA continuous-service limits). Even with a conservative `+10%` convection penalty for the detachable `MECH-RAIN-HAT`, all realistic modes pass with **`~30–38 °C` UV junction margin**.
 
 ## 3. CAD Artifacts & Plots
 
 - **Parameters & Generator:** [params.py](file:///home/alimuldal/src/lepiled/mechanical_design/cad/params.py), [generate_cad.py](file:///home/alimuldal/src/lepiled/mechanical_design/cad/generate_cad.py), [cad_verification.json](file:///home/alimuldal/src/lepiled/mechanical_design/cad/cad_verification.json)
-- **6 Support-Free 3D-Printable Parts (FDM PETG/ASA):** [mech_lid_bot.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_lid_bot.step), [mech_cap_bot.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_cap_bot.step), [mech_cap_top.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_cap_top.step), [mech_plug_top.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_plug_top.step), [mech_plug_bot.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_plug_bot.step), [mech_drill_jig.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_drill_jig.step), [lepiled_assembly.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/lepiled_assembly.step)
+- **8 Support-Free 3D-Printable Parts (FDM PETG/ASA):** [mech_base_ring.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_base_ring.step), [mech_lid_bot.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_lid_bot.step), [mech_cap_bot.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_cap_bot.step), [mech_cap_top.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_cap_top.step), [mech_plug_top.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_plug_top.step), [mech_rain_hat.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_rain_hat.step), [mech_plug_bot.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_plug_bot.step), [mech_drill_jig.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_drill_jig.step), [lepiled_assembly.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/lepiled_assembly.step)
 - **CAD Renders & Thermal Plots:** [assembly_iso.png](file:///home/alimuldal/src/lepiled/mechanical_design/cad/assembly_iso.png), [assembly_section_xz.png](file:///home/alimuldal/src/lepiled/mechanical_design/cad/assembly_section_xz.png), [assembly_section_yz.png](file:///home/alimuldal/src/lepiled/mechanical_design/cad/assembly_section_yz.png), [lid_bot_detail.png](file:///home/alimuldal/src/lepiled/mechanical_design/cad/lid_bot_detail.png), [cap_bot_detail.png](file:///home/alimuldal/src/lepiled/mechanical_design/cad/cap_bot_detail.png), [cap_top_detail.png](file:///home/alimuldal/src/lepiled/mechanical_design/cad/cap_top_detail.png), [thermal_margins.png](file:///home/alimuldal/src/lepiled/mechanical_design/thermal/thermal_margins.png), [thermal_ambient_sweep.png](file:///home/alimuldal/src/lepiled/mechanical_design/thermal/thermal_ambient_sweep.png), [thermal_network_comparison.png](file:///home/alimuldal/src/lepiled/mechanical_design/thermal/thermal_network_comparison.png)
