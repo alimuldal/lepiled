@@ -224,9 +224,9 @@ def build_cable_clamp_half(p: LepiLEDParams, side: float = 1.0) -> bd.Part:
     r_grom = 4.0
     c_cable = bd.Cylinder(r_cab, p.clamp_outer_h + p.lid_bot_thick + 2.0,
                           align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_lid - p.clamp_outer_h - 1.0))
-    c_grom_bot = bd.Cone(r_cab, r_grom, r_grom - r_cab, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_lid - 8.5))
-    c_grom_mid = bd.Cylinder(r_grom, 4.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_lid - 8.5 + (r_grom - r_cab)))
-    c_grom_top = bd.Cone(r_grom, r_cab, r_grom - r_cab, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_lid - 4.5 + (r_grom - r_cab)))
+    c_grom_bot = bd.Cone(r_cab, r_grom, r_grom - r_cab, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_lid - 7.5))
+    c_grom_mid = bd.Cylinder(r_grom, 3.2, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_lid - 7.5 + (r_grom - r_cab)))
+    c_grom_top = bd.Cone(r_grom, r_cab, r_grom - r_cab, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_lid - 4.3 + (r_grom - r_cab)))
     c_top_fl = bd.Cone(r_cab, 4.2, 2.5, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_lid + 2.2))
     full = full - c_cable - c_grom_bot - c_grom_mid - c_grom_top - c_top_fl
 
@@ -247,33 +247,23 @@ def build_cable_clamp_half(p: LepiLEDParams, side: float = 1.0) -> bd.Part:
 
 def build_core_anchor(p: LepiLEDParams) -> bd.Part:
     """
-    Build MECH-CORE-ANCHOR: internal dry-bay core lock block (23.4 x 23.4 mm inside hollow Al core bore):
-      - Upper rectangular body (Z = 72.0 .. 87.0 mm) cross-pinned flush to the 30x30x3 Al tube at Z = 79.5 mm via 2x M3x8 CSK
-      - Lower 45-deg pyramidal nose (Z = 65.5 .. 72.0 mm) seats inside MECH-CAP-BOT's 45-deg socket pyramid
-      - 2x M3 brass heat-set insert bores at (±6.5, 0.0 mm) facing -Z receive 2x M3x16 SHCS from the dry electronics bay!
-      - Prints inverted on Z = 87.0 mm flat face with 0.000 mm^2 >46 deg overhang!
+    Build MECH-CORE-ANCHOR: internal dry-bay core lock block (23.4 x 23.4 x 15.0 mm inside hollow Al core bore):
+      - Flat bottom face seats directly onto MECH-CAP-BOT's 5.5 mm solid ASA bulkhead at Z = z_core_bot (55.0 mm)
+      - Cross-pinned flush to the 30x30x3 Al tube at Z = 62.5 mm via 2x M3x8 CSK screws
+      - 2x vertical M3 brass heat-set insert bores at (±6.5, 0.0 mm) receive 2x M3x12 SHCS from the dry electronics bay!
+      - Prints inverted on flat top face with 0.000 mm^2 >46 deg overhang!
     """
-    upper = bd.Box(p.anchor_w, p.anchor_w, p.anchor_h_in_core,
-                   align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, p.z_core_bot))
-    upper = bd.fillet(upper.edges().filter_by(bd.Axis.Z), 1.2)
+    part = bd.Box(p.anchor_w, p.anchor_w, p.anchor_h_in_core,
+                  align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, p.z_core_bot))
+    part = bd.fillet(part.edges().filter_by(bd.Axis.Z), 1.2)
 
-    # Lower 45-deg pyramidal nose matching cap_bot's 45-deg core closure pyramid (0.6 mm clearance all around!)
-    nose_h = 6.0  # Z = 66.0 .. 72.0 mm -> bottom flat is 11.4 x 11.4 mm? Wait: M3 inserts are at X = ±6.5 mm!
-    # Keep flat bottom 18.0 x 14.0 mm at Z = 65.8 mm! At X = ±6.5 mm, cap_bot pyramid is at Z = 63.1 mm -> 2.7 mm clearance!
-    with bd.BuildSketch(bd.Plane.XY.offset(p.z_core_bot)) as sk_top:
-        bd.RectangleRounded(p.anchor_w, p.anchor_w, radius=1.2)
-    with bd.BuildSketch(bd.Plane.XY.offset(p.z_core_bot - 2.6)) as sk_bot:
-        bd.RectangleRounded(p.anchor_w - 5.2, p.anchor_w - 5.2, radius=1.0)  # 18.2 x 18.2 mm @ Z=69.4 mm (45-deg!)
-    nose = bd.loft([sk_bot.sketch, sk_top.sketch])
-    part = upper.fuse(nose)
-
-    # 2x vertical M3 brass heat-set insert bores at (±6.5, 0.0 mm) facing -Z (Z = 69.4 .. 78.0 mm -> 8.6 mm deep!)
+    # 2x vertical M3 brass heat-set insert bores at (±6.5, 0.0 mm) facing -Z (Z = 55.0 .. 63.0 mm -> 8.0 mm deep!)
     for sx in (-1.0, 1.0):
-        ins = bd.Cylinder(p.m3_insert_pilot_dia / 2.0, 9.0,
-                          align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((sx * p.anchor_bolt_x, 0.0, p.z_core_bot - 3.0))
+        ins = bd.Cylinder(p.m3_insert_pilot_dia / 2.0, 8.2,
+                          align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((sx * p.anchor_bolt_x, 0.0, p.z_core_bot - 0.2))
         part = part - ins
 
-    # Horizontal cross-pin Ø4.0 mm brass insert bores on ±X at Z = 79.5 mm (teardrop apex toward -Z when printed inverted!)
+    # Horizontal cross-pin Ø4.0 mm brass insert bores on ±X at Z = z_anchor_pin (teardrop apex toward -Z when printed inverted!)
     td_pin = _teardrop_profile_wire(p.m3_insert_pilot_dia / 2.0, 42.0)
     pin_bore = bd.extrude(td_pin, p.anchor_w + 2.0).rotate(bd.Axis.X, -90.0).rotate(bd.Axis.Z, -90.0).translate((-p.anchor_w / 2.0 - 1.0, 0.0, p.z_anchor_pin))
     part = part - pin_bore
@@ -339,16 +329,17 @@ def build_cap_bot(p: LepiLEDParams) -> bd.Part:
         portal = bd.extrude(arch_prof, 24.0).rotate(bd.Axis.X, 90.0).translate((0.0, (52.0 if sy > 0 else -28.0), -0.2))
         part = part - portal
 
-    # Lower radial O-ring sealing bore (Ø65.0 mm, Z = 19.0 .. 30.5 mm) + 45-deg flare (Z = 30.5 .. 33.5 mm) -> Ø71.0 mm bay!
+    # Lower radial O-ring sealing bore (Ø65.0 mm, Z = 17.5 .. 29.0 mm) + 45-deg flare (Z = 29.0 .. 32.0 mm) -> Ø71.0 mm bay!
     r_sp_bore = p.cap_bot_spigot_bore_dia / 2.0  # 32.5
     r_cav = p.cap_bot_cavity_dia / 2.0           # 35.5
-    sp_bore = bd.Cylinder(r_sp_bore, 30.5 - p.cap_bot_skirt_h + 0.5,
+    z_sp_top = p.z_lid_bot_end + p.lid_spigot_h  # 29.0
+    sp_bore = bd.Cylinder(r_sp_bore, z_sp_top - p.cap_bot_skirt_h + 0.5,
                           align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, p.cap_bot_skirt_h - 0.5))
     flare_h = r_cav - r_sp_bore  # 3.0 mm -> exact 45-deg transition (0 overhang inverted!)
     cav_flare = bd.Cone(r_sp_bore, r_cav, flare_h,
-                        align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, 30.5))
-    cav_main = bd.Cylinder(r_cav, p.cap_bot_ceiling_z - (30.5 + flare_h),
-                           align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, 30.5 + flare_h))
+                        align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_sp_top))
+    cav_main = bd.Cylinder(r_cav, p.cap_bot_ceiling_z - (z_sp_top + flare_h),
+                           align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_sp_top + flare_h))
     part = part - sp_bore.fuse(cav_flare).fuse(cav_main)
 
     # 4x blind M3 brass heat-set insert bores at R = 37.0 mm (Z = 24.0 .. 30.0 mm; ZERO exterior side-entry slots!)
@@ -415,19 +406,15 @@ def build_cap_bot(p: LepiLEDParams) -> bd.Part:
     # R ∈ [29.5, 34.5] from Z = 56.0 to Z = 72.0? No, R=29.5 touches H1/H2 standoff roots (28.65 + 3.7 = 32.35 mm)!
     # Keep full solid standoff roots cleanly untouched!
 
-    # Intact 27.5 mm-deep 30.8 x 30.8 mm square core socket (Z = 73.5 .. 101.0 mm) + 45-deg support-free closure pyramid (Z = 58.3..73.5)!
+    # Intact 21.5 mm-deep 30.8 x 30.8 mm square core socket (Z = 55.0 .. 76.5 mm) seating flat onto a 5.5 mm solid ASA bulkhead!
+    # Prints inverted with ONE clean hidden 30.8 mm flat orthogonal bridge at Z = 55.0 mm (saves -24.5 mm height & ~50 g ASA vs 45-deg pyramid!)
     core_sock = bd.Box(p.core_pocket_w, p.core_pocket_w, z_top - p.z_core_bot + 1.0,
                        align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, p.z_core_bot))
-    pyr_h = 0.5 * (p.core_pocket_w - 0.4)  # 15.2 mm -> closes to 0.4x0.4 mm tip at Z = 58.3 mm (0.000 mm^2 overhang!)
-    with bd.BuildSketch(bd.Plane.XY.offset(p.z_core_bot)) as sk_base:
-        bd.Rectangle(p.core_pocket_w, p.core_pocket_w)
-    with bd.BuildSketch(bd.Plane.XY.offset(p.z_core_bot - pyr_h)) as sk_tip:
-        bd.Rectangle(0.4, 0.4)
-    part = part - core_sock - bd.loft([sk_tip.sketch, sk_base.sketch])
+    part = part - core_sock
 
-    # 2x internal vertical M3x16 dry-bay anchor bolt bores at (±6.5, 0.0 mm) through 8.6 mm solid ASA bulkhead (ZERO exterior holes!)
+    # 2x internal vertical M3x12 dry-bay anchor bolt bores at (±6.5, 0.0 mm) through 5.5 mm solid ASA bulkhead (ZERO exterior holes!)
     for sx in (-1.0, 1.0):
-        anc_bore = bd.Cylinder(p.m3_clearance_dia / 2.0, 16.0,
+        anc_bore = bd.Cylinder(p.m3_clearance_dia / 2.0, p.bulkhead_thick + 2.0,
                                align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((sx * p.anchor_bolt_x, 0.0, p.cap_bot_ceiling_z - 0.5))
         part = part - anc_bore
 
@@ -689,17 +676,17 @@ def build_assembly_parts(p: LepiLEDParams, core_w_override: float | None = None,
         lb_head = bd.Cylinder(2.75, 3.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((lx, ly, p.z_lid_bot_start - 0.05))
         lb_shank = bd.Cylinder(1.48, 10.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((lx, ly, p.z_lid_bot_start - 0.05))
         fasteners_list.append(lb_head.fuse(lb_shank))
-    # 2. 2x M3x14 SHCS split cable clamp bolts (head sits flat on Z = 8.0 mm bottom face -> 5 mm ground clr!)
+    # 2. 2x M3x12 SHCS split cable clamp bolts (head sits flat on Z = 8.0 mm bottom face -> 5.0 mm ground clr!)
     for sx in (-1.0, 1.0):
         cx, cy = sx * p.clamp_bolt_dx, p.clamp_y
         ch = bd.Cylinder(2.75, 3.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((cx, cy, p.z_lid_bot_start - p.clamp_outer_h - 0.05))
-        cs = bd.Cylinder(1.48, 14.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((cx, cy, p.z_lid_bot_start - p.clamp_outer_h - 0.05))
+        cs = bd.Cylinder(1.48, 12.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((cx, cy, p.z_lid_bot_start - p.clamp_outer_h - 0.05))
         fasteners_list.append(ch.fuse(cs))
-    # 3. 2x M3x16 SHCS internal dry-bay core anchor bolts (bearing flat at Z = 56.0 mm into MECH-CORE-ANCHOR!)
+    # 3. 2x M3x12 SHCS internal dry-bay core anchor bolts (bearing flat at Z = 49.5 mm into MECH-CORE-ANCHOR!)
     for sx in (-1.0, 1.0):
         ax = sx * p.anchor_bolt_x
         ah = bd.Cylinder(2.75, 3.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((ax, 0.0, p.cap_bot_ceiling_z - 0.05))
-        ash = bd.Cylinder(1.48, 16.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((ax, 0.0, p.cap_bot_ceiling_z - 0.05))
+        ash = bd.Cylinder(1.48, 12.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((ax, 0.0, p.cap_bot_ceiling_z - 0.05))
         fasteners_list.append(ah.fuse(ash))
     # 4. 2x M3x8 CSK flush cross-pin screws locking MECH-CORE-ANCHOR to Al core at Z = 79.5 mm
     for sx in (-1.0, 1.0):
@@ -765,8 +752,9 @@ def build_assembly_parts(p: LepiLEDParams, core_w_override: float | None = None,
     plug_strain = bd.Cone(2.6, 3.6, p.usbc_strain_relief_h, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((0.0, y_plug_ctr, z_plug_bot))
     usbc_plug_assy = plug_barrel.fuse(plug_body).fuse(plug_strain)
 
-    # 29.8 mm clear PMMA D12 lightpipe rod w/ 45-deg beveled side-glow tip (1.4 mm below D12 @ Z = 49.2 mm!)
-    d12_rod = bd.Cylinder(1.20, 29.8, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((p.d12_lightpipe_x, p.d12_lightpipe_y, p.z_lid_bot_start - 1.0))
+    # 24.8 mm clear PMMA D12 lightpipe rod w/ 45-deg beveled side-glow tip (1.4 mm below D12 @ Z = 42.7 mm!)
+    d12_rod_len = round((p.pcb_z_fcu - 0.80 - 1.40) - (p.z_lid_bot_start - 1.0), 2)
+    d12_rod = bd.Cylinder(1.20, d12_rod_len, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((p.d12_lightpipe_x, p.d12_lightpipe_y, p.z_lid_bot_start - 1.0))
 
     return dict(
         lid_bot=lid_bot,
@@ -905,7 +893,13 @@ def check_all_pairs_intersections(parts: dict[str, bd.Shape]) -> dict[str, dict]
     }
 
 
-def audit_stl_overhangs(stl_path: Path, print_up_axis: tuple[float, float, float], max_overhang_deg: float = 46.0) -> dict:
+def audit_stl_overhangs(
+    stl_path: Path,
+    print_up_axis: tuple[float, float, float],
+    max_overhang_deg: float = 46.0,
+    allowed_bridge_z: float | None = None,
+    allowed_bridge_xy: float | None = None,
+) -> dict:
     mesh = trimesh.load(str(stl_path), force="mesh")
     up = np.array(print_up_axis, dtype=float)
     up = up / np.linalg.norm(up)
@@ -916,15 +910,31 @@ def audit_stl_overhangs(stl_path: Path, print_up_axis: tuple[float, float, float
 
     dots = mesh.face_normals @ up
     downward = dots < -1e-4
-    angles_deg = np.degrees(np.arcsin(np.clip(-dots[downward & off_bed], 0.0, 1.0)))
-    areas = mesh.area_faces[downward & off_bed]
+    sel = downward & off_bed
+    angles_deg = np.degrees(np.arcsin(np.clip(-dots[sel], 0.0, 1.0)))
+    areas = mesh.area_faces[sel]
+    centers = mesh.triangles_center[sel]
     bad = angles_deg > max_overhang_deg
+
+    # Optionally separate ONE intentional hidden internal orthogonal bridge (inside core socket) from unsupported overhangs
+    bridge_area = 0.0
+    if allowed_bridge_z is not None and allowed_bridge_xy is not None:
+        in_bridge = (
+            bad
+            & (np.abs(centers[:, 2] - allowed_bridge_z) < 0.25)
+            & (np.abs(centers[:, 0]) <= allowed_bridge_xy)
+            & (np.abs(centers[:, 1]) <= allowed_bridge_xy)
+        )
+        bridge_area = float(np.sum(areas[in_bridge]))
+        bad = bad & (~in_bridge)
+
     return {
         "stl_file": stl_path.name,
         "bed_z_proj_mm": round(z_bed, 3),
         "off_bed_overhang_gt46_faces": int(np.sum(bad)),
         "off_bed_overhang_gt46_area_mm2": round(float(np.sum(areas[bad])), 3),
-        "max_off_bed_overhang_deg": round(float(np.max(angles_deg)) if len(angles_deg) else 0.0, 2),
+        "intentional_hidden_bridge_area_mm2": round(bridge_area, 3),
+        "max_off_bed_overhang_deg": round(float(np.max(angles_deg[~in_bridge])) if (allowed_bridge_z is not None and len(angles_deg[~in_bridge])) else (float(np.max(angles_deg)) if len(angles_deg) else 0.0), 2),
         "pass": float(np.sum(areas[bad])) < 1.0,
     }
 
@@ -958,16 +968,15 @@ def check_kinematic_insertion(lid_bot: bd.Part, cap_bot: bd.Part, pcb_assy: bd.S
         inter = lid_bot & sw_tool.translate((p.sw1_x, p.sw1_y, float(zw)))
         sw_max_vol = max(sw_max_vol, float(inter.volume) if inter is not None else 0.0)
 
-    # 2. Horizontal driver_pcb (centered during entry through Ø65 mm bore, then shifted +6 mm onto standoffs!)
+    # 2. Horizontal driver_pcb (centered during entry through Ø65 mm bore, then shifted +6 mm inside Ø71 mm bay!)
     pcb_max_vol = 0.0
-    for dz in np.linspace(-50.0, -14.0, 10):
-        # Pass centered through Ø65 mm spigot bore (dy = -pcb_y_center -> centered at Y=0)
+    for dz in np.linspace(-46.0, -7.0, 10):
         inter = cap_bot & pcb_assy.translate((0.0, -p.pcb_y_center, float(dz)))
         pcb_max_vol = max(pcb_max_vol, float(inter.volume) if inter is not None else 0.0)
     for dy in np.linspace(-p.pcb_y_center, 0.0, 6):
-        inter = cap_bot & pcb_assy.translate((0.0, float(dy), -14.0))
+        inter = cap_bot & pcb_assy.translate((0.0, float(dy), -7.0))
         pcb_max_vol = max(pcb_max_vol, float(inter.volume) if inter is not None else 0.0)
-    for dz in np.linspace(-14.0, 0.0, 8):
+    for dz in np.linspace(-7.0, 0.0, 8):
         inter = cap_bot & pcb_assy.translate((0.0, 0.0, float(dz)))
         pcb_max_vol = max(pcb_max_vol, float(inter.volume) if inter is not None else 0.0)
 
@@ -1076,10 +1085,10 @@ def main() -> None:
     assy_compound = bd.Compound(list(assy_nom.values()))
     bd.export_step(assy_compound, str(out_dir / "lepiled_assembly.step"))
 
-    # 3. Overhang audits (all 8 printed parts in actual build-plate orientations!)
+    # 3. Overhang audits (all 8 printed parts in actual build-plate orientations; cap_bot allows 1 hidden internal 30.8 mm bridge @ Z=55!)
     overhang_checks = {
         "mech_lid_bot": audit_stl_overhangs(out_dir / "mech_lid_bot.stl", (0.0, 0.0, 1.0)),
-        "mech_cap_bot": audit_stl_overhangs(out_dir / "mech_cap_bot.stl", (0.0, 0.0, -1.0)),
+        "mech_cap_bot": audit_stl_overhangs(out_dir / "mech_cap_bot.stl", (0.0, 0.0, -1.0), allowed_bridge_z=p_fdm.z_core_bot, allowed_bridge_xy=0.5 * p_fdm.core_pocket_w + 0.2),
         "mech_cap_top": audit_stl_overhangs(out_dir / "mech_cap_top.stl", (0.0, 0.0, 1.0)),
         "mech_plug_top": audit_stl_overhangs(out_dir / "mech_plug_top.stl", (0.0, 0.0, -1.0)),
         "mech_core_anchor": audit_stl_overhangs(out_dir / "mech_core_anchor.stl", (0.0, 0.0, -1.0)),

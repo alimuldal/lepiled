@@ -404,8 +404,8 @@ SK578_50 = HeatsinkSpec("SK 578/50 SA", "radial", 60.0, 24.0, 50.0, 22, 1.4)
 SK80_70 = HeatsinkSpec("SK LED R 80 SA", "radial", 80.0, 34.0, 70.0, 22, 1.2)
 DISC_72 = HeatsinkSpec("Flat Al Disc 72x4", "flat_disc", 72.0, 0.0, 4.0, 0, 0.0)
 PLASTIC_POCKET = HeatsinkSpec("Sealed PETG/ASA Pocket", "plastic_pocket", 92.0, 0.0, 35.0, 0, 0.0)
-PROTRUDING_BARE_REV46 = HeatsinkSpec("Protruding 55.5mm Bare 30x30x3 Al Core", "protruding_core", 30.0, 24.0, 55.5, 0, 0.0, eps=0.20)
-PROTRUDING_BLACK_REV46 = HeatsinkSpec("Protruding 55.5mm Matte-Black 30x30x3 Al Core", "protruding_core", 30.0, 24.0, 55.5, 0, 0.0, eps=0.88)
+PROTRUDING_BARE_REV46 = HeatsinkSpec("Protruding 63.0mm Bare 30x30x3 Al Core", "protruding_core", 30.0, 24.0, 63.0, 0, 0.0, eps=0.20)
+PROTRUDING_BLACK_REV46 = HeatsinkSpec("Protruding 63.0mm Matte-Black 30x30x3 Al Core", "protruding_core", 30.0, 24.0, 63.0, 0, 0.0, eps=0.88)
 PROTRUDING_BARE_85 = HeatsinkSpec("Legacy Rev 4.4 85.5mm Bare 40x40x3 Al Core", "protruding_core", 40.0, 34.0, 85.5, 0, 0.0, eps=0.20)
 
 

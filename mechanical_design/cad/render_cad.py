@@ -133,9 +133,9 @@ def render_section_annotated(
 ) -> None:
     """Render an exact parallel-projection orthographic section and overlay true-to-scale mm dimensions & weight."""
     win_w, win_h = 1350, 1600
-    z_center = 140.0
-    par_scale = 176.0  # Exact world mm half-height -> Z ∈ [-36, +316] mm!
-    half_x = par_scale * (win_w / win_h)  # 148.5 mm -> X/Y ∈ [-148.5, +148.5] mm!
+    z_center = 136.0
+    par_scale = 175.0  # Exact world mm half-height -> Z ∈ [-39, +311] mm!
+    half_x = par_scale * (win_w / win_h)  # 147.66 mm -> X/Y ∈ [-147.7, +147.7] mm!
 
     pl = pv.Plotter(off_screen=True, window_size=(win_w, win_h))
     pl.set_background("#f4f6f8")
@@ -183,32 +183,33 @@ def render_section_annotated(
     _draw_hdim(ax, p.z_plug_top_end + 14.0, -r_core, r_core, f"{p.core_w_nom:.0f} mm Al core", z_ref0=p.z_core_top, z_ref1=p.z_core_top, text_dz=3.2, va="bottom")
 
     if plane == "YZ":
-        # Inner-left vertical breakdown: Base (101.0), Optical Window (86.0), Chimney (57.0)
+        # Inner-left vertical breakdown: Base (76.5), Optical Window (86.0), Chimney (63.0)
         _draw_vdim(ax, -66.0, 0.0, p.z_cap_bot_top, f"{p.z_cap_bot_top:.1f} mm\nbase", x_ref0=-r_base, x_ref1=-r_col, text_dx=-3.0, ha="right", fontsize=8.4)
         _draw_vdim(ax, -66.0, p.z_cap_bot_top, p.z_cap_top_bot, f"{p.exposed_glass_window:.1f} mm\nwindow", x_ref0=-r_col, x_ref1=-r_col, text_dx=-3.0, ha="right", fontsize=8.4)
         _draw_vdim(ax, -66.0, p.z_cap_top_top, p.z_core_top, f"{p.core_protrusion_mm:.1f} mm\nchimney", x_ref0=-19.4, x_ref1=-r_core, text_dx=-3.0, ha="right", fontsize=8.4)
 
         # Right side horizontal diameters & key internal callouts
-        _draw_hdim(ax, 224.0, -r_brim, r_brim, f"Ø{p.cap_top_brim_od:.0f} mm rain eaves", z_ref0=205.0, z_ref1=205.0, text_dz=3.2, va="bottom", fontsize=8.5)
+        _draw_hdim(ax, p.z_cap_top_top + 7.5, -r_brim, r_brim, f"Ø{p.cap_top_brim_od:.0f} mm rain eaves", z_ref0=p.z_cap_top_brim_rim_top, z_ref1=p.z_cap_top_brim_rim_top, text_dz=3.2, va="bottom", fontsize=8.5)
         _draw_vdim(ax, 66.0, p.z_glass_bot, p.z_glass_top, f"{p.glass_length:.0f} mm\nXT PMMA\n(Ø{p.glass_od_nom:.0f}×{p.glass_id_nom:.0f})", x_ref0=r_shroud, x_ref1=r_shroud, text_dx=3.5, ha="left", fontsize=8.3)
-        _draw_vdim(ax, 66.0, 0.0, p.z_lid_bot_start, f"{p.z_lid_bot_start:.0f} mm skirt", x_ref0=r_base, x_ref1=42.0, text_dx=3.5, ha="left", fontsize=8.3)
+        _draw_vdim(ax, 66.0, 0.0, p.z_lid_bot_start, f"{p.z_lid_bot_start:.1f} mm skirt", x_ref0=r_base, x_ref1=42.0, text_dx=3.5, ha="left", fontsize=8.3)
 
-        _draw_callout(ax, (15.0, p.z_hang_hole), (56.0, 251.0), "Ø8 mm hang hole\n+ Signal-Orange bushing")
-        _draw_callout(ax, (26.0, p.pcb_z_fcu), (56.0, 56.0), "Driver PCB (36×46 mm)\non M2.5 brass inserts")
-        _draw_callout(ax, (15.0, 12.0), (56.0, 32.0), "SW1 toggle + boot\n(4 mm ground clr)")
-        _draw_callout(ax, (-18.5, 13.0), (-56.0, -10.0), "2-piece split clamp\n+ 90° USB-C plug", ha="right")
+        _draw_callout(ax, (15.0, p.z_hang_hole), (56.0, p.z_hang_hole - 6.0), "Ø8 mm hang hole\n+ Signal-Orange bushing")
+        _draw_callout(ax, (26.0, p.pcb_z_fcu), (56.0, p.pcb_z_fcu + 8.0), "Driver PCB (36×46 mm)\non M2.5 brass inserts")
+        _draw_callout(ax, (15.0, 11.0), (56.0, 30.0), "SW1 toggle + boot\n(2.5 mm ground clr)")
+        _draw_callout(ax, (-18.5, 12.0), (-56.0, -10.0), "2-piece split clamp\n+ 90° USB-C plug", ha="right")
     else:
         # XZ plane: show Al core 200 mm length, 32 mm LED star pitch, solid hub & anchor/lock screws
         _draw_vdim(ax, -66.0, p.z_core_bot, p.z_core_top, f"{p.core_length:.0f} mm\nstock Al tube", x_ref0=-r_core, x_ref1=-r_core, text_dx=-3.0, ha="right", fontsize=8.5)
         _draw_vdim(ax, 66.0, p.z_led_vis, p.z_led_uv, f"{p.axial_uv_to_vis_mm:.0f} mm\nstar pitch", x_ref0=20.0, x_ref1=20.0, text_dx=3.5, ha="left", fontsize=8.5)
-        _draw_hdim(ax, 224.0, -r_brim, r_brim, f"Ø{p.cap_top_brim_od:.0f} mm eaves / Ø{p.cap_top_skirt_od:.0f} mm collar", z_ref0=205.0, z_ref1=205.0, text_dz=3.2, va="bottom", fontsize=8.4)
+        _draw_hdim(ax, p.z_cap_top_top + 7.5, -r_brim, r_brim, f"Ø{p.cap_top_brim_od:.0f} mm eaves / Ø{p.cap_top_skirt_od:.0f} mm collar", z_ref0=p.z_cap_top_brim_rim_top, z_ref1=p.z_cap_top_brim_rim_top, text_dz=3.2, va="bottom", fontsize=8.4)
 
-        _draw_callout(ax, (15.0, p.z_hang_hole), (56.0, 251.0), "Ø8 mm hang hole\n+ 8 mm finial cap")
-        _draw_callout(ax, (22.0, p.z_cap_top_lock), (56.0, 204.0), "2× M3×10 top lock\n(4.6 mm solid shoulder)")
-        _draw_callout(ax, (18.0, 160.0), (56.0, 174.0), "8× 20 mm Cu DTP stars\n(4 UV + 4 Vis)")
-        _draw_callout(ax, (26.5, 94.0), (56.0, 96.0), "Solid R=24.4 mm hub\n+ 60×3.5 VMQ50 O-ring")
-        _draw_callout(ax, (6.5, 62.0), (56.0, 62.0), "2× M3×16 dry-bay\ncore anchor (0 side holes)")
-        _draw_callout(ax, (16.0, 32.0), (56.0, 30.0), "29.8 mm D12 lightpipe\n(45° side-visible tip)")
+        _draw_callout(ax, (15.0, p.z_hang_hole), (56.0, p.z_hang_hole - 6.0), "Ø8 mm hang hole\n+ 8 mm finial cap")
+        _draw_callout(ax, (22.0, p.z_cap_top_lock), (56.0, p.z_cap_top_lock - 6.0), "2× M3×10 top lock\n(4.6 mm solid shoulder)")
+        _draw_callout(ax, (18.0, p.z_led_uv), (56.0, p.z_led_uv + 16.0), "8× 20 mm Cu DTP stars\n(4 UV + 4 Vis)")
+        _draw_callout(ax, (26.5, p.z_glass_bot + 7.5), (56.0, p.z_glass_bot + 10.0), "Solid R=24.4 mm hub\n+ 60×3.5 VMQ50 O-ring")
+        _draw_callout(ax, (6.5, p.cap_bot_ceiling_z + 3.0), (56.0, p.cap_bot_ceiling_z + 2.0), "2× M3×12 dry-bay anchor\n(5.5 mm bulkhead, 0 side holes)")
+        d12_len = round((p.pcb_z_fcu - 0.80 - 1.40) - (p.z_lid_bot_start - 1.0), 1)
+        _draw_callout(ax, (16.0, 28.0), (56.0, 26.0), f"{d12_len:.1f} mm D12 lightpipe\n(45° side-visible tip)")
 
     # Crisp specification & approximate weight card (top-right corner)
     mass_text = (
@@ -259,23 +260,23 @@ def main() -> None:
     render_assembly_iso(parts, cad_dir / "assembly_iso.png")
     render_section_annotated(
         parts, p, mass,
-        bounds=(-100, 100, 0, 100, -10, 290),
-        title="Section XZ (Y = 0) — Rev 4.6 Solid Hubs, Dry-Bay Core Anchor & Lofted Roof",
-        cam_pos=[(0, -690, 140), (0, 0, 140), (0, 0, 1)],
+        bounds=(-100, 100, 0, 100, -10, 275),
+        title="Section XZ (Y = 0) — Rev 4.6 Compact Base, Solid Hubs, Dry-Bay Anchor & Lofted Roof",
+        cam_pos=[(0, -690, 136), (0, 0, 136), (0, 0, 1)],
         plane="XZ",
         out_path=cad_dir / "assembly_section_xz.png",
     )
     render_section_annotated(
         parts, p, mass,
-        bounds=(-100, 0, -100, 100, -10, 290),
-        title="Section YZ (X = 0) — Rev 4.6 Horizontal PCB, 90° USB-C, Split Clamp & SW1",
-        cam_pos=[(690, 0, 140), (0, 0, 140), (0, 0, 1)],
+        bounds=(-100, 0, -100, 100, -10, 275),
+        title="Section YZ (X = 0) — Rev 4.6 Compact Base, Horizontal PCB, Split Clamp & SW1",
+        cam_pos=[(690, 0, 136), (0, 0, 136), (0, 0, 1)],
         plane="YZ",
         out_path=cad_dir / "assembly_section_yz.png",
     )
-    render_cap_detail(cad_dir / "mech_lid_bot.stl", "MECH-LID-BOT (Recessed Ø79.4 + Split Port + Interior Vent + D12)", 24.0, cad_dir / "lid_bot_detail.png")
-    render_cap_detail(cad_dir / "mech_cap_bot.stl", "MECH-CAP-BOT (Unified Tapered Frustum + Intact Core Hub + M2.5 Standoffs)", 50.0, cad_dir / "cap_bot_detail.png")
-    render_cap_detail(cad_dir / "mech_cap_top.stl", "MECH-CAP-TOP (Lofted Square-to-Round Roof + Solid R=24.4 Hub)", 202.0, cad_dir / "cap_top_detail.png")
+    render_cap_detail(cad_dir / "mech_lid_bot.stl", "MECH-LID-BOT (Recessed Ø79.4 + Split Port + Interior Vent + D12)", 22.0, cad_dir / "lid_bot_detail.png")
+    render_cap_detail(cad_dir / "mech_cap_bot.stl", "MECH-CAP-BOT (Compact 80.0 mm Tapered Frustum + Intact Hub + M2.5 Standoffs)", 40.0, cad_dir / "cap_bot_detail.png")
+    render_cap_detail(cad_dir / "mech_cap_top.stl", "MECH-CAP-TOP (Lofted Square-to-Round Roof + Solid R=24.4 Hub)", 177.0, cad_dir / "cap_top_detail.png")
     print("Rendered all 6 Rev 4.6 CAD PNGs with orthographic dimensions & weight badges cleanly.")
 
 

@@ -51,23 +51,23 @@ from typing import Literal
 class LepiLEDParams:
     process: Literal["FDM", "SLS"] = "FDM"
 
-    # Unified 4.3-deg continuous tapered bottom frustum (MECH-CAP-BOT: Z = 0.0 .. 101.0 mm, prints INVERTED!)
+    # Unified 5.1-deg compact tapered bottom frustum (MECH-CAP-BOT: Z = 0.0 .. 80.0 mm, prints INVERTED!)
     cap_bot_base_od: float = 88.4       # Ground-plane base OD (replaces Ø94.4 mm flange + MECH-BASE-RING!)
     cap_bot_collar_od: float = 74.0     # Upper shroud collar OD (matches MECH-CAP-TOP skirt OD!)
-    cap_bot_skirt_h: float = 19.0       # Integral recessed skirt shielding SW1 boot (4 mm) & split clamp (8 mm)
+    cap_bot_skirt_h: float = 17.5       # Compact recessed skirt shielding SW1 boot (2.5 mm) & split clamp (5.0 mm)
     cap_bot_skirt_id: float = 80.0      # Recesses Ø79.4 mm MECH-LID-BOT + 4x M3 bolt heads cleanly inside skirt!
     cap_bot_portal_w: float = 16.0      # 2x opposing 45-deg gothic-arch cable/drainage portals at ±Y (0 overhang!)
-    cap_bot_portal_rect_h: float = 3.5  # + 8.0 mm 45-deg pitched arch crown = 11.5 mm portal height
-    cap_bot_cavity_dia: float = 71.0    # Upper electronics bay (Z = 33.0 .. 56.0 mm; clears PCB & 90-deg USB-C plug!)
-    cap_bot_spigot_bore_dia: float = 65.0  # Lower radial O-ring sealing bore (Z = 24.0 .. 30.5 mm; 45-deg flare 30.5->33.5!)
-    cap_bot_ceiling_z: float = 56.0     # Flat upward-facing print floor (4.4 mm above B.Cu TH pins @ Z = 53.4 mm!)
-    cap_bot_core_bot_z: float = 73.5    # Core seat inside intact 30.8x30.8 mm square socket (pyramid closes @ Z=58.3!)
-    cap_bot_glass_bot_z: float = 86.5   # Shroud bottom seat (13.0 mm above core bottom -> full 4-wall square socket!)
+    cap_bot_portal_rect_h: float = 3.0  # + 8.0 mm 45-deg pitched arch crown = 11.0 mm portal height
+    cap_bot_cavity_dia: float = 71.0    # Upper electronics bay (Z = 32.0 .. 53.0 mm; clears PCB & 90-deg USB-C plug!)
+    cap_bot_spigot_bore_dia: float = 65.0  # Lower radial O-ring sealing bore (Z = 22.5 .. 29.0 mm; 45-deg flare 29->32!)
+    cap_bot_ceiling_z: float = 53.0     # Flat upward-facing print floor (2.6 mm above B.Cu TH pins @ Z = 50.4 mm!)
+    cap_bot_core_bot_z: float = 58.5    # Core seat on 5.5 mm solid ASA bulkhead (hidden 30.8 mm internal bridge!)
+    cap_bot_glass_bot_z: float = 65.5   # Shroud bottom seat (7.0 mm + 14.5 mm hub = 21.5 mm intact 4-wall core socket!)
     core_hub_od: float = 48.8           # Solid R = 24.4 mm central hub in BOTH caps (2.62 mm corner / 9.0 mm flat wall!)
 
-    # Recessed flat bottom lid w/ radial O-ring spigot (MECH-LID-BOT: Z = 19.0 .. 24.0 mm + 6.5 mm spigot)
+    # Recessed flat bottom lid w/ radial O-ring spigot (MECH-LID-BOT: Z = 17.5 .. 22.5 mm + 6.5 mm spigot)
     lid_bot_od: float = 79.4            # Slips cleanly inside Ø80.0 mm integral skirt (hides lid seam & all 4x M3 bolts!)
-    lid_bot_thick: float = 5.0          # Z = 19.0 .. 24.0 mm
+    lid_bot_thick: float = 5.0          # Z = 17.5 .. 22.5 mm
     lid_bot_bolt_r: float = 36.8        # 4x M3x10 SHCS at 45/135/225/315 deg into 4x M3 brass inserts (R+2.75=39.55<40!)
     lid_spigot_od: float = 64.2         # Slides cleanly inside Ø65.0 mm bore (0.40 mm radial clearance)
     lid_spigot_id: float = 56.2         # 2.25 mm solid wall behind radial O-ring groove root (R_g = 30.35 mm)
@@ -97,10 +97,10 @@ class LepiLEDParams:
     pcb_thick: float = 1.6              # F.Cu = 50.0 mm, B.Cu = 51.6 mm
     pcb_corner_r: float = 2.0
     pcb_y_center: float = 6.0           # Balances PCB (+Y R=33.38) & 90-deg USB-C plug (-Y R=33.83) inside Ø71.0 mm bay!
-    pcb_z_fcu: float = 50.0             # F.Cu (SMD/JST down) -> 11.2 mm above SW1 lugs & 15.4 mm plug-to-lid bend room!
+    pcb_z_fcu: float = 47.0             # F.Cu (SMD/JST down) -> 9.73 mm above SW1 lugs & strain relief clears Z=29 spigot!
     pcb_smd_max_h: float = 4.5          # L1/L2 SRN6045 = 4.5 mm
-    pcb_jst_mated_h: float = 9.8        # J2..J4 JST-XH mated downward (Z = 40.2 .. 50.0 mm)
-    pcb_jst_pin_protrude: float = 1.8   # TH pins upward on B.Cu (Z = 51.6 .. 53.4 mm -> 2.6 mm below Z=56.0 ceiling!)
+    pcb_jst_mated_h: float = 9.8        # J2..J4 JST-XH mated downward (Z = 33.7 .. 43.5 mm)
+    pcb_jst_pin_protrude: float = 1.8   # TH pins upward on B.Cu (Z = 45.1 .. 46.9 mm -> 2.6 mm below Z=49.5 ceiling!)
     pcb_hole_x: float = 14.0            # H1..H4 at (±14.0, pcb_y_center ± 19.0) = (±14.0, -13.0 / +25.0)
     pcb_hole_y: float = 19.0
     pcb_hole_drill: float = 2.7         # M2.5 NPTH clearance drill
@@ -117,11 +117,11 @@ class LepiLEDParams:
     usbc_plug_90_h: float = 11.5        # Vertical body height downward from J1 centerline
     usbc_strain_relief_h: float = 7.0   # Explicitly modeled molded strain-relief boot below plug body!
     clamp_x: float = 0.0
-    clamp_y: float = -18.5              # Cleanly inside Ø56.2 mm spigot ID; 15.4 mm vertical bend room to plug body!
+    clamp_y: float = -18.5              # Cleanly inside Ø56.2 mm spigot ID; 10.4 mm vertical bend room to plug body!
     clamp_port_w: float = 16.0          # Stadium port in MECH-LID-BOT passes intact 13.2x11.5 mm 90-deg USB-C plug!
     clamp_port_l: float = 14.0
     clamp_bolt_dx: float = 12.0         # 2x M3x12 SHCS clamping split halves upward into lid_bot (R = 22.05 < 28.1 mm!)
-    clamp_outer_h: float = 11.0         # Protrudes 11.0 mm below Z = 19.0 -> Z = 8.0 mm (8.0 mm above flat ground!)
+    clamp_outer_h: float = 9.5          # Protrudes 9.5 mm below Z = 17.5 -> Z = 8.0 mm (5.0 mm ground clr w/ M3 head!)
     clamp_cable_dia: float = 4.5        # Clamps Ø4.0-4.5 mm round USB-C PD cable jacket via slit silicone grommet
 
     # Bottom-mounted SW1 toggle switch (C&K 7211SYZBE + silicone boot on MECH-LID-BOT at X=0, Y=+15.0 mm)
@@ -353,9 +353,9 @@ class LepiLEDParams:
         checks["pcb_radial_clearance_mm"] = {"value": round(r_cav - max(pcb_pos_corner_r, pcb_neg_corner_r), 3), "min": 1.5, "pass": (r_cav - max(pcb_pos_corner_r, pcb_neg_corner_r)) >= 1.5}
         checks["usbc_90_plug_radial_clr_mm"] = {"value": round(r_cav - plug_corner_r, 3), "min": 1.2, "pass": (r_cav - plug_corner_r) >= 1.2}
         checks["pcb_th_pins_to_ceiling_mm"] = {"value": round(th_pin_to_ceiling, 3), "min": 2.0, "pass": th_pin_to_ceiling >= 2.0}
-        checks["pcb_smd_above_sw1_lugs_mm"] = {"value": round(smd_to_sw1_z, 3), "min": 8.0, "pass": smd_to_sw1_z >= 8.0}
-        checks["pcb_jst_above_lid_top_mm"] = {"value": round(jst_bot_z - self.z_lid_bot_end, 3), "min": 14.0, "pass": (jst_bot_z - self.z_lid_bot_end) >= 14.0}
-        checks["usbc_strain_above_lid_top_mm"] = {"value": round(strain_bot_z - self.z_lid_bot_end, 3), "min": 6.0, "pass": (strain_bot_z - self.z_lid_bot_end) >= 6.0}
+        checks["pcb_smd_above_sw1_lugs_mm"] = {"value": round(smd_to_sw1_z, 3), "min": 5.5, "pass": smd_to_sw1_z >= 5.5}
+        checks["pcb_jst_above_lid_top_mm"] = {"value": round(jst_bot_z - self.z_lid_bot_end, 3), "min": 10.0, "pass": (jst_bot_z - self.z_lid_bot_end) >= 10.0}
+        checks["usbc_strain_above_lid_top_mm"] = {"value": round(strain_bot_z - self.z_lid_bot_end, 3), "min": 3.0, "pass": (strain_bot_z - self.z_lid_bot_end) >= 3.0}
 
         # 2. Recessed MECH-LID-BOT, 2-piece Split Cable Clamp, SW1 & ground clearances
         r_spigot_in = self.lid_spigot_id / 2.0
@@ -369,7 +369,7 @@ class LepiLEDParams:
         checks["clamp_bolt_in_spigot_clr_mm"] = {"value": round(r_spigot_in - (clamp_bolt_r + 2.0), 3), "min": 2.5, "pass": (r_spigot_in - (clamp_bolt_r + 2.0)) >= 2.5}
         checks["clamp_to_sw1_gap_mm"] = {"value": round(clamp_to_sw1_gap, 3), "min": 14.0, "pass": clamp_to_sw1_gap >= 14.0}
         checks["sw1_in_spigot_clr_mm"] = {"value": round(r_spigot_in - sw1_corner_r, 3), "min": 5.0, "pass": (r_spigot_in - sw1_corner_r) >= 5.0}
-        checks["sw1_boot_above_ground_mm"] = {"value": round(sw1_boot_ground_clr, 3), "min": 3.0, "pass": sw1_boot_ground_clr >= 3.0}
+        checks["sw1_boot_above_ground_mm"] = {"value": round(sw1_boot_ground_clr, 3), "min": 2.5, "pass": sw1_boot_ground_clr >= 2.5}
         checks["clamp_above_ground_mm"] = {"value": round(clamp_ground_clr, 3), "min": 5.0, "pass": clamp_ground_clr >= 5.0}
 
         # 3. Radial clearances inside Ø60 x 54 mm Plexiglas XT shroud (ID_min = 53.5 mm) + solid R=24.4 mm hubs

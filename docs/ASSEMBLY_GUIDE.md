@@ -10,11 +10,11 @@
 - **Pre-Mounted LEDs (`Zero Bare-SMD Reflow`):** Order `8×` pre-mounted **`20 mm` Copper DTP star MCPCBs** (`4× Luminus SST-10-UV 365 nm`, `2× Cree XP-E2 Royal Blue 455 nm`, `1× XP-E2 Green 528 nm`, `1× XP-E2 Cool White 6200–6500 K`) from Kaidomain/Convoy.
 - **3D Printing (8 Support-Free FDM Parts in Matte Black ASA + Signal-Orange Accent, `0.2 mm` layers, `4` perimeters, `25%` gyroid infill, `0` supports):**
   - *Recommended CMF:* Print all structural shells in **Matte Black ASA** (`HDT 95 °C`, UV-A immune). Optional slicer **fuzzy skin (`0.15 mm` depth / `0.30 mm` spacing)** on the exterior tapered wall of `MECH-CAP-BOT` (with a cylindrical keepout over the O-ring bore) produces a rugged bead-blasted grip texture.
-  - [mech_cap_bot.step](../mechanical_design/cad/mech_cap_bot.step) — **inverted** (`Z = 101.0 mm` top rim flat on bed, `0.160 mm²` `>46°` overhang).
-  - [mech_lid_bot.step](../mechanical_design/cad/mech_lid_bot.step) — **upright** (`Z = 19.0 mm` flat bottom face on bed, `0.000 mm²` overhang).
+  - [mech_cap_bot.step](../mechanical_design/cad/mech_cap_bot.step) — **inverted** (`Z = 80.0 mm` top rim flat on bed, `0.000 mm²` unsupported overhang; prints one clean hidden `30.8 mm` orthogonal bridge inside the core socket with zero supports).
+  - [mech_lid_bot.step](../mechanical_design/cad/mech_lid_bot.step) — **upright** (`Z = 17.5 mm` flat bottom face on bed, `0.000 mm²` overhang).
   - [mech_cable_clamp.step](../mechanical_design/cad/mech_cable_clamp.step) — **print `2×`**, upright on flat bottom face (`0.000 mm²` overhang).
   - [mech_core_anchor.step](../mechanical_design/cad/mech_core_anchor.step) — **inverted** on flat top face (`0.000 mm²` overhang).
-  - [mech_cap_top.step](../mechanical_design/cad/mech_cap_top.step) — **upright** (`Z = 187.0 mm` bottom rim flat on bed, `0.000 mm²` overhang).
+  - [mech_cap_top.step](../mechanical_design/cad/mech_cap_top.step) — **upright** (`Z = 166.0 mm` bottom rim flat on bed, `0.000 mm²` overhang).
   - [mech_plug_top.step](../mechanical_design/cad/mech_plug_top.step) — **inverted** on flat top finial face (`0.000 mm²` overhang).
   - [mech_hang_bushing.step](../mechanical_design/cad/mech_hang_bushing.step) — **print `2×` in Signal Orange (`RAL 2009`)**, flat on outer flange face (`0.000 mm²` overhang).
   - [mech_drill_jig.step](../mechanical_design/cad/mech_drill_jig.step) — flat back plate on bed (`0.000 mm²` overhang; PLA/PETG fine).
@@ -48,8 +48,8 @@
 | **Lugs `1` and `4`** | **No Connect (leave bare)** | — | — | — |
 
    - Seat `SW1` into `MECH-LID-BOT` (`X = 0, Y = +15.0 mm`, oriented so pulling toward the smooth `0`-rib outer rim = **`OFF`**) and tighten `SW1_BOOT` (`C&K 759D02000`) from underneath.
-   - Stick the **`Ø8 mm` IP68 ePTFE breather vent patch (`MECH-VENT-1`)** cleanly over the `Ø2.5 mm` vent bore (`X = -20.0, Y = 0.0 mm`) on the sheltered **INSIDE top face (`Z = 24.0 mm`)** of `MECH-LID-BOT` where mud and fingers can never disturb it.
-   - Cut a **`29.8 ± 0.3 mm`** length of `Ø2.5 mm` clear PMMA rod (or clear filament), sand a **`45°` bevel** on its bottom tip aimed outward toward the side portal, and seal it into the `D12` lightpipe bore (`X = +16.0, Y = -0.6 mm`, protruding `1.0 mm` below `MECH-LID-BOT`) with a tiny dab of neutral-cure oxime silicone (`MECH-SEAL-1`).
+   - Stick the **`Ø8 mm` IP68 ePTFE breather vent patch (`MECH-VENT-1`)** cleanly over the `Ø2.5 mm` vent bore (`X = -20.0, Y = 0.0 mm`) on the sheltered **INSIDE top face (`Z = 22.5 mm`)** of `MECH-LID-BOT` where mud and fingers can never disturb it.
+   - Cut a **`28.3 ± 0.3 mm`** length of `Ø2.5 mm` clear PMMA rod (or clear filament), sand a **`45°` bevel** on its bottom tip aimed outward toward the side portal, and seal it into the `D12` lightpipe bore (`X = +16.0, Y = -0.6 mm`, protruding `1.0 mm` below `MECH-LID-BOT`) with a tiny dab of neutral-cure oxime silicone (`MECH-SEAL-1`).
 
 ## 3. Staged Bench Bring-Up (Standard USB-C PD Laptop Charger)
 
@@ -63,7 +63,7 @@
 1. **Internal Dry-Bay Core Lock (`MECH-CORE-ANCHOR` → `MECH-CAP-BOT`, Zero Exterior Holes!):**
    - Slide `MECH-CORE-ANCHOR` into the bottom of `MECH-HS-CORE` and secure flush with **`2× M3 × 8 mm` CSK screws** through the countersunk `±X` holes (`7.5 mm` from bottom).
    - Pass the two pre-crimped 2-pin JST-XH plugs (`HARN-01`) straight down through the two `9.0 × 7.5 mm` `±Y` wire channels in `MECH-CAP-BOT`.
-   - Seat `MECH-HS-CORE` fully into `MECH-CAP-BOT`'s intact `30.8 × 30.8 mm` square socket, reach into the open bottom bay *before* installing `driver_pcb`, and tighten **`2× M3 × 16 mm` SHCS** straight upward at `(±6.5, 0.0 mm)` through the solid `8.6 mm` bulkhead into `MECH-CORE-ANCHOR`.
+   - Seat `MECH-HS-CORE` fully into `MECH-CAP-BOT`'s intact `30.8 × 30.8 mm` square socket, reach into the open bottom bay *before* installing `driver_pcb`, and tighten **`2× M3 × 12 mm` SHCS** straight upward at `(±6.5, 0.0 mm)` through the solid `5.5 mm` bulkhead into `MECH-CORE-ANCHOR`.
 2. **Shroud, Ovality-Safe O-Rings, Lofted Roof, Finial & Signal-Orange Hang Bushing:**
    - Lightly grease **`MECH-GASKET-1/2` (`60 × 3.5 mm` soft VMQ50/60)** with silicone grease and seat them in `MECH-CAP-BOT` and `MECH-CAP-TOP`.
    - Slide the beveled extruded `XT PMMA` shroud (`MECH-TUBE-1`) down into `MECH-CAP-BOT`, then slide `MECH-CAP-TOP` down over the matte-black core onto the shroud.
@@ -72,5 +72,5 @@
 3. **Horizontal `driver_pcb`, Split Cable Clamp & Recessed Bottom Lid:**
    - Plug `J2` (UV) and `J3` (Vis) into `driver_pcb` *before* fastening the board, then bolt `driver_pcb` horizontally (SMD/JST-side down) onto the `4× M2.5` brass heat-set insert standoffs inside `MECH-CAP-BOT` using **`4× M2.5 × 6 mm` pan screws**.
    - Pass the intact `90°` USB-C plug (`HARN-04`) straight up through the `16.0 × 14.0 mm` stadium port in `MECH-LID-BOT` and plug it firmly into `J1`. Mate `SW1`'s `115 mm` `HARN-02` pigtail into `J4`.
-   - Wrap a short slit silicone sleeve (or neat bead of neutral-cure oxime silicone) around the `Ø4.0–4.5 mm` USB-C cable jacket, sandwich both **`MECH-CABLE-CLAMP`** halves around it into the lid port, and tighten **`2× M3 × 14 mm` SHCS** upward into `MECH-LID-BOT`'s brass inserts.
+   - Wrap a short slit silicone sleeve (or neat bead of neutral-cure oxime silicone) around the `Ø4.0–4.5 mm` USB-C cable jacket, sandwich both **`MECH-CABLE-CLAMP`** halves around it into the lid port, and tighten **`2× M3 × 12 mm` SHCS** upward into `MECH-LID-BOT`'s brass inserts.
    - Lightly grease **`MECH-GASKET-3` (`62 × 2.5 mm` VMQ70)** on `MECH-LID-BOT`'s spigot, slide `MECH-LID-BOT` straight up into `MECH-CAP-BOT`'s recessed skirt, and fasten with **`4× M3 × 10 mm` SHCS** into the `4× M3` brass inserts. Route the cable out through either smooth `45°`-arch portal when standing upright, or hang dead plumb from the Signal-Orange bushed hang hole!

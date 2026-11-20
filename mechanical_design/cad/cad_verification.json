@@ -4,15 +4,15 @@
     "process": "FDM",
     "cap_bot_base_od": 88.4,
     "cap_bot_collar_od": 74.0,
-    "cap_bot_skirt_h": 19.0,
+    "cap_bot_skirt_h": 17.5,
     "cap_bot_skirt_id": 80.0,
     "cap_bot_portal_w": 16.0,
-    "cap_bot_portal_rect_h": 3.5,
+    "cap_bot_portal_rect_h": 3.0,
     "cap_bot_cavity_dia": 71.0,
     "cap_bot_spigot_bore_dia": 65.0,
-    "cap_bot_ceiling_z": 56.0,
-    "cap_bot_core_bot_z": 73.5,
-    "cap_bot_glass_bot_z": 86.5,
+    "cap_bot_ceiling_z": 53.0,
+    "cap_bot_core_bot_z": 58.5,
+    "cap_bot_glass_bot_z": 65.5,
     "core_hub_od": 48.8,
     "lid_bot_od": 79.4,
     "lid_bot_thick": 5.0,
@@ -37,7 +37,7 @@
     "pcb_thick": 1.6,
     "pcb_corner_r": 2.0,
     "pcb_y_center": 6.0,
-    "pcb_z_fcu": 50.0,
+    "pcb_z_fcu": 47.0,
     "pcb_smd_max_h": 4.5,
     "pcb_jst_mated_h": 9.8,
     "pcb_jst_pin_protrude": 1.8,
@@ -59,7 +59,7 @@
     "clamp_port_w": 16.0,
     "clamp_port_l": 14.0,
     "clamp_bolt_dx": 12.0,
-    "clamp_outer_h": 11.0,
+    "clamp_outer_h": 9.5,
     "clamp_cable_dia": 4.5,
     "sw1_x": 0.0,
     "sw1_y": 15.0,
@@ -129,33 +129,33 @@
     "led_vis_max_h": 2.39,
     "m3_pan_plus_washer_h": 3.2,
     "derived": {
-      "z_lid_bot_start": 19.0,
-      "z_lid_bot_end": 24.0,
-      "z_pcb_bcu": 51.6,
+      "z_lid_bot_start": 17.5,
+      "z_lid_bot_end": 22.5,
+      "z_pcb_bcu": 48.6,
       "y_j1_mouth": -20.18,
-      "z_j1_center": 48.12,
-      "z_core_bot": 73.5,
-      "z_anchor_pin": 81.0,
-      "z_glass_bot": 86.5,
-      "z_cap_bot_top": 101.0,
-      "z_glass_top": 201.5,
-      "z_cap_top_bot": 187.0,
-      "z_cap_top_top": 216.5,
-      "z_cap_top_lock": 211.5,
-      "z_core_top": 273.5,
-      "core_protrusion_mm": 57.0,
-      "z_hang_hole": 257.5,
-      "z_plug_top_end": 281.5,
-      "total_height_mm": 281.5,
+      "z_j1_center": 45.12,
+      "z_core_bot": 58.5,
+      "z_anchor_pin": 66.0,
+      "z_glass_bot": 65.5,
+      "z_cap_bot_top": 80.0,
+      "z_glass_top": 180.5,
+      "z_cap_top_bot": 166.0,
+      "z_cap_top_top": 195.5,
+      "z_cap_top_lock": 190.5,
+      "z_core_top": 258.5,
+      "core_protrusion_mm": 63.0,
+      "z_hang_hole": 242.5,
+      "z_plug_top_end": 266.5,
+      "total_height_mm": 266.5,
       "exposed_glass_window_mm": 86.0,
-      "z_optical_center": 144.0,
-      "z_led_uv": 160.0,
-      "z_led_vis": 128.0,
+      "z_optical_center": 123.0,
+      "z_led_uv": 139.0,
+      "z_led_vis": 107.0,
       "axial_uv_to_top_mm": 56.5,
       "axial_uv_to_vis_mm": 32.0,
-      "axial_vis_to_bot_mm": 54.5,
-      "bulkhead_thick": 17.5,
-      "frustum_taper_deg": 4.08
+      "axial_vis_to_bot_mm": 48.5,
+      "bulkhead_thick": 5.5,
+      "frustum_taper_deg": 5.14
     },
     "checks": {
       "pcb_radial_clearance_mm": {
@@ -174,18 +174,18 @@
         "pass": true
       },
       "pcb_smd_above_sw1_lugs_mm": {
-        "value": 11.23,
-        "min": 8.0,
+        "value": 9.73,
+        "min": 5.5,
         "pass": true
       },
       "pcb_jst_above_lid_top_mm": {
-        "value": 16.2,
-        "min": 14.0,
+        "value": 14.7,
+        "min": 10.0,
         "pass": true
       },
       "usbc_strain_above_lid_top_mm": {
-        "value": 8.42,
-        "min": 6.0,
+        "value": 6.92,
+        "min": 3.0,
         "pass": true
       },
       "clamp_port_in_spigot_clr_mm": {
@@ -209,8 +209,8 @@
         "pass": true
       },
       "sw1_boot_above_ground_mm": {
-        "value": 4.0,
-        "min": 3.0,
+        "value": 2.5,
+        "min": 2.5,
         "pass": true
       },
       "clamp_above_ground_mm": {
@@ -264,17 +264,17 @@
         "pass": true
       },
       "lid_insert_outer_wall_mm": {
-        "value": 3.261,
+        "value": 2.835,
         "min": 2.5,
         "pass": true
       },
       "skirt_wall_min_mm": {
-        "value": 2.846,
+        "value": 2.625,
         "min": 2.5,
         "pass": true
       },
       "cap_bot_bay_wall_mm": {
-        "value": 4.708,
+        "value": 3.93,
         "min": 3.0,
         "pass": true
       },
@@ -331,7 +331,7 @@
         "pass": true
       },
       "core_protrusion_mm": {
-        "value": 57.0,
+        "value": 63.0,
         "min": 55.0,
         "max": 85.0,
         "pass": true
@@ -369,26 +369,26 @@
     "mech_cap_bot": {
       "step_file": "mech_cap_bot.step",
       "stl_file": "mech_cap_bot.stl",
-      "brep_volume_mm3": 221096.326,
-      "stl_volume_mm3": 221033.446,
+      "brep_volume_mm3": 138708.503,
+      "stl_volume_mm3": 138661.479,
       "is_watertight": true,
       "is_winding_consistent": true,
       "is_volume": true,
       "euler_number": -6,
       "genus": 4,
-      "triangles": 78420
+      "triangles": 70074
     },
     "mech_cap_top": {
       "step_file": "mech_cap_top.step",
       "stl_file": "mech_cap_top.stl",
       "brep_volume_mm3": 70180.015,
-      "stl_volume_mm3": 70157.874,
+      "stl_volume_mm3": 70157.885,
       "is_watertight": true,
       "is_winding_consistent": true,
       "is_volume": true,
       "euler_number": -8,
       "genus": 5,
-      "triangles": 46490
+      "triangles": 46608
     },
     "mech_plug_top": {
       "step_file": "mech_plug_top.step",
@@ -405,20 +405,20 @@
     "mech_core_anchor": {
       "step_file": "mech_core_anchor.step",
       "stl_file": "mech_core_anchor.stl",
-      "brep_volume_mm3": 8802.48,
-      "stl_volume_mm3": 8802.491,
+      "brep_volume_mm3": 7737.861,
+      "stl_volume_mm3": 7737.871,
       "is_watertight": true,
       "is_winding_consistent": true,
       "is_volume": true,
       "euler_number": -4,
       "genus": 3,
-      "triangles": 7116
+      "triangles": 6732
     },
     "mech_cable_clamp": {
       "step_file": "mech_cable_clamp.step",
       "stl_file": "mech_cable_clamp.stl",
-      "brep_volume_mm3": 2825.609,
-      "stl_volume_mm3": 2825.62,
+      "brep_volume_mm3": 2492.873,
+      "stl_volume_mm3": 2492.884,
       "is_watertight": true,
       "is_winding_consistent": true,
       "is_volume": true,
@@ -454,41 +454,46 @@
   "overhang_checks": {
     "mech_lid_bot": {
       "stl_file": "mech_lid_bot.stl",
-      "bed_z_proj_mm": 19.0,
+      "bed_z_proj_mm": 17.5,
       "off_bed_overhang_gt46_faces": 0,
       "off_bed_overhang_gt46_area_mm2": 0.0,
+      "intentional_hidden_bridge_area_mm2": 0.0,
       "max_off_bed_overhang_deg": 45.18,
       "pass": true
     },
     "mech_cap_bot": {
       "stl_file": "mech_cap_bot.stl",
-      "bed_z_proj_mm": -101.0,
-      "off_bed_overhang_gt46_faces": 25,
-      "off_bed_overhang_gt46_area_mm2": 0.16,
-      "max_off_bed_overhang_deg": 90.0,
+      "bed_z_proj_mm": -80.0,
+      "off_bed_overhang_gt46_faces": 0,
+      "off_bed_overhang_gt46_area_mm2": 0.0,
+      "intentional_hidden_bridge_area_mm2": 926.882,
+      "max_off_bed_overhang_deg": 45.16,
       "pass": true
     },
     "mech_cap_top": {
       "stl_file": "mech_cap_top.stl",
-      "bed_z_proj_mm": 187.0,
+      "bed_z_proj_mm": 166.0,
       "off_bed_overhang_gt46_faces": 0,
       "off_bed_overhang_gt46_area_mm2": 0.0,
+      "intentional_hidden_bridge_area_mm2": 0.0,
       "max_off_bed_overhang_deg": 45.16,
       "pass": true
     },
     "mech_plug_top": {
       "stl_file": "mech_plug_top.stl",
-      "bed_z_proj_mm": -281.5,
+      "bed_z_proj_mm": -266.5,
       "off_bed_overhang_gt46_faces": 0,
       "off_bed_overhang_gt46_area_mm2": 0.0,
+      "intentional_hidden_bridge_area_mm2": 0.0,
       "max_off_bed_overhang_deg": 45.0,
       "pass": true
     },
     "mech_core_anchor": {
       "stl_file": "mech_core_anchor.stl",
-      "bed_z_proj_mm": -88.5,
+      "bed_z_proj_mm": -73.5,
       "off_bed_overhang_gt46_faces": 0,
       "off_bed_overhang_gt46_area_mm2": 0.0,
+      "intentional_hidden_bridge_area_mm2": 0.0,
       "max_off_bed_overhang_deg": 42.01,
       "pass": true
     },
@@ -497,6 +502,7 @@
       "bed_z_proj_mm": 0.0,
       "off_bed_overhang_gt46_faces": 0,
       "off_bed_overhang_gt46_area_mm2": 0.0,
+      "intentional_hidden_bridge_area_mm2": 0.0,
       "max_off_bed_overhang_deg": 45.82,
       "pass": true
     },
@@ -505,6 +511,7 @@
       "bed_z_proj_mm": 0.0,
       "off_bed_overhang_gt46_faces": 0,
       "off_bed_overhang_gt46_area_mm2": 0.0,
+      "intentional_hidden_bridge_area_mm2": 0.0,
       "max_off_bed_overhang_deg": 45.13,
       "pass": true
     },
@@ -513,6 +520,7 @@
       "bed_z_proj_mm": 0.0,
       "off_bed_overhang_gt46_faces": 0,
       "off_bed_overhang_gt46_area_mm2": 0.0,
+      "intentional_hidden_bridge_area_mm2": 0.0,
       "max_off_bed_overhang_deg": 0.0,
       "pass": true
     }
@@ -576,17 +584,17 @@
     "all_zero": true
   },
   "mass_budget_g": {
-    "printed_lamp_volume_cm3": 344.1,
-    "cap_bot_volume_cm3": 221.1,
+    "printed_lamp_volume_cm3": 260.0,
+    "cap_bot_volume_cm3": 138.7,
     "cap_top_volume_cm3": 70.2,
     "lid_bot_volume_cm3": 26.4,
-    "asa_fdm_62pct_g": 228.3,
-    "asa_solid_100pct_g": 368.2,
+    "asa_fdm_62pct_g": 172.5,
+    "asa_solid_100pct_g": 278.2,
     "al_core_3mm_g": 173.8,
     "uvt_pmma_shroud_g": 72.9,
     "elec_stars_hardware_g": 102.0,
-    "total_fdm_g": 577.0,
-    "total_solid_g": 716.9
+    "total_fdm_g": 521.2,
+    "total_solid_g": 626.9
   },
   "summary": {
     "all_param_checks_pass": true,

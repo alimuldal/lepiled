@@ -2,15 +2,15 @@
   "process": "FDM",
   "cap_bot_base_od": 88.4,
   "cap_bot_collar_od": 74.0,
-  "cap_bot_skirt_h": 19.0,
+  "cap_bot_skirt_h": 17.5,
   "cap_bot_skirt_id": 80.0,
   "cap_bot_portal_w": 16.0,
-  "cap_bot_portal_rect_h": 3.5,
+  "cap_bot_portal_rect_h": 3.0,
   "cap_bot_cavity_dia": 71.0,
   "cap_bot_spigot_bore_dia": 65.0,
-  "cap_bot_ceiling_z": 56.0,
-  "cap_bot_core_bot_z": 73.5,
-  "cap_bot_glass_bot_z": 86.5,
+  "cap_bot_ceiling_z": 53.0,
+  "cap_bot_core_bot_z": 58.5,
+  "cap_bot_glass_bot_z": 65.5,
   "core_hub_od": 48.8,
   "lid_bot_od": 79.4,
   "lid_bot_thick": 5.0,
@@ -35,7 +35,7 @@
   "pcb_thick": 1.6,
   "pcb_corner_r": 2.0,
   "pcb_y_center": 6.0,
-  "pcb_z_fcu": 50.0,
+  "pcb_z_fcu": 47.0,
   "pcb_smd_max_h": 4.5,
   "pcb_jst_mated_h": 9.8,
   "pcb_jst_pin_protrude": 1.8,
@@ -57,7 +57,7 @@
   "clamp_port_w": 16.0,
   "clamp_port_l": 14.0,
   "clamp_bolt_dx": 12.0,
-  "clamp_outer_h": 11.0,
+  "clamp_outer_h": 9.5,
   "clamp_cable_dia": 4.5,
   "sw1_x": 0.0,
   "sw1_y": 15.0,
@@ -127,33 +127,33 @@
   "led_vis_max_h": 2.39,
   "m3_pan_plus_washer_h": 3.2,
   "derived": {
-    "z_lid_bot_start": 19.0,
-    "z_lid_bot_end": 24.0,
-    "z_pcb_bcu": 51.6,
+    "z_lid_bot_start": 17.5,
+    "z_lid_bot_end": 22.5,
+    "z_pcb_bcu": 48.6,
     "y_j1_mouth": -20.18,
-    "z_j1_center": 48.12,
-    "z_core_bot": 73.5,
-    "z_anchor_pin": 81.0,
-    "z_glass_bot": 86.5,
-    "z_cap_bot_top": 101.0,
-    "z_glass_top": 201.5,
-    "z_cap_top_bot": 187.0,
-    "z_cap_top_top": 216.5,
-    "z_cap_top_lock": 211.5,
-    "z_core_top": 273.5,
-    "core_protrusion_mm": 57.0,
-    "z_hang_hole": 257.5,
-    "z_plug_top_end": 281.5,
-    "total_height_mm": 281.5,
+    "z_j1_center": 45.12,
+    "z_core_bot": 58.5,
+    "z_anchor_pin": 66.0,
+    "z_glass_bot": 65.5,
+    "z_cap_bot_top": 80.0,
+    "z_glass_top": 180.5,
+    "z_cap_top_bot": 166.0,
+    "z_cap_top_top": 195.5,
+    "z_cap_top_lock": 190.5,
+    "z_core_top": 258.5,
+    "core_protrusion_mm": 63.0,
+    "z_hang_hole": 242.5,
+    "z_plug_top_end": 266.5,
+    "total_height_mm": 266.5,
     "exposed_glass_window_mm": 86.0,
-    "z_optical_center": 144.0,
-    "z_led_uv": 160.0,
-    "z_led_vis": 128.0,
+    "z_optical_center": 123.0,
+    "z_led_uv": 139.0,
+    "z_led_vis": 107.0,
     "axial_uv_to_top_mm": 56.5,
     "axial_uv_to_vis_mm": 32.0,
-    "axial_vis_to_bot_mm": 54.5,
-    "bulkhead_thick": 17.5,
-    "frustum_taper_deg": 4.08
+    "axial_vis_to_bot_mm": 48.5,
+    "bulkhead_thick": 5.5,
+    "frustum_taper_deg": 5.14
   },
   "checks": {
     "pcb_radial_clearance_mm": {
@@ -172,18 +172,18 @@
       "pass": true
     },
     "pcb_smd_above_sw1_lugs_mm": {
-      "value": 11.23,
-      "min": 8.0,
+      "value": 9.73,
+      "min": 5.5,
       "pass": true
     },
     "pcb_jst_above_lid_top_mm": {
-      "value": 16.2,
-      "min": 14.0,
+      "value": 14.7,
+      "min": 10.0,
       "pass": true
     },
     "usbc_strain_above_lid_top_mm": {
-      "value": 8.42,
-      "min": 6.0,
+      "value": 6.92,
+      "min": 3.0,
       "pass": true
     },
     "clamp_port_in_spigot_clr_mm": {
@@ -207,8 +207,8 @@
       "pass": true
     },
     "sw1_boot_above_ground_mm": {
-      "value": 4.0,
-      "min": 3.0,
+      "value": 2.5,
+      "min": 2.5,
       "pass": true
     },
     "clamp_above_ground_mm": {
@@ -262,17 +262,17 @@
       "pass": true
     },
     "lid_insert_outer_wall_mm": {
-      "value": 3.261,
+      "value": 2.835,
       "min": 2.5,
       "pass": true
     },
     "skirt_wall_min_mm": {
-      "value": 2.846,
+      "value": 2.625,
       "min": 2.5,
       "pass": true
     },
     "cap_bot_bay_wall_mm": {
-      "value": 4.708,
+      "value": 3.93,
       "min": 3.0,
       "pass": true
     },
@@ -329,7 +329,7 @@
       "pass": true
     },
     "core_protrusion_mm": {
-      "value": 57.0,
+      "value": 63.0,
       "min": 55.0,
       "max": 85.0,
       "pass": true
