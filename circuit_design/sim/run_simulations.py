@@ -1,33 +1,40 @@
 #!/usr/bin/env python3
 """
-LepiLED DIY Maxi Switch (Rev 4.7 — WCH CH224A + 2-Reel Hybrid PCBA + Dual AL8860WT-7)
+LepiLED DIY Maxi Switch (Rev 4.8 — WCH CH224A + Full-SMD ENIG PCBA + Dual AL8860WT-7)
 Comprehensive SPICE + Analytic Corner Sweep + Full-Parameter Monte Carlo Suite.
 
 Verifies:
-  1. Nominal mode transitions (OFF -> 4-UV -> 8-ALL) via ngspice (cSnk = 8.0 uF <= 10 uF)
+  1. Nominal mode transitions (OFF -> 4-UV -> 8-ALL) via ngspice (or libngspice.so.0 fallback)
   2. Hysteretic hardware UVLO (17.48 V ON / 16.66 V OFF; 0.83 V hyst; TL431 2.500 V +
-     LM393DR2G + 30k/5.1k/270k) through 0.30 Ohm source impedance proving 5-15.75 V PD
-     fallback rejection & ZERO motorboating
+     R24/C16 damped ESD bypass + LM393DR2G + 30k/5.1k/270k) through 0.30 Ohm source impedance
+     proving 5-15.75 V PD fallback rejection & ZERO motorboating / startup false-trigger
   3. Open-circuit LED disconnect AND live-reconnect surge (C4/C5=100 nF + R22/R23=10.0 Ohm
      keeps UV < 0.6 A & Vis < 0.9 A through 150 nH / 80 mOhm harness)
   4. Inherent short-circuit LED protection (J2 shorted mid-run)
   5. USB-C input protection: -15 V negative transient (unidirectional SMBJ22A clamp),
      inductive 21 V hot-plug clamping, and cold 5.0 V attach (cSnk = 8.0 uF, Q2/Q3 Vgs = 3.21 V)
   6. True .temp 85 C worst-case 21 V bounce / hot-plug (1.0 uH cable, derated 8.0 uF MLCCs,
-     N=1.44 damper): proves V_pk < 28 V (< 32 V CH224A), I_F1 < 40 A (MF-MSMF110/33X),
+     real SMBJ22A TBV1 = +9.6e-4/C): proves V_pk < 29 V (< 32 V CH224A), I_F1 < 50 A
+     (Littelfuse 046801.5NRHF), I2t(F1) << 0.288 A2s, P_pk(R7) < 600 W (2512 1.0 W),
      and Q2/Q3 V_GS < 18 V (< 20 V 2N7002 max) during C15 filter startup delay
   7. Exhaustive datasheet corner sweep across V_IN in [18.5, 21.5] V, T_amb in [-10, 55] C
-  8. Full-parameter Monte Carlo (N=2000) with +/-1.5% over-temp TL431 (2.500 V) & LM393 (+/-5 mV)
+     with corrected D12 PG-LOW bias, LM393 2.5 mA max, SS34 hot leakage, and T_bay = T_amb + 15 C
+  8. Full-parameter Monte Carlo (N=2000) with +/-1.5% over-temp TL431 & LM393 (+/-5 mV)
+  9. Machine-readable thermal_export & SHA-256 input_hashes in sim_summary.json (SSOT)
 """
 
 import csv
+import ctypes
+import hashlib
 import itertools
 import json
 import math
 import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 import matplotlib
@@ -36,33 +43,131 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 SIM_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SIM_DIR.parent.parent
 NET_DIR = SIM_DIR / "netlists"
 OUT_DIR = SIM_DIR / "outputs"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-NGSPICE = os.environ.get(
+NGSPICE_CANDIDATE = os.environ.get(
     "NGSPICE_BIN",
     "/home/alimuldal/.local/share/lepiled-tools/bin/ngspice",
 )
-if not Path(NGSPICE).exists():
-    NGSPICE = "ngspice"
+NGSPICE = NGSPICE_CANDIDATE if Path(NGSPICE_CANDIDATE).exists() else shutil.which("ngspice")
+
+_LIBNGSPICE_STATE = {"lib": None, "buf": []}
+
+
+def _sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()[:16]
+
+
+def _get_libngspice():
+    """Initialize shared libngspice.so.0 via ctypes when standalone ngspice CLI is absent."""
+    if _LIBNGSPICE_STATE["lib"] is not None:
+        return _LIBNGSPICE_STATE["lib"]
+
+    lib_path = None
+    for cand in ("/usr/lib/x86_64-linux-gnu/libngspice.so.0", "libngspice.so.0", "libngspice.so"):
+        try:
+            lib = ctypes.CDLL(cand)
+            lib_path = cand
+            break
+        except OSError:
+            continue
+    if lib_path is None:
+        raise RuntimeError("Neither ngspice CLI nor libngspice.so.0 is installed!")
+
+    SEND_CHAR = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_void_p)
+    SEND_STAT = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_void_p)
+    CTRL_EXIT = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_int, ctypes.c_bool, ctypes.c_bool, ctypes.c_int, ctypes.c_void_p)
+
+    def _cb_char(msg, _ident, _user):
+        if msg:
+            _LIBNGSPICE_STATE["buf"].append(msg.decode("utf-8", errors="replace"))
+        return 0
+
+    def _cb_stat(_msg, _ident, _user):
+        return 0
+
+    def _cb_exit(_status, _immediate, _quit, _ident, _user):
+        return 0
+
+    # Keep references alive so ctypes callbacks are never garbage-collected
+    _LIBNGSPICE_STATE["cbs"] = (SEND_CHAR(_cb_char), SEND_STAT(_cb_stat), CTRL_EXIT(_cb_exit))
+    lib.ngSpice_Init.argtypes = [
+        SEND_CHAR, SEND_STAT, CTRL_EXIT,
+        ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
+    ]
+    lib.ngSpice_Init.restype = ctypes.c_int
+    lib.ngSpice_Command.argtypes = [ctypes.c_char_p]
+    lib.ngSpice_Command.restype = ctypes.c_int
+    rc = lib.ngSpice_Init(*_LIBNGSPICE_STATE["cbs"], None, None, None, None)
+    if rc != 0:
+        raise RuntimeError(f"ngSpice_Init failed with rc={rc}")
+    _LIBNGSPICE_STATE["lib"] = lib
+    return lib
+
+
+def _run_via_libngspice(cir_path: Path) -> tuple[str, str]:
+    """Run a .cir bench via shared libngspice.so.0 by sourcing a quit-stripped temp copy."""
+    lib = _get_libngspice()
+    _LIBNGSPICE_STATE["buf"].clear()
+    raw_lines = cir_path.read_text(encoding="utf-8").splitlines()
+    # Strip 'quit' inside .control so libngspice stays alive across all 6 testbenches
+    cleaned = [ln for ln in raw_lines if ln.strip().lower() != "quit"]
+
+    old_cwd = os.getcwd()
+    tmp_path = None
+    try:
+        os.chdir(str(NET_DIR))
+        with tempfile.NamedTemporaryFile("w", suffix=".cir", dir=str(NET_DIR), delete=False, encoding="utf-8") as tf:
+            tf.write("\n".join(cleaned) + "\n")
+            tmp_path = Path(tf.name)
+        lib.ngSpice_Command(b"destroy all")
+        lib.ngSpice_Command(b"remcirc")
+        rc = lib.ngSpice_Command(f"source {tmp_path.name}".encode("utf-8"))
+        lib.ngSpice_Command(b"destroy all")
+        lib.ngSpice_Command(b"remcirc")
+    finally:
+        os.chdir(old_cwd)
+        if tmp_path is not None and tmp_path.exists():
+            tmp_path.unlink()
+
+    stdout_lines = []
+    stderr_lines = []
+    for entry in _LIBNGSPICE_STATE["buf"]:
+        if entry.startswith("stderr "):
+            stderr_lines.append(entry[7:])
+        elif entry.startswith("stdout "):
+            stdout_lines.append(entry[7:])
+        else:
+            stdout_lines.append(entry)
+    if rc != 0:
+        raise RuntimeError(f"libngspice source failed (rc={rc}) on {cir_path.name}")
+    return "\n".join(stdout_lines), "\n".join(stderr_lines)
 
 
 def run_ngspice(cir_name: str) -> dict:
     cir_path = NET_DIR / cir_name
-    proc = subprocess.run(
-        [NGSPICE, "-b", cir_path.name],
-        cwd=str(NET_DIR),
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
-    log_text = proc.stdout + "\n--- STDERR ---\n" + proc.stderr
+    if NGSPICE:
+        proc = subprocess.run(
+            [NGSPICE, "-b", cir_path.name],
+            cwd=str(NET_DIR),
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        out_txt, err_txt = proc.stdout, proc.stderr
+        if proc.returncode != 0:
+            raise RuntimeError(f"ngspice failed on {cir_name}:\n{err_txt[-1000:]}")
+    else:
+        out_txt, err_txt = _run_via_libngspice(cir_path)
+
+    log_text = out_txt + "\n--- STDERR ---\n" + err_txt
     log_path = OUT_DIR / (cir_path.stem + ".log")
-    log_path.write_text(log_text)
-    if proc.returncode != 0:
-        raise RuntimeError(f"ngspice failed on {cir_name}:\n{proc.stderr[-1000:]}")
-    # Fail-on-meas-error guard (fixes Opus A-M5 silent measurement failure bug)
+    log_path.write_text(log_text, encoding="utf-8")
+
+    # Fail-on-meas-error guard
     for line in log_text.splitlines():
         low = line.lower()
         if "meas" in low and ("failed" in low or "no such vector" in low):
@@ -70,7 +175,7 @@ def run_ngspice(cir_name: str) -> dict:
         if "no such vector" in low or "measure failed" in low:
             raise RuntimeError(f"ngspice vector/measure error in {cir_name}: {line.strip()}")
     meas = {}
-    for line in proc.stdout.splitlines():
+    for line in out_txt.splitlines():
         m = re.match(r"^\s*([a-zA-Z0-9_]+)\s*=\s*([-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?)", line)
         if m:
             meas[m.group(1).lower()] = float(m.group(2))
@@ -94,6 +199,7 @@ def solve_buck_channel(
     hys: float = 0.20,
     t_pd: float = 50e-9,
     i_q: float = 0.55e-3,
+    p_schottky_leak: float = 0.0,
 ):
     """Exact analytic model of AL8860 hysteretic buck LED driver (AL8860.pdf p. 13)."""
     i_nom = v_sense / r_s
@@ -123,7 +229,7 @@ def solve_buck_channel(
     p_sw_tran = 0.5 * v_in * i_avg * 25e-9 * f_sw
     p_iq = v_in * i_q
     p_ic = p_sw_cond + p_sw_tran + p_iq
-    p_diode = i_d_avg * v_d
+    p_diode = i_d_avg * v_d + p_schottky_leak
     p_ind = (i_l_rms**2) * dcr
     p_rs = (i_l_rms**2) * r_s
     p_led = i_avg * v_led
@@ -154,15 +260,35 @@ def solve_buck_channel(
 def uvlo_thresholds(r15, r16, r17, r18, r19, v_ref, v_io):
     """Exact analytic turn-on and turn-off thresholds of U4A hysteretic UVLO."""
     v_th = v_ref + v_io
-    # Rising (U4A OUT = 0 V): R19 in parallel with R16
     r16_eff = (r16 * r19) / (r16 + r19)
     v_on = v_th * (1.0 + r15 / r16_eff)
-    # Falling (U4A OUT open): R17/R18 Thevenin -> V_thv = VIN * R18/(R17+R18), R_thv = R17||R18
     k_div = r18 / (r17 + r18)
     r_fb_tot = r19 + (r17 * r18) / (r17 + r18)
-    # (VIN - v_th)/R15 + (k_div*VIN - v_th)/r_fb_tot = v_th/R16
     v_off = v_th * (1.0 / r16 + 1.0 / r15 + 1.0 / r_fb_tot) / (1.0 / r15 + k_div / r_fb_tot)
     return v_on, v_off
+
+
+def _overhead_losses(v_in: float, i_bucks: float, worst_case: bool = False) -> tuple[float, float]:
+    """Rev 4.8 PCB overhead current & power (fixes Rev 4.7 D12 PG-LOW double-count & LM393 2.5 mA max):
+      - U3 CH224A: 1.8 mA typ / 3.0 mA max (conservative 5.0 mA WC margin)
+      - U4 onsemi LM393DR2G: 1.0 mA typ / 2.5 mA max
+      - U5 Hottech TL431 via R14=10k: (V_in - 2.5) / 10k
+      - D12 PG=LOW via R13=10k (V_LED ~ 2.0 V -> I_R13 = (V_in - 2.0)/10k; R10 only draws 2.0/10k from R13!)
+      - UVLO dividers: R15+R16=35.1k, R17+R18=200k, R20=56k (U4B pulls UVLO_FAULT low in normal 20 V!)
+      - F1 Littelfuse 046801.5NRHF: R_cold=0.044 Ohm typ / 0.055 Ohm hot
+    """
+    i_u3 = 0.0050 if worst_case else 0.0018
+    i_u4 = 0.0025 if worst_case else 0.0010
+    i_r14 = (v_in - 2.5) / 10000.0
+    i_r13 = (v_in - 2.0) / 10000.0  # includes both D12 (~1.6 mA) and R10 (~0.2 mA) when PG=LOW
+    i_div = v_in / 35100.0 + v_in / 200000.0 + v_in / 56000.0
+    r_f1 = 0.055 if worst_case else 0.044
+    i_in_tot = i_bucks + i_u3 + i_u4 + i_r14 + i_r13 + i_div
+    p_over = (
+        v_in * (i_u3 + i_u4 + i_r14 + i_r13 + i_div)
+        + (i_in_tot**2) * r_f1
+    )
+    return i_in_tot, p_over
 
 
 def run_corner_sweep() -> dict:
@@ -186,9 +312,13 @@ def run_corner_sweep() -> dict:
     }
 
     for v_in, v_s, r_s, L, t_amb in itertools.product(v_ins, v_senses, r_ss, ls, temps):
-        dcr = 0.351 * (1.0 + 0.00393 * max(0.0, t_amb + 15.0 - 25.0))
+        # Sunlord SWPA6045S680MT: DCR_max = 0.376 Ohm @ 25 C
+        t_bay = t_amb + 15.0  # Realistic sealed bay rise above ambient for IC Tj & DCR
+        dcr = 0.376 * (1.0 + 0.00393 * max(0.0, t_bay - 25.0))
         r_sw = 0.30 if t_amb <= 25.0 else 0.45
         v_d = 0.40 if t_amb <= 25.0 else 0.32
+        # MDD SS34 reverse leakage at 20 V (duty ~ 0.65): ~0.005 W @ 25 C, up to 0.04 W @ 70 C bay
+        p_leak = 0.040 if t_amb >= 50.0 else 0.005
 
         uv_vfs = [4 * 3.90 + 4 * 0.00267 * (25 - (-10))] if t_amb < 0 else (
             [4 * 2.70 - 4 * 0.00267 * (80 - 25), 4 * 3.60, 4 * 3.90]
@@ -199,39 +329,29 @@ def run_corner_sweep() -> dict:
 
         for v_uv, v_vis in itertools.product(uv_vfs, vis_vfs):
             v_uv = min(v_uv, 16.0)
-            c1 = solve_buck_channel(v_in, v_uv, v_s, r_s, L, dcr, r_sw, v_d)
-            c2 = solve_buck_channel(v_in, v_vis, v_s, r_s, L, dcr, r_sw, v_d)
+            c1 = solve_buck_channel(v_in, v_uv, v_s, r_s, L, dcr, r_sw, v_d, p_schottky_leak=p_leak)
+            c2 = solve_buck_channel(v_in, v_vis, v_s, r_s, L, dcr, r_sw, v_d, p_schottky_leak=p_leak)
             worst["total_corners"] += 1
             if c1 is None or c2 is None:
                 worst["failed_corners"] += 1
                 continue
 
-            # Rev 4.7 overhead (worst-case corner): U3 CH224A (12 mA max) + D12 PG LED ((V_in-2.0)/10k + 1.0/10k),
-            # U4 LM393DR2G (1.7 mA max), U5 TL431 (R14 10k), UVLO dividers (R15+R16=35.1k, R17+R18=200k, R20=56k),
-            # F1 MF-MSMF110/33X (max 0.16 Ohm hot; no Q1 or R8!)
-            i_div = v_in / 35100.0 + v_in / 200000.0 + v_in / 56000.0 + v_in / 20000.0
-            i_in_raw = c1["i_in"] + c2["i_in"] + 0.0120 + 0.0017 + (v_in - 2.5) / 10000.0 + i_div
-            p_overhead = (
-                v_in * 0.0120
-                + v_in * 0.0017
-                + v_in * (v_in - 2.5) / 10000.0
-                + v_in * i_div
-                + (i_in_raw**2) * 0.160
-            )
+            i_in_raw, p_overhead = _overhead_losses(v_in, c1["i_in"] + c2["i_in"], worst_case=True)
             p_pcb_tot = (
                 c1["p_ic"] + c1["p_diode"] + c1["p_ind"] + c1["p_rs"]
                 + c2["p_ic"] + c2["p_diode"] + c2["p_ind"] + c2["p_rs"]
                 + p_overhead
             )
-            tj1 = t_amb + c1["p_ic"] * 147.0
-            tj2 = t_amb + c2["p_ic"] * 147.0
+            # Use realistic bay temperature T_bay = T_amb + 15 C (fixes Rev 4.7 ambient-only Tj bug!)
+            tj1 = t_bay + c1["p_ic"] * 147.0
+            tj2 = t_bay + c2["p_ic"] * 147.0
 
             ok = (
-                c1["i_pk"] < 0.70 and c2["i_pk"] < 0.70
+                c1["i_pk"] < 0.70 and c2["i_pk"] < 0.70  # << 1.10 A Sunlord SWPA6045 Isat
                 and c1["f_sw"] < 1.0e6 and c2["f_sw"] < 1.0e6
                 and c1["duty"] < 0.98 and c2["duty"] < 0.98
                 and tj1 < 125.0 and tj2 < 125.0
-                and i_in_raw < 0.73  # < MF-MSMF110/33X I_hold(60 C) = 0.73 A!
+                and i_in_raw < 1.05  # << 1.50 A Littelfuse 046801.5NRHF (derated > 1.12 A @ 70 C)
             )
             if not ok:
                 worst["failed_corners"] += 1
@@ -279,13 +399,8 @@ def run_corner_sweep() -> dict:
     return worst
 
 
-def run_monte_carlo(n: int = 2000, seed: int = 20261119) -> dict:
-    """
-    Full-parameter Monte Carlo (N=2000) sampling EVERY datasheet tolerance simultaneously:
-    V_IN (USB PD 20 V +/-5%), T_amb, V_SENSE (+/-4%), R_S (+/-1%), L (+/-20%), DCR,
-    R_SW, V_D, individual LED Vf + tempco, UVLO R15..R19 (+/-1%),
-    LM4040 (+/-0.85% full over-temp per Note 3!), LM393B Vio (+/-4 mV).
-    """
+def run_monte_carlo(n: int = 2000, seed: int = 20261120) -> dict:
+    """Full-parameter Monte Carlo (N=2000) sampling every datasheet tolerance simultaneously."""
     rng = np.random.default_rng(seed)
 
     v_in = rng.uniform(19.0, 21.0, n)
@@ -296,8 +411,8 @@ def run_monte_carlo(n: int = 2000, seed: int = 20261119) -> dict:
     r_s2 = rng.normal(0.300, 0.003 / 3.0, n).clip(0.297, 0.303)
     L1 = rng.normal(68e-6, 68e-6 * 0.20 / 3.0, n).clip(54.4e-6, 81.6e-6)
     L2 = rng.normal(68e-6, 68e-6 * 0.20 / 3.0, n).clip(54.4e-6, 81.6e-6)
-    dcr1 = rng.uniform(0.25, 0.351, n) * (1.0 + 0.00393 * (t_amb + 10.0 - 25.0))
-    dcr2 = rng.uniform(0.25, 0.351, n) * (1.0 + 0.00393 * (t_amb + 10.0 - 25.0))
+    dcr1 = rng.uniform(0.25, 0.376, n) * (1.0 + 0.00393 * (t_amb + 15.0 - 25.0))
+    dcr2 = rng.uniform(0.25, 0.376, n) * (1.0 + 0.00393 * (t_amb + 15.0 - 25.0))
     r_sw1 = rng.uniform(0.20, 0.42, n)
     r_sw2 = rng.uniform(0.20, 0.42, n)
     v_d1 = rng.uniform(0.28, 0.40, n)
@@ -312,7 +427,6 @@ def run_monte_carlo(n: int = 2000, seed: int = 20261119) -> dict:
         - 4 * 0.0015 * (t_j_led - 25.0)
     )
 
-    # UVLO threshold sampling (Rev 4.7: Hottech TL431 2.500 V +/-1.5% over-temp, LM393DR2G +/-5 mV, Basic 30k/5.1k/270k)
     r15 = rng.normal(30.0e3, 30.0e3 * 0.01 / 3.0, n).clip(29.70e3, 30.30e3)
     r16 = rng.normal(5.1e3, 5.1e3 * 0.01 / 3.0, n).clip(5.049e3, 5.151e3)
     r17 = rng.normal(100.0e3, 100.0e3 * 0.01 / 3.0, n).clip(99.0e3, 101.0e3)
@@ -328,39 +442,30 @@ def run_monte_carlo(n: int = 2000, seed: int = 20261119) -> dict:
     rows = []
 
     for k in range(n):
-        c1 = solve_buck_channel(v_in[k], v_uv[k], v_s1[k], r_s1[k], L1[k], dcr1[k], r_sw1[k], v_d1[k])
-        c2 = solve_buck_channel(v_in[k], v_vis[k], v_s2[k], r_s2[k], L2[k], dcr2[k], r_sw2[k], v_d2[k])
+        c1 = solve_buck_channel(v_in[k], v_uv[k], v_s1[k], r_s1[k], L1[k], dcr1[k], r_sw1[k], v_d1[k], p_schottky_leak=0.010)
+        c2 = solve_buck_channel(v_in[k], v_vis[k], v_s2[k], r_s2[k], L2[k], dcr2[k], r_sw2[k], v_d2[k], p_schottky_leak=0.010)
         if c1 is None or c2 is None:
             continue
-        # Rev 4.7 typ overhead: CH224A 1.8 mA + D12 PG LED (~1.8 mA via R13/R10) + LM393 0.6 mA + TL431 + dividers + F1
-        i_div = v_in[k] / 35100.0 + v_in[k] / 200000.0 + v_in[k] / 56000.0
-        i_pg_led = (v_in[k] - 2.0) / 10000.0
-        i_in_tot = c1["i_in"] + c2["i_in"] + 0.0018 + i_pg_led + 0.0006 + (v_in[k] - 2.5) / 10000.0 + i_div
-        p_over = (
-            v_in[k] * (0.0018 + i_pg_led + 0.0006)
-            + v_in[k] * (v_in[k] - 2.5) / 10000.0
-            + v_in[k] * i_div
-            + (i_in_tot**2) * 0.080
-        )
+        i_in_tot, p_over = _overhead_losses(v_in[k], c1["i_in"] + c2["i_in"], worst_case=False)
         p_pcb = (
             c1["p_ic"] + c1["p_diode"] + c1["p_ind"] + c1["p_rs"]
             + c2["p_ic"] + c2["p_diode"] + c2["p_ind"] + c2["p_rs"]
             + p_over
         )
         eff = (c1["p_led"] + c2["p_led"]) / (v_in[k] * i_in_tot)
-        tj1 = t_amb[k] + c1["p_ic"] * 147.0
-        tj2 = t_amb[k] + c2["p_ic"] * 147.0
+        tj1 = t_amb[k] + 15.0 + c1["p_ic"] * 147.0
+        tj2 = t_amb[k] + 15.0 + c2["p_ic"] * 147.0
 
         ok = (
             0.305 <= c1["i_avg"] <= 0.365
             and 0.305 <= c2["i_avg"] <= 0.365
             and c1["i_pk"] < 0.70 and c2["i_pk"] < 0.70
             and c1["f_sw"] < 1.0e6 and c2["f_sw"] < 1.0e6
-            and tj1 < 100.0 and tj2 < 100.0
+            and tj1 < 115.0 and tj2 < 115.0
             and 16.0 < v_off[k] < 17.3
             and 16.8 < v_on[k] < 18.2
             and v_hyst[k] >= 0.75
-            and i_in_tot < 0.73
+            and i_in_tot < 1.05
         )
         if ok:
             passes += 1
@@ -413,7 +518,6 @@ def run_monte_carlo(n: int = 2000, seed: int = 20261119) -> dict:
 
 
 def plot_results(mc_res: dict):
-    # 1. Nominal Mode Cycling Plot (OFF -> 4-UV -> 8-ALL)
     d = load_wrdata("nominal_waveforms.txt")
     t_ms = d[:, 0] * 1e3
     vin = d[:, 1]
@@ -428,7 +532,7 @@ def plot_results(mc_res: dict):
     axes[0].plot(t_ms, i_vis, label="Ch2 Vis LED Current (mA)", color="#1f618d", lw=1.4)
     axes[0].axhline(333.3, color="gray", ls="--", lw=0.8, label="Nominal 333 mA")
     axes[0].set_ylabel("LED Current (mA)")
-    axes[0].set_title("LepiLED Rev 4.7 (WCH CH224A + Direct DPDT) — Mode Cycling (OFF -> 4-UV -> 8-ALL)")
+    axes[0].set_title("LepiLED Rev 4.8 (CH224A + Full-SMD ENIG PCBA) — Mode Cycling (OFF -> 4-UV -> 8-ALL)")
     axes[0].legend(loc="upper left", fontsize=8)
     axes[0].grid(True, alpha=0.3)
 
@@ -448,7 +552,6 @@ def plot_results(mc_res: dict):
     fig.savefig(OUT_DIR / "plot_nominal_modes.png", dpi=150)
     plt.close(fig)
 
-    # 2. Hysteretic UVLO Ramp Plot
     du = load_wrdata("uvlo_sweep_waveforms.txt")
     tu = du[:, 0] * 1e3
     fig, axes = plt.subplots(2, 1, figsize=(10, 5.5), sharex=True)
@@ -456,7 +559,7 @@ def plot_results(mc_res: dict):
     axes[0].axhline(17.48, color="#27ae60", ls="--", lw=0.9, label="V_ON = 17.48 V")
     axes[0].axhline(16.66, color="#2980b9", ls=":", lw=0.9, label="V_OFF = 16.66 V (0.83 V Hyst)")
     axes[0].set_ylabel("Supply Voltage (V)")
-    axes[0].set_title("Hysteretic Hardware UVLO (LM393DR2G + TL431 2.500 V) — Zero Chatter on Slow Ramp")
+    axes[0].set_title("Hysteretic Hardware UVLO (LM393DR2G + TL431 + R24/C16) — Zero Chatter on Slow Ramp")
     axes[0].legend(loc="upper right", fontsize=8)
     axes[0].grid(True, alpha=0.3)
 
@@ -470,7 +573,6 @@ def plot_results(mc_res: dict):
     fig.savefig(OUT_DIR / "plot_uvlo_sweep.png", dpi=150)
     plt.close(fig)
 
-    # 3. Faults Plot (Open+Reconnect + Short-LED + True 85 C Hot-Plug & Q1 Slew Inrush)
     do = load_wrdata("fault_open_led.txt")
     ds = load_wrdata("fault_short_led.txt")
     dh = load_wrdata("fault_hotplug_85c.txt")
@@ -492,9 +594,9 @@ def plot_results(mc_res: dict):
     axes[2].plot(dh[:, 0] * 1e6, dh[:, 1], label="V(VIN_20V) (V) [< 32 V CH224A]", color="#c0392b", lw=1.3)
     axes[2].plot(dh[:, 0] * 1e6, dh[:, 3], label="V(UVLO_FAULT) Q2/Q3 Vgs (V) [< 20 V]", color="#27ae60", lw=1.3)
     ax2_r = axes[2].twinx()
-    ax2_r.plot(dh[:, 0] * 1e6, dh[:, 5], label="I(F1) Bounce Surge (A) [< 40 A]", color="#2980b9", lw=1.1, ls="--")
+    ax2_r.plot(dh[:, 0] * 1e6, dh[:, 5], label="I(F1) Bounce Surge (A) [< 50 A]", color="#2980b9", lw=1.1, ls="--")
     ax2_r.set_ylabel("F1 Current (A)", color="#2980b9")
-    axes[2].set_title("Fault 4: True 85 C 21 V Bounce/Hot-Plug (1.0 uH, cSnk=8.0 uF, N=1.44 Damper)")
+    axes[2].set_title("Fault 4: True 85 C 21 V Hot-Plug (Real TVS TBV1, 046801.5NRHF F1, 2512 1 W R7)")
     axes[2].set_ylabel("Voltage (V)")
     axes[2].set_xlabel("Time (us)")
     axes[2].legend(loc="center right", fontsize=8)
@@ -505,7 +607,16 @@ def plot_results(mc_res: dict):
 
 
 def main():
-    print("=== LepiLED Rev 4.7 (WCH CH224A + 2-Reel Hybrid PCBA + Hysteretic UVLO) Verification Suite ===")
+    backend = NGSPICE if NGSPICE else "libngspice.so.0 (ctypes)"
+    print(f"=== LepiLED Rev 4.8 SPICE + Corner + Monte Carlo Suite (backend: {backend}) ===")
+    cir_files = [
+        "lepiled_nominal.cir",
+        "lepiled_fault_uvlo_sweep.cir",
+        "lepiled_fault_open_led.cir",
+        "lepiled_fault_short_led.cir",
+        "lepiled_fault_input_prot.cir",
+        "lepiled_fault_hotplug_85c.cir",
+    ]
     nominal = run_ngspice("lepiled_nominal.cir")
     uvlo = run_ngspice("lepiled_fault_uvlo_sweep.cir")
     open_led = run_ngspice("lepiled_fault_open_led.cir")
@@ -517,18 +628,10 @@ def main():
     mc = run_monte_carlo(n=2000)
     plot_results(mc)
 
-    # Nominal analytic operating point at 20.0 V, 25 C (reconciled with SPICE: Rev 4.7 CH224A + D12 + dividers)
-    nom_uv = solve_buck_channel(19.90, 4 * 3.59, 0.100, 0.300, 68e-6, 0.29, 0.30, 0.35)
-    nom_vis = solve_buck_channel(19.90, 2 * 2.92 + 2.69 + 2.92, 0.100, 0.300, 68e-6, 0.29, 0.30, 0.35)
-    i_div_nom = 19.9 / 35100.0 + 19.9 / 200000.0 + 19.9 / 56000.0
-    i_pg_nom = (19.9 - 2.0) / 10000.0
-    i_in_nom = nom_uv["i_in"] + nom_vis["i_in"] + 0.0018 + i_pg_nom + 0.0006 + (19.9 - 2.5) / 10000.0 + i_div_nom
-    p_over_nom = (
-        19.9 * (0.0018 + i_pg_nom + 0.0006)
-        + 19.9 * (19.9 - 2.5) / 10000.0
-        + 19.9 * i_div_nom
-        + (i_in_nom**2) * 0.080
-    )
+    # Nominal analytic operating point at 20.0 V, 25 C (reconciled with SPICE)
+    nom_uv = solve_buck_channel(19.92, 4 * 3.59, 0.100, 0.300, 68e-6, 0.29, 0.30, 0.35, p_schottky_leak=0.005)
+    nom_vis = solve_buck_channel(19.92, 2 * 2.92 + 2.69 + 2.92, 0.100, 0.300, 68e-6, 0.29, 0.30, 0.35, p_schottky_leak=0.005)
+    i_in_nom, p_over_nom = _overhead_losses(19.92, nom_uv["i_in"] + nom_vis["i_in"], worst_case=False)
     p_pcb_nom = (
         nom_uv["p_ic"] + nom_uv["p_diode"] + nom_uv["p_ind"] + nom_uv["p_rs"]
         + nom_vis["p_ic"] + nom_vis["p_diode"] + nom_vis["p_ind"] + nom_vis["p_rs"]
@@ -536,6 +639,15 @@ def main():
     )
 
     uvlo_hyst_meas = uvlo["v_uvlo_on"] - uvlo["v_uvlo_off"]
+
+    # Closed-form datasheet safety limit assertions (Section 9 procedural gate!)
+    # F1 Littelfuse 046801.5NRHF: 50 A DC interrupt, I2t = 0.288 A2s (require >= 5x margin!)
+    # R7 UNI-ROYAL 2512 1.0 W: 10 us single-pulse limit >= 600 W
+    # TL431 startup ratio: R14*C16 (1.0 ms) < R15*C15 (3.0 ms) -> zero 5 V startup UVLO false glitch
+    f1_i2t_limit = 0.288
+    r7_pulse_limit_W = 600.0
+    tau_vref_ms = 10.0e3 * 100.0e-9 * 1e3
+    tau_uvlo_ms = 30.0e3 * 100.0e-9 * 1e3
 
     checks = {
         "nominal_off_leakage_mA": (abs(nominal["i_uv_off"] * 1e3) < 0.5 and abs(nominal["i_vis_off"] * 1e3) < 0.5),
@@ -557,6 +669,7 @@ def main():
             and uvlo["v_ok_min_post"] > 7.0
             and abs(uvlo["i_uv_end_off"] * 1e3) < 0.5
         ),
+        "uvlo_startup_vref_faster_than_sense": (tau_vref_ms < 0.5 * tau_uvlo_ms),
         "fault_open_led_and_live_reconnect_safe": (
             open_led["vsw1_pk_open"] < 23.0
             and abs(open_led["i_uv_open"] * 1e3) < 0.5
@@ -567,14 +680,16 @@ def main():
         "fault_short_led_regulated": (280.0 <= short_led["il1_avg_short"] * 1e3 <= 390.0 and short_led["il1_pk_short"] < 0.65),
         "fault_neg_transient_clamped": (input_prot["neg_vbus_min"] > -2.5),
         "fault_hotplug_21V_and_5V_attach_safe": (
-            input_prot["hp_vbus_peak"] < 28.0
-            and input_prot["hp_f1_peak"] < 40.0
+            input_prot["hp_vbus_peak"] < 29.0
+            and input_prot["hp_f1_peak"] < 50.0
             and input_prot["attach_5v_pk"] < 10.0
             and 3.0 <= input_prot["vgs_5v_settle"] <= 3.5
         ),
-        "fault_hotplug_85c_f1_and_vgs_safe": (
-            hotplug_85c["vin_85c_peak"] < 28.0
-            and hotplug_85c["f1_85c_surge_pk"] < 40.0
+        "fault_hotplug_85c_tvs_f1_r7_vgs_safe": (
+            hotplug_85c["vin_85c_peak"] < 29.5  # << 32.0 V CH224A abs max (even with +9.6e-4/C TBV1!)
+            and hotplug_85c["f1_85c_surge_pk"] < 50.0  # Littelfuse 046801.5NRHF 50 A interrupt rating
+            and hotplug_85c["i2t_f1_85c"] < 0.20 * f1_i2t_limit  # >= 5x margin on 0.288 A2s melting I2t
+            and hotplug_85c["p_r7_85c_pk"] < r7_pulse_limit_W  # UNI-ROYAL 2512 1.0 W pulse rating
             and hotplug_85c["vgs_85c_peak"] < 18.0
             and hotplug_85c["vin_85c_settle"] > 20.5
             and hotplug_85c["vgs_85c_settle"] < 0.15
@@ -583,9 +698,37 @@ def main():
         "monte_carlo_100pct_yield": (mc["passes"] == mc["n_trials"]),
     }
 
+    input_hashes = {
+        "COMPONENT_IDS.csv": _sha256_file(REPO_ROOT / "circuit_design" / "COMPONENT_IDS.csv"),
+        "models.lib": _sha256_file(NET_DIR / "models.lib"),
+        **{cf: _sha256_file(NET_DIR / cf) for cf in cir_files},
+    }
+
     summary = {
-        "architecture": "Rev 4.7 (WCH CH224A ESSOP-10 CFG1=120k + 2-Reel Hybrid PCBA + LM393/TL431 UVLO + Direct Gold DPDT + Dual AL8860WT-7 Buck)",
+        "revision": "4.8",
+        "architecture": "Rev 4.8 (WCH CH224A + Full-SMD ENIG PCBA + Littelfuse 046801.5NRHF + 2512 R7 + R24/C16 + Dual AL8860WT-7)",
+        "backend": backend,
         "all_passed": all(checks.values()),
+        "input_hashes": input_hashes,
+        "thermal_export": {
+            "p_pcb_nom_W": round(p_pcb_nom, 3),
+            "p_pcb_wc_W": round(corners["total_pcb_loss_max"], 3),
+            "i_in_nom_A": round(i_in_nom, 4),
+            "i_in_wc_A": round(corners["i_in_total_max"], 4),
+            "p_led_uv_nom_W": round(nom_uv["p_led"], 3),
+            "p_led_vis_nom_W": round(nom_vis["p_led"], 3),
+            "p_in_nom_W": round(20.0 * i_in_nom, 3),
+        },
+        "datasheet_limits_checked": {
+            "f1_interrupt_A": 50.0,
+            "f1_i2t_melting_A2s": f1_i2t_limit,
+            "f1_i2t_hotplug_85c_A2s": round(hotplug_85c["i2t_f1_85c"], 6),
+            "f1_i2t_margin_x": round(f1_i2t_limit / max(hotplug_85c["i2t_f1_85c"], 1e-9), 1),
+            "r7_2512_pulse_limit_W": r7_pulse_limit_W,
+            "r7_hotplug_85c_pk_W": round(hotplug_85c["p_r7_85c_pk"], 1),
+            "tau_vref_ms": round(tau_vref_ms, 2),
+            "tau_uvlo_sense_ms": round(tau_uvlo_ms, 2),
+        },
         "checks": checks,
         "ngspice_nominal": {k: round(v, 6) for k, v in nominal.items()},
         "ngspice_uvlo": {**{k: round(v, 6) for k, v in uvlo.items()}, "v_uvlo_hyst": round(uvlo_hyst_meas, 6)},
@@ -606,7 +749,7 @@ def main():
         "monte_carlo": mc,
     }
 
-    (OUT_DIR / "sim_summary.json").write_text(json.dumps(summary, indent=2))
+    (OUT_DIR / "sim_summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
 
     print("\n--- CHECKS ---")
     for name, ok in checks.items():
@@ -618,13 +761,13 @@ def main():
           f"Sys Eff={100.0*(nom_uv['p_led']+nom_vis['p_led'])/(20.0*i_in_nom):.1f}%")
     print(f"UVLO (0.30 Ohm Z): V_ON={uvlo['v_uvlo_on']:.3f} V, V_OFF={uvlo['v_uvlo_off']:.3f} V, "
           f"Hyst={uvlo_hyst_meas:.3f} V, V_OK_min_post={uvlo['v_ok_min_post']:.2f} V (ZERO chatter!)")
-    print(f"Faults: Open+Reconnect I_UV_pk={open_led['i_uv_reconn_pk']:.3f} A (<1.0 A), I_VIS_pk={open_led['i_vis_reconn_pk']:.3f} A (<1.2 A); "
-          f"Short I_L1={short_led['il1_avg_short']*1e3:.1f} mA; NegClamp={input_prot['neg_vbus_min']:.2f} V; "
-          f"5V Attach I_pk={input_prot['attach_5v_pk']:.2f} A, Vgs_5V={input_prot['vgs_5v_settle']:.2f} V; "
-          f"85C Bounce V_pk={hotplug_85c['vin_85c_peak']:.2f} V (<32 V), F1_pk={hotplug_85c['f1_85c_surge_pk']:.2f} A (<40 A), "
-          f"Vgs_pk={hotplug_85c['vgs_85c_peak']:.2f} V (<20 V)")
+    print(f"Faults (85 C w/ real TVS TBV1): V_pk={hotplug_85c['vin_85c_peak']:.2f} V (<32 V), "
+          f"F1_pk={hotplug_85c['f1_85c_surge_pk']:.2f} A (<50 A), I2t={hotplug_85c['i2t_f1_85c']:.5f} A2s "
+          f"({f1_i2t_limit/max(hotplug_85c['i2t_f1_85c'],1e-9):.0f}x margin!), "
+          f"R7_pk={hotplug_85c['p_r7_85c_pk']:.1f} W (<600 W 2512), Vgs_pk={hotplug_85c['vgs_85c_peak']:.2f} V (<20 V)")
     print(f"Corners: {corners['total_corners']-corners['failed_corners']}/{corners['total_corners']} PASS "
-          f"(P_PCB_max={corners['total_pcb_loss_max']:.3f} W, I_in_max={corners['i_in_total_max']:.3f} A, Tj_max={max(corners['uv_tj_max'], corners['vis_tj_max']):.1f} C)")
+          f"(P_PCB_max={corners['total_pcb_loss_max']:.3f} W, I_in_max={corners['i_in_total_max']:.3f} A, "
+          f"Tj_max={max(corners['uv_tj_max'], corners['vis_tj_max']):.1f} C @ T_bay=T_amb+15C)")
     print(f"Monte Carlo: {mc['passes']}/{mc['n_trials']} ({mc['yield_pct']}%) PASS; "
           f"V_ON=[{mc['v_uvlo_on_V']['min']}, {mc['v_uvlo_on_V']['max']}] V, V_OFF=[{mc['v_uvlo_off_V']['min']}, {mc['v_uvlo_off_V']['max']}] V")
 

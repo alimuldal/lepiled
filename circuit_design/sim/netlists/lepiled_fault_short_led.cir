@@ -1,5 +1,5 @@
 * ==============================================================================
-* LepiLED Rev 4.7 — Fault 2: Shorted LED String (Ch1 UV_POS shorted to UV_NEG at t=2.5 ms)
+* LepiLED Rev 4.8 — Fault 2: Shorted LED String (Ch1 UV_POS shorted to UV_NEG at t=2.5 ms)
 * ==============================================================================
 .include models.lib
 .include al8860.lib

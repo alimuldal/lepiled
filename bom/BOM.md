@@ -1,28 +1,46 @@
-# LepiLED DIY Maxi Switch — Master Bill of Materials (Rev 4.7)
+# LepiLED DIY Maxi Switch — Master Bill of Materials (Rev 4.8)
 
-The machine-verified master BOM lives in [bom.csv](bom.csv) and is audited 1:1 against [COMPONENT_IDS.csv](../circuit_design/COMPONENT_IDS.csv) (`66` RefDes), [driver_pcb_bom_pcba.csv](../pcb_design/driver_pcb_bom_pcba.csv) (`52` On-PCB parts), the derived 2-Extended-reel Hybrid PCBA files ([driver_pcb_bom_pcba_hybrid.csv](../pcb_design/driver_pcb_bom_pcba_hybrid.csv), [driver_pcb_cpl_hybrid.csv](../pcb_design/driver_pcb_cpl_hybrid.csv), [driver_pcb_diy_hand_solder.csv](../pcb_design/driver_pcb_diy_hand_solder.csv)), and [MECH_PARTS.csv](../mechanical_design/MECH_PARTS.csv) (`22` mechanical IDs) via [verify_bom.py](verify_bom.py).
+The machine-verified master BOM lives in [bom.csv](bom.csv) and is audited 1:1 against [COMPONENT_IDS.csv](../circuit_design/COMPONENT_IDS.csv) (`72` RefDes + every `Datasheet_Ref` verified on disk), [driver_pcb_bom_pcba.csv](../pcb_design/driver_pcb_bom_pcba.csv) (`54` On-PCB parts), the derived Full-SMD ENIG PCBA files ([driver_pcb_bom_pcba_hybrid.csv](../pcb_design/driver_pcb_bom_pcba_hybrid.csv), [driver_pcb_cpl_hybrid.csv](../pcb_design/driver_pcb_cpl_hybrid.csv), [driver_pcb_diy_hand_solder.csv](../pcb_design/driver_pcb_diy_hand_solder.csv)), and [MECH_PARTS.csv](../mechanical_design/MECH_PARTS.csv) (`23` mechanical IDs) via [verify_bom.py](verify_bom.py).
 
-## 1. Single-Unit Hobby Cost Summary (UK GBP)
+## 1. Low-Hassle Full-SMD ENIG Single-Unit Cost Summary (UK GBP)
 
-| Domain | 1-Off Checkout (ex-VAT) | 1-Off Checkout (inc 20% VAT) | Amortized Per-Lamp (ex-VAT) |
+| Domain | 1-Off Parts (ex-VAT) | 1-Off Parts (inc 20% VAT) | Amortized Per-Lamp (ex-VAT) |
 |---|---:|---:|---:|
-| **Electrical (`66` RefDes incl. `8×` `20 mm` Copper DTP LED stars)** | £38.01 | £45.61 | £36.74 |
+| **Electrical (`72` RefDes incl. `8×` `20 mm` LED stars from Kaidomain + LED-TECH.DE)** | £43.41 | £52.09 | £42.25 |
 | **Harness (pre-crimped JST-XH pigtails, `24 AWG` UV silicone wire, `90°` USB-C PD cable)** | £8.34 | £10.01 | £6.59 |
-| **PCB Fab + 2-Reel Hybrid Economic PCBA (`driver_pcb`, Lead-Free HASL, 2-pc min)** | £15.00 | £18.00 | £7.50 |
-| **Mechanical (`200 mm` Al core, `Ø60×54` XT PMMA tube, O-rings, ePTFE vent, oxime silicone, matte-black paint, brass inserts, screws)** | £43.93 | £52.72 | £43.10 |
-| **Total 1-Off Build (All Items Purchased New)** | **£105.28** | **£126.34** | **£93.93** |
-| **Net 1-Off Out-of-Pocket (Using Owned Screws, Thermal Paste & Matte-Black Spray)** | **£93.43** | **£112.12** | — |
+| **PCB Fab (ENIG) + Full-SMD Economic PCBA (`driver_pcb`, `48` SMDs [7 Ext reels], 2-pc min)** | £38.65 | £46.38 | £19.33 |
+| **Mechanical (`0A070` PMMA, `OTTOSEAL S 72 Clear`, `200 mm` Al core, O-rings, sleeve, vent, inserts, hardware)** | £57.78 | £69.34 | £53.20 |
+| **Total Parts-Only 1-Off (All Items Purchased New)** | **£148.18** | **£177.82** | **£121.37** (`£145.64` inc-VAT) |
+| **Net Parts-Only 1-Off (Using Owned M3 Screws, Thermal Paste & Matte-Black Spray)** | **£133.43** | **£160.12** | — |
 
-> **Scope:** The 8 3D-printed parts are printed in-house (`£0.00`, Black ASA + Signal-Orange accent). External USB-C PD power sources (laptop charger or 20 V PD power bank) are excluded.
+### Estimated Multi-Vendor UK Delivery Breakdown (Single-Lamp Order)
+
+Hobby single-unit builds span multiple specialist vendors; estimated UK delivery charges are shown separately below so there are no checkout surprises:
+
+| Vendor | Contents | Est. UK Shipping (inc-VAT) |
+|---|---|---:|
+| **JLCPCB** | 5× bare ENIG `driver_pcb` + 2× Full-SMD assembled (`48` SMDs) | £9–£12 |
+| **Farnell UK / RS UK** | `SW1` (`C&K 7211SYZBE`), `SW1_BOOT`, `J1..J4` THT, `MECH-VENT-1` | £0–£6 *(free over threshold / RS)* |
+| **Kaidomain** | `4× Luminus SST-10-UV 365 nm` + `1× Cree XP-E2 Cool White` (`20 mm` Cu DTP) | £4 |
+| **LED-TECH.DE** | `2× Cree XP-E2 Royal Blue 455 nm` + `1× Cree XP-E2 Green 528 nm` (`20 mm` Star) | £11–£14 |
+| **Amari Plastics / Acrylglas-Shop** | `PLEXIGLAS® XT Clear 0A070 (29070)` `Ø60 × 54 × 3.0 × 115 mm` tube | £8–£12 |
+| **Metals4U UK / eBay UK** | `30 × 30 × 3.0 × 200 mm` 6063-T6 Al box section | £5 |
+| **Sealants Online UK** | `OTTOSEAL® S 72 Clear` (`310 ml` PMMA-safe neutral-alkoxy RTV) | £6 |
+| **Simply Bearings / Accu / Amazon UK** | VMQ O-rings (`60×3.5`, `68×2.5`), silicone tubing, brass inserts, nylon screws/washers, pigtails, USB-C cable | £5–£8 |
+| **Estimated Total UK Delivery** | **8 Vendor Shipments** | **£48–£67** |
+| **Estimated All-In UK Delivered Single Lamp (All New)** | **Parts (£177.82 inc-VAT) + Shipping** | **~£226–£245 inc-VAT** |
+| **Estimated All-In UK Delivered (Owned M3 / Paste / Spray)** | **Parts (£160.12 inc-VAT) + Shipping** | **~£208–£227 inc-VAT** |
+
+> **Scope:** The 8 3D-printed parts are printed on a workshop printer (`£0.00`, Black PETG or ASA + Signal-Orange accent). Workshop tools/PPE/consumables (UV400 glasses, filament, O-ring grease) and external 20 V USB-C PD power sources (laptop charger or 20 V PD power bank) are excluded per project scope. Note that the JLCPCB 2-pc minimum, `310 ml` `OTTOSEAL S 72`, and fastener multi-packs make a **2nd lamp** cost only ~£80–£95 incremental!
 
 ## 2. Key Ordering Notes
 
-- **Driver PCB Hybrid PCBA (`PCB-01`):** Upload [driver_pcb_gerbers.zip](../pcb_design/gerbers/driver_pcb/driver_pcb_gerbers.zip), [driver_pcb_bom_pcba_hybrid.csv](../pcb_design/driver_pcb_bom_pcba_hybrid.csv), and [driver_pcb_cpl_hybrid.csv](../pcb_design/driver_pcb_cpl_hybrid.csv) to JLCPCB (`40` SMDs assembled, only 2 Extended reels: `U1/U2` `C125330` and `U3` `C42459160`). Hand-solder the `10` bulky parts (`J1..J4` THT + `F1`, `D11`, `L1`, `L2`, `R3`, `R4`) from RS UK / Farnell UK listed in [driver_pcb_diy_hand_solder.csv](../pcb_design/driver_pcb_diy_hand_solder.csv). *(Optional industrial upgrade for sub-zero or `> 30 °C` ambient builds: swap `U4` from Basic `LM393DR2G` `C7955` to `LM2903DR2G` `C57474`.)*
-- **Toggle Switch (`SW1`, `C&K 7211SYZBE` + `759D02000` Boot):** Uses gold dry-circuit contacts (`0.4 VA max`) and a threaded `1/4-40` bushing for the waterproof silicone boot. Do not substitute silver-contact switches, which oxidize outdoors on microamp logic signals. *(Multicomp Pro `E4`, Farnell `2113266`, is a compatible boot alternative.)*
-- **UV-Transmitting Acrylic Tube (`MECH-TUBE-1`, `Ø60 × 54 × 3.0 × 115 mm`):** Order **clear unstabilized extruded PMMA (`Plexiglas XT`)** (`85–92%` @ `365 nm`). Do not substitute UV-blocking cast `Plexiglas GS` or polycarbonate. Never clean with IPA or seal with acetic-cure silicone.
-- **Pre-Mounted `20 mm` Copper DTP Stars (`D1..D8`):** `4× Luminus SST-10-UV 365 nm` + `2× Cree XP-E2 Royal Blue` + `1× Green` + `1× Cool White` with electrically neutral thermal pads. Mount with `16× M3 × 8 mm` pan screws and `16× M3` nylon insulating washers, wired with `24 AWG` silicone wire (`HARN-03`).
-- **Aluminum Core (`MECH-HS-CORE`) & Matte-Black Spray (`MECH-PAINT-1`):** `200.0 mm` length of `30 × 30 × 3.0 mm` 6063-T6 square tube sprayed matte black (masking the `8× Ø20 mm` star pads bare).
-- **Seals & Hardware:** `2×` `60 × 3.5 mm` soft VMQ50/60 shroud O-rings, `1×` `62 × 2.5 mm` VMQ70 lid O-ring, `Ø8 mm` adhesive IP68 ePTFE vent patch, neutral-cure oxime RTV silicone, `10× M3` + `4× M2.5` brass heat-set inserts, and standard `M3`/`M2.5` machine screws.
+- **Driver PCB Full-SMD ENIG PCBA (`PCB-01` — Low-Hassle Path):** Upload [driver_pcb_gerbers.zip](../pcb_design/gerbers/driver_pcb/driver_pcb_gerbers.zip), [driver_pcb_bom_pcba_hybrid.csv](../pcb_design/driver_pcb_bom_pcba_hybrid.csv), and [driver_pcb_cpl_hybrid.csv](../pcb_design/driver_pcb_cpl_hybrid.csv) to JLCPCB (**ENIG**, Top-Side Economic PCBA, Qty `2`). JLCPCB machine-reflows **all `48` SMDs** (`20` Basic + `7` Extended reels: `U1/U2`, `U3`, `F1`, `D11`, `L1/L2`, `R3/R4`, `R7`). Only the **`4` through-hole connectors (`J1..J4`)** in [driver_pcb_diy_hand_solder.csv](../pcb_design/driver_pcb_diy_hand_solder.csv) are hand-soldered at home (`D13/D14` are left DNP with zero solder paste).
+- **UV-Transmitting Plexiglass Shroud (`MECH-TUBE-1`, `Ø60 × 54 × 3.0 × 115 mm`):** Specifically order **Röhm `PLEXIGLAS® XT Clear 0A070` (`29070`)** (`~80–85%` normal / `~79.8%` cone-integrated transmission at `365 nm`) from Amari Plastics UK or Acrylglas-Shop. Do **not** substitute UV-blocking cast `GS` or polycarbonate. Verify 365 nm transmission on arrival with the quick white-paper fluorescence bench check in [ASSEMBLY_GUIDE.md](../docs/ASSEMBLY_GUIDE.md). Never clean PMMA with IPA!
+- **PMMA-Safe Sealant (`MECH-SEAL-1`):** Use **`OTTOSEAL® S 72 Clear`** (Röhm-certified non-crazing neutral-alkoxy silicone for PLEXIGLAS XT) and observe a mandatory **48-hour open-air cure** before closing the shroud/lid.
+- **Pre-Mounted `20 mm` LED Stars (`D1..D8`):** `4× Luminus SST-10-UV 365 nm` + `1× Cree XP-E2 Cool White` from **Kaidomain** (`20 mm` Cu DTP), plus `2× Cree XP-E2 Royal Blue 455 nm` (`LT-2231`) + `1× Cree XP-E2 Green 528 nm` (`LT-2228`) from **LED-TECH.DE**. Mount Royal Blue on **opposite Faces 1 (`+X`) and 3 (`-X`)** with `16× M3 × 8 mm` pan screws and `16× M3` DIN 125 nylon washers edge-clamping at `R = 11.7 mm`.
+- **Aluminum Core (`MECH-HS-CORE`) & Chimney-Only Matte-Black Spray (`MECH-PAINT-1`):** `200.0 mm` length of `30 × 30 × 3.0 mm` 6063-T6 square tube. Spray **only the top `58.5 mm` protruding chimney** matte black — leave the interior shroud section bare mill aluminum (zero UV paint outgassing and zero star-pad masking!).
+- **Seals & Hardware:** `2×` `60 × 3.5 mm` soft VMQ50/60 shroud O-rings, `1×` **`68 × 2.5 mm` VMQ70** lid O-ring, `10 mm` slit silicone tubing sleeve (`MECH-GROMMET-1`, `Ø8 × Ø4 mm`), `Ø8 mm` adhesive IP68 ePTFE vent patch, `8× M3×5×4.2` + `2× M3×4×4.2` short blind brass inserts, `4× M2.5×4×3.5` brass inserts, `4× M2.5 × 6 mm` **nylon** pan screws, and `28× M3` machine screws (`16× M3×8` pan, `2× M3×8` CSK, `2× M3×10` SHCS, `8× M3×12` SHCS).
 
 ## 3. Verification
 

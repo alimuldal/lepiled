@@ -1,5 +1,5 @@
 * ==============================================================================
-* LepiLED Rev 4.7 — Fault 1: Open-LED Disconnect (t=2.0 ms) & Live-Reconnect (t=4.0 ms)
+* LepiLED Rev 4.8 — Fault 1: Open-LED Disconnect (t=2.0 ms) & Live-Reconnect (t=4.0 ms)
 * Proves C4/C5 = 100 nF + R22/R23 = 10.0 Ohm keeps BOTH UV (<0.5 A) & Vis (<0.8 A)
 * live-reconnect surge safely inside CW datasheet limits through 150 nH / 80 mOhm wire!
 * ==============================================================================
@@ -41,8 +41,8 @@ S_open2 VIS_POS VIS_SW n_open 0 SW_BRK
 L_harn2 VIS_SW VIS_H1 150n
 V_ivis VIS_H1 VIS_A1 0
 D5 VIS_A1 VIS_N1 D_XPE2_RB
-D6 VIS_N1 VIS_N2 D_XPE2_RB
-D7 VIS_N2 VIS_N3 D_XPE2_GRN
+D7 VIS_N1 VIS_N2 D_XPE2_GRN
+D6 VIS_N2 VIS_N3 D_XPE2_RB
 D8 VIS_N3 VIS_NEG D_XPE2_CW
 
 .options method=gear reltol=5e-3 abstol=1e-8 vntol=1e-4

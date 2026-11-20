@@ -1,6 +1,7 @@
 * ==============================================================================
-* LepiLED Rev 4.7 — Verified Semiconductor & Protection SPICE Models
-* Grounded in official manufacturer datasheets (TL431 BV calibrated to 2.500 V)
+* LepiLED Rev 4.8 — Verified Semiconductor & Protection SPICE Models
+* Grounded in official manufacturer datasheets (TL431 BV calibrated to 2.500 V;
+* SMBJ22A includes realistic TBV1 = +9.6e-4 /C breakdown tempco at .temp 85!)
 * ==============================================================================
 
 * --- Luminus SST-10-UV-A130-G365-00 (365 nm UV-A) ---
@@ -22,12 +23,12 @@
 * --- KENTO KT-0603R Red Indicator LED (Basic C2286, Vf ~ 1.95 V @ 1.6 mA) ---
 .model D_LED_RED_IND D(IS=2e-17 N=2.1 RS=6.0 CJO=12p BV=5.0)
 
-* --- Vishay SMBJ22A Unidirectional 22 V TVS (Vbr = 24.4-26.9 V, Vc = 35.5 V @ 16.9 A) ---
+* --- RUILON SMBJ22A Unidirectional 22 V TVS (C10214: Vbr = 24.4-26.9 V, TBV1=+0.096%/C, Vc = 35.5 V @ 16.9 A) ---
 * Pin order: anode (GND), cathode (VIN_20V) -> clamps negative spikes at -1 V!
 .subckt TVS_SMBJ22A anode cathode
 Dclamp anode cathode D_TVS22U
 Ctvs anode cathode 950p
-.model D_TVS22U D(IS=1e-12 N=1.2 RS=0.55 BV=24.8 IBV=1m)
+.model D_TVS22U D(IS=1e-12 N=1.2 RS=0.55 BV=24.8 IBV=1m TBV1=9.6e-4)
 .ends TVS_SMBJ22A
 
 * --- Leiditech ESD24V32D-C (24 V Bidirectional 25 pF ESD Diode, Optional DNP) ---
@@ -46,11 +47,11 @@ D_hi io k2 D_BAV99_M
 .model D_BAV99_M D(IS=5e-9 N=1.8 RS=1.2 CJO=1.2p BV=75 IBV=100u)
 .ends ESD_BAV99
 
-* --- Changjing 2N7002 (60 V N-MOSFET, Basic C8545, Vth=1.0-2.5 V, Rds<=5 Ohm @ 4.5 V) ---
+* --- Changjing 2N7002 (60 V N-MOSFET, Basic C8545, Vth=1.0-2.5 V, Rds<=7.5 Ohm) ---
 .model NMOS_2N7002 NMOS(LEVEL=1 VTO=1.80 KP=0.18 RD=1.5 RS=1.5 CBD=15p CBS=20p CGSO=25p CGDO=8p LAMBDA=0.01)
 
 * --- Hottech TL431 (2.500 V +/-1% Shunt Voltage Reference, SOT-23 Basic C181103) ---
-* Calibrated BV=2.421 yields exact V(K,A) = 2.500 V at I_K = 1.75 mA (Zka ~ 0.2 Ohm)
+* Calibrated BV=2.421 yields exact V(K,A) = 2.500 V at I_K = 1.75 mA (Zka ~ 0.25 Ohm)
 .subckt TL431_2V5 K A
 Dref A K D_TL431
 Rleak K A 10Meg
@@ -62,7 +63,7 @@ Cref K A 10p
 * Pulls OUT to GND (< 50 mV @ 0.4 mA) when IN+ < IN-; high-Z when IN+ > IN-
 .subckt LM393_CH INP INM OUT VCC GND
 Rin INP INM 2Meg
-Rq VCC GND 65k
+Rq VCC GND 40k
 B_drv drv GND V = { (V(VCC,GND) > 1.8) ? (0.5*(1 - tanh((V(INP,INM))/0.002))) : 0 }
 S_oc OUT GND drv GND SW_LM393
 R_leak OUT GND 100Meg

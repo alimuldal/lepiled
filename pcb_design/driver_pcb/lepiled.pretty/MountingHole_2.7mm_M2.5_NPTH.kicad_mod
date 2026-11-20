@@ -1,12 +1,12 @@
 (footprint "MountingHole_2.7mm_M2.5_NPTH"
-	(version 20241229)
+	(version 20260206)
 	(generator "pcbnew")
-	(generator_version "9.0")
+	(generator_version "10.0")
 	(layer "F.Cu")
 	(property "Reference" "H"
 		(at 0 3.4 0)
 		(layer "F.Fab")
-		(uuid "ab7cd7f4-7bf4-4afc-ab66-4bccbd92b992")
+		(uuid "411d043f-862f-4363-bfe6-e5baef9041d3")
 		(effects
 			(font
 				(size 0.8 0.8)
@@ -17,7 +17,7 @@
 	(property "Value" "MountingHole_2.7mm_M2.5_NPTH"
 		(at 0 -3.4 0)
 		(layer "F.Fab")
-		(uuid "31cae558-88a3-423a-b4bd-7c19a50be58e")
+		(uuid "b22cd7b5-5a9e-4977-aa87-5d217fc566b5")
 		(effects
 			(font
 				(size 0.5 0.5)
@@ -29,11 +29,10 @@
 		(at 0 0 0)
 		(layer "F.Fab")
 		(hide yes)
-		(uuid "c3a222f2-4848-4c55-bae1-6e89c5dc353c")
+		(uuid "26477743-afd6-45fc-93ba-5a6f2242177c")
 		(effects
 			(font
 				(size 1.27 1.27)
-				(thickness 0.15)
 			)
 		)
 	)
@@ -41,15 +40,15 @@
 		(at 0 0 0)
 		(layer "F.Fab")
 		(hide yes)
-		(uuid "624cd5d3-1ed0-4d29-aec7-72ac6eb8041f")
+		(uuid "f346fabe-1121-43cd-97c4-a5d4c2728768")
 		(effects
 			(font
 				(size 1.27 1.27)
-				(thickness 0.15)
 			)
 		)
 	)
 	(attr board_only exclude_from_pos_files exclude_from_bom)
+	(duplicate_pad_numbers_are_jumpers no)
 	(fp_circle
 		(center 0 0)
 		(end 2.75 0)
@@ -59,7 +58,7 @@
 		)
 		(fill no)
 		(layer "F.CrtYd")
-		(uuid "c1120521-d904-49df-af61-f7990c8bf146")
+		(uuid "a34abb9f-193b-4287-9ce9-c358522d34df")
 	)
 	(pad "" np_thru_hole circle
 		(at 0 0)
@@ -67,7 +66,7 @@
 		(drill 2.7)
 		(layers "*.Mask")
 		(solder_mask_margin 1.25)
-		(uuid "1b64501a-d7df-4d12-a9a6-f88a724139b0")
+		(uuid "bb3d8958-3213-4da2-8f6e-816b843ccb8f")
 	)
 	(embedded_fonts no)
 )

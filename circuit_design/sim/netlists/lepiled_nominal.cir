@@ -1,6 +1,6 @@
 * ==============================================================================
-* LepiLED Rev 4.7 — Nominal Operating Mode Testbench (OFF -> 4-UV -> 8-ALL)
-* Input: 20.0 V USB-C PD (WCH CH224A direct fused VIN_20V, cSnk = 8.0 uF)
+* LepiLED Rev 4.8 — Nominal Operating Mode Testbench (OFF -> 4-UV -> 8-ALL)
+* Input: 20.0 V USB-C PD (WCH CH224A + Littelfuse 046801.5NRHF 1.5 A Slo-Blo, cSnk = 8.0 uF)
 *   0.0 -  2.0 ms: OFF mode   (SW_UV_IN=GND, SW_VIS_IN=GND -> both OFF)
 *   2.0 -  5.5 ms: 4-UV mode  (SW_UV_IN=OPEN, SW_VIS_IN=GND -> Ch1 UV ON)
 *   5.5 - 14.5 ms: 8-ALL mode (SW_UV_IN=OPEN, SW_VIS_IN=OPEN -> both ON)
@@ -12,7 +12,7 @@ Vpd VPD_SRC 0 20.0
 Rcable VPD_SRC VBUS 0.106
 Lcable VBUS VBUS_IN 0.2u
 
-RF1 VBUS_IN VIN_20V 0.080
+RF1 VBUS_IN VIN_20V 0.044
 XD11 0 VIN_20V TVS_SMBJ22A
 R7 VIN_20V VBUS_DAMP 1.0
 C10 VBUS_DAMP 0 4.7u
@@ -22,9 +22,11 @@ R13 VIN_20V PD_LED_A 10.0k
 R10 PD_LED_A 0 10.0k
 D12 PD_LED_A 0 D_LED_RED_IND
 
-* Hysteretic Hardware UVLO (17.48 V ON / 16.66 V OFF; 0.83 V hyst)
+* Hysteretic Hardware UVLO (17.48 V ON / 16.66 V OFF; 0.83 V hyst) + Damped V_REF ESD Bypass
 R14 VIN_20V V_REF 10.0k
 XU5 V_REF 0 TL431_2V5
+R24 V_REF V_REF_DAMP 10.0
+C16 V_REF_DAMP 0 100n
 R15 VIN_20V UVLO_SENSE 30.0k
 R16 UVLO_SENSE 0 5.1k
 C15 UVLO_SENSE 0 100n
@@ -80,8 +82,8 @@ C5 VIS_POS VIS_C5_DAMP 100n
 R23 VIS_C5_DAMP VIS_NEG 10.0
 V_ivis VIS_POS VIS_A1 0
 D5 VIS_A1 VIS_N1 D_XPE2_RB
-D6 VIS_N1 VIS_N2 D_XPE2_RB
-D7 VIS_N2 VIS_N3 D_XPE2_GRN
+D7 VIS_N1 VIS_N2 D_XPE2_GRN
+D6 VIS_N2 VIS_N3 D_XPE2_RB
 D8 VIS_N3 VIS_NEG D_XPE2_CW
 
 .options method=gear reltol=5e-3 abstol=1e-8 vntol=1e-4

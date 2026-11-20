@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Programmatically derive Hybrid JLCPCB Economic PCBA files from the canonical full BOM & CPL.
+"""Programmatically derive JLCPCB Low-Hassle Full-SMD ENIG PCBA files from the canonical full BOM & CPL.
 
-Rev 4.7 (CH224A + 2-Extended-Reel Budget PCBA):
+Rev 4.8 (Low-Hassle Full-SMD ENIG PCBA — Zero SMD Hand-Soldering):
   Single source of truth:
-    - pcb_design/driver_pcb_bom_pcba.csv (52 populated On-PCB parts: 48 SMD + 4 THT)
-    - pcb_design/driver_pcb_cpl.csv      (48 SMD placements)
+    - pcb_design/driver_pcb_bom_pcba.csv (54 On-PCB rows: 48 populated SMD + 2 optional DNP + 4 THT)
+    - pcb_design/driver_pcb_cpl.csv      (48 populated SMD placements; DNP D13/D14 excluded)
 
-  Derived outputs (never hand-edit; verified 1:1 by bom/verify_bom.py):
-    - pcb_design/driver_pcb_bom_pcba_hybrid.csv  (40 SMD parts assembled by JLCPCB; ONLY 2 Extended reels: U1/U2 + U3!)
-    - pcb_design/driver_pcb_cpl_hybrid.csv       (40 SMD placements matching the hybrid BOM 1:1)
-    - pcb_design/driver_pcb_diy_hand_solder.csv  (10 bench hand-solder parts: 4 THT + 6 chunky 2-pad SMDs; plus 2 optional DNP notes)
+  Derived outputs (never hand-edit; verified 1:1 by bom/verify_bom.py & verify_all.py):
+    - pcb_design/driver_pcb_bom_pcba_hybrid.csv  (48 populated SMD parts assembled by JLCPCB; 20 Basic + 7 Extended reels)
+    - pcb_design/driver_pcb_cpl_hybrid.csv       (48 SMD placements matching the JLCPCB upload BOM 1:1)
+    - pcb_design/driver_pcb_diy_hand_solder.csv  (4 THT connectors hand-soldered at home: J1..J4; plus 2 optional DNP notes)
 
 Usage:
   python3 pcb_design/generate_hybrid_pcba.py          # regenerate all 3 derived CSVs
@@ -32,29 +32,20 @@ HYBRID_BOM_PATH = PCB_DESIGN_DIR / "driver_pcb_bom_pcba_hybrid.csv"
 HYBRID_CPL_PATH = PCB_DESIGN_DIR / "driver_pcb_cpl_hybrid.csv"
 DIY_BOM_PATH = PCB_DESIGN_DIR / "driver_pcb_diy_hand_solder.csv"
 
-# 1. Chunky 2-pad Extended SMDs offloaded from JLCPCB PCBA to DIY bench hand-soldering.
-#    Eliminates 4 Extended feeder reels ($12) while keeping all fine-pitch ICs, SOT-23,
-#    and 0603/0805/1206 passives assembled by JLCPCB.
-HYBRID_DIY_OFFLOAD: dict[str, str] = {
-    "F1": "1812 2-pad PPTC fuse (Extended reel offload; easy hand-solder)",
-    "D11": "DO-214AA (SMB) 2-pad TVS diode (Extended reel offload; easy hand-solder)",
-    "L1": "6.0x6.0 mm 2-pad power inductor (Extended reel offload; easy hand-solder)",
-    "L2": "6.0x6.0 mm 2-pad power inductor (Extended reel offload; easy hand-solder)",
-    "R3": "1206 2-pad 0.30R shunt (Extended reel offload; easy hand-solder)",
-    "R4": "1206 2-pad 0.30R shunt (Extended reel offload; easy hand-solder)",
-}
+# 1. Rev 4.8 Low-Hassle Full-SMD PCBA: ZERO SMDs offloaded to DIY hand-soldering!
+#    Every SMD (including shielded SWPA6045 inductors L1/L2, 1206 Slo-Blo fuse F1,
+#    2512 1 W pulse resistor R7, SMBJ22A D11, and 1206 shunts R3/R4) is machine-reflowed
+#    by JLCPCB on an ENIG surface finish so the builder only hand-solders 4 THT connectors.
+HYBRID_DIY_OFFLOAD: dict[str, str] = {}
 
-# 2. Optional ESD diodes left DNP (unpopulated) in the 2-Extended-reel Hybrid BOM.
-#    Because the 90-deg USB-C cable is permanently captured inside the sealed ASA base
-#    and CH224A includes internal ESD protection, leaving D13/D14 unpopulated saves $3
-#    and brings the entire Hybrid PCBA down to ONLY 2 Extended reels (U1/U2 + U3).
+# 2. Optional ESD diodes left DNP (unpopulated and excluded from F_Paste.gbr) because
+#    the 90-deg USB-C plug is sealed inside the housing and CH224A integrates internal ESD.
 HYBRID_DNP_EXCLUDE: dict[str, str] = {
-    "D13": "Optional CC1 24 V ESD diode (left DNP in 2-reel Hybrid PCBA; pads remain available)",
-    "D14": "Optional CC2 24 V ESD diode (left DNP in 2-reel Hybrid PCBA; pads remain available)",
+    "D13": "Optional CC1 24 V ESD diode (DNP; excluded from paste & PCBA; pads remain available)",
+    "D14": "Optional CC2 24 V ESD diode (DNP; excluded from paste & PCBA; pads remain available)",
 }
 
-# 3. Basic swaps map (empty in Rev 4.7 because Basic parts U4/U5/Q2/Q3/D9/D10/D12/D15/D16
-#    and all passives are already canonical in driver_pcb_bom_pcba.csv).
+# 3. Basic swaps map (empty in Rev 4.8; all Basic & Extended LCSC numbers are canonical).
 HYBRID_BASIC_SWAPS: dict[str, dict[str, str]] = {}
 
 HYBRID_BOM_COLS = ["Comment", "Designator", "Footprint", "LCSC Part #", "MPN", "Hybrid_Note"]
@@ -82,7 +73,7 @@ def derive_hybrid_tables(
     full_bom_path: Path = FULL_BOM_PATH,
     full_cpl_path: Path = FULL_CPL_PATH,
 ) -> tuple[str, str, str, dict[str, int]]:
-    """Deterministically derive (hybrid_bom_csv, hybrid_cpl_csv, diy_bom_csv, stats)."""
+    """Deterministically derive (pcba_bom_csv, pcba_cpl_csv, diy_bom_csv, stats)."""
     _, full_bom = _read_csv(full_bom_path)
     cpl_header, full_cpl = _read_csv(full_cpl_path)
 
@@ -115,7 +106,7 @@ def derive_hybrid_tables(
                 row["Footprint"],
                 row["MPN"],
                 method,
-                "Through-hole connector (hand-soldered in both Full and Hybrid builds)",
+                "Through-hole connector (only DIY hand-soldering required on Rev 4.8 ENIG PCB)",
             ])
         elif ref in HYBRID_DIY_OFFLOAD:
             diy_bom_rows.append([
@@ -123,17 +114,17 @@ def derive_hybrid_tables(
                 ref,
                 row["Footprint"],
                 row["MPN"],
-                "SMD Hand-Solder (DIY Hybrid Offload)",
+                "SMD Hand-Solder (DIY Offload)",
                 HYBRID_DIY_OFFLOAD[ref],
             ])
-        elif ref in HYBRID_DNP_EXCLUDE:
+        elif ref in HYBRID_DNP_EXCLUDE or "DNP" in method:
             diy_bom_rows.append([
                 row["Comment"],
                 ref,
                 row["Footprint"],
                 row["MPN"],
-                "Optional DNP (Omit in 2-Reel Hybrid)",
-                HYBRID_DNP_EXCLUDE[ref],
+                "Optional DNP (Excluded from Paste & PCBA)",
+                HYBRID_DNP_EXCLUDE.get(ref, "Optional DNP"),
             ])
         else:
             swap = HYBRID_BASIC_SWAPS.get(ref)
@@ -141,6 +132,8 @@ def derive_hybrid_tables(
             lcsc = swap["LCSC Part #"] if swap else row["LCSC Part #"]
             mpn = swap["MPN"] if swap else row["MPN"]
             note = swap["Hybrid_Note"] if swap else ""
+            if not lcsc:
+                raise ValueError(f"Missing LCSC Part # for JLCPCB-assembled SMD {ref} ({mpn})")
             hybrid_bom_rows.append([comment, ref, row["Footprint"], lcsc, mpn, note])
             hybrid_refs.add(ref)
 
@@ -155,7 +148,7 @@ def derive_hybrid_tables(
     if cpl_seen != hybrid_refs:
         missing = sorted(hybrid_refs - cpl_seen)
         extra = sorted(cpl_seen - hybrid_refs)
-        raise ValueError(f"Hybrid CPL/BOM Designator mismatch: missing={missing}, extra={extra}")
+        raise ValueError(f"PCBA CPL/BOM Designator mismatch: missing={missing}, extra={extra}")
 
     stats = {
         "full_bom_rows": len(full_bom),
@@ -202,7 +195,7 @@ def check() -> list[str]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Generate or verify Hybrid JLCPCB Economic PCBA files.")
+    parser = argparse.ArgumentParser(description="Generate or verify JLCPCB Low-Hassle Full-SMD PCBA files.")
     parser.add_argument("--check", action="store_true", help="Verify derived CSVs match canonical full BOM/CPL without writing.")
     args = parser.parse_args()
 
@@ -212,16 +205,15 @@ def main() -> int:
             for e in errs:
                 print(f"ERROR: {e}", file=sys.stderr)
             return 1
-        print("PASS: Hybrid PCBA CSVs match canonical driver_pcb_bom_pcba.csv + driver_pcb_cpl.csv 1:1.")
+        print("PASS: JLCPCB PCBA CSVs match canonical driver_pcb_bom_pcba.csv + driver_pcb_cpl.csv 1:1.")
         return 0
 
     stats = generate()
     print(
-        f"Generated Hybrid PCBA outputs from {stats['full_bom_rows']} canonical PCBA rows "
+        f"Generated Rev 4.8 Low-Hassle Full-SMD PCBA outputs from {stats['full_bom_rows']} canonical PCBA rows "
         f"({stats['full_cpl_rows']} SMD CPL): "
-        f"{stats['hybrid_pcba_rows']} JLCPCB Hybrid SMD (ONLY 2 Extended reels: U1/U2 + U3!) + "
-        f"{stats['diy_hand_solder_rows'] - stats['dnp_rows']} DIY hand-solder "
-        f"({stats['smd_offloads']} offloaded chunky SMDs + 4 THT) + {stats['dnp_rows']} optional DNP."
+        f"{stats['hybrid_pcba_rows']} JLCPCB SMD (20 Basic + 7 Extended reels; 0 DIY SMDs!) + "
+        f"{stats['diy_hand_solder_rows'] - stats['dnp_rows']} THT DIY (J1..J4) + {stats['dnp_rows']} optional DNP."
     )
     return 0
 

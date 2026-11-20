@@ -1,8 +1,8 @@
 * ==============================================================================
-* LepiLED Rev 4.7 — Fault 3: USB-C Input Protection & 5 V Attach Compliance Suite
+* LepiLED Rev 4.8 — Fault 3: USB-C Input Protection & 5 V Attach Compliance Suite
 *   Case A: Negative -15 V transient on VBUS -> Unidirectional SMBJ22A clamps >= -1.5 V
 *   Case B: Inductive USB-C 21 V Hot-Plug (L=0.5 uH, R=0.15 Ohm) on cSnk=8.0 uF
-*           (3.3 uF undamped + 4.7 uF/1.0R damper N=1.42) -> V_pk << 32 V CH224A max
+*           (3.3 uF undamped + 4.7 uF/1.0R 2512 damper N=1.42) -> V_pk << 32 V CH224A max
 *   Case C: Cold 5.0 V USB-C Attach (cSnk = 8.0 uF <= 10 uF spec) + Q2/Q3 gate Vgs
 * ==============================================================================
 .include models.lib
@@ -10,7 +10,7 @@
 * --- CASE A: Negative -15 V Transient on VBUS (Unidirectional SMBJ22A Clamp) ---
 V_neg a_src 0 PULSE(0 -15.0 10u 100n 100n 40u 1m)
 Ra_src a_src a_vbus 5.0
-RF1_a a_vbus a_vin 0.080
+RF1_a a_vbus a_vin 0.044
 XD11_a 0 a_vin TVS_SMBJ22A
 C_undamp_a a_vin 0 3.3u
 
@@ -19,7 +19,7 @@ V_hp b_src 0 PULSE(0 21.0 10u 100n 100n 2m 10m)
 V_isense_b b_src b_n0 0
 Rb_hp b_n0 b_n1 0.15
 Lb_hp b_n1 b_vbus 0.5u
-RF1_b b_vbus b_vin 0.080
+RF1_b b_vbus b_vin 0.044
 XD11_b 0 b_vin TVS_SMBJ22A
 C_undamp_b b_vin 0 3.3u
 R7_b b_vin b_damp 1.0
@@ -30,7 +30,7 @@ V_5v c_src 0 PULSE(0 5.0 10u 1u 1u 2m 10m)
 V_isense_c c_src c_n0 0
 Rc_cab c_n0 c_n1 0.15
 Lc_cab c_n1 c_vbus 0.5u
-RF1_c c_vbus c_vin 0.080
+RF1_c c_vbus c_vin 0.044
 C_undamp_c c_vin 0 3.3u
 R7_c c_vin c_damp 1.0
 C10_c c_damp 0 4.7u

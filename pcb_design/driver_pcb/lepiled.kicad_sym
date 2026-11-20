@@ -476,6 +476,25 @@
 
     )
   )
+  (symbol "TestPoint"
+    (pin_numbers (hide yes))
+    (pin_names (offset 1.016) (hide yes))
+    (exclude_from_sim no)
+    (in_bom yes)
+    (on_board yes)
+    (property "Reference" "TP" (at 0 5.08 0) (effects (font (size 1.27 1.27))))
+    (property "Value" "TestPoint" (at 0 -5.08 0) (effects (font (size 1.27 1.27))))
+    (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+    (property "Datasheet" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+    (property "MPN" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+    (symbol "TestPoint_0_1"
+      (circle (center 0 0) (radius 0.762) (stroke (width 0.254) (type default)) (fill (type none)))
+    )
+    (symbol "TestPoint_1_1"
+      (pin passive line (at 0 -2.54 90) (length 1.778) (name "1" (effects (font (size 0.8 0.8)))) (number "1" (effects (font (size 0.8 0.8)))))
+    )
+  )
   (symbol "Mech_Item"
     (pin_numbers (hide yes))
     (pin_names (offset 1.016) (hide yes))

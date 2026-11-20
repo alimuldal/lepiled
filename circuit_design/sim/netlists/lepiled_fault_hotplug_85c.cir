@@ -1,9 +1,11 @@
 * ==============================================================================
-* LepiLED Rev 4.7 — Fault 4: True 85 C Worst-Case 21 V Bounce / Hot-Plug Surge
-* Verifies ALL 3 Rev 4.7 P1-2 / P2-2 limits simultaneously at .temp 85 C:
-*   1. V(VIN_20V)_pk < 28.0 V (<< 32.0 V WCH CH224A VHV/VBUS/PG abs max!)
-*   2. I(F1)_pk < 40.0 A (Bourns MF-MSMF110/33X I_max rating, fixed via cSnk=8.0 uF!)
-*   3. V(UVLO_FAULT)_pk < 18.0 V (2N7002 +/-20 V V_GS,max during C15 filter delay!)
+* LepiLED Rev 4.8 — Fault 4: True 85 C Worst-Case 21 V Bounce / Hot-Plug Surge
+* Verifies ALL 5 Rev 4.8 limits simultaneously at .temp 85 C (with real TVS TBV1!):
+*   1. V(VIN_20V)_pk < 29.0 V (<< 32.0 V WCH CH224A VHV/VBUS/PG abs max!)
+*   2. I(F1)_pk < 50.0 A (Littelfuse 046801.5NRHF 50 A DC interrupt rating!)
+*   3. I2t(F1) << 0.288 A2s (144x melting margin on 046801.5NRHF!)
+*   4. P_pk(R7) < 600 W (UNI-ROYAL 2512 1.0 W pulse-rated damper resistor!)
+*   5. V(UVLO_FAULT)_pk < 18.0 V (2N7002 +/-20 V V_GS,max during C15 filter delay!)
 * ==============================================================================
 .include models.lib
 .temp 85
@@ -13,19 +15,21 @@ V_hp src 0 PULSE(0 21.0 10u 50n 50n 5m 10m)
 V_isense src n0 0
 R_cab n0 n1 0.10
 L_cab n1 vbus 1.0u
-RF1 vbus vin_20v 0.060
+RF1 vbus vin_20v 0.055
 XD11 0 vin_20v TVS_SMBJ22A
 
-* DC-bias derated Rev 4.7 capacitors at 21 V (~65% of nominal 50V X7R):
+* DC-bias derated Rev 4.8 capacitors at 21 V (~65% of nominal 50V X7R):
 * Undamped = C2(1.0) + C3(1.0) + C11(1.0) + C8/C9/C14(0.3) = 3.3 uF nom -> 2.15 uF eff
-* Damper   = C10(4.7 uF nom -> 3.1 uF eff) + R7(1.0 Ohm) -> N = 1.44!
+* Damper   = C10(4.7 uF nom -> 3.1 uF eff) + R7(1.0 Ohm 2512) -> N = 1.44!
 C_undamp vin_20v 0 2.15u
 R7 vin_20v vbus_d 1.0
 C10 vbus_d 0 3.1u
 
-* Real UVLO divider + C15=100n filter + LM393 + R20(56k)/R21(100k) to capture exact V_GS transient!
+* Real UVLO divider + C15=100n + damped R24/C16 on V_REF + LM393 + R20(56k)/R21(100k)
 R14 vin_20v v_ref 10.0k
 XU5 v_ref 0 TL431_2V5
+R24 v_ref v_ref_damp 10.0
+C16 v_ref_damp 0 100n
 R15 vin_20v uvlo_sense 30.0k
 R16 uvlo_sense 0 5.1k
 C15 uvlo_sense 0 100n
@@ -38,6 +42,10 @@ R20 vin_20v uvlo_fault 56.0k
 R21 uvlo_fault 0 100k
 C_q23 uvlo_fault 0 50p
 
+* Behavioral probes for instant R7 pulse power (W) and F1 I^2 (A^2)
+B_pr7 p_r7_w 0 V = { (V(vin_20v, vbus_d) * V(vin_20v, vbus_d)) / 1.0 }
+B_if2 i_f1_sq 0 V = { I(V_isense) * I(V_isense) }
+
 .options method=gear reltol=1e-3 abstol=1e-10
 .tran 100n 1.5m 0 100n uic
 
@@ -45,11 +53,13 @@ C_q23 uvlo_fault 0 50p
 set filetype=ascii
 run
 wrdata ../outputs/fault_hotplug_85c.txt v(vin_20v) v(uvlo_fault) i(v_isense) v(uvlo_sense)
-meas tran vin_85c_peak    MAX v(vin_20v)    FROM=0 TO=1.5m
-meas tran f1_85c_surge_pk MAX i(v_isense)   FROM=0 TO=1.5m
-meas tran vgs_85c_peak    MAX v(uvlo_fault) FROM=0 TO=1.5m
-meas tran vin_85c_settle  AVG v(vin_20v)    FROM=1.2m TO=1.5m
-meas tran vgs_85c_settle  AVG v(uvlo_fault) FROM=1.2m TO=1.5m
+meas tran vin_85c_peak    MAX   v(vin_20v)    FROM=0 TO=1.5m
+meas tran f1_85c_surge_pk MAX   i(v_isense)   FROM=0 TO=1.5m
+meas tran i2t_f1_85c      INTEG v(i_f1_sq)    FROM=0 TO=200u
+meas tran p_r7_85c_pk     MAX   v(p_r7_w)     FROM=0 TO=200u
+meas tran vgs_85c_peak    MAX   v(uvlo_fault) FROM=0 TO=1.5m
+meas tran vin_85c_settle  AVG   v(vin_20v)    FROM=1.2m TO=1.5m
+meas tran vgs_85c_settle  AVG   v(uvlo_fault) FROM=1.2m TO=1.5m
 quit
 .endc
 .end

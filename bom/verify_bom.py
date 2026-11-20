@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Machine-verifiable audit script for bom/bom.csv (Rev 4.5 — Compact Weatherproof 1-Off Hobby Build)."""
+"""Machine-verifiable audit script for bom/bom.csv (Rev 4.8 — Low-Hassle Full-SMD ENIG PCBA Build)."""
 
 from __future__ import annotations
 
@@ -92,15 +92,21 @@ def main() -> int:
         if row["Include_In_Total"] not in {"Yes", "No"}:
             fail(f"{bid}: invalid Include_In_Total {row['Include_In_Total']!r}")
 
-    # 1. Electrical 66-RefDes 1:1 parity (Rev 4.7 CH224A + 2-Reel Hybrid PCBA)
+    # 1. Electrical 72-RefDes 1:1 parity (Rev 4.8: adds R24, C16, TP1..TP4 + Full-SMD ENIG PCBA)
     comp_by_ref = {r["RefDes"].strip(): r for r in comp_rows}
     drv_by_ref = {r["Designator"].strip(): r for r in drv_rows}
     pcba_refs = {r["Designator"].strip() for r in pcba_rows}
 
-    if len(comp_rows) != 66:
-        fail(f"COMPONENT_IDS.csv expected 66 rows, got {len(comp_rows)}")
+    if len(comp_rows) != 72:
+        fail(f"COMPONENT_IDS.csv expected 72 rows, got {len(comp_rows)}")
     if set(comp_by_ref) != set(drv_by_ref):
         fail("COMPONENT_IDS.csv vs driver_pcb_bom.csv RefDes mismatch")
+
+    # 1a. NEW Rev 4.8 Gate: Verify every Datasheet_Ref in COMPONENT_IDS.csv actually exists on disk!
+    for ref, crow in comp_by_ref.items():
+        ds_ref = crow["Datasheet_Ref"].strip()
+        if not ds_ref or not (REPO_ROOT / ds_ref).is_file():
+            fail(f"COMPONENT_IDS.csv ({ref}): broken Datasheet_Ref {ds_ref!r} (file missing!)")
 
     bom_elec_rows = [r for r in bom_rows if r["Domain"] == "Electrical"]
     bom_elec_refs: list[str] = []
@@ -128,54 +134,58 @@ def main() -> int:
         fail(f"Electrical RefDes set mismatch: missing={sorted(set(comp_by_ref) - set(bom_elec_refs))}")
 
     off_board_expected = {"D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "SW1", "SW1_BOOT"}
-    pcb_features = {"H1", "H2", "H3", "H4"}
+    pcb_features_h = {"H1", "H2", "H3", "H4"}
+    pcb_features_tp = {"TP1", "TP2", "TP3", "TP4"}
+    pcb_features = pcb_features_h | pcb_features_tp
     on_pcb_from_comp = {r["RefDes"].strip() for r in comp_rows if r["Mounting"].strip() == "On-PCB"}
-    if (on_pcb_from_comp - pcb_features) != pcba_refs or len(pcba_refs) != 52:
-        fail(f"Populated On-PCB 52-RefDes subset mismatch (got {len(pcba_refs)})")
+    if (on_pcb_from_comp - pcb_features) != pcba_refs or len(pcba_refs) != 54:
+        fail(f"Populated On-PCB 54-RefDes subset mismatch (got {len(pcba_refs)})")
     if set(comp_by_ref) - on_pcb_from_comp != off_board_expected:
         fail("Off-board RefDes subset mismatch")
 
-    matched_h = [r for r in bom_elec_rows if set(x.strip() for x in r["RefDes_List"].split(";")) == pcb_features]
-    if len(matched_h) != 1 or matched_h[0]["Include_In_Total"] != "No" or Decimal(matched_h[0]["Ext_Price_Amort_GBP_exVAT"]) != 0:
-        fail("PCB feature H1..H4 must have single BOM row with Include_In_Total=No and £0.00")
+    for label, feat_set in (("H1..H4", pcb_features_h), ("TP1..TP4", pcb_features_tp)):
+        matched = [r for r in bom_elec_rows if set(x.strip() for x in r["RefDes_List"].split(";")) == feat_set]
+        if len(matched) != 1 or matched[0]["Include_In_Total"] != "No" or Decimal(matched[0]["Ext_Price_Amort_GBP_exVAT"]) != 0:
+            fail(f"PCB feature {label} must have single BOM row with Include_In_Total=No and £0.00")
 
-    # 1b. Programmatic Hybrid JLCPCB PCBA parity gate (zero divergence vs canonical full BOM & CPL)
+    # 1b. Programmatic Full-SMD JLCPCB PCBA parity gate (48 JLCPCB SMD + 4 DIY THT + 2 DNP = 54)
     sys.path.insert(0, str(REPO_ROOT / "pcb_design"))
     import generate_hybrid_pcba
 
-    for h_err in generate_hybrid_pcba.check():
+    h_errs = generate_hybrid_pcba.check()
+    for h_err in h_errs:
         fail(h_err)
-    if not generate_hybrid_pcba.check():
+    if not h_errs:
         _, hyb_bom_rows = load_csv(generate_hybrid_pcba.HYBRID_BOM_PATH)
         _, hyb_cpl_rows = load_csv(generate_hybrid_pcba.HYBRID_CPL_PATH)
         _, diy_bom_rows = load_csv(generate_hybrid_pcba.DIY_BOM_PATH)
         hyb_refs = {r["Designator"].strip() for r in hyb_bom_rows}
         hyb_cpl_refs = {r["Designator"].strip() for r in hyb_cpl_rows}
         diy_refs = {r["Designator"].strip() for r in diy_bom_rows}
-        if hyb_refs != hyb_cpl_refs:
-            fail(f"Hybrid BOM ({len(hyb_refs)}) vs Hybrid CPL ({len(hyb_cpl_refs)}) Designator mismatch")
+        if hyb_refs != hyb_cpl_refs or len(hyb_refs) != 48:
+            fail(f"JLCPCB SMD BOM ({len(hyb_refs)}) vs CPL ({len(hyb_cpl_refs)}) expected 48 matching SMDs")
         if (hyb_refs & diy_refs) or ((hyb_refs | diy_refs) != pcba_refs):
             fail(
-                f"Hybrid PCBA ({len(hyb_refs)}) + DIY/DNP ({len(diy_refs)}) "
-                f"must partition canonical 52 PCBA RefDes cleanly"
+                f"JLCPCB SMD ({len(hyb_refs)}) + DIY THT/DNP ({len(diy_refs)}) "
+                f"must partition canonical 54 PCBA RefDes cleanly"
             )
 
-    # 2. Single custom PCB (driver_pcb ONLY — led_mcpcb eliminated in Rev 4.2!)
+    # 2. Single custom PCB (driver_pcb ONLY)
     pcb_rows = {r["BOM_ID"]: r for r in bom_rows if r["Domain"] == "PCB_Fab"}
     if set(pcb_rows) != {"PCB-01"}:
         fail(f"Expected only PCB-01 (driver_pcb) in PCB_Fab domain, got {set(pcb_rows)}")
     if pcb_rows["PCB-01"]["Source_IDs"] != "driver_pcb" or pcb_rows["PCB-01"]["Include_In_Total"] != "Yes":
         fail("PCB-01 must represent driver_pcb with Include_In_Total=Yes")
 
-    # 3. Harness (4 rows: 2P/3P pre-crimped JST-XH pigtails + 24 AWG silicone UV wire + captured 90-deg USB-C cable)
+    # 3. Harness (4 rows)
     bom_harn_rows = [r for r in bom_rows if r["Domain"] == "Harness"]
     if len(bom_harn_rows) != 4:
-        fail(f"Expected 4 Harness rows (2P/3P pigtails + silicone UV wire + captured 90-deg USB-C cable), got {len(bom_harn_rows)}")
+        fail(f"Expected 4 Harness rows, got {len(bom_harn_rows)}")
 
-    # 4. Mechanical 22-Part 1:1 Parity (Rev 4.6 — 8 printed + 14 purchased/consumable; MECH-BASE-RING & M20 gland eliminated)
+    # 4. Mechanical 23-Part 1:1 Parity (Rev 4.8: 8 printed + 15 purchased/consumable incl. MECH-GROMMET-1!)
     mech_by_id = {r["Part_ID"].strip(): r for r in mech_rows}
-    if len(mech_by_id) != 22:
-        fail(f"MECH_PARTS.csv expected 22 rows, got {len(mech_by_id)}")
+    if len(mech_by_id) != 23:
+        fail(f"MECH_PARTS.csv expected 23 rows, got {len(mech_by_id)}")
 
     bom_mech_primary = [r for r in bom_rows if r["Domain"] == "Mechanical"]
     printed_ids = {
@@ -265,21 +275,20 @@ def main() -> int:
     mech_a, mech_o = summarize("Mechanical")
     tot_a, tot_o = summarize()
 
-    # Also compute "Workshop Owned" 1-off total (excluding M3/M2.5 hardware + PC thermal paste + matte-black spray already on hand)
     owned_ex = sum(
         Decimal(r["Ext_Price_1Off_GBP_exVAT"])
         for r in bom_rows
-        if r["Source_IDs"] in {"MECH-TIM-1", "MECH-FAST-M3", "MECH-FAST-M25", "MECH-PAINT-1"}
+        if r["Source_IDs"] in {"MECH-TIM-1", "MECH-FAST-M3", "MECH-PAINT-1"}
     )
     net_o = tot_o - owned_ex
 
-    print("PASS: bom/bom.csv verified 1:1 across Rev 4.7 (66 RefDes, 52 Full PCBA = 40 Hybrid SMD [2 Ext reels] + 10 DIY + 2 DNP, 4 Harness, 1 PCB, 22 MECH-*)")
-    print(f"  Electrical (66 RefDes incl. 8x Cu DTP stars): 1-Off = £{elec_o:.2f} ex VAT (£{round2(elec_o * VAT_RATE):.2f} inc VAT) | Amort = £{elec_a:.2f} ex VAT")
-    print(f"  Harness (JST-XH + UV silicone + 90° USB-C):   1-Off = £{harn_o:.2f} ex VAT (£{round2(harn_o * VAT_RATE):.2f} inc VAT) | Amort = £{harn_a:.2f} ex VAT")
-    print(f"  PCB Fab + Economic PCBA (driver_pcb ONLY):    1-Off = £{pcb_o:.2f} ex VAT (£{round2(pcb_o * VAT_RATE):.2f} inc VAT) | Amort = £{pcb_a:.2f} ex VAT")
-    print(f"  Mechanical (XT PMMA + Black Core, 22 IDs):    1-Off = £{mech_o:.2f} ex VAT (£{round2(mech_o * VAT_RATE):.2f} inc VAT) | Amort = £{mech_a:.2f} ex VAT")
-    print(f"  TOTAL Rev 4.7 1-Off Build (All Purchased):    1-Off = £{tot_o:.2f} ex VAT (£{round2(tot_o * VAT_RATE):.2f} inc VAT) | Amort = £{tot_a:.2f} ex VAT (£{round2(tot_a * VAT_RATE):.2f} inc VAT)")
-    print(f"  NET 1-Off Spend (Owned HW/Paste/Spray Paint): 1-Off = £{net_o:.2f} ex VAT (£{round2(net_o * VAT_RATE):.2f} inc VAT)")
+    print("PASS: bom/bom.csv verified 1:1 across Rev 4.8 (72 RefDes, 54 Full PCBA = 48 JLCPCB SMD [20 Basic + 7 Ext] + 4 DIY THT + 2 DNP, 4 Harness, 1 ENIG PCB, 23 MECH-*, all Datasheet_Ref verified!)")
+    print(f"  Electrical (72 RefDes incl. 8x 20mm LED stars): 1-Off = £{elec_o:.2f} ex VAT (£{round2(elec_o * VAT_RATE):.2f} inc VAT) | Amort = £{elec_a:.2f} ex VAT")
+    print(f"  Harness (JST-XH + UV silicone + 90° USB-C):     1-Off = £{harn_o:.2f} ex VAT (£{round2(harn_o * VAT_RATE):.2f} inc VAT) | Amort = £{harn_a:.2f} ex VAT")
+    print(f"  PCB Fab (ENIG) + Full-SMD PCBA (driver_pcb):    1-Off = £{pcb_o:.2f} ex VAT (£{round2(pcb_o * VAT_RATE):.2f} inc VAT) | Amort = £{pcb_a:.2f} ex VAT")
+    print(f"  Mechanical (0A070 PMMA + OTTOSEAL S72, 23 IDs): 1-Off = £{mech_o:.2f} ex VAT (£{round2(mech_o * VAT_RATE):.2f} inc VAT) | Amort = £{mech_a:.2f} ex VAT")
+    print(f"  TOTAL Rev 4.8 Parts-Only (All Purchased New):   1-Off = £{tot_o:.2f} ex VAT (£{round2(tot_o * VAT_RATE):.2f} inc VAT) | Amort = £{tot_a:.2f} ex VAT (£{round2(tot_a * VAT_RATE):.2f} inc VAT)")
+    print(f"  NET Parts-Only (Owned M3/Paste/Spray Paint):    1-Off = £{net_o:.2f} ex VAT (£{round2(net_o * VAT_RATE):.2f} inc VAT)")
     return 0
 
 

@@ -1,30 +1,25 @@
 #!/usr/bin/env python3
 """
-Reproducible Native KiCad 9.0.8 Generator for Board 1:
-LepiLED DIY Maxi Switch Driver & USB-C PD PCB (Rev 4.7).
+Reproducible Native KiCad 10 Generator for Board 1:
+LepiLED DIY Maxi Switch Driver & USB-C PD PCB (Rev 4.8).
 
-Rev 4.7 Architecture (WCH CH224A + 2-Extended-Reel Hybrid PCBA + Review Hardening):
-  - USB-C PD ONLY (20 V WCH CH224A ESSOP-10 C42459160, 1.0 mm leaded pitch, internal
-    5.1 kOhm dead-battery CC Rd, VBUS Pin 8 shorted directly to VHV/VIN_20V per CH224DS1,
-    CFG1 Pin 9 strapped via R9 = 120 kOhm Basic single-resistor 20 V mode disabling 28 V EPR).
-  - Input Protection & USB-C cSnk Compliance: MF-MSMF110/33X (33 V / 40 A), unidirectional
-    SMBJ22A zero-stub at F1, total cSnk = 8.0 uF nom / 8.8 uF max <= 10 uF (C2=C3=C11=1.0 uF
-    0805 + C10=4.7 uF / R7=1.0 R damper N=1.42 + 3x 100 nF HF), optional 24 V bidirectional
-    ESD24V32D-C (D13/D14, DNP in 2-reel Hybrid), Basic BAV99 (D15/D16) + 1k (R5/R6) on J4.
-  - Hysteretic Hardware UVLO (U4 LM393DR2G Basic C7955 + U5 Hottech TL431 2.500 V Basic
-    C181103): 17.48 V ON / 16.66 V OFF (0.83 V clean hysteresis, zero chatter) via Basic
-    30k/5.1k/270k divider driving Q2/Q3 Basic 2N7002 clamps (R20=56k / R21=100k gate divider).
-  - Direct Gold DPDT On-On-On Mode Switch (C&K 7211SYZBE via J4: OFF / 4-UV / 8-ALL).
-  - Dual 40 V 333 mA Buck LED Drivers (AL8860WT-7 C125330, R3/R4=0.30R with true VIN+SET
-    Kelvin taps, L1/L2=68uH, D9/D10=Basic MDD SS34, C2/C3=1.0uF 0805, C8/C9=100nF local HF,
-    C4/C5=100nF + R22/R23=10.0R damped shunts keeping open-LED live-mate < 0.8 A).
-  - Layout & DFM Hardening:
-    * J1 signal drills = 0.40 mm (GCT datasheet), U3 ESSOP-10 EPAD = 2.10 x 3.30 mm (59.4% paste).
-    * H1..H4 unplated NPTH M2.5 isolated mounting holes (zero chassis-GND fault path).
-    * < 10 mm F.Cu buck hot loops + 100% unbroken B.Cu GND plane under Y=+4.3..+16.5 mm.
-    * Real KiCad ERC pin types + PWR_FLAGs, 0 via-in-pad, deduplicated tracks,
-      F.SilkS RefDes on all 52 populated parts, fit-to-board assembly_map.pdf,
-      Lead-Free HASL gbrjob metadata, and verified JLCPCB CPL rotation offsets.
+Rev 4.8 Architecture (Low-Hassle Full-SMD ENIG PCBA + P0 Safety & DFM Fixes):
+  - Surface Finish: ENIG (eliminates 0.40 mm USB4085 HASL hole plugging & CH224A EPAD dome tilt).
+  - Zero SMD Hand-Soldering: All 48 populated SMDs (20 Basic + 7 Extended reels) machine-reflowed
+    by JLCPCB; builder hand-solders only the 4 THT connectors (J1..J4); D13/D14 marked DNP & paste-free.
+  - USB-C PD ONLY (20 V WCH CH224A ESSOP-10 C42459160, CFG1=120k single-R 20 V mode).
+  - Input Protection Hardening: Littelfuse 046801.5NRHF 1206 1.5 A / 63 V Slo-Blo fuse (50 A
+    interrupt, I2t=0.288 A2s, C151143) + RUILON SMBJ22A (C10214) zero-stub at F1 + 2512 1.0 W
+    pulse-rated damper resistor R7 (1.0 R, C11254) with C10=4.7 uF + total cSnk=8.0 uF <= 10 uF.
+  - Hysteretic Hardware UVLO (U4 LM393DR2G Basic C7955 + U5 Hottech TL431 2.500 V Basic C181103):
+    17.48 V ON / 16.66 V OFF + damped V_REF ESD bypass (R24=10.0 R + C16=100 nF Basic, Q <= 1).
+  - Dual 40 V 333 mA Buck LED Drivers (AL8860WT-7 C125330, Sunlord SWPA6045S680MT C53663,
+    UNI-ROYAL 1206 0.30 R C59882, Basic MDD SS34 C8678).
+  - Layout & Automated Gate Hardening:
+    * H1..H4 unplated NPTH M2.5 isolated mounting holes WITH r=2.80 mm F.Cu+B.Cu copper keepout
+      rule areas + mandatory post-export Gerber polygon audit asserting 0 copper inside r=2.70 mm.
+    * J1 signal GND pins (A1, A12, B1, B12) solid-connected & tied to SH1/SH2 -> 0 starved_thermal.
+    * KiCad 10 ERC = 0, DRC (--refill-zones --schematic-parity --severity-all) = 0 errors & 0 warnings.
 """
 
 import csv
@@ -122,7 +117,7 @@ def write_kicad_pro():
         netclass_assignments[f"/{n}"] = ["LED_Drive"]
     for n in [
         "CC1", "CC2", "U3_CFG1", "PD_LED_A", "PD_LED_K",
-        "V_REF", "UVLO_SENSE", "UVLO_OK", "UVLO_FAULT",
+        "V_REF", "V_REF_DAMP", "UVLO_SENSE", "UVLO_OK", "UVLO_FAULT",
         "SW_UV_IN", "SW_VIS_IN", "U1_CTRL", "U2_CTRL",
     ]:
         netclass_assignments[f"/{n}"] = ["Signal"]
@@ -374,13 +369,14 @@ def create_footprints():
     save(sfp, "SOT-23-3")
 
     # 5. 2-pin Polarized Diodes (Pin 1 = Cathode left -X with silkscreen bar, Pin 2 = Anode right +X)
-    def make_diode(name, val, pw, ph, ctc, bw, bh):
+    def make_diode(name, val, pw, ph, ctc, bw, bh, paste=True):
         dfp = pcbnew.FOOTPRINT(None)
         dfp.SetReference("D")
         dfp.SetValue(val)
         dfp.SetAttributes(pcbnew.FP_SMD)
-        _smd_pad(dfp, 1, -ctc / 2.0, 0.0, pw, ph, roundrect=0.08)
-        _smd_pad(dfp, 2, +ctc / 2.0, 0.0, pw, ph, roundrect=0.08)
+        pad_layers = lset(pcbnew.F_Cu, pcbnew.F_Mask, pcbnew.F_Paste) if paste else lset(pcbnew.F_Cu, pcbnew.F_Mask)
+        _smd_pad(dfp, 1, -ctc / 2.0, 0.0, pw, ph, layers=pad_layers, roundrect=0.08)
+        _smd_pad(dfp, 2, +ctc / 2.0, 0.0, pw, ph, layers=pad_layers, roundrect=0.08)
         ky = max(bh, ph) / 2.0 + 0.42
         kx = ctc / 2.0 + pw / 2.0 + 0.45
         silk = [(-kx, -ph / 2.0, -kx, +ph / 2.0)]
@@ -388,12 +384,13 @@ def create_footprints():
         _setup_fp_texts(dfp, ref_xy=(0.0, ky + 0.65), val_xy=(0.0, -ky - 0.65))
         save(dfp, name)
 
-    make_diode("D_SMA_DO-214AC", "B340A-13-F", 1.60, 1.70, 4.00, 4.30, 2.60)
+    make_diode("D_SMA_DO-214AC", "SS34", 1.60, 1.70, 4.00, 4.30, 2.60)
     make_diode("D_SMB_DO-214AA_UniDir", "SMBJ22A", 1.72, 2.20, 3.88, 4.35, 3.60)
-    make_diode("D_SOD-323", "CDSOD323", 0.80, 0.85, 2.20, 1.70, 1.25)
-    make_diode("LED_0603", "Green_0603", 0.75, 0.95, 1.55, 1.60, 0.80)
+    make_diode("D_SOD-323", "ESD24V32D-C", 0.80, 0.85, 2.20, 1.70, 1.25)
+    make_diode("D_SOD-323_DNP", "ESD24V32D-C", 0.80, 0.85, 2.20, 1.70, 1.25, paste=False)
+    make_diode("LED_0603", "KT-0603R", 0.75, 0.95, 1.55, 1.60, 0.80)
 
-    # 6. Inductors, Polyfuse (Style-2 land per MF-MSMF.pdf p. 7), Resistors, Capacitors
+    # 6. Inductors, 1206 Slo-Blo Fuse, Resistors (incl. 2512 1 W pulse damper), Capacitors
     def make_2pad(name, ref_pfx, val, pw, ph, ctc, bw, bh, has_silk=True):
         pfp = pcbnew.FOOTPRINT(None)
         pfp.SetReference(ref_pfx)
@@ -407,9 +404,11 @@ def create_footprints():
         _setup_fp_texts(pfp, ref_xy=(0.0, sy + 0.65), val_xy=(0.0, -sy - 0.65))
         save(pfp, name)
 
-    make_2pad("Bourns_SRN6045", "L", "SRN6045-680M", 2.00, 6.00, 4.30, 6.00, 6.00, has_silk=True)
-    # MF-MSMF110/33X Style-2 recommended land: 1.68 x 2.95 mm pads, 3.10 mm gap => ctc = 4.78 mm (Opus B-L7)
-    make_2pad("Bourns_MF_MSMF_1812", "F", "MF-MSMF110/33X", 1.68, 2.95, 4.78, 4.60, 3.25, has_silk=False)
+    make_2pad("Sunlord_SWPA6045", "L", "SWPA6045S680MT", 2.00, 6.00, 4.30, 6.00, 6.00, has_silk=True)
+    # Littelfuse 046801.5NRHF 1206 Slo-Blo SMD fuse land (1.20 x 1.80 mm pads, 3.10 mm ctc)
+    make_2pad("F_1206", "F", "046801.5NRHF", 1.20, 1.80, 3.10, 3.20, 1.60, has_silk=False)
+    # UNI-ROYAL 2512 1.0 W pulse-rated resistor land (1.50 x 3.40 mm pads, 5.70 mm ctc)
+    make_2pad("R_2512", "R", "R_2512", 1.50, 3.40, 5.70, 6.35, 3.20, has_silk=False)
     make_2pad("R_1206", "R", "R_1206", 1.05, 1.75, 2.55, 3.20, 1.60, has_silk=False)
     make_2pad("R_0805", "R", "R_0805", 0.95, 1.40, 1.95, 2.00, 1.25, has_silk=False)
     make_2pad("R_0603", "R", "R_0603", 0.72, 0.95, 1.50, 1.60, 0.80, has_silk=False)
@@ -566,6 +565,30 @@ def create_footprints():
     fp.Add(c)
     _setup_fp_texts(fp, ref_xy=(0.0, -3.40), val_xy=(0.0, +3.40), ref_layer=pcbnew.F_Fab, ref_sz=0.80)
     save(fp, "MountingHole_2.7mm_M2.5_NPTH")
+
+    # 10. Bare ENIG 1.0 mm SMD Test Point Pad ($0 BOM/PCBA, paste-free)
+    fp = pcbnew.FOOTPRINT(None)
+    fp.SetReference("TP")
+    fp.SetValue("TestPoint")
+    fp.SetAttributes(pcbnew.FP_EXCLUDE_FROM_BOM | pcbnew.FP_EXCLUDE_FROM_POS_FILES | pcbnew.FP_BOARD_ONLY)
+    p = pcbnew.PAD(fp)
+    p.SetNumber("1")
+    p.SetAttribute(pcbnew.PAD_ATTRIB_SMD)
+    p.SetShape(pcbnew.PAD_SHAPE_CIRCLE)
+    p.SetPosition(lpt(0.0, 0.0))
+    p.SetSize(pcbnew.VECTOR2I(mm(1.00), mm(1.00)))
+    p.SetLayerSet(lset(pcbnew.F_Cu, pcbnew.F_Mask))
+    p.SetLocalSolderMaskMargin(mm(0.05))
+    fp.Add(p)
+    c = pcbnew.PCB_SHAPE(fp)
+    c.SetShape(pcbnew.SHAPE_T_CIRCLE)
+    c.SetLayer(pcbnew.F_CrtYd)
+    c.SetWidth(mm(0.05))
+    c.SetCenter(lpt(0.0, 0.0))
+    c.SetEnd(lpt(0.75, 0.0))
+    fp.Add(c)
+    _setup_fp_texts(fp, ref_xy=(0.0, +1.20), val_xy=(0.0, -1.20), ref_layer=pcbnew.F_SilkS, ref_sz=0.65)
+    save(fp, "TestPoint_Pad_D1.0mm")
 
 
 # ---------------------------------------------------------------------------
@@ -823,6 +846,12 @@ def build_symbol_defs():
         "",
         pin_names_hide=True, pin_nums_hide=True,
     )
+    syms["TestPoint"] = _sym_wrap(
+        "TestPoint", "TP", "",
+        '      (circle (center 0 0) (radius 0.762) (stroke (width 0.254) (type default)) (fill (type none)))',
+        '      (pin passive line (at 0 -2.54 90) (length 1.778) (name "1" (effects (font (size 0.8 0.8)))) (number "1" (effects (font (size 0.8 0.8)))))',
+        pin_names_hide=True, pin_nums_hide=True,
+    )
     syms["Mech_Item"] = _sym_wrap(
         "Mech_Item", "SW", "",
         '      (rectangle (start -3.81 1.905) (end 3.81 -1.905) (stroke (width 0.254) (type dash)) (fill (type none)))',
@@ -906,6 +935,7 @@ def _sym_pin_offsets():
         "Conn_3P": {"1": (-5.08, 2.54), "2": (-5.08, 0), "3": (-5.08, -2.54)},
         "SW_DPDT_OnOnOn": {"1": (-6.35, 2.54), "2": (-6.35, 0), "3": (-6.35, -2.54)},
         "MountingHole_NPTH": {},
+        "TestPoint": {"1": (0, -2.54)},
         "Mech_Item": {},
     }
 
@@ -929,32 +959,33 @@ def write_kicad_sch(syms, comp_rows):
         "U5": "lepiled:SOT-23-3",
         "Q2": "lepiled:SOT-23-3",
         "Q3": "lepiled:SOT-23-3",
-        "F1": "lepiled:Bourns_MF_MSMF_1812",
+        "F1": "lepiled:F_1206",
         "D9": "lepiled:D_SMA_DO-214AC",
         "D10": "lepiled:D_SMA_DO-214AC",
         "D11": "lepiled:D_SMB_DO-214AA_UniDir",
         "D12": "lepiled:LED_0603",
-        "D13": "lepiled:D_SOD-323",
-        "D14": "lepiled:D_SOD-323",
+        "D13": "lepiled:D_SOD-323_DNP",
+        "D14": "lepiled:D_SOD-323_DNP",
         "D15": "lepiled:SOT-23-3",
         "D16": "lepiled:SOT-23-3",
-        "L1": "lepiled:Bourns_SRN6045",
-        "L2": "lepiled:Bourns_SRN6045",
+        "L1": "lepiled:Sunlord_SWPA6045",
+        "L2": "lepiled:Sunlord_SWPA6045",
         "R3": "lepiled:R_1206", "R4": "lepiled:R_1206",
         "R5": "lepiled:R_0603", "R6": "lepiled:R_0603",
-        "R7": "lepiled:R_0805",
+        "R7": "lepiled:R_2512",
         "R9": "lepiled:R_0603", "R10": "lepiled:R_0805",
         "R13": "lepiled:R_0805", "R14": "lepiled:R_0805",
         "R15": "lepiled:R_0603", "R16": "lepiled:R_0603",
         "R17": "lepiled:R_0603", "R18": "lepiled:R_0603",
         "R19": "lepiled:R_0603", "R20": "lepiled:R_0603",
         "R21": "lepiled:R_0603", "R22": "lepiled:R_0805", "R23": "lepiled:R_0805",
+        "R24": "lepiled:R_0805",
         "C2": "lepiled:C_0805", "C3": "lepiled:C_0805",
         "C4": "lepiled:C_0603", "C5": "lepiled:C_0603",
         "C6": "lepiled:C_0603", "C7": "lepiled:C_0603",
         "C8": "lepiled:C_0603", "C9": "lepiled:C_0603",
         "C10": "lepiled:C_1206", "C11": "lepiled:C_0805",
-        "C14": "lepiled:C_0603", "C15": "lepiled:C_0603",
+        "C14": "lepiled:C_0603", "C15": "lepiled:C_0603", "C16": "lepiled:C_0603",
         "J1": "lepiled:GCT_USB4085_GF_A",
         "J2": "lepiled:JST_XH_B2B_P2.50mm",
         "J3": "lepiled:JST_XH_B2B_P2.50mm",
@@ -963,29 +994,34 @@ def write_kicad_sch(syms, comp_rows):
         "H2": "lepiled:MountingHole_2.7mm_M2.5_NPTH",
         "H3": "lepiled:MountingHole_2.7mm_M2.5_NPTH",
         "H4": "lepiled:MountingHole_2.7mm_M2.5_NPTH",
+        "TP1": "lepiled:TestPoint_Pad_D1.0mm",
+        "TP2": "lepiled:TestPoint_Pad_D1.0mm",
+        "TP3": "lepiled:TestPoint_Pad_D1.0mm",
+        "TP4": "lepiled:TestPoint_Pad_D1.0mm",
     }
 
     short_val = {
         "U1": "AL8860WT-7", "U2": "AL8860WT-7", "U3": "CH224A", "U4": "LM393DR2G", "U5": "TL431",
         "Q2": "2N7002", "Q3": "2N7002",
-        "F1": "1.1A/33V",
+        "F1": "1.5A/63V",
         "D1": "SST-10-UV", "D2": "SST-10-UV", "D3": "SST-10-UV", "D4": "SST-10-UV",
         "D5": "XP-E2 RB", "D6": "XP-E2 RB", "D7": "XP-E2 GRN", "D8": "XP-E2 CW",
         "D9": "SS34", "D10": "SS34", "D11": "SMBJ22A", "D12": "RED LED",
-        "D13": "ESD 24V", "D14": "ESD 24V", "D15": "BAV99", "D16": "BAV99",
+        "D13": "ESD 24V (DNP)", "D14": "ESD 24V (DNP)", "D15": "BAV99", "D16": "BAV99",
         "L1": "68uH", "L2": "68uH",
         "R3": "0.30R", "R4": "0.30R",
-        "R5": "1.0k", "R6": "1.0k", "R7": "1.0R",
+        "R5": "1.0k", "R6": "1.0k", "R7": "1.0R 1W",
         "R9": "120k", "R10": "10.0k",
         "R13": "10.0k", "R14": "10.0k", "R15": "30.0k", "R16": "5.1k",
         "R17": "100k", "R18": "100k", "R19": "270k", "R20": "56.0k",
-        "R21": "100k", "R22": "10.0R", "R23": "10.0R",
+        "R21": "100k", "R22": "10.0R", "R23": "10.0R", "R24": "10.0R",
         "C2": "1uF/50V", "C3": "1uF/50V", "C4": "100nF", "C5": "100nF",
         "C6": "1.0nF", "C7": "4.7nF", "C8": "100nF", "C9": "100nF", "C10": "4.7uF/50V",
-        "C11": "1uF/50V", "C14": "100nF", "C15": "100nF",
+        "C11": "1uF/50V", "C14": "100nF", "C15": "100nF", "C16": "100nF",
         "J1": "USB4085", "J2": "UV_STR", "J3": "VIS_STR", "J4": "MAXI_SW",
         "SW1": "7211SYZBE Gold", "SW1_BOOT": "759D02000 Boot",
         "H1": "M2.5_NPTH", "H2": "M2.5_NPTH", "H3": "M2.5_NPTH", "H4": "M2.5_NPTH",
+        "TP1": "VIN_20V", "TP2": "V_REF", "TP3": "UVLO_OK", "TP4": "GND",
     }
 
     elements = []
@@ -998,9 +1034,11 @@ def write_kicad_sch(syms, comp_rows):
     def place(ref, sym_name, x, y, ang=0, ref_off=(0, -3.2), val_off=(0, 3.2)):
         row = comp_rows[ref]
         off_board = (row["Mounting"] == "Off-Board")
+        is_dnp = ref in ("D13", "D14")
         fp = "" if off_board else fp_map[ref]
-        in_bom = "no" if ref in ("H1", "H2", "H3", "H4") else "yes"
+        in_bom = "no" if (ref in ("H1", "H2", "H3", "H4", "TP1", "TP2", "TP3", "TP4") or is_dnp) else "yes"
         on_board = "no" if off_board else "yes"
+        dnp_str = "yes" if is_dnp else "no"
         pins = list(pin_offs[sym_name].keys())
         pin_lines = "\n".join(f'    (pin "{p}" (uuid "{uid(f"pin_{ref}_{p}")}"))' for p in pins)
         s = f"""  (symbol
@@ -1010,7 +1048,7 @@ def write_kicad_sch(syms, comp_rows):
     (exclude_from_sim no)
     (in_bom {in_bom})
     (on_board {on_board})
-    (dnp no)
+    (dnp {dnp_str})
     (uuid "{uid(f'sym_{ref}')}")
     (property "Reference" "{ref}" (at {x + ref_off[0]:.2f} {y + ref_off[1]:.2f} 0) (effects (font (size 1.27 1.27))))
     (property "Value" "{short_val[ref]}" (at {x + val_off[0]:.2f} {y + val_off[1]:.2f} 0) (effects (font (size 1.15 1.15))))
@@ -1190,9 +1228,19 @@ def write_kicad_sch(syms, comp_rows):
     polywire([pin_pos[("D12", "1")], (185.42, 93.98), pin_pos[("U3", "10")]])
     lbl("PD_LED_K", (162.56, 93.98))
 
-    # Isolated NPTH Mounting Holes H1..H4
+    # Isolated NPTH Mounting Holes H1..H4 & Bare-Pad Bench Test Points TP1..TP4 ($0 BOM)
     for idx, hx in enumerate([35.56, 53.34, 71.12, 88.90], start=1):
         place(f"H{idx}", "MountingHole_NPTH", hx, 129.54, 0, ref_off=(0, -3.2), val_off=(0, 3.5))
+    for tp_ref, tp_x, tp_net in [
+        ("TP1", 116.84, "VIN_20V"), ("TP2", 137.16, "V_REF"),
+        ("TP3", 157.48, "UVLO_OK"), ("TP4", 177.80, "GND"),
+    ]:
+        place(tp_ref, "TestPoint", tp_x, 129.54, 0, ref_off=(0, -2.2), val_off=(0, -4.8))
+        wire(pin_pos[(tp_ref, "1")], (tp_x, 134.62))
+        if tp_net == "GND":
+            gnd_at((tp_x, 134.62))
+        else:
+            lbl(tp_net, (tp_x, 134.62))
 
     # =====================================================================
     # BLOCK 2 (Bottom-Left): 0.83 V HYSTERETIC UVLO & DIRECT DPDT MAXI-SWITCH
@@ -1233,6 +1281,13 @@ def write_kicad_sch(syms, comp_rows):
     polywire([(38.10, 184.15), (43.18, 184.15), (43.18, 205.74), (68.58, 205.74), (68.58, 187.96), pin_pos[("U4", "2")]])
     lbl("V_REF", (39.37, 184.15))
     polywire([(68.58, 193.04), pin_pos[("U4", "5")]])
+    # Damped V_REF ESD bypass sink (R24=10.0 R + C16=100 nF Basic; Q <= 1 guarantees TL431 stability)
+    place("R24", "R", 30.48, 213.36, 90, ref_off=(-3.8, -0.8), val_off=(-4.0, 1.2))
+    place("C16", "C", 30.48, 226.06, 0, ref_off=(-3.8, -0.8), val_off=(-4.0, 1.2))
+    polywire([(43.18, 205.74), (30.48, 205.74), pin_pos[("R24", "2")]])
+    wire(pin_pos[("R24", "1")], pin_pos[("C16", "1")])
+    lbl("V_REF_DAMP", (30.48, 219.71))
+    gnd_at(pin_pos[("C16", "2")])
 
     # R17 (100k pull-up) + R18 (100k divider) + R19 (270k hysteresis) on UVLO_OK
     place("R17", "R", 114.30, 177.80, 90, ref_off=(3.5, -0.8), val_off=(3.5, 1.2))
@@ -1375,7 +1430,7 @@ def write_kicad_sch(syms, comp_rows):
     build_buck_block(
         139.70, "BLOCK 4: CH2 4S VISIBLE BUCK DRIVER (333 mA)",
         "U2", "R4", "L2", "D10", "C3", "C9", "C5", "R23", "C7", "J3",
-        ["D5", "D6", "D7", "D8"], "VIS_POS", "VIS_NEG", "VIS_C5_DAMP", "SW2_NODE", "U2_CTRL",
+        ["D5", "D7", "D6", "D8"], "VIS_POS", "VIS_NEG", "VIS_C5_DAMP", "SW2_NODE", "U2_CTRL",
         ["VIS_N1", "VIS_N2", "VIS_N3"],
     )
 
@@ -1438,12 +1493,12 @@ def write_kicad_sch(syms, comp_rows):
   (uuid "{root_uuid}")
   (paper "A3")
   (title_block
-    (title "LepiLED DIY Maxi Switch — Rev 4.7 (CH224A USB-C PD + Dual AL8860 Buck)")
+    (title "LepiLED DIY Maxi Switch — Rev 4.8 (ENIG Full-SMD)")
     (date "2026-11-20")
-    (rev "4.7")
+    (rev "4.8")
     (company "LepiLED Open-Source DIY Hardware")
-    (comment 1 "USB-C PD Only (WCH CH224A ESSOP-10, CFG1=120k 20V) + LM393/TL431 UVLO (17.48/16.66V) + Gold DPDT")
-    (comment 2 "66 RefDes (52 On-PCB = 40 Hybrid SMD [2 Ext Reels] + 10 DIY + 2 DNP; 4 NPTH; 10 Off-Board) | cSnk=8.0uF")
+    (comment 1 "CH224A 20V PD + 1.5A/63V Slo-Blo F1 + 2512 R7 + LM393/TL431 UVLO")
+    (comment 2 "72 RefDes (48 JLCPCB SMD + 4 THT + 2 DNP + 4 NPTH + 4 TP + 10 Off-Board)")
   )
   (lib_symbols
 {lib_sym_txt}
@@ -1559,7 +1614,7 @@ class GridRouter:
                 x = self.XMIN + ix * self.RES
                 if abs(x) > 17.20 or abs(y) > 22.20:
                     via_blk[iy][ix] = 1
-                if abs(x) > 17.55 or abs(y) > 22.55:
+                if abs(x) > 17.40 or abs(y) > 22.40:
                     b0[iy][ix] = 1
                     b1[iy][ix] = 1
 
@@ -2032,10 +2087,10 @@ def place_non_overlapping_silkscreen(board: pcbnew.BOARD):
 
     # Accurate J2/J3/J4 pinout legends on B.SilkS (right beside THT solder joints, 100% clear of vias!)
     board_texts = [
-        ("LEPILED REV4.7 20V-PD", 0.0, +21.75, 0.80, pcbnew.B_SilkS, True),
+        ("LEPILED REV4.8 20V-PD", 0.0, +21.75, 0.80, pcbnew.B_SilkS, True),
         ("1:UV+ 2:UV-", -5.20, +16.40, 0.75, pcbnew.B_SilkS, True),
         ("1:VIS+ 2:VIS-", +5.20, +16.40, 0.75, pcbnew.B_SilkS, True),
-        ("1:UV 2:GND 3:VIS", -1.40, -0.25, 0.72, pcbnew.B_SilkS, True),
+        ("1:UV 2:GND 3:VIS", -1.90, -0.10, 0.72, pcbnew.B_SilkS, True),
     ]
     add_moth_silkscreen(board, cx=0.0, cy=+10.20, scale=1.0, layer=pcbnew.B_SilkS)
     for txt_str, xm, ym, sz, lyr, mir in board_texts:
@@ -2126,7 +2181,7 @@ def build_board(fp_map, short_val, comp_rows):
     net_names = [
         "GND", "VBUS", "VBUS_DAMP", "VIN_20V",
         "CC1", "CC2", "U3_CFG1", "PD_LED_A", "PD_LED_K",
-        "V_REF", "UVLO_SENSE", "UVLO_OK", "UVLO_FAULT", "SW_UV_IN", "SW_VIS_IN",
+        "V_REF", "V_REF_DAMP", "UVLO_SENSE", "UVLO_OK", "UVLO_FAULT", "SW_UV_IN", "SW_VIS_IN",
         "U1_CTRL", "U2_CTRL",
         "SW1_NODE", "SW2_NODE", "UV_POS", "UV_NEG", "UV_C4_DAMP",
         "VIS_POS", "VIS_NEG", "VIS_C5_DAMP",
@@ -2191,34 +2246,41 @@ def build_board(fp_map, short_val, comp_rows):
         "R19": {"1": "UVLO_SENSE", "2": "UVLO_OK"}, "R20": {"1": "UVLO_FAULT", "2": "VIN_20V"},
         "R21": {"1": "GND", "2": "UVLO_FAULT"},
         "R22": {"1": "UV_NEG", "2": "UV_C4_DAMP"}, "R23": {"1": "VIS_NEG", "2": "VIS_C5_DAMP"},
+        "R24": {"1": "V_REF_DAMP", "2": "V_REF"},
         "C2": {"1": "VIN_20V", "2": "GND"},
         "C3": {"1": "VIN_20V", "2": "GND"}, "C4": {"1": "UV_POS", "2": "UV_C4_DAMP"},
         "C5": {"1": "VIS_POS", "2": "VIS_C5_DAMP"}, "C6": {"1": "U1_CTRL", "2": "GND"},
         "C7": {"1": "U2_CTRL", "2": "GND"}, "C8": {"1": "VIN_20V", "2": "GND"},
         "C9": {"1": "VIN_20V", "2": "GND"}, "C10": {"1": "VBUS_DAMP", "2": "GND"},
         "C11": {"1": "VIN_20V", "2": "GND"}, "C14": {"1": "VIN_20V", "2": "GND"},
-        "C15": {"1": "UVLO_SENSE", "2": "GND"},
+        "C15": {"1": "UVLO_SENSE", "2": "GND"}, "C16": {"1": "V_REF_DAMP", "2": "GND"},
+        "TP1": {"1": "VIN_20V"}, "TP2": {"1": "V_REF"}, "TP3": {"1": "UVLO_OK"}, "TP4": {"1": "GND"},
     }
 
-    # Rev 4.7 Power-Stage-First Floorplan (36.0 x 46.0 mm, exact Rev 4.6 enclosure datums!)
+    # Rev 4.8 Power-Stage-First Floorplan (36.0 x 46.0 mm, exact mounting datums + 2512 R7 + R24/C16 + TP1..TP4!)
     placements = {
-        # Enclosure Datums (H1..H4 isolated NPTH, J1 mouth at Y=-25.76 mm, J2/J3/J4 unchanged)
+        # Enclosure Datums (H1..H4 isolated NPTH with r=2.80 mm F/B.Cu copper keepout, J1..J4 unchanged)
         "H1": (-14.00, +19.00, 0), "H2": (+14.00, +19.00, 0),
         "H3": (-14.00, -19.00, 0), "H4": (+14.00, -19.00, 0),
         "J1": (0.00, -18.50, 0),
         "J2": (-5.20, +19.20, 0), "J3": (+5.20, +19.20, 0),
         "J4": (-1.40, -2.50, 0),
+        # Free $0 bare ENIG 1.0 mm bench bring-up test pads
+        "TP1": (-1.40, +13.50, 0),     # VIN_20V (paired right beside TP4 GND at top-center!)
+        "TP4": (+1.40, +13.50, 0),     # GND
+        "TP2": (-15.55, -5.95, 0),     # V_REF (2.500 V right above R24; clean courtyard gap)
+        "TP3": (+6.80, -6.10, 0),      # UVLO_OK (comparator threshold check)
 
-        # Block 1: USB-C PD (CH224A ESSOP-10) + zero-stub F1 -> D11 -> VIN_20V + PG LED D12
-        "F1": (-8.60, -15.30, 180),    # pin1=VBUS right facing J1, pin2=VIN_20V left (-10.99,-15.30)
+        # Block 1: USB-C PD (CH224A ESSOP-10) + zero-stub 1206 F1 -> D11 -> 2512 R7/C10 -> VIN_20V + PG LED D12
+        "F1": (-8.60, -15.30, 180),    # 1206 1.5A/63V Slo-Blo: pin1=VBUS right, pin2=VIN_20V left (-10.15,-15.30)
         "D11": (-10.80, -9.80, 90),    # Uni SMBJ22A: pin1=K(VIN_20V) bot (-10.8,-11.74), zero-stub at F1!
-        "R7": (-4.80, -8.70, 0),       # 0805 1.0R damper (1=VBUS_DAMP left, 2=VIN_20V right)
+        "R7": (-4.30, -10.40, 0),      # 2512 1.0W 1.0R pulse damper (1=VBUS_DAMP left -7.15, 2=VIN_20V right -1.45)
         "C10": (-8.95, -5.55, 180),    # 1206 4.7uF damper cap (clear of D11, R7, J4 & D16!)
         "C11": (+2.00, -10.50, 180),   # 0805 1uF CH224A VHV local decoupling (1=VIN_20V right facing U3.1, 2=GND left)
         "U3": (+8.50, -12.50, 0),      # WCH CH224A ESSOP-10 (1.0 mm leaded pitch, 2.10x3.30 EPAD)
         "R9": (+13.50, -11.20, 180),   # 0603 120k CFG1 20 V single-R strap (2=U3_CFG1 left facing U3.9, 1=GND right)
-        "D13": (+6.90, -20.55, 270),   # Optional 24V ESD CC1 vertical (DNP in 2-reel Hybrid PCBA)
-        "D14": (+9.20, -20.55, 270),   # Optional 24V ESD CC2 vertical (DNP in 2-reel Hybrid PCBA)
+        "D13": (+6.90, -20.55, 270),   # Optional 24V ESD CC1 vertical (DNP, paste-free)
+        "D14": (+9.20, -20.55, 270),   # Optional 24V ESD CC2 vertical (DNP, paste-free)
         "R13": (+16.00, -10.70, 270),  # 0805 10k (1=PD_LED_A top facing D12.2, 2=VIN_20V bot facing U3.8)
         "R10": (+12.90, -8.20, 0),     # 0805 10k PG voltage-clamp bottom (1=GND left, 2=PD_LED_A right)
         "D12": (+16.00, -6.60, 270),   # Red 0603 PD LED (2=PD_LED_A bot facing R13/R10, 1=PD_LED_K top -> U3.10 PG)
@@ -2226,7 +2288,7 @@ def build_board(fp_map, short_val, comp_rows):
         # Block 2: Hysteretic UVLO (Mid-Right) & Direct DPDT Switch Interface (Mid-Left)
         "U4": (+9.80, -2.10, 0),       # SOIC-8 LM393DR2G Basic
         "C14": (+14.90, +3.20, 0),     # 100nF U4 VCC bypass
-        "U5": (+15.95, -2.90, 270),    # SOT-23 TL431 Basic (1+2=V_REF, 3=GND)
+        "U5": (+15.90, -2.90, 270),    # SOT-23 TL431 Basic (0.625 mm edge margin, 0.43 mm vref_esc clearance)
         "R14": (+15.80, +0.80, 90),    # 0805 10k TL431 bias
         "R15": (+11.60, +2.80, 0),     # 0603 30.0k UVLO top (1=UVLO_SENSE left, 2=VIN_20V right)
         "R16": (+9.00, +2.40, 90),     # 0603 5.1k UVLO bot (2=UVLO_SENSE top, 1=GND bot)
@@ -2234,12 +2296,14 @@ def build_board(fp_map, short_val, comp_rows):
         "R19": (+4.80, +2.40, 270),    # 0603 270k hysteresis (1=UVLO_SENSE top, 2=UVLO_OK bot)
         "R17": (+4.80, -1.00, 90),     # 100k U4A pull-up
         "R18": (+4.80, -3.90, 90),     # 100k U4A divider bot
-        "R20": (+12.40, -5.50, 0),     # 56k U4B UVLO_FAULT pull-up to VIN_20V
+        "R20": (+12.10, -5.70, 0),     # 56k U4B UVLO_FAULT pull-up to VIN_20V
         "R21": (+9.40, -6.00, 0),      # 100k U4B UVLO_FAULT divider bottom to GND (3.21-11.54 V for 2N7002)
         "Q2": (-8.65, +2.20, 0),       # Basic 2N7002 UVLO clamp on U1_CTRL
         "Q3": (-2.00, +3.15, 0),       # Basic 2N7002 UVLO clamp on U2_CTRL
         "D15": (-12.50, -0.30, 0),     # Basic BAV99 SOT-23 clamp on SW_UV_IN (1=GND, 2=V_REF, 3=SW_UV_IN)
         "D16": (-13.10, -4.00, 0),     # Basic BAV99 SOT-23 clamp on SW_VIS_IN (1=GND, 2=V_REF, 3=SW_VIS_IN)
+        "R24": (-15.55, -8.65, 90),    # 0805 10.0R damped ESD sink ESR (2=V_REF top, 1=V_REF_DAMP bot)
+        "C16": (-15.55, -11.65, 270),  # 0603 100nF local V_REF ESD bypass right beside D15/D16 (1=top, 2=GND bot)
         "R5": (-15.20, +2.00, 90),     # 1.0k SW_UV_IN (bot) -> U1_CTRL (top)
         "R6": (-7.60, -2.00, 90),      # 1.0k SW_VIS_IN (bot) -> U2_CTRL (top)
 
@@ -2248,7 +2312,7 @@ def build_board(fp_map, short_val, comp_rows):
         "D9": (-10.40, +5.80, 180),    # SMA: A(2) left (-12.4,+5.8) -> L1.1; K(1) right (-8.4,+5.8) -> clear of C2!
         "C2": (-5.10, +5.80, 0),       # 0805 1.0uF: pin1(VIN_20V) left (-6.075,+5.80) = 2.325 mm from D9.1!
         "U1": (-6.60, +9.90, 0),       # TSOT25: SW(-7.7,+10.85), GND(-7.7,+9.9), CTRL(-7.7,+8.95), SET(-5.5,+8.95), VIN(-5.5,+10.85)
-        "C8": (-2.40, +8.80, 90),      # 0603 100nF local HF bypass right beside U1.5 (VIN)!
+        "C8": (-2.45, +9.60, 90),      # 0603 100nF local HF bypass tucked tighter beside U1.5 (VIN)!
         "C6": (-5.50, +3.20, 0),       # 0603 1.0nF soft-start (clear of Q2 & Q3!)
         "R3": (-4.40, +13.60, 90),     # 1206 0.30R vertical (1=VIN_20V bot +12.325, 2=UV_POS top +14.875)
         "C4": (-7.00, +15.40, 180),    # 0603 100nF (1=UV_POS right -> R3.2/J2.1, 2=UV_C4_DAMP left -> R22.2!)
@@ -2259,7 +2323,7 @@ def build_board(fp_map, short_val, comp_rows):
         "D10": (+10.40, +5.80, 0),     # SMA: K(1) left (+8.4,+5.8) -> abuts C3.1! A(2) right (+12.4,+5.8) -> L2.1!
         "C3": (+5.10, +5.80, 180),     # 0805 1.0uF: pin1(VIN_20V) right (+6.075,+5.80) = 2.325 mm from D10.1!
         "U2": (+6.60, +9.90, 180),     # TSOT25 mirrored: SW(+7.7,+8.95), GND(+7.7,+9.9), CTRL(+7.7,+10.85), SET(+5.5,+10.85), VIN(+5.5,+8.95)
-        "C9": (+2.40, +8.80, 90),      # 0603 100nF local HF bypass right beside U2.5 (VIN)!
+        "C9": (+2.45, +9.60, 90),      # 0603 100nF local HF bypass tucked tighter beside U2.5 (VIN)!
         "C7": (+0.65, +3.15, 270),     # 0603 4.7nF vertical (1=top facing Q3.3, 2=GND bot; 2.1 mm VIN_20V highway east!)
         "R4": (+4.40, +13.60, 90),     # 1206 0.30R vertical (1=VIN_20V bot +12.325, 2=VIS_POS top +14.875)
         "C5": (+7.00, +15.40, 0),      # 0603 100nF (1=VIS_POS left -> R4.2/J3.1, 2=VIS_C5_DAMP right -> R23.2!)
@@ -2276,6 +2340,17 @@ def build_board(fp_map, short_val, comp_rows):
         fp.SetFPID(pcbnew.LIB_ID("lepiled", fp_name))
         fp.SetReference(ref)
         fp.SetValue(short_val[ref])
+        # Sync schematic fields (MPN + Datasheet) & DNP flag so KiCad 10 DRC --schematic-parity has 0 warnings!
+        row = comp_rows[ref]
+        fp.SetField("Datasheet", row["Datasheet_Ref"])
+        fp.SetField("MPN", row["MPN"])
+        for fld in fp.GetFields():
+            if fld.GetName() in ("Datasheet", "MPN"):
+                fld.SetVisible(False)
+        if ref in ("D13", "D14"):
+            fp.SetDNP(True)
+            fp.SetExcludedFromBOM(True)
+            fp.SetExcludedFromPosFiles(True)
         fp.SetPosition(kpt(xm, ym))
         fp.SetOrientation(pcbnew.EDA_ANGLE(ang, pcbnew.DEGREES_T))
         fp.SetPath(pcbnew.KIID_PATH(f"/{root_uuid}/{uid(f'sym_{ref}')}"))
@@ -2284,6 +2359,9 @@ def build_board(fp_map, short_val, comp_rows):
             pn = p.GetNumber()
             if pn in p_nets:
                 p.SetNet(nets[p_nets[pn]])
+                # Solid zone connect on J1 tiny 0.40 mm signal GND pins eliminates KiCad 10 starved_thermal DRC!
+                if ref == "J1" and pn in ("A1", "A12", "B1", "B12"):
+                    p.SetLocalZoneConnection(pcbnew.ZONE_CONNECTION_FULL)
             elif (ref, pn) in nc_nets:
                 p.SetNet(nc_nets[(ref, pn)])
         board.Add(fp)
@@ -2292,21 +2370,46 @@ def build_board(fp_map, short_val, comp_rows):
     def pt(ref, pnum):
         return get_pad_pos(fps[ref], pnum)
 
-    # Solid unbroken B.Cu GND plane across entire board (0.50 mm edge setback for V-score DFM, Opus B-L19!)
+    # Solid unbroken B.Cu GND plane across entire board (0.50 mm edge setback for V-score DFM)
     add_zone(
         board, [(-17.50, -22.50), (+17.50, -22.50), (+17.50, +22.50), (-17.50, +22.50)],
         pcbnew.B_Cu, nets["GND"], priority=0, min_thickness=0.20, clearance=0.22,
     )
 
+    # P0 Safety Fix: Circular r=2.80 mm (dia 5.60 mm) F.Cu + B.Cu copper keepout rule areas around
+    # ALL FOUR unplated M2.5 mounting holes H1..H4 so ZERO GND copper sits inside the 5.20 mm mask opening!
+    for href in ("H1", "H2", "H3", "H4"):
+        hx, hy, _ = placements[href]
+        ko = pcbnew.ZONE(board)
+        ko.SetIsRuleArea(True)
+        ko.SetDoNotAllowZoneFills(True)
+        ko.SetDoNotAllowTracks(True)
+        ko.SetDoNotAllowVias(True)
+        ko.SetLayerSet(lset(pcbnew.F_Cu, pcbnew.B_Cu))
+        ol = ko.Outline()
+        ol.NewOutline()
+        ko_r = 2.80
+        n_seg = 32
+        for k_i in range(n_seg):
+            ang_rad = 2.0 * math.pi * k_i / n_seg
+            ol.Append(kpt(hx + ko_r * math.cos(ang_rad), hy + ko_r * math.sin(ang_rad)))
+        board.Add(ko)
+
     # -----------------------------------------------------------------------
     # Explicit Critical Power, Hot-Loop, Kelvin & Escape Traces BEFORE Router
     # -----------------------------------------------------------------------
-    # 1. J1 VBUS tie + direct 0.80 mm feed to F1 + zero-stub 1.0 mm fly-by F1.2 -> D11.1!
+    # 1. J1 VBUS tie + J1 GND signal ties (eliminates starved_thermal) + zero-stub F1 -> D11 -> VIN_20V!
     add_track(board, [pt("J1", "B9"), pt("J1", "A4")], 0.45, nets["VBUS"])
     add_track(board, [pt("J1", "B4"), pt("J1", "A9")], 0.45, nets["VBUS"])
     add_track(board, [pt("J1", "A4"), (-2.125, -16.05), (+2.125, -16.05), pt("J1", "A9")], 0.50, nets["VBUS"])
     add_track(board, [(-2.125, -16.05), (-6.21, -16.05), pt("F1", "1")], 0.80, nets["VBUS"])
-    # ZERO-STUB fly-by F1.2 (-10.99, -15.30) -> D11.1 (-10.80, -11.74) on VIN_20V!
+    # Explicit J1 GND signal ties on B.Cu & F.Cu to shell pins SH1/SH2 (robust GND + 0 starved_thermal)
+    for lyr_g in (pcbnew.F_Cu, pcbnew.B_Cu):
+        add_track(board, [pt("J1", "A1"), pt("J1", "B12")], 0.40, nets["GND"], lyr_g)
+        add_track(board, [pt("J1", "A12"), pt("J1", "B1")], 0.40, nets["GND"], lyr_g)
+        add_track(board, [pt("J1", "B12"), (-4.325, -18.50), pt("J1", "SH1")], 0.40, nets["GND"], lyr_g)
+        add_track(board, [pt("J1", "B1"), (+4.325, -18.50), pt("J1", "SH2")], 0.40, nets["GND"], lyr_g)
+    # ZERO-STUB fly-by F1.2 (-10.15, -15.30) -> D11.1 (-10.80, -11.74) on VIN_20V!
     add_track(board, [pt("F1", "2"), (-10.80, -15.30), pt("D11", "1")], 1.00, nets["VIN_20V"])
     # Twin GND vias directly at D11.2 (Anode)
     add_track(board, [pt("D11", "2"), (-12.70, -7.86)], 0.60, nets["GND"])
@@ -2323,19 +2426,20 @@ def build_board(fp_map, short_val, comp_rows):
     add_via(board, u3_v_bot[0], u3_v_bot[1], nets["GND"])
     u3_esc = {}
 
-    # J1 CC1/CC2 clean B.Cu escapes
+    # J1 CC1/CC2 clean B.Cu escapes (CC2 routed at Y=-20.30 well below B1/SH2!)
     j1_cc1_esc = (-1.275, -15.60)
-    j1_cc2_esc = (+5.40, -20.00)
+    j1_cc2_esc = (+5.40, -20.30)
     add_track(board, [pt("J1", "A5"), j1_cc1_esc], 0.20, nets["CC1"], pcbnew.B_Cu)
-    add_track(board, [pt("J1", "B5"), (+1.275, -20.00), j1_cc2_esc], 0.20, nets["CC2"], pcbnew.B_Cu)
+    add_track(board, [pt("J1", "B5"), (+1.275, -20.30), j1_cc2_esc], 0.20, nets["CC2"], pcbnew.B_Cu)
 
     # 3. ULTRA-TIGHT < 10 mm F.Cu Buck Hot Loops + TRUE Kelvin VIN & SET Taps (Carbon B-1 / Opus B-M1/B-L1!)
     # Ch1 UV: D9.1 (-8.4,+5.8) -> C2.1 (-6.075,+5.8) direct F.Cu copper bridge!
     add_track(board, [pt("D9", "1"), pt("C2", "1")], 1.00, nets["VIN_20V"])
     add_track(board, [pt("C2", "1"), (pt("C2", "1")[0], +7.35), (-3.60, +7.35), (-3.60, +12.325), pt("R3", "1")], 0.65, nets["VIN_20V"])
-    # Dedicated Kelvin U1.5 (VIN) tap directly from R3.1 pad 1 + local C8.1!
+    # Dedicated Kelvin U1.5 (VIN) tap directly from R3.1 pad 1 + local C8.1 + TP1 bench probe!
     add_track(board, [pt("R3", "1"), (-4.40, +10.85), pt("U1", "5")], 0.28, nets["VIN_20V"])
-    add_track(board, [pt("C8", "1"), (-3.60, +8.05)], 0.30, nets["VIN_20V"])
+    add_track(board, [pt("C8", "1"), (-3.60, +8.85)], 0.30, nets["VIN_20V"])
+    add_track(board, [pt("TP1", "1"), (-1.40, +12.325), (-3.60, +12.325)], 0.30, nets["VIN_20V"])
     add_track(board, [pt("U1", "1"), (-10.80, +10.85), (-10.80, +8.95), pt("L1", "1")], 0.55, nets["SW1_NODE"])
     add_track(board, [(-10.80, +8.95), (-12.40, +8.95), pt("D9", "2")], 0.55, nets["SW1_NODE"])
     add_track(board, [pt("U1", "2"), (-9.20, +9.90)], 0.40, nets["GND"])
@@ -2351,7 +2455,7 @@ def build_board(fp_map, short_val, comp_rows):
     add_track(board, [pt("C3", "1"), (pt("C3", "1")[0], +7.35), (+3.60, +7.35), (+3.60, +12.325), pt("R4", "1")], 0.65, nets["VIN_20V"])
     # Dedicated Kelvin U2.5 (VIN) tap directly from R4.1 pad 1 + local C9.1!
     add_track(board, [pt("R4", "1"), (+4.40, +8.95), pt("U2", "5")], 0.28, nets["VIN_20V"])
-    add_track(board, [pt("C9", "1"), (+3.60, +8.05)], 0.30, nets["VIN_20V"])
+    add_track(board, [pt("C9", "1"), (+3.60, +8.85)], 0.30, nets["VIN_20V"])
     add_track(board, [pt("U2", "1"), (+10.80, +8.95), pt("L2", "1")], 0.55, nets["SW2_NODE"])
     add_track(board, [(+10.80, +8.95), (+12.40, +8.95), pt("D10", "2")], 0.55, nets["SW2_NODE"])
     add_track(board, [pt("U2", "2"), (+9.20, +9.90)], 0.40, nets["GND"])
@@ -2367,9 +2471,10 @@ def build_board(fp_map, short_val, comp_rows):
 
     # Bridge Ch1 & Ch2 VIN_20V buses across centerline on F.Cu (zero B.Cu slots, 0.35 mm clear of C2.2/C3.2!)
     add_track(board, [(-3.60, +7.35), (+3.60, +7.35)], 0.65, nets["VIN_20V"])
-    # Centerline GND via for C8/C9
-    add_track(board, [pt("C8", "2"), (0.00, +9.55), pt("C9", "2")], 0.30, nets["GND"])
-    add_via(board, 0.00, +9.55, nets["GND"])
+    # Centerline GND via for C8/C9 + TP4 bench GND probe pad
+    add_track(board, [pt("C8", "2"), (0.00, +10.35), pt("C9", "2")], 0.30, nets["GND"])
+    add_via(board, 0.00, +10.35, nets["GND"])
+    add_track(board, [pt("TP4", "1"), (+1.40, +12.10), (0.00, +12.10), (0.00, +10.35)], 0.30, nets["GND"])
 
     # U4 / U5 local GND, under-IC ties & clean U4.3 / U4.7 escape vias
     add_track(board, [pt("U4", "4"), (+5.90, pt("U4", "4")[1])], 0.25, nets["GND"])
@@ -2382,8 +2487,10 @@ def build_board(fp_map, short_val, comp_rows):
     add_via(board, u4_p7_esc[0], u4_p7_esc[1], nets["UVLO_FAULT"])
     add_track(board, [pt("U4", "2"), (+9.40, pt("U4", "2")[1]), (+9.40, pt("U4", "5")[1]), pt("U4", "5")], 0.22, nets["V_REF"])
     add_track(board, [pt("U4", "1"), (+10.10, pt("U4", "1")[1]), (+10.10, pt("U4", "6")[1]), pt("U4", "6")], 0.22, nets["UVLO_OK"])
-    # U5 TL431: Pin 1 (REF) + Pin 2 (K) tied to V_REF; Pin 3 (A) -> GND via!
+    # U5 TL431: Pin 1 (REF) + Pin 2 (K) tied to V_REF + clean F.Cu escape stub; Pin 3 (A) -> GND via!
     add_track(board, [pt("U5", "1"), pt("U5", "2")], 0.25, nets["V_REF"])
+    vref_esc = (+13.84, -4.15)
+    add_track(board, [pt("U5", "2"), (+14.90, -4.15), vref_esc], 0.22, nets["V_REF"])
     add_track(board, [pt("U5", "3"), (+16.70, -4.60)], 0.25, nets["GND"])
     add_via(board, +16.70, -4.60, nets["GND"])
     # Explicit GND vias for R10.1, R9.1 & R21.1 before routing
@@ -2403,7 +2510,7 @@ def build_board(fp_map, short_val, comp_rows):
     add_via(board, +7.95, -21.65, nets["GND"])
     add_track(board, [pt("D14", "2"), (+10.35, -21.65)], 0.30, nets["GND"])
     add_via(board, +10.35, -21.65, nets["GND"])
-    # Explicit low-inductance GND via directly east of Q2.2 + shared ESD vias for BAV99 D15.1/D16.1
+    # Explicit low-inductance GND via directly east of Q2.2 + shared ESD vias for BAV99 D15.1/D16.1 + R24/C16
     add_track(board, [pt("Q2", "2"), (-6.50, +1.20)], 0.25, nets["GND"])
     add_via(board, -6.50, +1.20, nets["GND"])
     add_track(board, [pt("D15", "1"), (-14.70, -1.30)], 0.25, nets["GND"])
@@ -2411,6 +2518,11 @@ def build_board(fp_map, short_val, comp_rows):
     add_track(board, [pt("D16", "1"), (-15.40, -5.00)], 0.25, nets["GND"])
     add_via(board, -15.40, -5.00, nets["GND"])
     add_track(board, [pt("D15", "2"), (-11.55, -5.00), pt("D16", "2")], 0.22, nets["V_REF"])
+    # Local damped ESD bypass on V_REF: R24 (10 R) + C16 (100 nF) + TP2 bench V_REF pad + dedicated GND via
+    add_track(board, [pt("TP2", "1"), pt("R24", "2")], 0.25, nets["V_REF"])
+    add_track(board, [pt("R24", "1"), pt("C16", "1")], 0.30, nets["V_REF_DAMP"])
+    add_track(board, [pt("C16", "2"), (-15.55, -13.60)], 0.30, nets["GND"])
+    add_via(board, -15.55, -13.60, nets["GND"])
     q3_g_esc = (-3.60, +1.40)
     add_track(board, [pt("Q3", "1"), q3_g_esc], 0.22, nets["UVLO_FAULT"])
     add_track(board, [pt("Q3", "3"), (+0.65, +4.15), pt("C7", "1")], 0.22, nets["U2_CTRL"])
@@ -2482,7 +2594,8 @@ def build_board(fp_map, short_val, comp_rows):
         (("U4", "1", 0), ("R19", "2", 0)),
         (("U4", "1", 0), ("R17", "1", 0)),
         (("R17", "1", 0), ("R18", "2", 0)),
-    ], "UVLO_OK", 0.22, 0.16, allow_b=False)
+        (("R18", "2", 0), ("TP3", "1", 0)),
+    ], "UVLO_OK", 0.22, 0.16, allow_b=True, b_pen=6)
 
     # Route local PD LED & CFG1 straps before R20->R13->U3.8 VIN_20V branch so zero F.Cu crossing occurs!
     r_net([(("U3", "9", 0), ("R9", "2", 0))], "U3_CFG1", 0.22, 0.16, allow_b=False)
@@ -2536,12 +2649,13 @@ def build_board(fp_map, short_val, comp_rows):
     router.route(pt("R21", "2"), 0, pt("Q2", "1"), 0, nets["UVLO_FAULT"], 0.22, 0.16, allow_b=True, b_penalty=5)
     router.route(pt("Q2", "1"), 0, q3_g_esc, 0, nets["UVLO_FAULT"], 0.22, 0.16, allow_b=True, b_penalty=5)
 
-    # V_REF (R14.1 -> U5.1/2 -> U4.5 -> D15.2; D15.2->D16.2 explicit above)
+    # V_REF (R14.1 -> U5.1/2 -> U4.5; vref_esc B.Cu -> D15.2; D16.2 -> R24.2)
     r_net([
         (("R14", "1", 0), ("U5", "1", 0)),
         (("U5", "2", 0), ("U4", "5", 0)),
-        (("U4", "5", 0), ("D15", "2", 0)),
+        (("D16", "2", 0), ("R24", "2", 0)),
     ], "V_REF", 0.22, 0.16)
+    router.route(vref_esc, 0, pt("D15", "2"), 0, nets["V_REF"], 0.22, 0.16, allow_b=True, b_penalty=4)
 
     # --- Fan-Out GND Stitching Vias for ALL Remaining SMD GND Pads ---
     gnd_smd_pads = [
@@ -2639,21 +2753,22 @@ JLCPCB_ROT_OFFSET = {
     "LED_0603": 0.0,
 }
 
-# 100% live-verified JLCPCB in-stock LCSC Part #s (Rev 4.7 — ONLY 2 Extended reels in Hybrid PCBA: U1/U2 + U3!)
+# 100% live-verified JLCPCB in-stock LCSC Part #s (Rev 4.8 Low-Hassle Full-SMD ENIG PCBA: 20 Basic + 7 Extended!)
 LCSC_MAP = {
     "Diodes AL8860WT-7": "C125330",         # Verified In-Stock Extended: AL8860WT-7 TSOT-25
     "WCH CH224A": "C42459160",              # Verified In-Stock Extended: CH224A ESSOP-10 (1.0 mm leaded)
+    "Littelfuse 046801.5NRHF": "C151143",   # Verified In-Stock Extended: 1.5 A / 63 V 1206 Slo-Blo fuse (50 A int)
+    "Sunlord SWPA6045S680MT": "C53663",     # Verified In-Stock Extended: 68 uH 1.1 A 6045 shielded inductor
+    "RUILON SMBJ22A": "C10214",             # Verified In-Stock Extended: 22 V 600 W Uni SMB TVS
+    "UNI-ROYAL 1206W4F300LT5E": "C59882",   # Verified In-Stock Extended: 0.30 R 1% 0.25 W 1206 sense resistor
+    "UNI-ROYAL 25121WF100KT4E": "C11254",   # Verified In-Stock Extended: 1.0 R 1% 1.0 W 2512 pulse damper resistor
     "onsemi LM393DR2G": "C7955",            # Verified In-Stock Basic: LM393DR2G SOIC-8
     "Hottech TL431": "C181103",             # Verified In-Stock Basic: TL431 SOT-23 (1=REF, 2=K, 3=A)
     "Changjing 2N7002": "C8545",            # Verified In-Stock Basic: 2N7002 SOT-23
-    "Bourns MF-MSMF110/33X": "",            # Offloaded to DIY hand-solder in Hybrid
     "MDD SS34": "C8678",                    # Verified In-Stock Basic: SS34 3A/40V SMA
-    "Vishay SMBJ22A-E3/52": "",             # Offloaded to DIY hand-solder in Hybrid
     "KENTO KT-0603R": "C2286",              # Verified In-Stock Basic: Red 0603 LED
-    "Leiditech ESD24V32D-C": "C5224353",    # Verified In-Stock Extended (Optional DNP in 2-reel Hybrid)
+    "Leiditech ESD24V32D-C": "C5224353",    # Verified In-Stock Extended (Optional DNP; excluded from paste/PCBA)
     "Nexperia BAV99": "C2500",              # Verified In-Stock Basic: BAV99 dual series ESD clamp SOT-23
-    "Bourns SRN6045-680M": "",              # Offloaded to DIY hand-solder in Hybrid
-    "Bourns CRL1206-FW-R300ELF": "",        # Offloaded to DIY hand-solder in Hybrid
     "Samsung CL21B105KBFNNNE": "C28323",    # Verified In-Stock Basic: 1uF 50V X7R 0805
     "FH 1206B475K500NT": "C29823",          # Verified In-Stock Basic: 4.7uF 50V X7R 1206
     "YAGEO CC0603KRX7R9BB104": "C14663",    # Verified In-Stock Basic: 100nF 50V X7R 0603
@@ -2661,7 +2776,6 @@ LCSC_MAP = {
     "FH 0603B472K500NT": "C53987",          # Verified In-Stock Basic: 4.7nF 50V X7R 0603
     "UNI-ROYAL 0603WAF1001T5E": "C21190",   # Verified In-Stock Basic: 1.0k 0603 1%
     "UNI-ROYAL 0603WAF1203T5E": "C25808",   # Verified In-Stock Basic: 120k 0603 1% (CH224A CFG1 20 V)
-    "UNI-ROYAL 0805W8F100KT5E": "C25271",   # Verified In-Stock Basic: 1.0R 0805 1%
     "UNI-ROYAL 0805W8F1002T5E": "C17414",   # Verified In-Stock Basic: 10.0k 0805 1%
     "UNI-ROYAL 0603WAF3002T5E": "C22984",   # Verified In-Stock Basic: 30.0k 0603 1%
     "UNI-ROYAL 0603WAF5101T5E": "C23186",   # Verified In-Stock Basic: 5.1k 0603 1%
@@ -2672,6 +2786,136 @@ LCSC_MAP = {
 }
 
 
+def audit_gerber_npth_and_dnp(gerber_dir: Path, dnp_xy: list[tuple[str, float, float]], min_npth_r_mm: float = 2.70):
+    """Hard post-export Gerber audit:
+    1) Verify ZERO copper polygons, track strokes, or pad flashes on F_Cu.gbr / B_Cu.gbr
+       intrude within min_npth_r_mm of any NPTH hole in driver_pcb-NPTH.drl.
+    2) Verify ZERO solder-paste flashes exist on F_Paste.gbr near DNP footprints (D13/D14).
+    """
+    import re
+
+    npth_path = gerber_dir / "driver_pcb-NPTH.drl"
+    assert npth_path.exists(), f"Missing {npth_path}"
+    holes: list[tuple[float, float]] = []
+    for line in npth_path.read_text().splitlines():
+        m = re.match(r"^X([+-]?\d+(?:\.\d+)?)Y([+-]?\d+(?:\.\d+)?)$", line.strip())
+        if m:
+            holes.append((float(m.group(1)), float(m.group(2))))
+    assert len(holes) == 4, f"Expected 4 NPTH mounting holes in {npth_path}, found {len(holes)}: {holes}"
+
+    def _pt_seg_dist(px, py, ax, ay, bx, by):
+        vx, vy = bx - ax, by - ay
+        wx, wy = px - ax, py - ay
+        c1 = vx * wx + vy * wy
+        if c1 <= 0:
+            return math.hypot(px - ax, py - ay)
+        c2 = vx * vx + vy * vy
+        if c2 <= c1:
+            return math.hypot(px - bx, py - by)
+        t = c1 / c2
+        return math.hypot(px - (ax + t * vx), py - (ay + t * vy))
+
+    def _pt_in_poly(px, py, poly):
+        inside = False
+        n = len(poly)
+        if n < 3:
+            return False
+        j = n - 1
+        for i in range(n):
+            xi, yi = poly[i]
+            xj, yj = poly[j]
+            if ((yi > py) != (yj > py)) and (px < (xj - xi) * (py - yi) / (yj - yi + 1e-18) + xi):
+                inside = not inside
+            j = i
+        return inside
+
+    def _parse_gerber(path: Path):
+        scale = 1e-6
+        in_region = False
+        regions: list[list[tuple[float, float]]] = []
+        cur_poly: list[tuple[float, float]] = []
+        strokes: list[tuple[float, float, float, float]] = []
+        flashes: list[tuple[float, float]] = []
+        cx, cy = 0.0, 0.0
+        for raw in path.read_text().splitlines():
+            s = raw.strip()
+            m_fs = re.search(r"%FSLA[XY](\d)(\d)[XY](\d)(\d)\*%", s)
+            if m_fs:
+                scale = 10.0 ** (-int(m_fs.group(2)))
+                continue
+            if s.startswith("G36"):
+                in_region = True
+                cur_poly = []
+                continue
+            if s.startswith("G37"):
+                if cur_poly:
+                    regions.append(cur_poly)
+                in_region = False
+                cur_poly = []
+                continue
+            m_xy = re.match(r"^(?:G0[123])?(?:X([+-]?\d+))?(?:Y([+-]?\d+))?(?:I[+-]?\d+)?(?:J[+-]?\d+)?D0([123])\*$", s)
+            if m_xy:
+                nx = int(m_xy.group(1)) * scale if m_xy.group(1) is not None else cx
+                ny = int(m_xy.group(2)) * scale if m_xy.group(2) is not None else cy
+                op = m_xy.group(3)
+                if in_region:
+                    if op == "2":
+                        if cur_poly:
+                            regions.append(cur_poly)
+                        cur_poly = [(nx, ny)]
+                    elif op == "1":
+                        cur_poly.append((nx, ny))
+                else:
+                    if op == "1":
+                        strokes.append((cx, cy, nx, ny))
+                    elif op == "3":
+                        flashes.append((nx, ny))
+                cx, cy = nx, ny
+        return regions, strokes, flashes
+
+    for lyr_name in ("F_Cu", "B_Cu"):
+        gbr = gerber_dir / f"driver_pcb-{lyr_name}.gbr"
+        assert gbr.exists(), f"Missing {gbr}"
+        regions, strokes, flashes = _parse_gerber(gbr)
+        min_d = 999.0
+        violations = []
+        for hx, hy in holes:
+            for poly in regions:
+                if _pt_in_poly(hx, hy, poly):
+                    violations.append((lyr_name, "CENTER_INSIDE_POUR", round(hx, 2), round(hy, 2)))
+                for a, b in zip(poly, poly[1:]):
+                    d = _pt_seg_dist(hx, hy, a[0], a[1], b[0], b[1])
+                    if d < min_d:
+                        min_d = d
+                    if d < min_npth_r_mm:
+                        violations.append((lyr_name, "REGION_EDGE", round(hx, 2), round(hy, 2), round(d, 3)))
+            for x0, y0, x1, y1 in strokes:
+                d = _pt_seg_dist(hx, hy, x0, y0, x1, y1)
+                if d < min_d:
+                    min_d = d
+                if d < min_npth_r_mm:
+                    violations.append((lyr_name, "STROKE", round(hx, 2), round(hy, 2), round(d, 3)))
+            for fx, fy in flashes:
+                d = math.hypot(hx - fx, hy - fy)
+                if d < min_d:
+                    min_d = d
+                if d < min_npth_r_mm:
+                    violations.append((lyr_name, "FLASH", round(hx, 2), round(hy, 2), round(d, 3)))
+        assert not violations, f"GERBER NPTH COPPER KEEPOUT VIOLATION on {lyr_name} (r<{min_npth_r_mm} mm): {violations[:6]}"
+        print(f"Verified Gerber {lyr_name}: 0 copper inside r={min_npth_r_mm:.2f} mm of all 4 NPTH holes (min dist = {min_d:.3f} mm).")
+
+    # Verify DNP footprints (D13/D14) have ZERO paste on F_Paste.gbr
+    paste_gbr = gerber_dir / "driver_pcb-F_Paste.gbr"
+    assert paste_gbr.exists(), f"Missing {paste_gbr}"
+    p_regions, p_strokes, p_flashes = _parse_gerber(paste_gbr)
+    paste_pts = list(p_flashes) + [pt_p for poly in p_regions for pt_p in poly]
+    for ref, dx, dy in dnp_xy:
+        for px, py in paste_pts:
+            if math.hypot(px - dx, py - dy) < 1.8:
+                raise AssertionError(f"GERBER PASTE ON DNP FOOTPRINT {ref} at ({px:.2f}, {py:.2f})!")
+    print(f"Verified Gerber F_Paste: 0 solder paste apertures on DNP footprints ({[r for r, _, _ in dnp_xy]}).")
+
+
 def verify_and_export(comp_rows, fp_map, short_val):
     sch_path = BASE_DIR / "driver_pcb.kicad_sch"
     pcb_path = BASE_DIR / "driver_pcb.kicad_pcb"
@@ -2679,7 +2923,7 @@ def verify_and_export(comp_rows, fp_map, short_val):
     GERBER_DIR.mkdir(parents=True, exist_ok=True)
     RENDER_DIR.mkdir(parents=True, exist_ok=True)
 
-    # 1. Native KiCad 9.0.8 ERC (with REAL electrical pin types!)
+    # 1. Native KiCad 10 ERC (with REAL electrical pin types!)
     for fmt, ext in [("json", "json"), ("report", "rpt")]:
         subprocess.run(
             [KCLI, "sch", "erc", "--format", fmt, "--severity-all", "--exit-code-violations",
@@ -2687,10 +2931,11 @@ def verify_and_export(comp_rows, fp_map, short_val):
             check=True,
         )
 
-    # 2. Native KiCad 9.0.8 DRC with schematic parity
+    # 2. Native KiCad 10 DRC with --refill-zones --save-board --schematic-parity --severity-all!
     for fmt, ext in [("json", "json"), ("report", "rpt")]:
         subprocess.run(
-            [KCLI, "pcb", "drc", "--format", fmt, "--schematic-parity", "--severity-all", "--exit-code-violations",
+            [KCLI, "pcb", "drc", "--format", fmt, "--refill-zones", "--save-board",
+             "--schematic-parity", "--severity-all", "--exit-code-violations",
              "-o", str(BASE_DIR / f"drc_report.{ext}"), str(pcb_path)],
             check=True,
         )
@@ -2713,12 +2958,12 @@ def verify_and_export(comp_rows, fp_map, short_val):
         check=True,
     )
 
-    # Patch driver_pcb-job.gbrjob to Green LPI / White Silk / Lead-Free HASL / Rev 4.7
+    # Patch driver_pcb-job.gbrjob to Green LPI / White Silk / ENIG / Rev 4.8
     gbrjob_path = GERBER_DIR / "driver_pcb-job.gbrjob"
     if gbrjob_path.exists():
         job = json.loads(gbrjob_path.read_text())
-        job.setdefault("GeneralSpecs", {})["Finish"] = "HASL (lead-free)"
-        job["GeneralSpecs"]["ProjectId"] = {"Name": "driver_pcb", "GUID": uid("driver_pcb_proj"), "Revision": "4.7"}
+        job.setdefault("GeneralSpecs", {})["Finish"] = "ENIG"
+        job["GeneralSpecs"]["ProjectId"] = {"Name": "driver_pcb", "GUID": uid("driver_pcb_proj"), "Revision": "4.8"}
         for item in job.get("MaterialStackup", []):
             if item.get("Type") == "SolderMask":
                 item["Color"] = "Green"
@@ -2726,13 +2971,16 @@ def verify_and_export(comp_rows, fp_map, short_val):
                 item["Color"] = "White"
         gbrjob_path.write_text(json.dumps(job, indent=2) + "\n")
 
+    # Hard Gerber Audit: NPTH copper keepout + DNP paste exclusion
+    audit_gerber_npth_and_dnp(GERBER_DIR, [("D13", +6.90, -20.55), ("D14", +9.20, -20.55)], min_npth_r_mm=2.70)
+
     zip_path = GERBER_DIR / "driver_pcb_gerbers.zip"
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
         for f in sorted(GERBER_DIR.iterdir()):
             if f.name.endswith((".gbr", ".drl", ".gbrjob")):
                 zf.write(f, f.name)
 
-    # 4. Turnkey SMD-Only JLCPCB CPL (excluding THT J1..J4 and NPTH H1..H4!) + LCSC BOM
+    # 4. Turnkey SMD-Only JLCPCB CPL (excluding THT J1..J4, NPTH H1..H4, and DNP D13/D14!) + LCSC BOM
     raw_pos = RENDER_DIR / "_raw_pos.csv"
     subprocess.run(
         [KCLI, "pcb", "export", "pos", "--format", "csv", "--units", "mm",
@@ -2740,15 +2988,16 @@ def verify_and_export(comp_rows, fp_map, short_val):
          "-o", str(raw_pos), str(pcb_path)],
         check=True,
     )
-    exclude_pcba = {"H1", "H2", "H3", "H4"}
+    exclude_pcba = {"H1", "H2", "H3", "H4", "TP1", "TP2", "TP3", "TP4"}
     tht_refs = {"J1", "J2", "J3", "J4"}
+    dnp_refs = {"D13", "D14"}
     with raw_pos.open() as f_in, (PCB_DESIGN_DIR / "driver_pcb_cpl.csv").open("w", newline="") as f_out:
         reader = csv.DictReader(f_in)
         writer = csv.writer(f_out)
         writer.writerow(["Designator", "Mid X", "Mid Y", "Layer", "Rotation"])
         for row in reader:
             ref = row["Ref"]
-            if ref in exclude_pcba or ref in tht_refs:
+            if ref in exclude_pcba or ref in tht_refs or ref in dnp_refs:
                 continue
             fp_short = fp_map[ref].split(":")[1]
             off = JLCPCB_ROT_OFFSET.get(fp_short, 0.0)
@@ -2769,19 +3018,24 @@ def verify_and_export(comp_rows, fp_map, short_val):
         w_all.writerow(cols_all)
         w_pcba.writerow(cols_pcba)
         for ref, r in comp_rows.items():
-            dnp_flag = "Yes" if (r["Mounting"] == "Off-Board" or ref in exclude_pcba) else "No"
+            dnp_flag = "Yes" if (r["Mounting"] == "Off-Board" or ref in exclude_pcba or ref in dnp_refs) else "No"
             lcsc = LCSC_MAP.get(r["MPN"], "")
             w_all.writerow([short_val.get(ref, r["Value_Rating"]), ref, r["Package_Footprint"], r["MPN"], lcsc, r["Qty"], r["Category"], r["Mounting"], dnp_flag])
             if r["Mounting"] == "On-PCB" and ref not in exclude_pcba:
-                asm = "THT Hand-Solder (DIY)" if ref in tht_refs else "SMD Turnkey PCBA"
+                if ref in tht_refs:
+                    asm = "THT Hand-Solder (DIY)"
+                elif ref in dnp_refs:
+                    asm = "Optional DNP (Excluded from Paste & PCBA)"
+                else:
+                    asm = "SMD Turnkey PCBA (JLCPCB ENIG)"
                 w_pcba.writerow([short_val.get(ref, r["Value_Rating"]), ref, r["Package_Footprint"], lcsc, r["MPN"], asm])
 
-    # Automatically derive Hybrid JLCPCB PCBA + DIY hand-solder CSVs from canonical full PCBA outputs
+    # Automatically derive Low-Hassle Full-SMD JLCPCB PCBA + DIY THT hand-solder CSVs
     sys.path.insert(0, str(PCB_DESIGN_DIR))
     import generate_hybrid_pcba
     generate_hybrid_pcba.generate()
 
-    # 5. Schematic PDF/SVG + Scaled F.Fab Assembly Map PDF (5:1 fit-page-to-board, Carbon B-5!) + 3D & Gerbv Renders
+    # 5. Schematic PDF/SVG + Scaled F.Fab Assembly Map PDF + 3D & Copper/Drill Renders
     subprocess.run([KCLI, "sch", "export", "pdf", "-o", str(RENDER_DIR / "schematic.pdf"), str(sch_path)], check=True)
     subprocess.run([KCLI, "sch", "export", "svg", "-o", str(RENDER_DIR), str(sch_path)], check=True)
     shutil.copy2(RENDER_DIR / "schematic.pdf", REPO_ROOT / "circuit_design" / "schematic.pdf")
@@ -2794,7 +3048,6 @@ def verify_and_export(comp_rows, fp_map, short_val):
         check=True,
     )
 
-    # Clean F.Fab + F.CrtYd + Edge.Cuts assembly map SVG (fit-to-board) + scaled 5:1 PDF (no F.SilkS overprint!)
     subprocess.run(
         [KCLI, "pcb", "export", "svg", "-o", str(RENDER_DIR / "assembly_map.svg"),
          "-l", "F.Fab,F.CrtYd,Edge.Cuts", "--mode-single", "--black-and-white",
@@ -2808,7 +3061,6 @@ def verify_and_export(comp_rows, fp_map, short_val):
             check=True,
         )
     else:
-        # Native KiCad PlotController with AutoScale=True fits the 36x46 mm board cleanly to the page (~5:1)!
         b_plot = pcbnew.LoadBoard(str(pcb_path))
         pc = pcbnew.PLOT_CONTROLLER(b_plot)
         po = pc.GetPlotOptions()
@@ -2842,29 +3094,51 @@ def verify_and_export(comp_rows, fp_map, short_val):
          "-o", str(RENDER_DIR / "render_bottom.png"), str(pcb_path)],
         check=True,
     )
-    subprocess.run(
-        [GERBV, "-x", "png", "-D", "300", "-o", str(RENDER_DIR / "gerbv_top.png"),
-         str(GERBER_DIR / "driver_pcb-F_Cu.gbr"),
-         str(GERBER_DIR / "driver_pcb-F_Silkscreen.gbr"),
-         str(GERBER_DIR / "driver_pcb-Edge_Cuts.gbr"),
-         str(GERBER_DIR / "driver_pcb-PTH.drl")],
-        check=True,
-    )
-    subprocess.run(
-        [GERBV, "-x", "png", "-D", "300", "-o", str(RENDER_DIR / "gerbv_bottom.png"),
-         str(GERBER_DIR / "driver_pcb-B_Cu.gbr"),
-         str(GERBER_DIR / "driver_pcb-B_Silkscreen.gbr"),
-         str(GERBER_DIR / "driver_pcb-Edge_Cuts.gbr"),
-         str(GERBER_DIR / "driver_pcb-PTH.drl")],
-        check=True,
-    )
-    print("driver_pcb (Rev 4.7 CH224A + 2-Reel Hybrid PCBA + Emperor Moth B.SilkS) verification & exports completed cleanly.")
+    gerbv_bin = GERBV if Path(GERBV).exists() else shutil.which("gerbv")
+    if gerbv_bin:
+        subprocess.run(
+            [gerbv_bin, "-x", "png", "-D", "300", "-o", str(RENDER_DIR / "gerbv_top.png"),
+             str(GERBER_DIR / "driver_pcb-F_Cu.gbr"),
+             str(GERBER_DIR / "driver_pcb-F_Silkscreen.gbr"),
+             str(GERBER_DIR / "driver_pcb-Edge_Cuts.gbr"),
+             str(GERBER_DIR / "driver_pcb-PTH.drl"),
+             str(GERBER_DIR / "driver_pcb-NPTH.drl")],
+            check=True,
+        )
+        subprocess.run(
+            [gerbv_bin, "-x", "png", "-D", "300", "-o", str(RENDER_DIR / "gerbv_bottom.png"),
+             str(GERBER_DIR / "driver_pcb-B_Cu.gbr"),
+             str(GERBER_DIR / "driver_pcb-B_Silkscreen.gbr"),
+             str(GERBER_DIR / "driver_pcb-Edge_Cuts.gbr"),
+             str(GERBER_DIR / "driver_pcb-PTH.drl"),
+             str(GERBER_DIR / "driver_pcb-NPTH.drl")],
+            check=True,
+        )
+    else:
+        # Fallback: KiCad SVG copper+silk+actual drills (PTH + NPTH) rasterized cleanly to PNG!
+        for side, lyrs, out_png in [
+            ("top", "F.Cu,F.SilkS,Edge.Cuts", RENDER_DIR / "gerbv_top.png"),
+            ("bottom", "B.Cu,B.SilkS,Edge.Cuts", RENDER_DIR / "gerbv_bottom.png"),
+        ]:
+            tmp_svg = RENDER_DIR / f"_gerbv_{side}.svg"
+            subprocess.run(
+                [KCLI, "pcb", "export", "svg", "-o", str(tmp_svg),
+                 "-l", lyrs, "--mode-single", "--drill-shape-opt", "2",
+                 "--page-size-mode", "2", "--exclude-drawing-sheet", str(pcb_path)],
+                check=True,
+            )
+            subprocess.run(
+                ["convert", "-density", "300", "-background", "#181818", "-flatten", str(tmp_svg), str(out_png)],
+                check=True,
+            )
+            tmp_svg.unlink()
+    print("driver_pcb (Rev 4.8 ENIG Full-SMD PCBA + H1..H4 Copper Keepout + 0 DRC) verification & exports completed cleanly.")
 
 
 def main():
     with COMPONENT_CSV.open() as f:
         comp_rows = {row["RefDes"]: row for row in csv.DictReader(f)}
-    assert len(comp_rows) == 66, f"Expected 66 RefDes in COMPONENT_IDS.csv, got {len(comp_rows)}"
+    assert len(comp_rows) == 72, f"Expected 72 RefDes in COMPONENT_IDS.csv, got {len(comp_rows)}"
 
     write_lib_tables()
     write_kicad_pro()

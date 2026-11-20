@@ -1,5 +1,5 @@
 * ==============================================================================
-* LepiLED Rev 4.7 — Hysteretic UVLO Testbench (17.48 V ON / 16.66 V OFF)
+* LepiLED Rev 4.8 — Hysteretic UVLO Testbench (17.48 V ON / 16.66 V OFF)
 * Tests 5/9/12/15.75 V PD fallback rejection PLUS slow ramp UP & DOWN through
 * realistic 0.30 Ohm source impedance to prove ZERO chatter / motorboating!
 * ==============================================================================
@@ -18,6 +18,8 @@ Rsrc V_SRC VIN_20V 0.30
 * Hysteretic UVLO (U5 TL431 2.500 V + U4A/U4B LM393DR2G + Q2/Q3 2N7002)
 R14 VIN_20V V_REF 10.0k
 XU5 V_REF 0 TL431_2V5
+R24 V_REF V_REF_DAMP 10.0
+C16 V_REF_DAMP 0 100n
 R15 VIN_20V UVLO_SENSE 30.0k
 R16 UVLO_SENSE 0 5.1k
 C15 UVLO_SENSE 0 100n
@@ -62,8 +64,8 @@ C5 VIS_POS VIS_C5_DAMP 100n
 R23 VIS_C5_DAMP VIS_NEG 10.0
 V_ivis VIS_POS VIS_A1 0
 D5 VIS_A1 VIS_N1 D_XPE2_RB
-D6 VIS_N1 VIS_N2 D_XPE2_RB
-D7 VIS_N2 VIS_N3 D_XPE2_GRN
+D7 VIS_N1 VIS_N2 D_XPE2_GRN
+D6 VIS_N2 VIS_N3 D_XPE2_RB
 D8 VIS_N3 VIS_NEG D_XPE2_CW
 
 .options method=gear reltol=5e-3 abstol=1e-8 vntol=1e-4
