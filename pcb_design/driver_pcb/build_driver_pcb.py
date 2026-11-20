@@ -1948,14 +1948,118 @@ def place_non_overlapping_silkscreen(board: pcbnew.BOARD):
                 return True
         return False
 
+    def add_moth_silkscreen(board, cx=0.0, cy=10.2, scale=1.0, layer=pcbnew.B_SilkS):
+        """Draw a crisp Emperor-Moth (Saturnia pavonia) silkscreen graphic: feathery pectinate antennae,
+        stout segmented body, broad swept forewings, tucked hindwings, and 4 eyespots (ocelli)."""
+
+        def add_poly(pts, filled=False, stroke_w=0.18):
+            shp = pcbnew.PCB_SHAPE(board)
+            shp.SetShape(pcbnew.SHAPE_T_POLY)
+            shp.SetLayer(layer)
+            shp.SetWidth(mm(stroke_w))
+            shp.SetFilled(filled)
+            poly = pcbnew.SHAPE_POLY_SET()
+            poly.NewOutline()
+            for x, y in pts:
+                poly.Append(kpt(cx + x * scale, cy + y * scale))
+            shp.SetPolyShape(poly)
+            board.Add(shp)
+
+        def add_seg(p0, p1, stroke_w=0.18):
+            shp = pcbnew.PCB_SHAPE(board)
+            shp.SetShape(pcbnew.SHAPE_T_SEGMENT)
+            shp.SetLayer(layer)
+            shp.SetWidth(mm(stroke_w))
+            shp.SetStart(kpt(cx + p0[0] * scale, cy + p0[1] * scale))
+            shp.SetEnd(kpt(cx + p1[0] * scale, cy + p1[1] * scale))
+            board.Add(shp)
+
+        def add_circle(x, y, r, filled=False, stroke_w=0.18):
+            shp = pcbnew.PCB_SHAPE(board)
+            shp.SetShape(pcbnew.SHAPE_T_CIRCLE)
+            shp.SetLayer(layer)
+            shp.SetWidth(mm(stroke_w))
+            shp.SetFilled(filled)
+            shp.SetCenter(kpt(cx + x * scale, cy + y * scale))
+            shp.SetEnd(kpt(cx + (x + r) * scale, cy + y * scale))
+            board.Add(shp)
+
+        def add_polyline(pts, stroke_w=0.16):
+            for a, b in zip(pts, pts[1:]):
+                add_seg(a, b, stroke_w)
+
+        # 1. Stout moth head, furry thorax collar (filled), and plump segmented tapering abdomen
+        add_circle(0.0, 2.35, 0.58, filled=True, stroke_w=0.16)
+        thorax = [
+            (0.0, 2.35), (0.78, 2.00), (0.98, 1.20), (0.85, 0.35),
+            (0.0, 0.20), (-0.85, 0.35), (-0.98, 1.20), (-0.78, 2.00),
+        ]
+        add_poly(thorax, filled=True, stroke_w=0.16)
+        abdomen = [
+            (-0.80, 0.35), (0.80, 0.35), (0.88, -0.55), (0.78, -1.55),
+            (0.55, -2.55), (0.28, -3.30), (0.0, -3.65),
+            (-0.28, -3.30), (-0.55, -2.55), (-0.78, -1.55), (-0.88, -0.55),
+        ]
+        add_poly(abdomen, filled=False, stroke_w=0.20)
+        for sy, hw in [(-0.45, 0.84), (-1.15, 0.80), (-1.85, 0.68), (-2.55, 0.50)]:
+            add_seg((-hw, sy), (hw, sy), stroke_w=0.16)
+
+        # 2. Symmetric Left & Right: Feathery Pectinate Antennae + Swept Forewings + Tucked Hindwings + Eyespots
+        for s in (-1.0, 1.0):
+            ant = [(s * 0.35, 2.75), (s * 0.90, 3.35), (s * 1.65, 3.85), (s * 2.50, 4.10), (s * 3.15, 4.12)]
+            add_polyline(ant, stroke_w=0.18)
+            barbs = [
+                ((0.65, 3.10), (0.35, 3.60), (1.00, 2.85)),
+                ((1.10, 3.50), (0.85, 4.15), (1.45, 3.18)),
+                ((1.58, 3.82), (1.40, 4.48), (1.92, 3.45)),
+                ((2.08, 4.00), (1.98, 4.55), (2.35, 3.65)),
+                ((2.58, 4.10), (2.56, 4.48), (2.78, 3.82)),
+            ]
+            for (bx, by), (ux, uy), (lx, ly) in barbs:
+                add_seg((s * bx, by), (s * ux, uy), stroke_w=0.15)
+                add_seg((s * bx, by), (s * lx, ly), stroke_w=0.15)
+
+            forewing = [
+                (s * 0.85, 1.70), (s * 2.40, 2.35), (s * 4.50, 2.75), (s * 6.50, 2.60),
+                (s * 7.60, 2.05), (s * 7.25, 1.05), (s * 6.65, 0.10), (s * 5.75, -0.75),
+                (s * 4.30, -1.05), (s * 2.30, -0.85), (s * 0.82, -0.25),
+            ]
+            add_poly(forewing, filled=False, stroke_w=0.22)
+
+            add_polyline([
+                (s * 6.45, 2.25), (s * 6.20, 1.45), (s * 5.75, 0.65),
+                (s * 5.10, -0.05), (s * 4.25, -0.55),
+            ], stroke_w=0.16)
+            add_polyline([
+                (s * 1.15, 1.35), (s * 2.60, 1.65), (s * 3.10, 1.45),
+            ], stroke_w=0.15)
+            add_polyline([
+                (s * 1.10, 0.25), (s * 2.55, -0.15), (s * 3.30, -0.35),
+            ], stroke_w=0.15)
+
+            add_circle(s * 4.15, 0.90, 0.88, filled=False, stroke_w=0.20)
+            add_circle(s * 4.15, 0.90, 0.36, filled=True, stroke_w=0.16)
+
+            hindwing = [
+                (s * 4.85, -0.95), (s * 5.15, -1.75), (s * 4.65, -2.75),
+                (s * 3.65, -3.45), (s * 2.40, -3.55), (s * 1.30, -2.95), (s * 0.72, -1.85),
+            ]
+            add_polyline(hindwing, stroke_w=0.22)
+            add_polyline([
+                (s * 4.45, -1.55), (s * 4.10, -2.35), (s * 3.25, -2.95), (s * 2.15, -2.95),
+            ], stroke_w=0.16)
+            add_circle(s * 2.75, -1.95, 0.60, filled=False, stroke_w=0.18)
+            add_circle(s * 2.75, -1.95, 0.24, filled=True, stroke_w=0.15)
+
+
     # Accurate J2/J3/J4 pinout legends on B.SilkS (right beside THT solder joints, 100% consistent!)
     board_texts = [
-        ("LEPILED REV4.2 20V-PD", 0.0, +21.75, 0.80, pcbnew.B_SilkS, True),
+        ("LEPILED REV4.5 20V-PD", 0.0, +21.75, 0.80, pcbnew.B_SilkS, True),
         ("1:UV+ 2:UV-", -5.20, +16.40, 0.75, pcbnew.B_SilkS, True),
         ("1:VIS+ 2:VIS-", +5.20, +16.40, 0.75, pcbnew.B_SilkS, True),
         ("1:UV 2:GND 3:VIS", -1.40, -5.95, 0.72, pcbnew.B_SilkS, True),
-        ("JLCJLCJLCJLC", 0.0, +13.50, 0.80, pcbnew.B_SilkS, True),
     ]
+    add_moth_silkscreen(board, cx=0.0, cy=+10.20, scale=1.0, layer=pcbnew.B_SilkS)
     for txt_str, xm, ym, sz, lyr, mir in board_texts:
         t = pcbnew.PCB_TEXT(board)
         t.SetText(txt_str)
@@ -2684,7 +2788,7 @@ def verify_and_export(comp_rows, fp_map, short_val):
     if gbrjob_path.exists():
         job = json.loads(gbrjob_path.read_text())
         job.setdefault("GeneralSpecs", {})["Finish"] = "ENIG"
-        job["GeneralSpecs"]["ProjectId"] = {"Name": "driver_pcb", "GUID": uid("driver_pcb_proj"), "Revision": "4.1"}
+        job["GeneralSpecs"]["ProjectId"] = {"Name": "driver_pcb", "GUID": uid("driver_pcb_proj"), "Revision": "4.5"}
         for item in job.get("MaterialStackup", []):
             if item.get("Type") == "SolderMask":
                 item["Color"] = "Green"

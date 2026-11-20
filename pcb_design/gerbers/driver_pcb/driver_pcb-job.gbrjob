@@ -5,13 +5,13 @@
       "Application": "Pcbnew",
       "Version": "9.0.8+dfsg-1"
     },
-    "CreationDate": "2026-11-20T01:01:35+00:00"
+    "CreationDate": "2026-11-20T03:33:43+00:00"
   },
   "GeneralSpecs": {
     "ProjectId": {
       "Name": "driver_pcb",
       "GUID": "39e272a3-039f-5ac1-bf14-59ffb761c445",
-      "Revision": "4.1"
+      "Revision": "4.5"
     },
     "Size": {
       "X": 36.1,
