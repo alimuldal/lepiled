@@ -1,29 +1,29 @@
-# LepiLED DIY Maxi Switch — Master Bill of Materials (Rev 4.4 — Field-Robust 1-Off Hobby Build)
+# LepiLED DIY Maxi Switch — Master Bill of Materials (Rev 4.5 — Compact Weatherproof 1-Off Hobby Build)
 
-Machine-verified master BOM in [bom.csv](file:///home/alimuldal/src/lepiled/bom/bom.csv), audited 1:1 against [COMPONENT_IDS.csv](file:///home/alimuldal/src/lepiled/circuit_design/COMPONENT_IDS.csv) (`75` RefDes), [driver_pcb_bom_pcba.csv](file:///home/alimuldal/src/lepiled/pcb_design/driver_pcb_bom_pcba.csv) (`61` populated PCBA parts), and [MECH_PARTS.csv](file:///home/alimuldal/src/lepiled/mechanical_design/MECH_PARTS.csv) (`15` mechanical IDs) via [verify_bom.py](file:///home/alimuldal/src/lepiled/bom/verify_bom.py).
+Machine-verified master BOM in [bom.csv](file:///home/alimuldal/src/lepiled/bom/bom.csv), audited 1:1 against [COMPONENT_IDS.csv](file:///home/alimuldal/src/lepiled/circuit_design/COMPONENT_IDS.csv) (`75` RefDes), [driver_pcb_bom_pcba.csv](file:///home/alimuldal/src/lepiled/pcb_design/driver_pcb_bom_pcba.csv) (`61` populated PCBA parts), and [MECH_PARTS.csv](file:///home/alimuldal/src/lepiled/mechanical_design/MECH_PARTS.csv) (`18` mechanical IDs) via [verify_bom.py](file:///home/alimuldal/src/lepiled/bom/verify_bom.py).
 
 ## 1. Single-Unit Hobby Cost Summary (UK GBP)
 
-Rev 4.4 keeps the exact same low 1-off cost (`£0` BOM delta from vertical `driver_pcb` and bottom-entry USB-C) while delivering a shatter-resistant UV-transmitting PMMA shroud, seamless unbroken lower housing, bottom-mounted `SW1` inside `MECH-BASE-RING`, and an integral `Ø116 mm` shroud drip-brim:
+Rev 4.5 budgets every real weatherproofing and harness item honestly for a single-unit UK build (including realistic delivered XT PMMA pricing, the permanently captured `90°` USB-C PD cable, `M20` IP68 split cable gland, `MECH-GASKET-3` lid O-ring, IP68 ePTFE breather vent, neutral-cure oxime silicone sealant, and `24 AWG` UV-stable silicone inter-star wire):
 
 | Domain | 1-Off Hobby Checkout (ex-VAT) | 1-Off Hobby Checkout (inc 20% VAT) | Amortized Per-Lamp (ex-VAT) |
 |---|---:|---:|---:|
 | **Electrical (`75` RefDes incl. `8×` `20 mm` Copper DTP LED stars)** | £42.72 | £51.26 | £41.00 |
-| **Harness (Pre-crimped `22 AWG` JST-XH 2P & 3P pigtails — no crimper)** | £2.50 | £3.00 | £0.75 |
+| **Harness (JST-XH 2P/3P pigtails + `24 AWG` UV silicone wire + captured `90°` USB-C PD cable)** | £8.34 | £10.01 | £6.59 |
 | **PCB Fab + JLCPCB Economic PCBA (`driver_pcb` ONLY, 2-pc min)** | £20.00 | £24.00 | £10.00 |
-| **Mechanical (`250 mm` bare `3 mm` Al tube, UVT PMMA shroud, seals, M3 + nylon washers)** | £26.13 | £31.36 | £26.13 |
-| **TOTAL Rev 4.4 1-Off Build (All Items Purchased New)** | **£91.35** | **£109.62** | **£77.88** |
-| **NET 1-Off Out-of-Pocket (Using Owned Workshop `M3` Screws/Nuts & PC Paste)** | **£84.80** | **£101.76** | — |
+| **Mechanical (`200 mm` bare `30×30×3` Al core, `Ø60×54` XT PMMA, 3 radial O-rings, M20 split gland, ePTFE vent, oxime silicone, fasteners)** | £39.03 | £46.84 | £39.03 |
+| **TOTAL Rev 4.5 1-Off Build (All Items Purchased New)** | **£110.09** | **£132.11** | **£96.62** |
+| **NET 1-Off Out-of-Pocket (Using Owned Workshop `M3`/`M2.5` Screws & PC Paste)** | **£103.14** | **£123.77** | — |
 
-> **Scope Notes:** All 7 3D-printed parts (`MECH-BASE-RING`, `MECH-LID-BOT`, `MECH-CAP-BOT`, `MECH-CAP-TOP`, `MECH-PLUG-TOP`, `MECH-PLUG-BOT`, `MECH-DRILL-JIG`) are printed in-house (`£0.00`, support-free FDM PETG/ASA). External USB-C PD power sources (laptop charger or `20 V` PD power bank) and courier delivery fees are excluded.
+> **Scope Notes:** All 6 3D-printed parts (`MECH-BASE-RING`, `MECH-LID-BOT`, `MECH-CAP-BOT`, `MECH-CAP-TOP`, `MECH-PLUG-TOP`, `MECH-DRILL-JIG`) are printed in-house (`£0.00`, support-free FDM PETG or Black ASA; `MECH-PLUG-BOT` eliminated). External USB-C PD power sources (laptop charger or `20 V` PD power bank) are excluded.
 
-## 2. Key Ordering Notes (Rev 4.3)
+## 2. Key Ordering Notes (Rev 4.5)
 
-- **UV-Transmitting PMMA Tube (`MECH-TUBE-1` — `Ø75 × 69 × 3.0 mm × 150 mm`):** Order **UV-transmitting / unstabilized cast PMMA** (e.g. Plexiglas GS 2458 / Perspex UVT, `85–92%` @ `365 nm`, `~£10` inc-VAT from Simply Plastics / Direct Plastics UK). **Do NOT substitute polycarbonate (PC)**, which blocks `> 98%` of `365 nm` UV-A.
-- **Pre-Mounted `20 mm` Copper DTP Stars (`ELEC-08..11`):** `4× Luminus SST-10-UV 365 nm` + `2× Cree XP-E2 Royal Blue` + `1× Green` + `1× Cool White` (`£23.40` ex-VAT from Kaidomain/Convoy). Confirm electrically neutral thermal pads and mount with all `16× M3` nylon insulating washers (`MECH-WASH-NYLON`).
-- **Single Stock Metal Part (`MECH-HS-CORE`):** `250.0 mm` stock cut of bare `40 × 40 × 3.0 mm` Al 6063 box section (`£6.67` ex-VAT; `3.0 mm` wall retained for full `M3` thread engagement).
-- **Single `M3` Fastener Size (`MECH-FAST-M3`):** `20× M3×8` (`16×` stars + `4×` bottom plug pins), `2× M3×12` (`cap_top` lock), `6× M3×16` (`2×` bulkhead CSK + `4×` base-ring/lid SHCS), plus `6× M3` hex nuts (`4×` captive in `cap_bot` + `2×` in `plug_bot`).
-- **JLCPCB Economic PCBA + UK Consolidation:** `driver_pcb` is the sole custom PCB (`57` SMD JLCPCB Basic-optimized; `J1..J4`, `SW1`, `SW1_BOOT` consolidated on Farnell UK / RS UK to avoid DigiKey UK's `£22` `< £65` shipping fee).
+- **Clear Unstabilized Extruded PMMA Tube (`MECH-TUBE-1` — `Ø60 × 54 × 3.0 mm × 115 mm`):** Order **clear unstabilized extruded PMMA (`Plexiglas XT`)** (`85–92%` @ `365 nm`, `~£15` inc-VAT realistic UK 1-off delivered from Clear Plastic Tube UK / Simply Plastics UK). **Do NOT substitute standard UV-blocking cast `Plexiglas GS` or polycarbonate (PC).** Never clean with IPA or seal with acetic-cure silicone.
+- **Pre-Mounted `20 mm` Copper DTP Stars (`ELEC-08..11`):** `4× Luminus SST-10-UV 365 nm` + `2× Cree XP-E2 Royal Blue` + `1× Green` + `1× Cool White` (`£23.40` ex-VAT from Kaidomain/Convoy). Mount with `16× M3 × 8 mm` pan screws + `16× M3` nylon insulating washers (`MECH-WASH-NYLON`) and wire with `24 AWG` silicone wire (`HARN-03`).
+- **Single Stock Metal Part (`MECH-HS-CORE`):** `200.0 mm` stock cut of bare `30 × 30 × 3.0 mm` Al 6063-T6 box section (`174 g`, `£6.25` ex-VAT delivered on eBay UK / Metals4U; retains full `3.0 mm` wall for 6-turn `M3` threads).
+- **Weatherproofing Kit (`MECH-GASKET-1..3`, `MECH-GLAND-1`, `MECH-VENT-1`, `MECH-SEAL-1`):** `2×` `60 × 3.0 mm` VMQ70 radial shroud O-rings, `1×` `70 × 2.5 mm` VMQ70 radial lid O-ring, `M20` IP68 split waterproof cable gland (`Ø4–5 mm` split seal around captured `90°` USB-C PD cable `HARN-04`), `Ø8 mm` adhesive IP68 ePTFE breather vent patch, and **neutral-cure oxime** RTV silicone (never acetic-cure).
+- **Fasteners (`MECH-FAST-M3`, `MECH-FAST-M25`):** `16× M3×8` pan (stars), `4× M3×10` SHCS (`cap_bot`/`cap_top` core locks), `4× M3×16` SHCS + `4× M3` hex nuts (`lid`/`base_ring`), plus `4× M2.5×8` pan (horizontal `driver_pcb`).
 
 ## 3. Verification Command
 

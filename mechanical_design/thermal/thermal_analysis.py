@@ -418,9 +418,10 @@ SK577_50 = HeatsinkSpec("SK 577/50 SA", "radial", 50.0, 20.0, 50.0, 20, 1.3)
 SK578_50 = HeatsinkSpec("SK 578/50 SA", "radial", 60.0, 24.0, 50.0, 22, 1.4)
 SK80_70 = HeatsinkSpec("SK LED R 80 SA", "radial", 80.0, 34.0, 70.0, 22, 1.2)
 DISC_72 = HeatsinkSpec("Flat Al Disc 72x4", "flat_disc", 72.0, 0.0, 4.0, 0, 0.0)
-PLASTIC_POCKET = HeatsinkSpec("Sealed PETG/PA12 Pocket", "plastic_pocket", 92.0, 0.0, 40.0, 0, 0.0)
-PROTRUDING_BARE_85 = HeatsinkSpec("Protruding 85.5mm Bare Al Tube", "protruding_core", 40.0, 34.0, 85.5, 0, 0.0, eps=0.20)
-PROTRUDING_BLACK_85 = HeatsinkSpec("Protruding 85.5mm Black Al Tube", "protruding_core", 40.0, 34.0, 85.5, 0, 0.0, eps=0.88)
+PLASTIC_POCKET = HeatsinkSpec("Sealed PETG/ASA Pocket", "plastic_pocket", 92.0, 0.0, 35.0, 0, 0.0)
+PROTRUDING_BARE_REV45 = HeatsinkSpec("Protruding 56.8mm Bare 30x30x3 Al Core", "protruding_core", 30.0, 24.0, 56.8, 0, 0.0, eps=0.20)
+PROTRUDING_BLACK_REV45 = HeatsinkSpec("Protruding 56.8mm Matte-Black 30x30x3 Al Core", "protruding_core", 30.0, 24.0, 56.8, 0, 0.0, eps=0.88)
+PROTRUDING_BARE_85 = HeatsinkSpec("Legacy Rev 4.4 85.5mm Bare 40x40x3 Al Core", "protruding_core", 40.0, 34.0, 85.5, 0, 0.0, eps=0.20)
 
 
 def protruding_core_Q(T_s: float, T_amb: float, hs: HeatsinkSpec, orientation: str = "vertical",
@@ -604,12 +605,12 @@ def compute_bulkhead_resistance(params: LepiLEDParams) -> float:
       - 2x M4 SS DIN 7991 CSK bulkhead bolts (k=15 W/mK, L=11.5 mm, A_s=17.56 mm^2) w/ 1.0 mm nylon CSK finishing/insulating washers (k=0.25, A=35 mm^2 ea)
       - Internal cavity radiation (~114 K/W)
     """
+    # Bulkhead plastic conduction + cap wall + cavity radiation (MECH-PLUG-BOT & vertical bolts removed in Rev 4.5!)
     k_petg = 0.23
-    r_bh_plastic = (params.bulkhead_thick * 1e-3) / (k_petg * 1400e-6)  # 18.63 K/W
-    r_wall = 0.038 / (k_petg * 2800e-6)                                # 59.01 K/W
-    r_bolts = (0.0115 / (15.0 * 17.56e-6)) + (0.001 / (0.25 * 70e-6))  # 100.80 K/W
+    r_bh_plastic = (max(0.006, params.bulkhead_thick * 1e-3)) / (k_petg * 1200e-6)
+    r_wall = 0.032 / (k_petg * 2200e-6)
     r_rad = 114.1
-    return 1.0 / (1.0 / r_bh_plastic + 1.0 / r_wall + 1.0 / r_bolts + 1.0 / r_rad)
+    return 1.0 / (1.0 / r_bh_plastic + 1.0 / r_wall + 1.0 / r_rad)
 
 
 def compute_top_joint_resistance(params: LepiLEDParams) -> float:
@@ -688,11 +689,13 @@ def solve_system(
     def resid(x: list[float]) -> list[float]:
         T_c_uv, T_c_vis, T_hs_t, T_hs_b, T_pcb_bot = x
         T_c_avg = 0.5 * (T_c_uv + T_c_vis)
+        d_core_eq = 4.0 * params.core_w_nom / math.pi
         Q_glass, _, _ = borosilicate_path_Q(
             T_c_avg, T_amb,
             D_in_mm=params.glass_id_nom,
             D_out_mm=params.glass_od_nom,
             L_glass_mm=params.exposed_glass_window,
+            D_core_eq_mm=d_core_eq,
             eps_core=eps_core,
             eps_glass=eps_shroud,
             k_wall=k_shroud,
@@ -713,11 +716,13 @@ def solve_system(
     x0 = [T_amb + 25.0, T_amb + 25.0, T_amb + 20.0, T_amb + 15.0, T_amb + 18.0]
     T_c_uv, T_c_vis, T_hs_t, T_hs_b, T_pcb_bot = [float(v) for v in fsolve(resid, x0)]
     T_c_avg = 0.5 * (T_c_uv + T_c_vis)
+    d_core_eq = 4.0 * params.core_w_nom / math.pi
     Q_glass, T_gi, T_go = borosilicate_path_Q(
         T_c_avg, T_amb,
         D_in_mm=params.glass_id_nom,
         D_out_mm=params.glass_od_nom,
         L_glass_mm=params.exposed_glass_window,
+        D_core_eq_mm=d_core_eq,
         eps_core=eps_core,
         eps_glass=eps_shroud,
         k_wall=k_shroud,
@@ -797,9 +802,9 @@ MODES = [
 
 # (name, top_hs, bot_hs, coupled, r_sub_uv, r_sub_vis, r_tim_led, eps_core)
 CONFIGS = [
-    ("Config 0: Rev 4.3 Baseline (UVT PMMA Shroud + 85.5mm Bare Al Core + 20mm Cu DTP Stars)", PROTRUDING_BARE_85, PLASTIC_POCKET, False, 0.50, 0.50, 0.30, 0.20),
-    ("Config 1: 85.5mm Black Al Core + 20mm Cu DTP Stars + UVT PMMA", PROTRUDING_BLACK_85, PLASTIC_POCKET, False, 0.50, 0.50, 0.30, 0.88),
-    ("Config 2: Top SK 578/50 SA + 20mm Cu DTP Stars + UVT PMMA", SK578_50, PLASTIC_POCKET, False, 0.50, 0.50, 0.30, 0.88),
+    ("Config 0: Rev 4.5 Baseline (XT PMMA Ø60x54 + 56.8mm Bare 30x30x3 Al Core + 20mm Cu DTP Stars)", PROTRUDING_BARE_REV45, PLASTIC_POCKET, False, 0.50, 0.50, 0.30, 0.20),
+    ("Config 1: Rev 4.5 w/ Matte-Black Top Core (30x30x3 + 20mm Cu DTP Stars + XT PMMA)", PROTRUDING_BLACK_REV45, PLASTIC_POCKET, False, 0.50, 0.50, 0.30, 0.88),
+    ("Config 2: Top SK 578/50 SA + 20mm Cu DTP Stars + XT PMMA", SK578_50, PLASTIC_POCKET, False, 0.50, 0.50, 0.30, 0.88),
     ("Config 3: Rev 4.1 Legacy (Top SK 578/50 + Custom 1 W/mK MCPCB)", SK578_50, PLASTIC_POCKET, False, None, None, 0.15, 0.88),
 ]
 
@@ -866,7 +871,7 @@ def main() -> None:
         writer.writeheader()
         writer.writerows(rows)
 
-    # Ambient sweep (15..40 C) for Rev 4.2 Baseline (Bare Protruding 85.5mm Core + 20mm Cu DTP Stars, horizontal)
+    # Ambient sweep (15..40 C) for Rev 4.5 Baseline (Bare Protruding 61.5mm 30x30x3 Core + 20mm Cu DTP Stars, horizontal)
     t_ambs = np.linspace(15.0, 40.0, 26)
     sweep_modes = ["4-UV Nom", "8-ALL Nom (40%UV)", "8-ALL DS-RealWPE", "8-ALL DS-100%"]
     sweep_data: dict[str, list[dict[str, float]]] = {m: [] for m in sweep_modes}
@@ -876,22 +881,22 @@ def main() -> None:
         for Ta in t_ambs:
             r = solve_system(
                 params, q_uv, q_vis, q_pcb, p_u1, float(Ta),
-                PROTRUDING_BARE_85, PLASTIC_POCKET, pcb_3d_base[m_scale],
+                PROTRUDING_BARE_REV45, PLASTIC_POCKET, pcb_3d_base[m_scale],
                 r_diel_uv=r_dtp_star, r_diel_vis=r_dtp_star,
                 orientation="horizontal", coupled_core_to_bot=False,
                 eps_core=0.20, r_tim_led=0.30, r_bulkhead=r_bh_nom,
             )
             sweep_data[m_name].append({"T_amb": float(Ta), **{k: round(v, 3) for k, v in r.items()}})
 
-    # Sensitivity Cases (Rev 4.3 Baseline: UVT PMMA Shroud + Ø116mm Drip-Brim + Bare Protruding Core)
+    # Sensitivity Cases (Rev 4.5 Baseline: XT PMMA Ø60x54 + 61.5mm Bare 30x30x3 Core + Horizontal PCB)
     sens_specs = [
-        ("Rev 4.3 Baseline (UVT PMMA + 85.5mm Bare Al + Cu DTP Stars, 22 C UK Night)", 22.0, dict(eps_core=0.20, r_tim_led=0.30, rth_penalty_factor=1.0), PROTRUDING_BARE_85),
-        ("Rev 4.3 Baseline (UVT PMMA + 85.5mm Bare Al + Cu DTP Stars, 30 C Horiz)", 30.0, dict(eps_core=0.20, r_tim_led=0.30, rth_penalty_factor=1.0), PROTRUDING_BARE_85),
-        ("Comparison: Borosilicate 3.5mm Glass vs UVT PMMA 3.0mm (30 C Horiz)", 30.0, dict(eps_core=0.20, r_tim_led=0.30, rth_penalty_factor=1.0, k_shroud=1.14, eps_shroud=0.90), PROTRUDING_BARE_85),
-        ("Optional Matte-Black Painted Core (eps=0.88, 30 C Horiz)", 30.0, dict(eps_core=0.88, r_tim_led=0.30, rth_penalty_factor=1.0), PROTRUDING_BLACK_85),
-        ("Thick TIM bondline under 20mm star (R_tim_led=0.80 K/W, 30 C)", 30.0, dict(eps_core=0.20, r_tim_led=0.80, rth_penalty_factor=1.0), PROTRUDING_BARE_85),
-        ("Worst-case +20% still-air convection penalty (30 C Horiz)", 30.0, dict(eps_core=0.20, r_tim_led=0.30, rth_penalty_factor=1.20), PROTRUDING_BARE_85),
-        ("Hot summer night T_amb = 35 C (Horizontal, UVT PMMA)", 35.0, dict(eps_core=0.20, r_tim_led=0.30, rth_penalty_factor=1.0), PROTRUDING_BARE_85),
+        ("Rev 4.5 Baseline (XT PMMA Ø60x54 + 56.8mm Bare 30x30x3 Al + Cu DTP, 22 C UK Night)", 22.0, dict(eps_core=0.20, r_tim_led=0.30, rth_penalty_factor=1.0), PROTRUDING_BARE_REV45),
+        ("Rev 4.5 Baseline (XT PMMA Ø60x54 + 56.8mm Bare 30x30x3 Al + Cu DTP, 30 C Horiz)", 30.0, dict(eps_core=0.20, r_tim_led=0.30, rth_penalty_factor=1.0), PROTRUDING_BARE_REV45),
+        ("Optional Matte-Black Painted Top Core (eps=0.88, 30 C Horiz)", 30.0, dict(eps_core=0.88, r_tim_led=0.30, rth_penalty_factor=1.0), PROTRUDING_BLACK_REV45),
+        ("Thick TIM bondline under 20mm star (R_tim_led=0.80 K/W, 30 C)", 30.0, dict(eps_core=0.20, r_tim_led=0.80, rth_penalty_factor=1.0), PROTRUDING_BARE_REV45),
+        ("Worst-case +20% still-air convection penalty (30 C Horiz)", 30.0, dict(eps_core=0.20, r_tim_led=0.30, rth_penalty_factor=1.20), PROTRUDING_BARE_REV45),
+        ("Hot summer night T_amb = 35 C (Horizontal, Bare 30x30x3)", 35.0, dict(eps_core=0.20, r_tim_led=0.30, rth_penalty_factor=1.0), PROTRUDING_BARE_REV45),
+        ("Hot summer night T_amb = 35 C (Horizontal, Matte-Black Top)", 35.0, dict(eps_core=0.88, r_tim_led=0.30, rth_penalty_factor=1.0), PROTRUDING_BLACK_REV45),
     ]
     sensitivity = []
     for desc, ta_s, kw, ths in sens_specs:
@@ -917,12 +922,13 @@ def main() -> None:
     cfg0_all_22_30 = [r for r in cfg0_rows if r["T_amb_C"] <= 30.0]
     cfg0_real_35 = [r for r in cfg0_rows if r["T_amb_C"] == 35.0 and "DS-100%" not in r["mode"]]
     summary = {
-        "architecture": "Rev 4.3 (UVT PMMA Acrylic Shroud + 85.5 mm Bare Protruding 3 mm Al Core + 20 mm Cu DTP Stars + Ø116 mm Drip-Brim)",
+        "architecture": "Rev 4.5 (Clear Extruded XT PMMA Ø60x54x115 + 56.8 mm Bare Protruding 30x30x3 Al Core + 20 mm Cu DTP Stars + Horizontal PCB)",
         "cad_reconciliation": {
+            "core_section_mm": f"{params.core_w_nom:.0f}x{params.core_w_nom:.0f}x{params.core_wall:.1f}",
             "core_length_mm": params.core_length,
             "core_protrusion_mm": params.core_protrusion_mm,
             "exposed_glass_window_mm": params.exposed_glass_window,
-            "shroud_material": "UV-Transmitting PMMA (k=0.19 W/mK, eps=0.93, Ø75x69x3.0 mm)",
+            "shroud_material": "Unstabilized Extruded PMMA XT (k=0.19 W/mK, eps=0.93, Ø60x54x3.0 mm)",
             "axial_uv_to_top_mm": params.axial_uv_to_top_mm,
             "axial_uv_to_vis_mm": params.axial_uv_to_vis_mm,
             "axial_vis_to_bot_mm": params.axial_vis_to_bot_mm,
@@ -932,10 +938,10 @@ def main() -> None:
             "R_sub_legacy_1WmK_mcpcb_uv_KW": round(r_diel_uv_legacy, 3),
             "R_sub_legacy_1WmK_mcpcb_vis_KW": round(r_diel_vis_legacy, 3),
         },
-        "rev43_22_30C_real_modes_all_pass": all(r["pass_all_limits"] for r in cfg0_real_22_30),
-        "rev43_22_30C_all_20_pass": all(r["pass_all_limits"] for r in cfg0_all_22_30),
-        "rev43_35C_nom_pass": all(r["pass_all_limits"] for r in cfg0_real_35 if "Nom" in r["mode"]),
-        "baseline_rev43_results": cfg0_rows,
+        "rev45_22_30C_real_modes_all_pass": all(r["pass_all_limits"] for r in cfg0_real_22_30),
+        "rev45_22_30C_all_20_pass": all(r["pass_all_limits"] for r in cfg0_all_22_30),
+        "rev45_35C_nom_pass": all(r["pass_all_limits"] for r in cfg0_real_35 if "Nom" in r["mode"]),
+        "baseline_rev45_results": cfg0_rows,
         "config_comparison_30C_horiz": [
             r for r in rows if r["T_amb_C"] == 30.0 and r["orientation"] == "horizontal" and r["mode"] in ("8-ALL Nom (40%UV)", "8-ALL DS-RealWPE")
         ],
@@ -945,8 +951,8 @@ def main() -> None:
     json_path = out_dir / "thermal_summary.json"
     json_path.write_text(json.dumps(summary, indent=2))
 
-    print(f"Rev 4.3 20mm Copper DTP Star R_sub={r_dtp_star:.2f} K/W (UVT PMMA 3.0mm shroud k=0.19 W/mK)")
-    print("=== Rev 4.3 Baseline (UVT PMMA Shroud + 85.5mm Bare Protruding Al Core + 20mm Cu DTP Stars) ===")
+    print(f"Rev 4.5 20mm Copper DTP Star R_sub={r_dtp_star:.2f} K/W (Extruded XT PMMA Ø60x54x3.0 mm shroud k=0.19 W/mK)")
+    print("=== Rev 4.5 Baseline (XT PMMA Ø60x54 + 61.5mm Bare Protruding 30x30x3 Al Core + 20mm Cu DTP Stars) ===")
     for r in cfg0_rows:
         if r["T_amb_C"] in (22.0, 30.0, 35.0) and (r["orientation"] == "horizontal" or r["T_amb_C"] <= 30.0):
             print(
@@ -954,8 +960,8 @@ def main() -> None:
                 f"Tcore={r['T_c_uv']:5.1f}C TjUV={r['T_j_uv']:5.1f}C Tshroud={r['T_glass_in']:4.1f}C "
                 f"Tpcb={r['T_pcb_top_avg']:5.1f}C | PASS={r['pass_all_limits']}"
             )
-    print(f"Rev 4.3 22-30 C Real-WPE Modes PASS: {sum(r['pass_all_limits'] for r in cfg0_real_22_30)}/{len(cfg0_real_22_30)}")
-    print(f"Rev 4.3 22-30 C All 20 Cases PASS:   {sum(r['pass_all_limits'] for r in cfg0_all_22_30)}/{len(cfg0_all_22_30)}")
+    print(f"Rev 4.5 22-30 C Real-WPE Modes PASS: {sum(r['pass_all_limits'] for r in cfg0_real_22_30)}/{len(cfg0_real_22_30)}")
+    print(f"Rev 4.5 22-30 C All 20 Cases PASS:   {sum(r['pass_all_limits'] for r in cfg0_all_22_30)}/{len(cfg0_all_22_30)}")
 
     # Plot 1: thermal_margins.png (Rev 4.2 Baseline)
     fig, axes = plt.subplots(1, 3, figsize=(14.5, 4.8), dpi=150)
@@ -1005,7 +1011,7 @@ def main() -> None:
     ax.grid(axis="y", alpha=0.3)
     ax.legend(fontsize=7.5, loc="upper left")
 
-    fig.suptitle("Rev 4.3 Baseline (UVT PMMA Shroud + 85.5mm Bare Protruding Al Core + 20mm Cu DTP Stars) — Steady-State Margins", fontweight="bold")
+    fig.suptitle("Rev 4.5 Baseline (XT PMMA Ø60x54 + 56.8mm Bare 30x30x3 Al Core + 20mm Cu DTP Stars) — Steady-State Margins", fontweight="bold")
     fig.tight_layout()
     fig.savefig(out_dir / "thermal_margins.png")
     plt.close(fig)
@@ -1042,7 +1048,7 @@ def main() -> None:
     ax2.grid(alpha=0.3)
     ax2.legend(fontsize=6.5, ncol=2)
 
-    fig.suptitle("Rev 4.3 Ambient Sweep (15–40°C, UVT PMMA Shroud + Bare Protruding Core + Cu DTP Stars)", fontweight="bold")
+    fig.suptitle("Rev 4.5 Ambient Sweep (15–40°C, XT PMMA Ø60x54 + Bare 30x30x3 Core + Cu DTP Stars)", fontweight="bold")
     fig.tight_layout()
     fig.savefig(out_dir / "thermal_ambient_sweep.png")
     plt.close(fig)
@@ -1050,8 +1056,8 @@ def main() -> None:
     # Plot 3: thermal_network_comparison.png (Compare UV Junction Temp across Rev 4.3 vs Rev 4.1!)
     fig, ax = plt.subplots(figsize=(10.5, 4.8), dpi=150)
     cfg_labels = [
-        "Config 0 (Rev 4.3):\nUVT PMMA + Bare Core\n+ Cu DTP Stars",
-        "Config 1:\nUVT PMMA + Black Core\n+ Cu DTP Stars",
+        "Config 0 (Rev 4.5):\nXT PMMA + Bare 30x30x3\n+ Cu DTP Stars",
+        "Config 1:\nXT PMMA + Black 30x30x3\n+ Cu DTP Stars",
         "Config 2:\nSK 578/50 Top\n+ Cu DTP Stars",
         "Config 3 (Rev 4.1):\nSK 578/50 Top\n+ 1 W/mK MCPCB",
     ]
@@ -1074,7 +1080,7 @@ def main() -> None:
     ax.set_xticks(x_c, cfg_labels, fontsize=9)
     ax.set_ylabel("UV LED Junction $T_{j,\\mathrm{UV}}$ (°C)")
     ax.set_ylim(0, 110)
-    ax.set_title("Rev 4.3 vs Rev 4.1 UV Junction Temperature ($T_{\\mathrm{amb}}=30^\\circ\\mathrm{C}$, Horizontal)")
+    ax.set_title("Rev 4.5 vs Rev 4.1 UV Junction Temperature ($T_{\\mathrm{amb}}=30^\\circ\\mathrm{C}$, Horizontal)")
     ax.grid(axis="y", alpha=0.3)
     ax.legend(fontsize=8.5)
     fig.tight_layout()
