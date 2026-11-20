@@ -1,6 +1,6 @@
 # LepiLED DIY Maxi Switch — Master Bill of Materials (Rev 4.5 — Compact Weatherproof 1-Off Hobby Build)
 
-Machine-verified master BOM in [bom.csv](file:///home/alimuldal/src/lepiled/bom/bom.csv), audited 1:1 against [COMPONENT_IDS.csv](file:///home/alimuldal/src/lepiled/circuit_design/COMPONENT_IDS.csv) (`75` RefDes), [driver_pcb_bom_pcba.csv](file:///home/alimuldal/src/lepiled/pcb_design/driver_pcb_bom_pcba.csv) (`61` populated PCBA parts), and [MECH_PARTS.csv](file:///home/alimuldal/src/lepiled/mechanical_design/MECH_PARTS.csv) (`18` mechanical IDs) via [verify_bom.py](file:///home/alimuldal/src/lepiled/bom/verify_bom.py).
+Machine-verified master BOM in [bom.csv](bom.csv), audited 1:1 against [COMPONENT_IDS.csv](../circuit_design/COMPONENT_IDS.csv) (`75` RefDes), [driver_pcb_bom_pcba.csv](../pcb_design/driver_pcb_bom_pcba.csv) (`61` populated PCBA parts), and [MECH_PARTS.csv](../mechanical_design/MECH_PARTS.csv) (`18` mechanical IDs) via [verify_bom.py](verify_bom.py).
 
 ## 1. Single-Unit Hobby Cost Summary (UK GBP)
 

@@ -1,16 +1,16 @@
-# LepiLED DIY Maxi Switch — Electronics Architecture (Rev 4.1)
+# LepiLED DIY Maxi Switch — Electronics Architecture (Rev 4.5)
 
 ## 1. Architectural Evolution: `20 V` USB-C PD Only + Dual Constant-Current Buck
-Building on the Rev 4.0 shift from `5 V` boost to `20 V` USB-C PD + dual `AL8860WT-7` constant-current bucks, **Rev 4.1** hardens every safety, ESD, UVLO hysteresis, and derating margin surfaced by two independent adversarial reviews while removing the unused Auxiliary DC path and steering-FET switch overhead.
+The electrical circuit architecture was hardened in Rev 4.1 (removing the unused Auxiliary DC path and resolving every safety, ESD, UVLO hysteresis, and derating finding from two independent reviews) and carries forward unchanged electrically into **Rev 4.5** alongside pre-mounted `20 mm` Copper DTP LED stars and the compact weatherproof enclosure.
 
-| Metric | Legacy Rev 3 (`5 V` Boost) | Rev 4.0 (Dual-Input Buck) | **Rev 4.1 (USB-C Only, Hardened)** |
+| Metric | Legacy Rev 3 (`5 V` Boost) | Rev 4.0 (Dual-Input Buck) | **Rev 4.5 (USB-C Only, Hardened)** |
 |---|---|---|---|
 | Input Architecture | `5 V` USB-C (`2.15–3.24 A`) | `20 V` USB-C PD + Aux `TP1/TP2` | **`20 V` USB-C PD Only (`0.455 A` nom / `0.581 A` max)** |
 | Driver PCB Loss (nom / worst) | `1.60 W` / `4.39 W` | `0.50 W` / `0.82 W` | **`0.550 W` / `0.797 W`** (`93.8%` sys eff) |
 | Load Switch & Input Protection | `30 V` FET / discrete OVP | `2× 30 V DMN3404L` + `24 V` PTC + `SMBJ22CA` | **Single `40 V DMN4035L-7` + `33 V MF-MSMF110/33X` + Uni `SMBJ22A` + `CC1/CC2` ESD** |
 | Hardware UVLO | None (fixed `5 V`) | `17.25 V` comparator (`0 V` hyst) | **`0.90 V` hysteretic `LM393B` (`V_ON = 17.54 V`, `V_OFF = 16.64 V`, `0` chatter)** |
 | Mode Switch (`SW1`) | Silver SP3T + high-side | Silver SP3T + `BAT54`/`BSS138` bias | **Gold `C&K 7211SYZBE` DPDT On-On-On wired direct to `J4` + `5 V` ESD** |
-| Bottom Heatsink Required | `£24.60` `SK LED R 80 SA` | `£5.88` `SK 578/50 SA` | **None (`MECH-LID-BOT` sealed plastic lid; passes 20/20 `22–30 °C` & 5/5 `35 °C`)** |
+| Bottom Heatsink Required | `£24.60` `SK LED R 80 SA` | `£5.88` `SK 578/50 SA` | **None (sealed plastic bay; `T_pcb = 55.9 °C` @ `22 °C`, `63.9 °C` @ `30 °C` horiz nom, `<= 75 °C` PETG)** |
 
 ---
 
@@ -44,7 +44,7 @@ Building on the Rev 4.0 shift from `5 V` boost to `20 V` USB-C PD + dual `AL8860
 
 ---
 
-## 3. Verification Summary ([sim_summary.json](file:///home/alimuldal/src/lepiled/circuit_design/sim/outputs/sim_summary.json))
+## 3. Verification Summary ([sim_summary.json](../circuit_design/sim/outputs/sim_summary.json))
 - **6/6 `ngspice` Nominal & Fault Benches:** **15/15 assertions PASS** (nominal `I_UV = 329.9 mA`, `I_VIS = 336.2 mA`, `V_REF = 2.508 V`, `0` UVLO chatter on `0.30 Ω` ramp, `85 °C` hot-plug `26.02 V`, `Q1` inrush `0.582 A`, negative transient `-2.26 V`, open-LED live-mate `0.532 A / 0.922 A`, short-LED `338.7 mA`).
 - **Datasheet Corner Sweep (`18.5–24.0 V`, `-10..+55 °C`, all tolerances):** **`2,565 / 2,565 PASS`** (`P_PCB_max = 0.797 W`, `I_in_max = 0.581 A`, `T_jmax = 69.8 °C`).
 - **Full-Parameter Monte Carlo (`N = 2,000`):** **`2,000 / 2,000 (100.0%) PASS`** (`I_UV = 329.9 ± 4.5 mA`, `I_VIS = 331.9 ± 4.5 mA`, `P_PCB = 0.561 W` mean / `0.618 W` max, `V_ON = 17.54 ± 0.08 V`, `V_OFF = 16.64 ± 0.08 V`, `V_HYST = 0.902 ± 0.007 V`).

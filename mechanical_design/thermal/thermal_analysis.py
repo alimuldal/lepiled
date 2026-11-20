@@ -1,29 +1,14 @@
 #!/usr/bin/env python3
 """
-Reproducible Coupled First-Principles 2D/3D Thermal Analysis for LepiLED DIY Maxi Switch (M3).
+Reproducible Coupled First-Principles Thermal Analysis for LepiLED DIY Maxi Switch (Rev 4.5).
 
-Reconciled directly to the exact CAD dimensions in `mechanical_design/cad/params.py`,
-M1 electrical dissipation budgets in `circuit_design/INTERFACE_CONTRACT.md` §2.1,
-and M2 PCB layouts (`pcb_design/led_mcpcb/build_led_mcpcb.py` & `pcb_design/driver_pcb/build_driver_pcb.py`).
-
-Physics modeled:
-  1. Genuine 2D Finite-Volume (FVM) PDE solver on exact M2 MCPCB thermal copper polygons
-     (1.30 x 3.25 mm pinched-neck thermal pad, 1.30 mm 1 oz Cu neck, 100 um 1.0 W/(m*K) dielectric):
-     dynamically solves R_diel_UV_avg = 15.29 K/W (max 17.54 K/W) and R_diel_Vis_avg = 18.89 K/W.
-  2. Genuine 3D 3-layer FVM PDE solver on exact M2 Driver PCB (36 x 46 x 1.6 mm FR4, F.Cu pours,
-     B.Cu GND plane with SW1/SW2 keepouts, 32x GND vias [6x U1 DAP + 6x U2 DAP + 20x stitching], 4x H1..H4
-     plated holes, 25 um soldermask, 0.5 mm TG-A6200 gap pad with J1/TP1/TP2/J2/J3/J4/H1..H4 cutouts,
-     and MECH-ADAPT-BOT Ø90x3 + Ø59x5 mm Al 6061 pedestal with 1.8 mm milled pockets):
-     computes R_eff_bot_avg, T_pcb_bot_avg, T_pcb_top_avg, T_j,U1 (3D via-coupled & JEDEC), and T_j,Q1 (max of Q1A/Q1B).
-  3. Non-linear natural convection (Bar-Cohen/Rohsenow Elenbaas radial-fin channel choking,
-     Churchill-Chu external cylinder/vertical plate, McAdams horizontal up/down plates)
-     + Stefan-Boltzmann radiation for MECH-HS-EXT-TOP (Fischer SK 578/50 SA, Ø60x50 mm) and
-     MECH-HS-EXT-BOT (Fischer SK LED R 80 SA, Ø80x70 mm, catalog 1.35 K/W).
-  4. Parallel internal borosilicate 3.3 tube heat path (exposed window = 126.0 mm, eps_core = 0.88
-     via MECH-COAT-1 matte-black coating; bare Al eps = 0.34 also evaluated in sensitivity).
-  5. First-principles parallel bulkhead thermal decoupling (6.0 mm PETG/PA12 bulkhead + outer wall +
-     2x M4 SS DIN 7991 CSK bulkhead bolts w/ nylon CSK insulating washers + internal cavity radiation -> R_bulkhead ~ 11.2 K/W)
-     and first-principles top butt-joint spreading (core TIM + 3 mm radial Al + hub TIM -> 0.284 K/W).
+Reconciled directly to the exact CAD dimensions in `mechanical_design/cad/params.py` and
+electrical dissipation budgets in `circuit_design/INTERFACE_CONTRACT.md` §2.1:
+  - Compact 30 x 30 x 3.0 mm x 200 mm bare Al 6063-T6 core protruding 56.8 mm above MECH-CAP-TOP
+  - 8x off-the-shelf pre-mounted 20 mm Copper DTP LED stars (R_sub = 0.50 K/W, R_tim = 0.30 K/W)
+  - Clear unstabilized extruded PMMA (Plexiglas XT) shroud (Ø60 x 54 x 3.0 mm, k = 0.19 W/(m*K), eps = 0.93)
+  - Sealed horizontal-PCB plastic electronics bay (75 C conservative PETG limit / 95 C ASA)
+  - Retains historical 2D MCPCB and 3D Driver PCB FVM solvers for Rev 4.1 comparison benchmarks.
 """
 
 from __future__ import annotations
@@ -952,7 +937,7 @@ def main() -> None:
     json_path.write_text(json.dumps(summary, indent=2))
 
     print(f"Rev 4.5 20mm Copper DTP Star R_sub={r_dtp_star:.2f} K/W (Extruded XT PMMA Ø60x54x3.0 mm shroud k=0.19 W/mK)")
-    print("=== Rev 4.5 Baseline (XT PMMA Ø60x54 + 61.5mm Bare Protruding 30x30x3 Al Core + 20mm Cu DTP Stars) ===")
+    print("=== Rev 4.5 Baseline (XT PMMA Ø60x54 + 56.8mm Bare Protruding 30x30x3 Al Core + 20mm Cu DTP Stars) ===")
     for r in cfg0_rows:
         if r["T_amb_C"] in (22.0, 30.0, 35.0) and (r["orientation"] == "horizontal" or r["T_amb_C"] <= 30.0):
             print(

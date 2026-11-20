@@ -2904,7 +2904,7 @@ def verify_and_export(comp_rows, fp_map, short_val):
          str(GERBER_DIR / "driver_pcb-PTH.drl")],
         check=True,
     )
-    print("Board 1 (Rev 4.1 USB-C Only + S3 DPDT) verification & exports completed cleanly.")
+    print("driver_pcb (Rev 4.5 USB-C Only + S3 DPDT + Emperor Moth B.SilkS) verification & exports completed cleanly.")
 
 
 def main():

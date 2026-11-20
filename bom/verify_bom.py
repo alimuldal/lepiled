@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Machine-verifiable audit script for bom/bom.csv (Rev 4.2 — Lean 1-Off Hobby Build)."""
+"""Machine-verifiable audit script for bom/bom.csv (Rev 4.5 — Compact Weatherproof 1-Off Hobby Build)."""
 
 from __future__ import annotations
 

@@ -4,22 +4,22 @@
 
 - **UV-A Eye Safety:** Wear EN166 / ANSI Z87+ UV400 safety glasses whenever `D1..D4` (`365 nm` Luminus `SST-10-UV`) are energized. Never stare directly into the shroud.
 - **No Live Hot-Plugging of LED Headers:** Always unplug USB-C power before mating or unmating `J2` (UV) or `J3` (Visible).
-- **Single Custom PCB (`driver_pcb` ONLY):** Upload [driver_pcb_gerbers.zip](file:///home/alimuldal/src/lepiled/pcb_design/gerbers/driver_pcb/driver_pcb_gerbers.zip) (`36 × 46 mm`, 2-layer `1.6 mm` FR4, 1 oz Cu, **ENIG**, Green LPI / White silk) to JLCPCB along with [driver_pcb_bom_pcba.csv](file:///home/alimuldal/src/lepiled/pcb_design/driver_pcb_bom_pcba.csv) and [driver_pcb_cpl.csv](file:///home/alimuldal/src/lepiled/pcb_design/driver_pcb_cpl.csv) (`57` SMD parts assembled via JLCPCB Economic PCBA; `J1..J4` THT hand-soldered on the bench using [assembly_map.pdf](file:///home/alimuldal/src/lepiled/pcb_design/driver_pcb/renders/assembly_map.pdf)).
+- **Single Custom PCB (`driver_pcb` ONLY):** Upload [driver_pcb_gerbers.zip](../pcb_design/gerbers/driver_pcb/driver_pcb_gerbers.zip) (`36 × 46 mm`, 2-layer `1.6 mm` FR4, 1 oz Cu, **ENIG**, Green LPI / White silk) to JLCPCB along with [driver_pcb_bom_pcba.csv](../pcb_design/driver_pcb_bom_pcba.csv) and [driver_pcb_cpl.csv](../pcb_design/driver_pcb_cpl.csv) (`57` SMD parts assembled via JLCPCB Economic PCBA; `J1..J4` THT hand-soldered on the bench using [assembly_map.pdf](../pcb_design/driver_pcb/renders/assembly_map.pdf)).
 - **Clear Unstabilized Extruded PMMA Shroud (`MECH-TUBE-1`):** Order `Ø60.0 × 54.0 × 3.0 mm × 115 mm` (`±2.0 mm` cut-length tolerant) **unstabilized clear extruded PMMA (`Plexiglas XT`)** tubing (`85–92%` @ `365 nm`). **Do NOT use UV-blocking standard cast `Plexiglas GS` or polycarbonate (PC)**. Quick arrival check: shine a `365 nm` torch through the tube wall onto white paper or a banknote—fluorescence should stay bright.
   - **Chemical Warning (PMMA):** Never clean PMMA with **isopropyl alcohol (IPA)** or seal with **acetic-cure (vinegar-smelling) silicone**—both cause environmental stress crazing in acrylic! Clean PMMA only with warm soapy water and seal joints exclusively with **neutral-cure oxime RTV silicone** (`MECH-SEAL-1`, e.g. Dow 7091 / Loctite SI 5980).
 - **Pre-Mounted LEDs (`Zero Bare-SMD Reflow`):** Order `8×` pre-mounted **`20 mm` Copper DTP star MCPCBs** (`4× Luminus SST-10-UV 365 nm`, `2× Cree XP-E2 Royal Blue 455 nm`, `1× XP-E2 Green 528 nm`, `1× XP-E2 Cool White 6200–6500 K`) from Kaidomain/Convoy (or `LED-Tech.de`).
 - **3D Printing (6 Support-Free FDM Parts in PETG or Black ASA, `0.2 mm` layers, `4` perimeters, `25%` gyroid infill, `0` supports — `MECH-PLUG-BOT` eliminated):**
-  - [mech_base_ring.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_base_ring.step) — inverted (`Z = 0` mating face on bed, `0.000 mm²` overhang).
-  - [mech_lid_bot.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_lid_bot.step) — upright (`Z = 0` flat bottom face on bed, `0.000 mm²` overhang).
-  - [mech_cap_bot.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_cap_bot.step) — **inverted** (`Z = 77.0 mm` top shroud rim flat on bed, `0.917 mm²` `>46°` overhang).
-  - [mech_cap_top.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_cap_top.step) — **upright** (`Z = 168.0 mm` bottom shroud rim flat on bed, `0.000 mm²` overhang).
-  - [mech_plug_top.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_plug_top.step) — inverted (flat top cap face on bed, `0.000 mm²` overhang).
-  - [mech_drill_jig.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_drill_jig.step) — flat back plate on bed (`0.000 mm²` overhang).
+  - [mech_base_ring.step](../mechanical_design/cad/mech_base_ring.step) — inverted (`Z = 0` mating face on bed, `0.000 mm²` overhang).
+  - [mech_lid_bot.step](../mechanical_design/cad/mech_lid_bot.step) — upright (`Z = 0` flat bottom face on bed, `0.000 mm²` overhang).
+  - [mech_cap_bot.step](../mechanical_design/cad/mech_cap_bot.step) — **inverted** (`Z = 77.0 mm` top shroud rim flat on bed, `0.917 mm²` `>46°` overhang).
+  - [mech_cap_top.step](../mechanical_design/cad/mech_cap_top.step) — **upright** (`Z = 168.0 mm` bottom shroud rim flat on bed, `0.000 mm²` overhang).
+  - [mech_plug_top.step](../mechanical_design/cad/mech_plug_top.step) — inverted (flat top cap face on bed, `0.000 mm²` overhang).
+  - [mech_drill_jig.step](../mechanical_design/cad/mech_drill_jig.step) — flat back plate on bed (`0.000 mm²` overhang).
 
 ## 2. Step-by-Step Build Sequence
 
 1. **Drill & Tap the Single Stock Aluminum Tube (`MECH-HS-CORE`, `30 × 30 × 3.0 mm × 200 mm`, Zero Sawing):**
-   - Slip the 3D-printed snap-on drilling jig ([mech_drill_jig.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_drill_jig.step)) over the bottom end of the `200 mm` tube (end-stop flush against the bottom end):
+   - Slip the 3D-printed snap-on drilling jig ([mech_drill_jig.step](../mechanical_design/cad/mech_drill_jig.step)) over the bottom end of the `200 mm` tube (end-stop flush against the bottom end):
      - On all 4 faces, drill `4× Ø2.5 mm` pilot holes (`16` holes total: Vis star screws at `44.0 / 63.0 mm`, UV star screws at `76.0 / 95.0 mm` from the bottom end) and tap **`M3 × 0.5`** (`3 mm` wall gives `6` full threads).
      - On the two opposite `±X` faces only, use the jig's bottom and top guide holes (`6.0 mm` and `130.5 mm` from the bottom end) to drill `4× Ø2.5 mm` holes and tap **`M3 × 0.5`** for the `MECH-CAP-BOT` and `MECH-CAP-TOP` radial locking screws.
    - Drill `1× Ø8.0 mm` hanging hole straight across the protruding top (`16.0 mm` down from the top end, centered at `Y = 0`).
@@ -34,7 +34,7 @@
    - Apply a thin, even layer of PC thermal paste (`MECH-TIM-1`, e.g. Arctic MX-4) under each `20 mm` Copper DTP star.
    - Bolt all 4 UV stars (top row, `85.5 mm` from core bottom) and all 4 Visible stars (bottom row, `53.5 mm` from core bottom) onto the 4 flat faces using **`16× M3 × 8 mm` pan-head screws WITH `16× M3` nylon insulating washers (`MECH-WASH-NYLON`) under every screw head**. Verify `> 10 MΩ` isolation between `+`/`-` leads and the aluminum core.
 4. **Hand-Solder `J1..J4` on `driver_pcb` & Prepare `MECH-LID-BOT`:**
-   - Hand-solder `J1` (`USB4085-GF-A`), `J2/J3` (`B2B-XH-A`), and `J4` (`B3B-XH-A`) onto the JLCPCB-assembled `driver_pcb` using [assembly_map.pdf](file:///home/alimuldal/src/lepiled/pcb_design/driver_pcb/renders/assembly_map.pdf).
+   - Hand-solder `J1` (`USB4085-GF-A`), `J2/J3` (`B2B-XH-A`), and `J4` (`B3B-XH-A`) onto the JLCPCB-assembled `driver_pcb` using [assembly_map.pdf](../pcb_design/driver_pcb/renders/assembly_map.pdf).
    - Solder the pre-crimped `22 AWG` 3-pin JST-XH pigtail (`HARN-02`, leave `~60 mm` length) directly to the gold solder lugs of `SW1` (`C&K 7211SYZBE`, `DPDT On-On-On`):
 
 | `C&K 7211SYZBE` Lug(s) | Wire Destination (`J4`) | Pos 1 (`OFF`) | Pos 2 (`4-UV`) | Pos 3 (`8-ALL`) |

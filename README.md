@@ -58,7 +58,7 @@ An open-source DIY implementation of Gunnar Brehm's *LepiLED* moth lamp ([Brehm,
         <img src="pcb_design/driver_pcb/renders/render_bottom.png" alt="Driver PCB Bottom 3D Render" height="360" />
       </a>
       <br />
-      <sub><b>Driver PCB — Bottom</b><br/>Unbroken <code>B.Cu</code> power-stage GND plane, isolated <code>H1..H4</code> NPTH holes bolting onto bulkhead standoffs via 4× M2.5×8 screws, mirrored pinout legends.</sub>
+      <sub><b>Driver PCB — Bottom</b><br/>Unbroken <code>B.Cu</code> power-stage GND plane, isolated <code>H1..H4</code> NPTH holes bolting onto bulkhead standoffs via 4× M2.5×8 screws, mirrored pinout legends, and Emperor-moth back silkscreen.</sub>
     </td>
   </tr>
 </table>

@@ -1,8 +1,8 @@
 # Interface Contract (Rev 4.5) — Electronics ↔ PCB & Mechanical / Thermal
 
-**Canonical Registry:** [COMPONENT_IDS.csv](file:///home/alimuldal/src/lepiled/circuit_design/COMPONENT_IDS.csv) (**75 unique RefDes:** `61` Populated On-PCB = `57` SMD JLCPCB PCBA + `4` THT `J1..J4`; `4` Isolated NPTH `H1..H4`; `10` Off-Board = `8×` pre-mounted `20 mm` Copper DTP stars + `SW1` + `SW1_BOOT`)
-**Datasheet Source of Truth:** [datasheets_summary.json](file:///home/alimuldal/src/lepiled/datasheets/datasheets_summary.json)
-**Simulation Verification:** [sim_summary.json](file:///home/alimuldal/src/lepiled/circuit_design/sim/outputs/sim_summary.json)
+**Canonical Registry:** [COMPONENT_IDS.csv](COMPONENT_IDS.csv) (**75 unique RefDes:** `61` Populated On-PCB = `57` SMD JLCPCB PCBA + `4` THT `J1..J4`; `4` Isolated NPTH `H1..H4`; `10` Off-Board = `8×` pre-mounted `20 mm` Copper DTP stars + `SW1` + `SW1_BOOT`)
+**Datasheet Source of Truth:** [datasheets_summary.json](../datasheets/datasheets_summary.json)
+**Simulation Verification:** [sim_summary.json](sim/outputs/sim_summary.json)
 
 ---
 
