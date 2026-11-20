@@ -1,15 +1,15 @@
 {
   "metadata": {
-    "project": "LepiLED DIY Maxi Switch (Rev 4.8 — CH224A 20V PD + Full-SMD ENIG PCBA + Dual AL8860 Buck + Hysteretic UVLO + Gold DPDT)",
-    "milestone": "Rev 4.8",
-    "generated_utc": "2026-11-20T21:55:00Z",
-    "notes": "Single source of truth for Rev 4.8 SPICE simulations, KiCad 10 schematics/PCBs, thermal verification, CAD, and UK GBP BOM."
+    "project": "LepiLED DIY Maxi Switch (Rev 4.9 — Value-Engineered 2-Reel Hybrid HASL + Convoy Osram/Luminus + Unified M3 Hardware)",
+    "milestone": "Rev 4.9",
+    "generated_utc": "2026-11-20T23:10:00Z",
+    "notes": "Single source of truth for Rev 4.9 SPICE simulations, KiCad 10 schematics/PCBs, thermal verification, CAD, and UK GBP BOM."
   },
   "leds": {
     "SST-10-UV-A130-G365-00": {
       "manufacturer": "Luminus Devices",
+      "supplier": "Convoylight.com (20mm Cu DTP Star)",
       "datasheet_pdf": "datasheets/Luminus_SST-10-UV_Datasheet.pdf",
-      "revision": "PDS-002674 Rev 05 (2023-03-21)",
       "wavelength_nm": {"min": 365, "typ": 370, "max": 375},
       "vf_at_350mA_25C_V": {"min": 2.7, "typ": 3.60, "max": 3.90},
       "vf_tempco_mV_per_C": -2.67,
@@ -18,48 +18,55 @@
       "tj_max_C": 100.0,
       "r_theta_js_C_per_W": 1.4,
       "wpe_nominal_fraction": 0.48,
+      "isolated_thermal_pad": true,
       "faces": ["Face 1 (+X) D1", "Face 2 (+Y) D2", "Face 3 (-X) D3", "Face 4 (-Y) D4"]
     },
-    "XPEBRY-L1-0000-00S02": {
-      "manufacturer": "Cree LED",
+    "KB_CSLNM1.14": {
+      "manufacturer": "ams OSRAM",
       "color": "Royal Blue",
-      "datasheet_pdf": "datasheets/XLamp-XPE2.pdf",
-      "wavelength_nm": {"min": 450, "typ": 455, "max": 460},
-      "vf_at_350mA_25C_V": {"min": 2.6, "typ": 2.93, "max": 3.40},
-      "vf_tempco_mV_per_C": -1.5,
-      "rdyn_ohm_per_led": 0.45,
-      "if_max_cw_A": 1.2,
+      "supplier": "Convoylight.com (20mm Cu DTP Star)",
+      "wavelength_nm": {"peak": 450, "dom_typ": 455, "range": [445, 465]},
+      "vf_at_333mA_25C_V": {"min": 2.65, "typ": 2.85, "max": 3.25},
+      "vf_tempco_mV_per_C": -1.6,
+      "rdyn_ohm_per_led": 0.42,
+      "if_max_cw_A": 3.0,
       "tj_max_C": 150.0,
-      "r_theta_js_C_per_W": 5.7,
-      "wpe_nominal_fraction": 0.58,
+      "r_theta_js_C_per_W": 4.9,
+      "package_height_max_mm": 0.81,
+      "wpe_nominal_fraction": 0.55,
+      "isolated_thermal_pad": true,
       "faces": ["Face 1 (+X) D5", "Face 3 (-X) D6 (opposite faces for 360-deg balance)"]
     },
-    "XPEBGR-L1-0000-00K01": {
-      "manufacturer": "Cree LED",
-      "color": "Green",
-      "datasheet_pdf": "datasheets/XLamp-XPE2.pdf",
-      "wavelength_nm": {"min": 520, "typ": 528, "max": 535},
-      "vf_at_350mA_25C_V": {"min": 2.5, "typ": 2.70, "max": 3.25},
-      "vf_tempco_mV_per_C": -1.2,
-      "rdyn_ohm_per_led": 0.45,
-      "if_max_cw_A": 1.5,
+    "KP_CSLNM1.F1": {
+      "manufacturer": "ams OSRAM",
+      "color": "Pure Green (Phosphor-Converted)",
+      "supplier": "Convoylight.com (20mm Cu DTP Star)",
+      "wavelength_nm": {"band": [515, 565], "note": "Covers 520-545 nm Lepidoptera green peak at ~3x higher efficiency than InGaN green"},
+      "vf_at_333mA_25C_V": {"min": 2.65, "typ": 2.85, "max": 3.25},
+      "vf_tempco_mV_per_C": -1.6,
+      "rdyn_ohm_per_led": 0.42,
+      "if_max_cw_A": 3.0,
       "tj_max_C": 150.0,
-      "r_theta_js_C_per_W": 9.0,
-      "wpe_nominal_fraction": 0.28,
+      "r_theta_js_C_per_W": 4.9,
+      "package_height_max_mm": 0.81,
+      "wpe_nominal_fraction": 0.42,
+      "isolated_thermal_pad": true,
       "faces": ["Face 2 (+Y) D7"]
     },
-    "XPEBWT-L1-0000-00H51": {
-      "manufacturer": "Cree LED",
-      "color": "Cool White (6200-6500 K)",
-      "datasheet_pdf": "datasheets/XLamp-XPE2.pdf",
-      "cct_K": 6200,
-      "vf_at_350mA_25C_V": {"min": 2.6, "typ": 2.93, "max": 3.19},
-      "vf_tempco_mV_per_C": -1.5,
-      "rdyn_ohm_per_led": 0.45,
-      "if_max_cw_A": 1.5,
+    "KW_CSLNM1.TG": {
+      "manufacturer": "ams OSRAM",
+      "color": "Cool White (6500 K)",
+      "supplier": "Convoylight.com (20mm Cu DTP Star)",
+      "cct_K": 6500,
+      "vf_at_333mA_25C_V": {"min": 2.65, "typ": 2.85, "max": 3.25},
+      "vf_tempco_mV_per_C": -1.6,
+      "rdyn_ohm_per_led": 0.42,
+      "if_max_cw_A": 3.0,
       "tj_max_C": 150.0,
-      "r_theta_js_C_per_W": 5.8,
-      "wpe_nominal_fraction": 0.35,
+      "r_theta_js_C_per_W": 4.9,
+      "package_height_max_mm": 0.81,
+      "wpe_nominal_fraction": 0.40,
+      "isolated_thermal_pad": true,
       "faces": ["Face 4 (-Y) D8"]
     }
   },
@@ -89,19 +96,6 @@
       "manufacturer": "WCH (Nanjing Qinheng)",
       "lcsc": "C42459160",
       "package": "ESSOP-10 (1.0 mm leaded pitch, 2.10 x 3.30 mm EPAD GND)",
-      "pinout": {
-        "1": "VHV (3.3-30 V supply, 32 V abs max, 1 uF local C11)",
-        "2": "CFG2 (NC in single-R mode)",
-        "3": "CFG3 (NC in single-R mode; disables 28 V EPR)",
-        "4": "DP (NC)",
-        "5": "DM (NC)",
-        "6": "CC2 (internal 5.1k dead-battery Rd)",
-        "7": "CC1 (internal 5.1k dead-battery Rd)",
-        "8": "VBUS (shorted to VHV/VIN_20V per CH224DS1)",
-        "9": "CFG1 (120 kOhm R9 to GND -> 20 V PD)",
-        "10": "PG (open-drain 32 V abs max; active LOW when 20 V PD OK)",
-        "11": "EPAD (GND)"
-      },
       "vhv_vbus_pg_abs_max_V": 32.0,
       "ivhv_mA": {"typ": 1.5, "max": 3.0},
       "rcfg1_20V_ohm": 120000.0,
@@ -127,7 +121,7 @@
       "ik_min_mA": 1.0,
       "ik_max_mA": 100.0,
       "temp_range_C": [0.0, 70.0],
-      "stability_note": "V_REF ESD bypass C16=100 nF uses series damping R24=10.0 Ohm (Q <= 1) to stay unconditionally outside TL431 capacitive oscillation region."
+      "stability_note": "V_REF ESD bypass C16=100 nF uses series damping R24=10.0 Ohm (Q <= 1) for unconditional TL431 loop stability."
     },
     "2N7002": {
       "manufacturer": "Changjing (JSCJ)",
@@ -153,24 +147,23 @@
     }
   },
   "inductor": {
-    "SWPA6045S680MT": {
-      "manufacturer": "Sunlord",
-      "lcsc": "C53663",
+    "SRN6045-680M": {
+      "manufacturer": "Bourns",
+      "supplier": "Farnell UK / RS UK (DIY 2-pad SMD offload)",
       "package": "6.0 x 6.0 x 4.5 mm SMD",
       "L_H": 68.0e-6,
       "tolerance_fraction": 0.20,
-      "dcr_typ_ohm": 0.290,
-      "dcr_max_ohm": 0.376,
-      "irms_A": 0.95,
-      "isat_A": 1.10,
-      "srf_MHz_min": 6.4,
+      "dcr_typ_ohm": 0.270,
+      "dcr_max_ohm": 0.351,
+      "irms_A": 0.90,
+      "isat_A": 1.00,
       "temp_range_C": [-40.0, 125.0]
     }
   },
   "protection_and_input": {
     "046801.5NRHF": {
       "manufacturer": "Littelfuse",
-      "lcsc": "C151143",
+      "supplier": "Farnell UK (DIY 2-pad SMD offload)",
       "type": "1206 Slo-Blo Thin-Film SMD Fuse",
       "package": "1206",
       "i_rated_A": 1.50,
@@ -178,12 +171,11 @@
       "interrupt_rating_A": 50.0,
       "i2t_melting_A2s": 0.288,
       "r_cold_typ_ohm": 0.044,
-      "temp_range_C": [-55.0, 90.0],
-      "usage": "F1 USB-C VBUS overcurrent fuse (replaces MF-MSMF110/33X which had 20 A Imax and hot hold-current collapse)"
+      "temp_range_C": [-55.0, 90.0]
     },
     "SMBJ22A": {
-      "manufacturer": "RUILON",
-      "lcsc": "C10214",
+      "manufacturer": "Littelfuse",
+      "supplier": "Farnell UK (DIY 2-pad SMD offload)",
       "datasheet_pdf": "datasheets/smbj.pdf",
       "package": "DO-214AA (SMB), Unidirectional",
       "vrwm_V": 22.0,
@@ -216,29 +208,29 @@
       "gnd_current_max_A": 6.25,
       "voltage_max_V": 48.0,
       "signal_drill_mm": 0.40,
-      "row_b_to_front_mouth_mm": 7.26,
-      "recommended_pcb_finish": "ENIG (prevents HASL solder bridging/plugging in 0.40 mm signal drills)"
+      "row_b_to_front_mouth_mm": 7.26
     }
   },
   "resistors": {
-    "1206W4F300LT5E": {
-      "manufacturer": "UNI-ROYAL",
-      "lcsc": "C59882",
+    "CRL1206-FW-R300ELF": {
+      "manufacturer": "Bourns",
+      "supplier": "Farnell UK (DIY 2-pad SMD offload)",
       "package": "1206",
       "resistance_ohm": 0.30,
       "tolerance_fraction": 0.01,
-      "power_rating_70C_W": 0.25,
-      "usage": "R3, R4 AL8860 high-side sense resistors (33 mW, 7.5x margin)"
+      "power_rating_70C_W": 0.50,
+      "usage": "R3, R4 AL8860 high-side sense resistors (33 mW; Kelvin VIN+SET taps)"
     },
-    "25121WF100KT4E": {
-      "manufacturer": "UNI-ROYAL",
-      "lcsc": "C11254",
+    "CRCW25121R00FKEG": {
+      "manufacturer": "Vishay",
+      "supplier": "Farnell UK (DIY 2-pad SMD offload)",
+      "datasheet_pdf": "datasheets/dcrcwe3.pdf",
       "package": "2512",
       "resistance_ohm": 1.0,
       "tolerance_fraction": 0.01,
       "power_rating_70C_W": 1.0,
       "single_pulse_10us_limit_W": 600.0,
-      "usage": "R7 hot-plug RC damper series resistor with C10=4.7 uF (8x film area vs 0805)"
+      "usage": "R7 hot-plug RC damper series resistor with C10=4.7 uF"
     }
   },
   "electromechanical": {
@@ -260,18 +252,16 @@
     }
   },
   "optical_and_sealing": {
-    "PLEXIGLAS_XT_0A070": {
-      "product_name": "PLEXIGLAS XT Clear 0A070 (29070)",
-      "manufacturer": "Rohm / Polyvantis",
+    "Extruded_XT_PMMA": {
+      "product_name": "Clear Extruded PMMA (XT) Tube 60x54x3.0 mm (cut to 115 mm; Rohm 0A070 equivalent)",
       "dimensions_mm": "OD 60 x ID 54 x wall 3.0 x L 115",
       "uv_365nm_normal_transmission_fraction": 0.83,
-      "uv_365nm_cone_integrated_transmission_fraction": 0.798,
-      "chemical_compatibility": "Use ONLY neutral-alkoxy PMMA-safe silicone (e.g. OTTOSEAL S 72 Clear) cured 48 h open-air; avoid IPA wipe on stressed edges."
+      "verification": "Verify 365 nm transmission on arrival via white-paper optical-brightener fluorescence bench check; never clean with IPA."
     },
-    "OTTOSEAL_S72_Clear": {
-      "manufacturer": "OTTO-CHEMIE",
-      "type": "Neutral-alkoxy silicone certified for PLEXIGLAS / PMMA stress-crack compatibility",
-      "cure_time_h": 48
+    "Soudal_Fix_ALL_Crystal": {
+      "manufacturer": "Soudal",
+      "type": "Crystal-clear SMX Hybrid MS-Polymer (solvent-free, non-acetic, PMMA/copper-safe; Screwfix 51412)",
+      "application": "Plastic-to-aluminum seals ONLY (top collar groove + finial cap; never directly on PMMA)."
     }
   }
 }

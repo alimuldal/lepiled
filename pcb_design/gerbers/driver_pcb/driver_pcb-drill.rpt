@@ -1,5 +1,5 @@
 Drill report for driver_pcb.kicad_pcb
-Created on 2026-11-20T22:25:41
+Created on 2026-11-20T23:11:37
 
 Copper Layer Stackup:
     =============================================================
@@ -21,6 +21,6 @@ Drill file 'driver_pcb-PTH.drl' contains
 Drill file 'driver_pcb-NPTH.drl' contains
     unplated through holes:
     =============================================================
-    T1  2.700mm  0.1063"  (4 holes))
+    T1  3.200mm  0.1260"  (4 holes))
 
     Total unplated holes count 4

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-LepiLED DIY Maxi Switch (Rev 4.8 — WCH CH224A + Full-SMD ENIG PCBA + Dual AL8860WT-7)
+LepiLED DIY Maxi Switch (Rev 4.9 — WCH CH224A + 2-Reel Hybrid HASL PCBA + Convoy OSRAM CSLNM1 + Dual AL8860WT-7)
 Comprehensive SPICE + Analytic Corner Sweep + Full-Parameter Monte Carlo Suite.
 
 Verifies:
@@ -312,9 +312,9 @@ def run_corner_sweep() -> dict:
     }
 
     for v_in, v_s, r_s, L, t_amb in itertools.product(v_ins, v_senses, r_ss, ls, temps):
-        # Sunlord SWPA6045S680MT: DCR_max = 0.376 Ohm @ 25 C
+        # Bourns SRN6045-680M (Farnell UK DIY chunky SMD): DCR_max = 0.351 Ohm @ 25 C (0.270 typ)
         t_bay = t_amb + 15.0  # Realistic sealed bay rise above ambient for IC Tj & DCR
-        dcr = 0.376 * (1.0 + 0.00393 * max(0.0, t_bay - 25.0))
+        dcr = 0.351 * (1.0 + 0.00393 * max(0.0, t_bay - 25.0))
         r_sw = 0.30 if t_amb <= 25.0 else 0.45
         v_d = 0.40 if t_amb <= 25.0 else 0.32
         # MDD SS34 reverse leakage at 20 V (duty ~ 0.65): ~0.005 W @ 25 C, up to 0.04 W @ 70 C bay
@@ -323,8 +323,9 @@ def run_corner_sweep() -> dict:
         uv_vfs = [4 * 3.90 + 4 * 0.00267 * (25 - (-10))] if t_amb < 0 else (
             [4 * 2.70 - 4 * 0.00267 * (80 - 25), 4 * 3.60, 4 * 3.90]
         )
-        vis_vfs = [2 * 3.40 + 3.25 + 3.19 + 4 * 0.0015 * 35] if t_amb < 0 else (
-            [2 * 2.60 + 2.50 + 2.60 - 4 * 0.0015 * 55, 2 * 2.93 + 2.70 + 2.93, 2 * 3.40 + 3.25 + 3.19]
+        # ams OSRAM CSLNM1 visible string (2x KB RB + 1x KP Pure Green + 1x KW Cool White): Vf_nom = 2.85 V (2.60-3.20 V)
+        vis_vfs = [4 * 3.20 + 4 * 0.0015 * 35] if t_amb < 0 else (
+            [4 * 2.60 - 4 * 0.0015 * 55, 4 * 2.85, 4 * 3.20]
         )
 
         for v_uv, v_vis in itertools.product(uv_vfs, vis_vfs):
@@ -347,7 +348,7 @@ def run_corner_sweep() -> dict:
             tj2 = t_bay + c2["p_ic"] * 147.0
 
             ok = (
-                c1["i_pk"] < 0.70 and c2["i_pk"] < 0.70  # << 1.10 A Sunlord SWPA6045 Isat
+                c1["i_pk"] < 0.70 and c2["i_pk"] < 0.70  # << 1.15 A Bourns SRN6045-680M Isat
                 and c1["f_sw"] < 1.0e6 and c2["f_sw"] < 1.0e6
                 and c1["duty"] < 0.98 and c2["duty"] < 0.98
                 and tj1 < 125.0 and tj2 < 125.0
@@ -411,8 +412,8 @@ def run_monte_carlo(n: int = 2000, seed: int = 20261120) -> dict:
     r_s2 = rng.normal(0.300, 0.003 / 3.0, n).clip(0.297, 0.303)
     L1 = rng.normal(68e-6, 68e-6 * 0.20 / 3.0, n).clip(54.4e-6, 81.6e-6)
     L2 = rng.normal(68e-6, 68e-6 * 0.20 / 3.0, n).clip(54.4e-6, 81.6e-6)
-    dcr1 = rng.uniform(0.25, 0.376, n) * (1.0 + 0.00393 * (t_amb + 15.0 - 25.0))
-    dcr2 = rng.uniform(0.25, 0.376, n) * (1.0 + 0.00393 * (t_amb + 15.0 - 25.0))
+    dcr1 = rng.uniform(0.24, 0.351, n) * (1.0 + 0.00393 * (t_amb + 15.0 - 25.0))
+    dcr2 = rng.uniform(0.24, 0.351, n) * (1.0 + 0.00393 * (t_amb + 15.0 - 25.0))
     r_sw1 = rng.uniform(0.20, 0.42, n)
     r_sw2 = rng.uniform(0.20, 0.42, n)
     v_d1 = rng.uniform(0.28, 0.40, n)
@@ -421,9 +422,7 @@ def run_monte_carlo(n: int = 2000, seed: int = 20261120) -> dict:
     t_j_led = t_amb + 30.0
     v_uv = np.sum(rng.normal(3.60, 0.10, (n, 4)).clip(2.7, 3.9), axis=1) - 4 * 0.00267 * (t_j_led - 25.0)
     v_vis = (
-        np.sum(rng.normal(2.93, 0.12, (n, 2)).clip(2.6, 3.4), axis=1)
-        + rng.normal(2.70, 0.14, n).clip(2.5, 3.25)
-        + rng.normal(2.93, 0.09, n).clip(2.6, 3.19)
+        np.sum(rng.normal(2.85, 0.10, (n, 4)).clip(2.60, 3.20), axis=1)
         - 4 * 0.0015 * (t_j_led - 25.0)
     )
 
@@ -532,7 +531,7 @@ def plot_results(mc_res: dict):
     axes[0].plot(t_ms, i_vis, label="Ch2 Vis LED Current (mA)", color="#1f618d", lw=1.4)
     axes[0].axhline(333.3, color="gray", ls="--", lw=0.8, label="Nominal 333 mA")
     axes[0].set_ylabel("LED Current (mA)")
-    axes[0].set_title("LepiLED Rev 4.8 (CH224A + Full-SMD ENIG PCBA) — Mode Cycling (OFF -> 4-UV -> 8-ALL)")
+    axes[0].set_title("LepiLED Rev 4.9 (CH224A + 2-Reel Hybrid HASL PCBA + OSRAM CSLNM1) — Mode Cycling")
     axes[0].legend(loc="upper left", fontsize=8)
     axes[0].grid(True, alpha=0.3)
 
@@ -608,7 +607,7 @@ def plot_results(mc_res: dict):
 
 def main():
     backend = NGSPICE if NGSPICE else "libngspice.so.0 (ctypes)"
-    print(f"=== LepiLED Rev 4.8 SPICE + Corner + Monte Carlo Suite (backend: {backend}) ===")
+    print(f"=== LepiLED Rev 4.9 SPICE + Corner + Monte Carlo Suite (backend: {backend}) ===")
     cir_files = [
         "lepiled_nominal.cir",
         "lepiled_fault_uvlo_sweep.cir",
@@ -628,9 +627,9 @@ def main():
     mc = run_monte_carlo(n=2000)
     plot_results(mc)
 
-    # Nominal analytic operating point at 20.0 V, 25 C (reconciled with SPICE)
-    nom_uv = solve_buck_channel(19.92, 4 * 3.59, 0.100, 0.300, 68e-6, 0.29, 0.30, 0.35, p_schottky_leak=0.005)
-    nom_vis = solve_buck_channel(19.92, 2 * 2.92 + 2.69 + 2.92, 0.100, 0.300, 68e-6, 0.29, 0.30, 0.35, p_schottky_leak=0.005)
+    # Nominal analytic operating point at 20.0 V, 25 C (reconciled with SPICE: Bourns SRN6045-680M 0.270 Ohm + OSRAM CSLNM1 2.85 V)
+    nom_uv = solve_buck_channel(19.92, 4 * 3.59, 0.100, 0.300, 68e-6, 0.27, 0.30, 0.35, p_schottky_leak=0.005)
+    nom_vis = solve_buck_channel(19.92, 4 * 2.85, 0.100, 0.300, 68e-6, 0.27, 0.30, 0.35, p_schottky_leak=0.005)
     i_in_nom, p_over_nom = _overhead_losses(19.92, nom_uv["i_in"] + nom_vis["i_in"], worst_case=False)
     p_pcb_nom = (
         nom_uv["p_ic"] + nom_uv["p_diode"] + nom_uv["p_ind"] + nom_uv["p_rs"]
@@ -705,8 +704,8 @@ def main():
     }
 
     summary = {
-        "revision": "4.8",
-        "architecture": "Rev 4.8 (WCH CH224A + Full-SMD ENIG PCBA + Littelfuse 046801.5NRHF + 2512 R7 + R24/C16 + Dual AL8860WT-7)",
+        "revision": "4.9",
+        "architecture": "Rev 4.9 (WCH CH224A + 2-Reel Hybrid HASL PCBA + Convoy OSRAM CSLNM1 + Littelfuse 046801.5NRHF + Vishay 2512 R7 + Bourns SRN6045-680M + Dual AL8860WT-7)",
         "backend": backend,
         "all_passed": all(checks.values()),
         "input_hashes": input_hashes,

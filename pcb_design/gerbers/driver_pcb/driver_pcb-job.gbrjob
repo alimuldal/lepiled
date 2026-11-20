@@ -5,13 +5,13 @@
       "Application": "Pcbnew",
       "Version": "10.0.1+dfsg-1"
     },
-    "CreationDate": "2026-11-20T22:25:40+00:00"
+    "CreationDate": "2026-11-20T23:11:36+00:00"
   },
   "GeneralSpecs": {
     "ProjectId": {
       "Name": "driver_pcb",
       "GUID": "39e272a3-039f-5ac1-bf14-59ffb761c445",
-      "Revision": "4.8"
+      "Revision": "4.9"
     },
     "Size": {
       "X": 36.1,
@@ -19,7 +19,7 @@
     },
     "LayerNumber": 2,
     "BoardThickness": 1.6,
-    "Finish": "ENIG"
+    "Finish": "HASL lead free"
   },
   "DesignRules": [
     {

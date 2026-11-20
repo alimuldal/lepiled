@@ -1,20 +1,20 @@
 * ==============================================================================
-* LepiLED Rev 4.8 — Verified Semiconductor & Protection SPICE Models
-* Grounded in official manufacturer datasheets (TL431 BV calibrated to 2.500 V;
-* SMBJ22A includes realistic TBV1 = +9.6e-4 /C breakdown tempco at .temp 85!)
+* LepiLED Rev 4.9 — Verified Semiconductor & Protection SPICE Models
+* Grounded in official manufacturer datasheets (Convoy Osram CSLNM1 visible LEDs,
+* TL431 BV calibrated to 2.500 V, SMBJ22A real TBV1 = +9.6e-4 /C at .temp 85!)
 * ==============================================================================
 
 * --- Luminus SST-10-UV-A130-G365-00 (365 nm UV-A) ---
 * Vf = 3.59 V typ @ 333 mA (3.60 V @ 350 mA), Rdyn = 0.75 Ohm
 .model D_SST10_UV D(IS=1.2e-18 N=3.45 RS=0.75 CJO=120p BV=5.0 IBV=1m)
 
-* --- Cree XP-E2 Visible LEDs (BV=1.0 V honors Cree VR_max = 1.0 V rating!) ---
-* Royal Blue (455 nm, 00S02): Vf = 2.92 V @ 333 mA, Rdyn = 0.45 Ohm
-.model D_XPE2_RB  D(IS=3.5e-16 N=3.20 RS=0.45 CJO=90p BV=1.0 IBV=100u)
-* Green (528 nm, 00K01): Vf = 2.69 V @ 333 mA, Rdyn = 0.45 Ohm
-.model D_XPE2_GRN D(IS=2.8e-15 N=3.15 RS=0.45 CJO=90p BV=1.0 IBV=100u)
-* Cool White (6200 K, 00H51): Vf = 2.92 V @ 333 mA (25 C), Rdyn = 0.45 Ohm
-.model D_XPE2_CW  D(IS=3.5e-16 N=3.20 RS=0.45 CJO=90p BV=1.0 IBV=100u)
+* --- ams OSRAM CSLNM1 Visible LEDs (Convoy 20mm Cu DTP stars; isolated thermal pad) ---
+* Royal Blue (KB CSLNM1.14, 450nm pk / 455nm dom): Vf = 2.85 V @ 333 mA, Rdyn = 0.42 Ohm
+.model D_XPE2_RB  D(IS=8.0e-16 N=3.20 RS=0.42 CJO=90p BV=5.0 IBV=100u)
+* Pure Green (KP CSLNM1.F1, 515-565nm): Vf = 2.85 V @ 333 mA, Rdyn = 0.42 Ohm
+.model D_XPE2_GRN D(IS=8.0e-16 N=3.20 RS=0.42 CJO=90p BV=5.0 IBV=100u)
+* Cool White (KW CSLNM1.TG, 6500K): Vf = 2.85 V @ 333 mA, Rdyn = 0.42 Ohm
+.model D_XPE2_CW  D(IS=8.0e-16 N=3.20 RS=0.42 CJO=90p BV=5.0 IBV=100u)
 
 * --- MDD SS34 (40 V 3.0 A SMA Schottky, Basic C8678) ---
 * Vf ~ 0.35 V @ 0.33 A, 0.42 V @ 1.0 A

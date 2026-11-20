@@ -5,12 +5,12 @@
   (uuid "8bb02b33-e340-5362-8974-afdded8a1864")
   (paper "A3")
   (title_block
-    (title "LepiLED DIY Maxi Switch — Rev 4.8 (ENIG Full-SMD)")
+    (title "LepiLED DIY Maxi Switch — Rev 4.9 (2-Reel Hybrid HASL)")
     (date "2026-11-20")
-    (rev "4.8")
+    (rev "4.9")
     (company "LepiLED Open-Source DIY Hardware")
     (comment 1 "CH224A 20V PD + 1.5A/63V Slo-Blo F1 + 2512 R7 + LM393/TL431 UVLO")
-    (comment 2 "72 RefDes (48 JLCPCB SMD + 4 THT + 2 DNP + 4 NPTH + 4 TP + 10 Off-Board)")
+    (comment 2 "72 RefDes (41 JLCPCB SMD [2 Ext] + 11 DIY + 2 DNP + 4 M3 NPTH + 4 TP)")
   )
   (lib_symbols
   (symbol "lepiled:R"
@@ -680,7 +680,7 @@
     (property "Value" "SMBJ22A" (at 70.44 58.42 0) (effects (font (size 1.15 1.15))))
     (property "Footprint" "lepiled:D_SMB_DO-214AA_UniDir" (at 66.04 58.42 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (property "Datasheet" "datasheets/smbj.pdf" (at 66.04 58.42 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "MPN" "RUILON SMBJ22A" (at 66.04 58.42 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "MPN" "Littelfuse SMBJ22A" (at 66.04 58.42 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (pin "1" (uuid "e41f7ad5-395b-56f8-9ed9-30f2f9a02cbc"))
     (pin "2" (uuid "f1cf00ae-2ee3-5c4b-b725-5b40d3abf046"))
     (instances
@@ -704,8 +704,8 @@
     (property "Reference" "R7" (at 94.64 53.61 0) (effects (font (size 1.27 1.27))))
     (property "Value" "1.0R 1W" (at 94.64 55.81 0) (effects (font (size 1.15 1.15))))
     (property "Footprint" "lepiled:R_2512" (at 91.44 54.61 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "Datasheet" "datasheets/datasheets_summary.json" (at 91.44 54.61 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "MPN" "UNI-ROYAL 25121WF100KT4E" (at 91.44 54.61 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "Datasheet" "datasheets/dcrcwe3.pdf" (at 91.44 54.61 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "MPN" "Vishay CRCW25121R00FKEG" (at 91.44 54.61 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (pin "1" (uuid "cff2ba70-0731-5bbd-8ae0-883f8c257827"))
     (pin "2" (uuid "cdb3b04b-bea8-5bc7-9453-e3a0840b9867"))
     (instances
@@ -1109,10 +1109,10 @@
     (dnp no)
     (uuid "d153c360-1ca8-5332-a0a8-c157bf53d228")
     (property "Reference" "H1" (at 35.56 126.34 0) (effects (font (size 1.27 1.27))))
-    (property "Value" "M2.5_NPTH" (at 35.56 133.04 0) (effects (font (size 1.15 1.15))))
-    (property "Footprint" "lepiled:MountingHole_2.7mm_M2.5_NPTH" (at 35.56 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "Value" "M3_NPTH" (at 35.56 133.04 0) (effects (font (size 1.15 1.15))))
+    (property "Footprint" "lepiled:MountingHole_3.2mm_M3_NPTH" (at 35.56 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (property "Datasheet" "datasheets/datasheets_summary.json" (at 35.56 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "MPN" "M2.5 NPTH Mounting Hole" (at 35.56 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "MPN" "M3 NPTH Mounting Hole" (at 35.56 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
 
     (instances
       (project "driver_pcb"
@@ -1133,10 +1133,10 @@
     (dnp no)
     (uuid "87e586ab-8611-58ab-aef8-26c069226398")
     (property "Reference" "H2" (at 53.34 126.34 0) (effects (font (size 1.27 1.27))))
-    (property "Value" "M2.5_NPTH" (at 53.34 133.04 0) (effects (font (size 1.15 1.15))))
-    (property "Footprint" "lepiled:MountingHole_2.7mm_M2.5_NPTH" (at 53.34 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "Value" "M3_NPTH" (at 53.34 133.04 0) (effects (font (size 1.15 1.15))))
+    (property "Footprint" "lepiled:MountingHole_3.2mm_M3_NPTH" (at 53.34 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (property "Datasheet" "datasheets/datasheets_summary.json" (at 53.34 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "MPN" "M2.5 NPTH Mounting Hole" (at 53.34 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "MPN" "M3 NPTH Mounting Hole" (at 53.34 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
 
     (instances
       (project "driver_pcb"
@@ -1157,10 +1157,10 @@
     (dnp no)
     (uuid "ff49932b-3c86-51f9-b05f-53500ed5d9bd")
     (property "Reference" "H3" (at 71.12 126.34 0) (effects (font (size 1.27 1.27))))
-    (property "Value" "M2.5_NPTH" (at 71.12 133.04 0) (effects (font (size 1.15 1.15))))
-    (property "Footprint" "lepiled:MountingHole_2.7mm_M2.5_NPTH" (at 71.12 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "Value" "M3_NPTH" (at 71.12 133.04 0) (effects (font (size 1.15 1.15))))
+    (property "Footprint" "lepiled:MountingHole_3.2mm_M3_NPTH" (at 71.12 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (property "Datasheet" "datasheets/datasheets_summary.json" (at 71.12 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "MPN" "M2.5 NPTH Mounting Hole" (at 71.12 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "MPN" "M3 NPTH Mounting Hole" (at 71.12 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
 
     (instances
       (project "driver_pcb"
@@ -1181,10 +1181,10 @@
     (dnp no)
     (uuid "bc7742be-9f6c-5ac5-8911-f445033b6a74")
     (property "Reference" "H4" (at 88.90 126.34 0) (effects (font (size 1.27 1.27))))
-    (property "Value" "M2.5_NPTH" (at 88.90 133.04 0) (effects (font (size 1.15 1.15))))
-    (property "Footprint" "lepiled:MountingHole_2.7mm_M2.5_NPTH" (at 88.90 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "Value" "M3_NPTH" (at 88.90 133.04 0) (effects (font (size 1.15 1.15))))
+    (property "Footprint" "lepiled:MountingHole_3.2mm_M3_NPTH" (at 88.90 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (property "Datasheet" "datasheets/datasheets_summary.json" (at 88.90 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "MPN" "M2.5 NPTH Mounting Hole" (at 88.90 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "MPN" "M3 NPTH Mounting Hole" (at 88.90 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
 
     (instances
       (project "driver_pcb"
@@ -1208,7 +1208,7 @@
     (property "Value" "VIN_20V" (at 116.84 124.74 0) (effects (font (size 1.15 1.15))))
     (property "Footprint" "lepiled:TestPoint_Pad_D1.0mm" (at 116.84 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (property "Datasheet" "datasheets/datasheets_summary.json" (at 116.84 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "MPN" "Bare ENIG Pad 1.0mm" (at 116.84 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "MPN" "Bare HASL Pad 1.0mm" (at 116.84 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (pin "1" (uuid "b51b9a37-9b65-5896-9b66-144975d0d004"))
     (instances
       (project "driver_pcb"
@@ -1232,7 +1232,7 @@
     (property "Value" "V_REF" (at 137.16 124.74 0) (effects (font (size 1.15 1.15))))
     (property "Footprint" "lepiled:TestPoint_Pad_D1.0mm" (at 137.16 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (property "Datasheet" "datasheets/datasheets_summary.json" (at 137.16 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "MPN" "Bare ENIG Pad 1.0mm" (at 137.16 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "MPN" "Bare HASL Pad 1.0mm" (at 137.16 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (pin "1" (uuid "413dbe34-25a4-5c82-8f93-f9783f3c36bb"))
     (instances
       (project "driver_pcb"
@@ -1256,7 +1256,7 @@
     (property "Value" "UVLO_OK" (at 157.48 124.74 0) (effects (font (size 1.15 1.15))))
     (property "Footprint" "lepiled:TestPoint_Pad_D1.0mm" (at 157.48 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (property "Datasheet" "datasheets/datasheets_summary.json" (at 157.48 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "MPN" "Bare ENIG Pad 1.0mm" (at 157.48 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "MPN" "Bare HASL Pad 1.0mm" (at 157.48 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (pin "1" (uuid "8b429366-90ed-57f8-b2be-0a632ccd498f"))
     (instances
       (project "driver_pcb"
@@ -1280,7 +1280,7 @@
     (property "Value" "GND" (at 177.80 124.74 0) (effects (font (size 1.15 1.15))))
     (property "Footprint" "lepiled:TestPoint_Pad_D1.0mm" (at 177.80 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (property "Datasheet" "datasheets/datasheets_summary.json" (at 177.80 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "MPN" "Bare ENIG Pad 1.0mm" (at 177.80 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "MPN" "Bare HASL Pad 1.0mm" (at 177.80 129.54 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (pin "1" (uuid "57d5d917-3c89-50a6-802c-8d4088033bca"))
     (instances
       (project "driver_pcb"
@@ -2169,7 +2169,7 @@
     (property "Value" "0.30R" (at 269.24 46.38 0) (effects (font (size 1.15 1.15))))
     (property "Footprint" "lepiled:R_1206" (at 269.24 43.18 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (property "Datasheet" "datasheets/datasheets_summary.json" (at 269.24 43.18 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "MPN" "UNI-ROYAL 1206W4F300LT5E" (at 269.24 43.18 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "MPN" "Bourns CRL1206-FW-R300ELF" (at 269.24 43.18 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (pin "1" (uuid "462760bb-5b7b-521d-a85b-588b9df2a4fe"))
     (pin "2" (uuid "961444ee-f026-5f4b-b201-9a14d77e52dc"))
     (instances
@@ -2336,7 +2336,7 @@
     (property "Value" "68uH" (at 297.18 104.80 0) (effects (font (size 1.15 1.15))))
     (property "Footprint" "lepiled:Sunlord_SWPA6045" (at 297.18 101.60 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (property "Datasheet" "datasheets/datasheets_summary.json" (at 297.18 101.60 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "MPN" "Sunlord SWPA6045S680MT" (at 297.18 101.60 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "MPN" "Bourns SRN6045-680M" (at 297.18 101.60 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (pin "1" (uuid "dc981d9f-5f8d-5e7d-8613-5dcfb08104f1"))
     (pin "2" (uuid "55fb5492-2e2e-5087-ac1b-b55352b07dcd"))
     (instances
@@ -2590,7 +2590,7 @@
     (property "Value" "0.30R" (at 269.24 168.30 0) (effects (font (size 1.15 1.15))))
     (property "Footprint" "lepiled:R_1206" (at 269.24 165.10 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (property "Datasheet" "datasheets/datasheets_summary.json" (at 269.24 165.10 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "MPN" "UNI-ROYAL 1206W4F300LT5E" (at 269.24 165.10 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "MPN" "Bourns CRL1206-FW-R300ELF" (at 269.24 165.10 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (pin "1" (uuid "e917a557-0d9f-5867-9b45-babec7023ed8"))
     (pin "2" (uuid "662886d8-e2d4-5c18-85ae-683e1512ee24"))
     (instances
@@ -2757,7 +2757,7 @@
     (property "Value" "68uH" (at 297.18 226.72 0) (effects (font (size 1.15 1.15))))
     (property "Footprint" "lepiled:Sunlord_SWPA6045" (at 297.18 223.52 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (property "Datasheet" "datasheets/datasheets_summary.json" (at 297.18 223.52 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "MPN" "Sunlord SWPA6045S680MT" (at 297.18 223.52 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "MPN" "Bourns SRN6045-680M" (at 297.18 223.52 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (pin "1" (uuid "a02c5492-f207-50a7-b295-2dbc641e53a8"))
     (pin "2" (uuid "3a10b6fe-61ec-51e8-a0d1-d3d6ac6dd1cf"))
     (instances
@@ -2856,10 +2856,10 @@
     (dnp no)
     (uuid "35149cca-b4e4-5783-abc2-5b6f45e8b6db")
     (property "Reference" "D5" (at 375.04 168.98 0) (effects (font (size 1.27 1.27))))
-    (property "Value" "XP-E2 RB" (at 375.34 171.38 0) (effects (font (size 1.15 1.15))))
+    (property "Value" "OSRAM RB" (at 375.34 171.38 0) (effects (font (size 1.15 1.15))))
     (property "Footprint" "" (at 370.84 170.18 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "Datasheet" "datasheets/XLamp-XPE2.pdf" (at 370.84 170.18 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "MPN" "Cree XP-E2 Royal Blue 455nm (20mm Star)" (at 370.84 170.18 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "Datasheet" "datasheets/datasheets_summary.json" (at 370.84 170.18 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "MPN" "Osram KB CSLNM1.14 455nm (20mm Cu DTP Star)" (at 370.84 170.18 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (pin "1" (uuid "d38f26d9-9044-545d-917a-676e5e52f6d5"))
     (pin "2" (uuid "44b13d27-7a47-5254-880d-668ef8caf982"))
     (instances
@@ -2881,10 +2881,10 @@
     (dnp no)
     (uuid "e19b430f-33b4-55b7-86a7-08aaf3b718f9")
     (property "Reference" "D7" (at 375.04 186.76 0) (effects (font (size 1.27 1.27))))
-    (property "Value" "XP-E2 GRN" (at 375.34 189.16 0) (effects (font (size 1.15 1.15))))
+    (property "Value" "OSRAM GRN" (at 375.34 189.16 0) (effects (font (size 1.15 1.15))))
     (property "Footprint" "" (at 370.84 187.96 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "Datasheet" "datasheets/XLamp-XPE2.pdf" (at 370.84 187.96 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "MPN" "Cree XP-E2 Green 528nm (20mm Star)" (at 370.84 187.96 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "Datasheet" "datasheets/datasheets_summary.json" (at 370.84 187.96 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "MPN" "Osram KP CSLNM1.F1 Green (20mm Cu DTP Star)" (at 370.84 187.96 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (pin "1" (uuid "2b95d5e2-f09e-537d-af2b-b8ea0e66c4eb"))
     (pin "2" (uuid "99d5ce81-7c97-54f3-989e-f48a5573fe01"))
     (instances
@@ -2906,10 +2906,10 @@
     (dnp no)
     (uuid "4831f3e1-ee3d-5746-89cb-0f74125a0020")
     (property "Reference" "D6" (at 375.04 204.54 0) (effects (font (size 1.27 1.27))))
-    (property "Value" "XP-E2 RB" (at 375.34 206.94 0) (effects (font (size 1.15 1.15))))
+    (property "Value" "OSRAM RB" (at 375.34 206.94 0) (effects (font (size 1.15 1.15))))
     (property "Footprint" "" (at 370.84 205.74 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "Datasheet" "datasheets/XLamp-XPE2.pdf" (at 370.84 205.74 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "MPN" "Cree XP-E2 Royal Blue 455nm (20mm Star)" (at 370.84 205.74 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "Datasheet" "datasheets/datasheets_summary.json" (at 370.84 205.74 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "MPN" "Osram KB CSLNM1.14 455nm (20mm Cu DTP Star)" (at 370.84 205.74 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (pin "1" (uuid "78790ed9-35fc-554e-9df9-0e7918d7d1e0"))
     (pin "2" (uuid "2e98af8a-cf11-5e75-abd9-9fb556f48372"))
     (instances
@@ -2931,10 +2931,10 @@
     (dnp no)
     (uuid "ddddf223-c52f-500e-b7bf-ff4a7e0f0aa4")
     (property "Reference" "D8" (at 375.04 222.32 0) (effects (font (size 1.27 1.27))))
-    (property "Value" "XP-E2 CW" (at 375.34 224.72 0) (effects (font (size 1.15 1.15))))
+    (property "Value" "OSRAM CW" (at 375.34 224.72 0) (effects (font (size 1.15 1.15))))
     (property "Footprint" "" (at 370.84 223.52 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "Datasheet" "datasheets/XLamp-XPE2.pdf" (at 370.84 223.52 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "MPN" "Cree XP-E2 Cool White 6200-6500K (20mm Cu DTP Star)" (at 370.84 223.52 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "Datasheet" "datasheets/datasheets_summary.json" (at 370.84 223.52 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "MPN" "Osram KW CSLNM1.TG 6500K (20mm Cu DTP Star)" (at 370.84 223.52 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (pin "1" (uuid "e50f7698-6f7f-58d8-beaa-6ac9d51e45b2"))
     (pin "2" (uuid "c6b251a8-afad-5b61-9911-fc6ac4bb68a2"))
     (instances

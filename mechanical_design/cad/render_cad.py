@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Headless PyVista 3D CAD Renderer for LepiLED DIY Maxi Switch (Rev 4.8 — "Field Lantern":
-PETG/ASA Shell + Chimney-Only Matte-Black Al Core + Copper Stars + Signal-Orange Hang Bushing).
+Headless PyVista 3D CAD Renderer for LepiLED DIY Maxi Switch (Rev 4.9 — "Field Lantern":
+PETG/ASA Shell + Unpainted Bare Mill Al Core + Unified M3 CSK Hardware + Copper Stars + Wire Bail).
 Run under: xvfb-run -a /tmp/lepiled-venv/bin/python mechanical_design/cad/render_cad.py
 """
 
@@ -19,20 +19,20 @@ from params import LepiLEDParams
 
 
 PART_STYLES = {
-    "lid_bot":        dict(color="#363b42", opacity=1.0),  # Recessed lid + 4x integral M2.5 PCB standoffs
+    "lid_bot":        dict(color="#363b42", opacity=1.0),  # Recessed 8.5 mm lid + 4x integral M3 PCB standoffs + flush CSK
     "cap_bot":        dict(color="#25292e", opacity=1.0),  # Unified matte PETG/ASA base shell
     "cap_top":        dict(color="#25292e", opacity=1.0),  # Lofted rain roof + 9.5 mm vertical collar
     "plug_top":       dict(color="#30353c", opacity=1.0),  # 8 mm chamfered obelisk finial
     "core_anchor":    dict(color="#4a515a", opacity=1.0),  # Staggered internal dry-bay core anchor
-    "cable_clamp":    dict(color="#3d434b", opacity=1.0),  # Blind-bolted conical radial-compression clamp
+    "cable_clamp":    dict(color="#3d434b", opacity=1.0),  # Blind-bolted conical radial-compression clamp (flush M3 CSK)
     "hang_bushing":   dict(color="#ff5a1f", opacity=1.0),  # Signal-Orange snap-fit hang-hole pivot bushing
     "hang_bail":      dict(color="#c4cdd6", opacity=1.0),  # DIY C-shaped steel wire hanging bail (coat-hanger wire)
-    "pcb_assy":       dict(color="#1f6f3b", opacity=1.0),  # Serviceable lid-mounted driver_pcb (SMD/JST UP)
-    "hs_core":        dict(color="#8d96a0", opacity=1.0),  # Bare mill Al core interior (chimney top sprayed matte black)
-    "inserts_brass":  dict(color="#d4a73c", opacity=1.0),  # 14x modeled brass heat-set inserts
-    "fasteners_m3":   dict(color="#adb6c2", opacity=1.0),  # Full-length M3 + M2.5 nylon fasteners
-    "glass_tube":     dict(color="#d8f0ff", opacity=0.24), # PLEXIGLAS XT Clear 0A070 (Ø60x54x115 mm)
-    "dtp_stars":      dict(color="#d47a34", opacity=1.0),  # 8x 20 mm LED stars + Ø7 nylon edge-clamping washers
+    "pcb_assy":       dict(color="#1f6f3b", opacity=1.0),  # Serviceable lid-mounted driver_pcb (SMD/JST UP; M3 NPTH)
+    "hs_core":        dict(color="#b2bac4", opacity=1.0),  # Unpainted bare mill 30x30x3 Al 6063-T6 core
+    "inserts_brass":  dict(color="#d4a73c", opacity=1.0),  # 14x identical workshop M3x5.0x4.2 brass heat-set inserts
+    "fasteners_m3":   dict(color="#adb6c2", opacity=1.0),  # 32x unified workshop M3 CSK screws + steel/nylon washers
+    "glass_tube":     dict(color="#d8f0ff", opacity=0.24), # Extruded Clear XT PMMA Shroud (Ø60x54x115 mm)
+    "dtp_stars":      dict(color="#d47a34", opacity=1.0),  # 8x Convoy 20 mm Cu DTP stars + steel/nylon M3 edge washers
     "sw1_assy":       dict(color="#c4342d", opacity=1.0),  # Bottom-mounted SW1 + realistic 18.6 mm boot
     "usbc_plug_assy": dict(color="#5b6675", opacity=1.0),  # Realistic 15 mm 90-deg USB-C plug + 7 mm strain relief
 }
@@ -49,7 +49,7 @@ def render_assembly_iso(parts: dict[str, pv.PolyData], out_path: Path) -> None:
         st = PART_STYLES[k]
         pl.add_mesh(mesh, color=st["color"], opacity=st["opacity"], smooth_shading=True, split_sharp_edges=True)
     pl.camera_position = [(490, -510, 290), (0, 0, 158), (0, 0, 1)]
-    pl.add_title("LepiLED Rev 4.8 — Wire Bail, Lid-PCB, Sealed Collar & 0A070 PMMA", font_size=10, color="black")
+    pl.add_title("LepiLED Rev 4.9 — Unified M3 CSK, Bare Al Core, Wire Bail & XT PMMA", font_size=10, color="black")
     pl.add_axes()
     pl.screenshot(str(out_path))
     pl.close()
@@ -169,32 +169,32 @@ def render_section_annotated(
         _draw_vdim(ax, -66.0, p.z_cap_top_top, p.z_core_top, f"{p.core_protrusion_mm:.1f} mm\nchimney", x_ref0=-20.2, x_ref1=-r_core, text_dx=-3.0, ha="right", fontsize=8.4)
 
         _draw_hdim(ax, p.z_cap_top_top + 7.5, -r_brim, r_brim, f"Ø{p.cap_top_brim_od:.0f} mm rain eaves", z_ref0=p.z_cap_top_brim_rim_top, z_ref1=p.z_cap_top_brim_rim_top, text_dz=3.2, va="bottom", fontsize=8.5)
-        _draw_vdim(ax, 66.0, p.z_glass_bot, p.z_glass_top, f"{p.glass_length:.0f} mm\n0A070 PMMA\n(Ø{p.glass_od_nom:.0f}×{p.glass_id_nom:.0f})", x_ref0=r_shroud, x_ref1=r_shroud, text_dx=3.5, ha="left", fontsize=8.3)
+        _draw_vdim(ax, 66.0, p.z_glass_bot, p.z_glass_top, f"{p.glass_length:.0f} mm\nXT PMMA\n(Ø{p.glass_od_nom:.0f}×{p.glass_id_nom:.0f})", x_ref0=r_shroud, x_ref1=r_shroud, text_dx=3.5, ha="left", fontsize=8.3)
         _draw_vdim(ax, 66.0, 0.0, p.z_lid_bot_start, f"{p.z_lid_bot_start:.1f} mm skirt", x_ref0=r_base, x_ref1=43.0, text_dx=3.5, ha="left", fontsize=8.3)
 
         _draw_callout(ax, (-1.5, p.z_bail_top_center - 6.0), (-56.0, p.z_bail_top_center - 12.0), f"DIY C-clip wire bail\n({p.bail_clearance_above_finial_mm:.0f} mm hook clr; £0)", ha="right")
         _draw_callout(ax, (15.0, p.z_hang_hole), (56.0, p.z_hang_hole - 6.0), "Ø8→4.0 mm snap-fit\nwire-bail pivot bushing")
-        _draw_callout(ax, (26.0, p.pcb_z_fcu), (56.0, p.pcb_z_fcu + 10.0), "Lid-mounted PCB (SMD UP)\non M2.5 lid standoffs")
+        _draw_callout(ax, (26.0, p.pcb_z_fcu), (56.0, p.pcb_z_fcu + 10.0), "Lid-mounted PCB (SMD UP)\non M3 lid standoffs + nylon wash.")
         _draw_callout(ax, (15.0, 12.0), (56.0, 32.0), "SW1 + real 18.6 mm boot\n(3.4 mm recessed in skirt)")
-        _draw_callout(ax, (-20.5, 16.0), (-56.0, -8.0), "Blind-bolted conical\nsplit clamp + 15 mm USB-C", ha="right")
+        _draw_callout(ax, (-20.5, 16.0), (-56.0, -8.0), "Blind-bolted conical split\nclamp (flush M3 CSK)", ha="right")
     else:
         _draw_vdim(ax, -66.0, p.z_core_bot, p.z_core_top, f"{p.core_length:.0f} mm\nstock Al tube", x_ref0=-r_core, x_ref1=-r_core, text_dx=-3.0, ha="right", fontsize=8.5)
         _draw_vdim(ax, 66.0, p.z_led_vis, p.z_led_uv, f"{p.axial_uv_to_vis_mm:.0f} mm\nstar pitch", x_ref0=20.0, x_ref1=20.0, text_dx=3.5, ha="left", fontsize=8.5)
         _draw_hdim(ax, p.z_cap_top_top + 7.5, -r_brim, r_brim, f"Ø{p.cap_top_brim_od:.0f} mm eaves / 40.4 mm collar", z_ref0=p.z_cap_top_brim_rim_top, z_ref1=p.z_cap_top_brim_rim_top, text_dz=3.2, va="bottom", fontsize=8.4)
 
         _draw_callout(ax, (-16.0, p.z_bail_top_center - 16.0), (-56.0, p.z_bail_top_center - 14.0), "DIY C-clip wire bail\n(~175 mm coat hanger; self-clamps!)", ha="right")
-        _draw_callout(ax, (15.0, p.z_hang_hole), (56.0, p.z_hang_hole - 6.0), "Chimney-only matte black\n+ Ø4.0 mm snap bushings")
-        _draw_callout(ax, (21.0, p.z_cap_top_lock), (56.0, p.z_cap_top_lock - 6.0), "2× M3×10 top lock\n(4.65 mm collar wall, 0 holes)")
-        _draw_callout(ax, (18.0, p.z_led_uv), (56.0, p.z_led_uv + 16.0), "8× 20 mm stars edge-clamped\n(R=11.7 mm + Ø7 nylon washer)")
+        _draw_callout(ax, (15.0, p.z_hang_hole), (56.0, p.z_hang_hole - 6.0), "Unpainted bare mill Al\n+ Ø4.0 mm snap bushings")
+        _draw_callout(ax, (21.0, p.z_cap_top_lock), (56.0, p.z_cap_top_lock - 6.0), "2× M3×10 CSK top lock\n(4.65 mm collar wall, 0 holes)")
+        _draw_callout(ax, (18.0, p.z_led_uv), (56.0, p.z_led_uv + 16.0), "8× Convoy 20 mm Cu stars\n(M3 CSK + steel & Ø7 nylon wash.)")
         _draw_callout(ax, (26.5, p.z_glass_bot + 7.5), (56.0, p.z_glass_bot + 10.0), "Solid R=24.5 mm hub\n+ 60×3.5 VMQ50 O-ring")
-        _draw_callout(ax, (11.0, p.z_anchor_pin), (56.0, p.z_anchor_pin - 20.0), "Staggered core anchor\n(±Y bolts / ±X CSK pins)")
+        _draw_callout(ax, (11.0, p.z_anchor_pin), (56.0, p.z_anchor_pin - 20.0), "Staggered core anchor\n(±Y flush CSK / ±X CSK pins)")
 
     mass_text = (
         f"Approx. Weight: ~{mass['total_fdm_petg_g']:.0f} g PETG\n"
         f"  (~{mass['total_fdm_asa_g']:.0f} g ASA)\n"
         f"  • Printed shell:    {mass['petg_fdm_62pct_g']:.0f} g\n"
         f"  • 30×30×3 Al core:  {mass['al_core_3mm_g']:.0f} g\n"
-        f"  • 0A070 PMMA tube:   {mass['uvt_pmma_shroud_g']:.0f} g\n"
+        f"  • XT PMMA tube:     {mass['uvt_pmma_shroud_g']:.0f} g\n"
         f"  • Stars / PCB / HW: {mass['elec_stars_hardware_g']:.0f} g\n"
         f"Envelope: {p.total_height_mm:.1f} × Ø{p.cap_bot_base_od:.1f} mm"
     )
@@ -239,7 +239,7 @@ def main() -> None:
     render_section_annotated(
         parts, p, mass,
         bounds=(-100, 100, 0, 100, -10, 330),
-        title="Section XZ (Y = 0) — Rev 4.8 C-Clip Wire Bail, Sealed Collar & Edge-Clamped Stars",
+        title="Section XZ (Y = 0) — Rev 4.9 Bare Al Core, Wire Bail & Convoy Cu DTP Stars",
         cam_pos=[(0, -760, 152), (0, 0, 152), (0, 0, 1)],
         plane="XZ",
         out_path=cad_dir / "assembly_section_xz.png",
@@ -247,15 +247,15 @@ def main() -> None:
     render_section_annotated(
         parts, p, mass,
         bounds=(-100, 0, -100, 100, -10, 330),
-        title="Section YZ (X = 0) — Rev 4.8 Wire Bail, Lid-Mounted PCB, Blind Clamp & Real SW1 Boot",
+        title="Section YZ (X = 0) — Rev 4.9 Unified M3 CSK, Lid-Mounted PCB & Blind Clamp",
         cam_pos=[(760, 0, 152), (0, 0, 152), (0, 0, 1)],
         plane="YZ",
         out_path=cad_dir / "assembly_section_yz.png",
     )
-    render_cap_detail(cad_dir / "mech_lid_bot.stl", "MECH-LID-BOT (4x M2.5 Standoffs + Blind Clamp + Recessed Vent)", 32.0, cad_dir / "lid_bot_detail.png")
-    render_cap_detail(cad_dir / "mech_cap_bot.stl", "MECH-CAP-BOT (22 mm Skirt + Straight Ø71.6 Bore + Intact Ribs)", 44.0, cad_dir / "cap_bot_detail.png")
-    render_cap_detail(cad_dir / "mech_cap_top.stl", "MECH-CAP-TOP (Lofted Roof + 9.5 mm Solid Collar — 0 Roof Holes!)", 192.0, cad_dir / "cap_top_detail.png")
-    print("Rendered all 6 Rev 4.8 CAD PNGs cleanly.")
+    render_cap_detail(cad_dir / "mech_lid_bot.stl", "MECH-LID-BOT (8.5 mm Thick + 4x M3 Standoffs + Blind M3x5 + Flush CSK)", 32.0, cad_dir / "lid_bot_detail.png")
+    render_cap_detail(cad_dir / "mech_cap_bot.stl", "MECH-CAP-BOT (22 mm Skirt + Straight Ø71.6 Bore + Flush CSK Anchor)", 44.0, cad_dir / "cap_bot_detail.png")
+    render_cap_detail(cad_dir / "mech_cap_top.stl", "MECH-CAP-TOP (Lofted Roof + 9.5 mm Solid Collar — 0 Roof Holes!)", 193.0, cad_dir / "cap_top_detail.png")
+    print("Rendered all 6 Rev 4.9 CAD PNGs cleanly.")
 
 
 if __name__ == "__main__":

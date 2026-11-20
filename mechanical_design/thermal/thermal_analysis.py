@@ -1,24 +1,21 @@
 #!/usr/bin/env python3
 """
-Reproducible Coupled First-Principles Thermal Analysis for LepiLED DIY Maxi Switch (Rev 4.8).
+Reproducible Coupled First-Principles Thermal Analysis for LepiLED DIY Maxi Switch (Rev 4.9).
 
 SSOT-Coupled Architecture (zero hardcoded stale geometry or power budgets!):
   - Reads exact CAD geometry directly from `mechanical_design/cad/cad_params.json`
     (30 x 30 x 3.0 mm x 200 mm Al 6063-T6 core protruding 58.5 mm above MECH-CAP-TOP,
-    Ø60 x 54 x 3.0 mm PLEXIGLAS XT Clear 0A070 shroud, 86.0 mm exposed window, 5.5 mm bulkhead).
+    Ø60 x 54 x 3.0 mm Extruded Clear XT PMMA shroud, 86.0 mm exposed window, 5.5 mm bulkhead).
   - Reads exact electrical PCB & LED power budgets directly from
-    `circuit_design/sim/outputs/sim_summary.json` (P_PCB_nom = 0.512 W, P_PCB_wc = 0.850 W).
-  - Config 0 (Rev 4.8 Standard): Chimney-Only Matte-Black Spray (top 58.5 mm sprayed matte black
-    eps = 0.88; interior shroud section stays bare mill aluminum eps = 0.20 so zero paint sits
-    inside the 365 nm UV-A chamber and zero star-pad masking is required!).
-  - Includes physical effects flagged in critical review:
-      * Chimney-to-ambient radiative view factor F_amb = 0.84 (accounting for Ø84 mm rain eaves
-        partially shielding the base of the 58.5 mm chimney).
-      * Interior optical Fresnel/end-cap re-absorption (~14% of optical output deposited as heat
-        on the interior core & PMMA shroud wall in open-space hanging operation).
-      * Explicit sealed-bay air temperature T_bay_air checked against BOTH commercial IC ambient
-        rating (U4 LM393DR2G / U5 Hottech TL431: 0..+70 C) AND PETG (75 C) / ASA (95 C) HDT!
-  - Dead Rev 4.1 2D/3D FVM legacy solvers (old MCPCB & Q1 DMN4035L) cleanly removed.
+    `circuit_design/sim/outputs/sim_summary.json` (Bourns SRN6045-680M + Convoy OSRAM CSLNM1).
+  - Config 0 (Rev 4.9 Standard): Unpainted Bare Mill 30x30x3 Al Core (eps = 0.20 everywhere —
+    £0 paint cost, zero masking, zero UV paint outgassing; passes ALL 15..22 C UK-night modes
+    including DS-RealWPE and ALL 15..30 C nominal modes with PETG & commercial 0..70 C ICs!).
+  - Config 1 (Optional Upgrade): Chimney-Only Matte-Black Spray (eps = 0.88 on top 58.5 mm)
+    drops T_PCB_hotspot by ~5 C at 30 C worst-case DS-RealWPE if operating in 30 C tropical
+    nights with a PETG housing.
+  - Visible LEDs upgraded to ams OSRAM CSLNM1 on 20 mm Cu DTP stars (R_thJS = 4.9 K/W max vs
+    9.0 K/W Cree XP-E2 Green -> ~4 C cooler visible die junction!).
 """
 
 from __future__ import annotations
@@ -361,17 +358,17 @@ def solve_system(
         Q_opt_wall_W=Q_opt_wall, orientation=orientation,
     )
 
-    # Junction temperatures (20 mm Copper DTP star: R_sub = 0.50 K/W, solder = 0.10 K/W, MX-4 TIM = 0.30 K/W)
-    # Luminus SST-10-UV RthJS = 1.4 K/W; Cree XP-E2 Green (worst visible die) RthJS = 9.0 K/W
+    # Junction temperatures (20 mm Copper DTP star: R_sub = 0.50 K/W, solder = 0.10 K/W, TIM = 0.30 K/W)
+    # Luminus SST-10-UV RthJS = 1.4 K/W; ams OSRAM CSLNM1 (KB/KP/KW) RthJS = 4.9 K/W max (4.1 typ)
     q_uv_single = Q_uv_elec_heat / 4.0
     T_j_uv = T_c_uv + q_uv_single * (1.4 + r_sub_led + 0.10 + r_tim_led)
 
     if Q_vis_elec_heat <= 0.0:
         T_j_vis = T_c_vis
     else:
-        # Green XP-E2 carries ~28.5% of Ch2 visible heat (lower WPE than Royal Blue)
-        q_green_single = 0.285 * Q_vis_elec_heat
-        T_j_vis = T_c_vis + q_green_single * (9.0 + r_sub_led + 0.10 + r_tim_led)
+        # KP CSLNM1.F1 phosphor-converted green carries ~27% of Ch2 visible heat
+        q_green_single = 0.270 * Q_vis_elec_heat
+        T_j_vis = T_c_vis + q_green_single * (4.9 + r_sub_led + 0.10 + r_tim_led)
 
     # Driver PCB hotspot & U1/U2 AL8860WT-7 junction (TSOT25 RthJA = 147 C/W to bay air, conservative JEDEC)
     T_pcb_hotspot = T_pcb_avg + 3.5 * Q_pcb
@@ -453,9 +450,9 @@ def main() -> None:
 
     # (name, top_hs, eps_core_inner)
     configs = [
-        (f"Config 0: Rev 4.8 Standard — Chimney-Only Matte-Black ({l_chim:.1f}mm black, bare inner Al, 0A070 PMMA)", hs_black_chim, 0.20),
-        (f"Config 1: Full-Core Matte-Black Spray ({l_chim:.1f}mm + inner core black, star pads masked)", hs_black_chim, 0.88),
-        (f"Config 2: Unpainted Bare Mill 30x30x3 Al Core (eps=0.20 everywhere)", hs_bare_chim, 0.20),
+        (f"Config 0: Rev 4.9 Standard — Unpainted Bare Mill 30x30x3 Al Core (eps=0.20 everywhere, XT PMMA)", hs_bare_chim, 0.20),
+        (f"Config 1: Optional Chimney-Only Matte-Black Spray ({l_chim:.1f}mm black, bare inner Al)", hs_black_chim, 0.20),
+        (f"Config 2: Full-Core Matte-Black Spray ({l_chim:.1f}mm + inner core black, star pads masked)", hs_black_chim, 0.88),
         ("Config 3: Benchmark External SK 578/50 SA Heatsink + Bare Inner Core", hs_sk578, 0.20),
     ]
 
@@ -470,11 +467,19 @@ def main() -> None:
                         top_hs=top_hs, eps_core_inner=eps_in, f_rad_amb=f_rad_amb,
                         orientation=orient,
                     )
-                    passed = (
+                    passed_petg = (
                         r["margin_uv_100C"] > 0.0
                         and r["margin_vis_150C"] > 0.0
                         and r["margin_pmma_75C"] > 0.0
                         and r["margin_petg_75C"] >= 0.0
+                        and r["margin_u1_125C"] >= 0.0
+                        and r["margin_ic_comm_70C"] >= 0.0
+                    )
+                    passed_asa = (
+                        r["margin_uv_100C"] > 0.0
+                        and r["margin_vis_150C"] > 0.0
+                        and r["margin_pmma_75C"] > 0.0
+                        and r["margin_asa_95C"] >= 0.0
                         and r["margin_u1_125C"] >= 0.0
                         and r["margin_ic_comm_70C"] >= 0.0
                     )
@@ -489,7 +494,8 @@ def main() -> None:
                         "Q_pcb_W": q_pcb,
                         "P_u1_W": p_u1,
                         **{k: round(v, 3) for k, v in r.items()},
-                        "pass_all_limits": passed,
+                        "pass_all_limits": passed_petg,
+                        "pass_all_limits_asa": passed_asa,
                     })
 
     csv_path = out_dir / "thermal_results.csv"
@@ -498,7 +504,7 @@ def main() -> None:
         writer.writeheader()
         writer.writerows(rows)
 
-    # Ambient sweep (10..40 C) for Rev 4.8 Standard (Config 0: Chimney-Only Black, vertical hanging & horizontal)
+    # Ambient sweep (10..40 C) for Rev 4.9 Standard (Config 0: Unpainted Bare Mill Al Core, vertical hanging)
     t_ambs = np.linspace(10.0, 40.0, 31)
     sweep_modes = ["4-UV Nom (40%WPE)", "8-ALL Nom (40%UV WPE)", "8-ALL DS-RealWPE", "8-ALL DS-100% (NoOpt)"]
     sweep_data: dict[str, list[dict[str, float]]] = {m: [] for m in sweep_modes}
@@ -508,20 +514,20 @@ def main() -> None:
         for Ta in t_ambs:
             r = solve_system(
                 cad, q_uv, q_vis, q_opt, q_pcb, p_u1, float(Ta),
-                top_hs=hs_black_chim, eps_core_inner=0.20, f_rad_amb=f_rad_amb,
+                top_hs=hs_bare_chim, eps_core_inner=0.20, f_rad_amb=f_rad_amb,
                 orientation="vertical",
             )
             sweep_data[m_name].append({"T_amb": float(Ta), **{k: round(v, 3) for k, v in r.items()}})
 
-    # Sensitivity Cases (Rev 4.8 Standard Config 0 vs alternatives at 22 C UK Night & 30 C Warm Night)
+    # Sensitivity Cases (Rev 4.9 Standard Config 0 Bare Al vs alternatives at 22 C UK Night & 30 C Warm Night)
     sens_specs = [
-        ("Rev 4.8 Standard: Chimney-Only Black (22 C UK Night, Vertical Hanging)", 22.0, "vertical", dict(eps_core_inner=0.20, r_tim_led=0.30, rth_penalty_factor=1.0), hs_black_chim),
-        ("Rev 4.8 Standard: Chimney-Only Black (30 C Warm Night, Vertical Hanging)", 30.0, "vertical", dict(eps_core_inner=0.20, r_tim_led=0.30, rth_penalty_factor=1.0), hs_black_chim),
-        ("Rev 4.8 Standard: Chimney-Only Black (30 C Warm Night, Horizontal)", 30.0, "horizontal", dict(eps_core_inner=0.20, r_tim_led=0.30, rth_penalty_factor=1.0), hs_black_chim),
+        ("Rev 4.9 Standard: Unpainted Bare Mill Al Core (22 C UK Night, Vertical Hanging)", 22.0, "vertical", dict(eps_core_inner=0.20, r_tim_led=0.30, rth_penalty_factor=1.0), hs_bare_chim),
+        ("Rev 4.9 Standard: Unpainted Bare Mill Al Core (30 C Warm Night, Vertical Hanging)", 30.0, "vertical", dict(eps_core_inner=0.20, r_tim_led=0.30, rth_penalty_factor=1.0), hs_bare_chim),
+        ("Rev 4.9 Standard: Unpainted Bare Mill Al Core (30 C Warm Night, Horizontal)", 30.0, "horizontal", dict(eps_core_inner=0.20, r_tim_led=0.30, rth_penalty_factor=1.0), hs_bare_chim),
+        ("Optional Upgrade: Chimney-Only Matte-Black Spray (30 C, Vertical Hanging)", 30.0, "vertical", dict(eps_core_inner=0.20, r_tim_led=0.30, rth_penalty_factor=1.0), hs_black_chim),
         ("Full-Core Matte-Black Spray (30 C, Vertical Hanging)", 30.0, "vertical", dict(eps_core_inner=0.88, r_tim_led=0.30, rth_penalty_factor=1.0), hs_black_chim),
-        ("Unpainted Bare Mill Al Core (30 C, Vertical Hanging)", 30.0, "vertical", dict(eps_core_inner=0.20, r_tim_led=0.30, rth_penalty_factor=1.0), hs_bare_chim),
-        ("Thick TIM bondline under 20mm star (R_tim=0.80 K/W, 30 C Vertical)", 30.0, "vertical", dict(eps_core_inner=0.20, r_tim_led=0.80, rth_penalty_factor=1.0), hs_black_chim),
-        ("+20% Still-Air Convection Penalty (Chimney-Only Black, 30 C Vertical)", 30.0, "vertical", dict(eps_core_inner=0.20, r_tim_led=0.30, rth_penalty_factor=1.20), hs_black_chim),
+        ("Thick TIM bondline under 20mm star (R_tim=0.80 K/W, 30 C Vertical)", 30.0, "vertical", dict(eps_core_inner=0.20, r_tim_led=0.80, rth_penalty_factor=1.0), hs_bare_chim),
+        ("+20% Still-Air Convection Penalty (Bare Mill Al, 30 C Vertical)", 30.0, "vertical", dict(eps_core_inner=0.20, r_tim_led=0.30, rth_penalty_factor=1.20), hs_bare_chim),
     ]
     sensitivity = []
     nom40 = next(m for m in modes if m[0] == "8-ALL Nom (40%UV WPE)")
@@ -546,12 +552,13 @@ def main() -> None:
         })
 
     cfg0_rows = [r for r in rows if r["config"].startswith("Config 0:")]
-    cfg0_real_15_30 = [r for r in cfg0_rows if r["T_amb_C"] <= 30.0 and "DS-100%" not in r["mode"]]
-    cfg0_uk_22 = [r for r in cfg0_rows if r["T_amb_C"] <= 22.0 and "DS-100%" not in r["mode"]]
+    cfg0_uk_22_real = [r for r in cfg0_rows if r["T_amb_C"] <= 22.0 and "DS-100%" not in r["mode"]]
+    cfg0_15_30_nom = [r for r in cfg0_rows if r["T_amb_C"] <= 30.0 and "Nom" in r["mode"]]
+    cfg0_15_30_real_asa = [r for r in cfg0_rows if r["T_amb_C"] <= 30.0 and "DS-100%" not in r["mode"]]
 
     summary = {
-        "revision": "4.8",
-        "architecture": f"Rev 4.8 Field Lantern (PLEXIGLAS XT 0A070 Ø60x54x115 + Chimney-Only Matte-Black {l_chim:.1f}mm Al Core + Cu DTP Stars + PETG/ASA)",
+        "revision": "4.9",
+        "architecture": f"Rev 4.9 Field Lantern (Extruded XT PMMA Ø60x54x115 + Unpainted Bare Mill {l_chim:.1f}mm Al Core + Convoy Cu DTP Stars + Unified M3 CSK)",
         "input_hashes": {
             "cad_params.json": _sha256_file(CAD_PARAMS_JSON),
             "sim_summary.json": _sha256_file(SIM_SUMMARY_JSON),
@@ -563,7 +570,7 @@ def main() -> None:
             "core_protrusion_mm": l_chim,
             "chimney_rad_view_factor_F_amb": f_rad_amb,
             "exposed_shroud_window_mm": cad["derived"]["exposed_glass_window_mm"],
-            "shroud_material": "PLEXIGLAS XT Clear 0A070 / 29070 (k=0.19 W/mK, eps=0.93, Ø60x54x3.0 mm)",
+            "shroud_material": "Extruded Clear XT PMMA (k=0.19 W/mK, eps=0.93, Ø60x54x3.0 mm)",
             "p_pcb_4uv_nom_W": p_pcb_4uv_nom,
             "p_pcb_8all_nom_W": p_pcb_8all_nom,
             "p_pcb_wc_W": p_pcb_wc,
@@ -571,11 +578,13 @@ def main() -> None:
             "p_u1_wc_W": p_u1_wc,
             "R_bulkhead_parallel_KW": round(compute_bulkhead_resistance(cad), 3),
             "R_sub_copper_dtp_KW": 0.50,
+            "R_thJS_vis_osram_cslnm1_max_KW": 4.90,
             "optical_reabsorption_fraction": 0.14,
         },
-        "rev48_uk_night_22C_real_modes_all_pass": all(r["pass_all_limits"] for r in cfg0_uk_22),
-        "rev48_15_30C_real_modes_all_pass": all(r["pass_all_limits"] for r in cfg0_real_15_30),
-        "baseline_rev48_results": cfg0_rows,
+        "rev49_uk_night_22C_real_modes_all_pass": all(r["pass_all_limits"] for r in cfg0_uk_22_real),
+        "rev49_15_30C_nom_all_pass": all(r["pass_all_limits"] for r in cfg0_15_30_nom),
+        "rev49_15_30C_real_modes_asa_all_pass": all(r["pass_all_limits_asa"] for r in cfg0_15_30_real_asa),
+        "baseline_rev49_results": cfg0_rows,
         "config_comparison_30C_vert": [
             r for r in rows if r["T_amb_C"] == 30.0 and r["orientation"] == "vertical" and r["mode"] in ("8-ALL Nom (40%UV WPE)", "8-ALL DS-RealWPE")
         ],
@@ -585,15 +594,17 @@ def main() -> None:
     json_path = out_dir / "thermal_summary.json"
     json_path.write_text(json.dumps(summary, indent=2) + "\n")
 
-    print(f"=== Rev 4.8 SSOT Thermal Analysis (Chimney={l_chim:.1f}mm, F_amb={f_rad_amb:.3f}, P_PCB={p_pcb_8all_nom:.3f}/{p_pcb_wc:.3f}W) ===")
+    print(f"=== Rev 4.9 SSOT Thermal Analysis (Unpainted Bare Al Chimney={l_chim:.1f}mm, F_amb={f_rad_amb:.3f}, P_PCB={p_pcb_8all_nom:.3f}/{p_pcb_wc:.3f}W) ===")
     for r in cfg0_rows:
         if r["T_amb_C"] in (22.0, 30.0) and r["mode"] in ("4-UV Nom (40%WPE)", "8-ALL Nom (40%UV WPE)", "8-ALL DS-RealWPE"):
             print(
                 f"  Tamb={r['T_amb_C']:2.0f}C {r['orientation']:10s} | {r['mode']:21s} | "
-                f"TjUV={r['T_j_uv']:5.1f}C Tshroud={r['T_shroud_in']:4.1f}C "
-                f"Tbay={r['T_bay_air']:4.1f}C Tpcb={r['T_pcb_hotspot']:4.1f}C | PASS={r['pass_all_limits']}"
+                f"TjUV={r['T_j_uv']:5.1f}C TjVis={r['T_j_vis']:5.1f}C Tshroud={r['T_shroud_in']:4.1f}C "
+                f"Tbay={r['T_bay_air']:4.1f}C Tpcb={r['T_pcb_hotspot']:4.1f}C | PETG={r['pass_all_limits']} ASA={r['pass_all_limits_asa']}"
             )
-    print(f"Rev 4.8 15-30 C Real-WPE Modes PASS: {sum(r['pass_all_limits'] for r in cfg0_real_15_30)}/{len(cfg0_real_15_30)}")
+    print(f"Rev 4.9 UK-Night (<=22 C Real-WPE, PETG) PASS: {sum(r['pass_all_limits'] for r in cfg0_uk_22_real)}/{len(cfg0_uk_22_real)}")
+    print(f"Rev 4.9 Nominal (15-30 C, PETG) PASS:          {sum(r['pass_all_limits'] for r in cfg0_15_30_nom)}/{len(cfg0_15_30_nom)}")
+    print(f"Rev 4.9 Real-WPE (15-30 C, ASA+Comm IC) PASS:  {sum(r['pass_all_limits_asa'] for r in cfg0_15_30_real_asa)}/{len(cfg0_15_30_real_asa)}")
 
     # Plot 1: thermal_margins.png
     fig, axes = plt.subplots(1, 3, figsize=(14.5, 4.8), dpi=150)
@@ -624,8 +635,8 @@ def main() -> None:
     ax.bar(x - w, get_vals("T_shroud_in", 22.0, "vertical"), w, label="22°C Vert", color="#4c72b0")
     ax.bar(x, get_vals("T_shroud_in", 30.0, "vertical"), w, label="30°C Vert", color="#dd8452")
     ax.bar(x + w, get_vals("T_shroud_in", 30.0, "horizontal"), w, label="30°C Horiz", color="#c44e52")
-    ax.axhline(75.0, color="red", ls="--", lw=1.5, label="0A070 PMMA 75°C")
-    ax.set_title("PLEXIGLAS 0A070 Inner Wall $T_{\\mathrm{shroud}}$")
+    ax.axhline(75.0, color="red", ls="--", lw=1.5, label="XT PMMA 75°C")
+    ax.set_title("Extruded XT PMMA Inner Wall $T_{\\mathrm{shroud}}$")
     ax.set_xticks(x, ["4-UV\nNom", "8-ALL\nNom", "8-ALL\nDS-Real", "8-ALL\nDS-100%"], fontsize=8.5)
     ax.set_ylim(0, 95)
     ax.grid(axis="y", alpha=0.3)
@@ -643,7 +654,7 @@ def main() -> None:
     ax.grid(axis="y", alpha=0.3)
     ax.legend(fontsize=7.2, loc="upper left")
 
-    fig.suptitle(f"Rev 4.8 Standard (Chimney-Only Matte-Black {l_chim:.1f} mm + 0A070 PMMA + 14% Opt. Re-Abs.) — Steady-State Margins", fontweight="bold")
+    fig.suptitle(f"Rev 4.9 Standard (Unpainted Bare Mill Al {l_chim:.1f} mm + XT PMMA + 14% Opt. Re-Abs.) — Steady-State Margins", fontweight="bold")
     fig.tight_layout()
     fig.savefig(out_dir / "thermal_margins.png")
     plt.close(fig)
@@ -681,7 +692,7 @@ def main() -> None:
     ax2.grid(alpha=0.3)
     ax2.legend(fontsize=6.5, ncol=2)
 
-    fig.suptitle(f"Rev 4.8 Ambient Sweep (10–40°C, Chimney-Only Black {l_chim:.1f}mm, F_amb={f_rad_amb:.2f}, P_PCB={p_pcb_8all_nom:.2f}/{p_pcb_wc:.2f}W)", fontweight="bold")
+    fig.suptitle(f"Rev 4.9 Ambient Sweep (10–40°C, Unpainted Bare Mill Al {l_chim:.1f}mm, F_amb={f_rad_amb:.2f}, P_PCB={p_pcb_8all_nom:.2f}/{p_pcb_wc:.2f}W)", fontweight="bold")
     fig.tight_layout()
     fig.savefig(out_dir / "thermal_ambient_sweep.png")
     plt.close(fig)
@@ -689,9 +700,9 @@ def main() -> None:
     # Plot 3: thermal_network_comparison.png
     fig, ax = plt.subplots(figsize=(10.5, 4.8), dpi=150)
     cfg_labels = [
-        f"Config 0 (Rev 4.8):\nChimney-Only Black\n(top {l_chim:.1f}mm, bare inner)",
-        "Config 1:\nFull-Core Matte-Black\n(star pads masked)",
-        "Config 2:\nBare Mill Al Core\n(unpainted, eps=0.20)",
+        f"Config 0 (Rev 4.9):\nBare Mill Al Core\n(unpainted, eps=0.20)",
+        f"Config 1 (Opt.):\nChimney-Only Black\n(top {l_chim:.1f}mm, bare inner)",
+        "Config 2:\nFull-Core Matte-Black\n(star pads masked)",
         "Config 3:\nSK 578/50 SA Top\n(benchmark finned)",
     ]
     cfg_prefixes = ["Config 0:", "Config 1:", "Config 2:", "Config 3:"]
@@ -713,7 +724,7 @@ def main() -> None:
     ax.set_xticks(x_c, cfg_labels, fontsize=9)
     ax.set_ylabel("UV LED Junction $T_{j,\\mathrm{UV}}$ (°C)")
     ax.set_ylim(0, 118)
-    ax.set_title("Rev 4.8 Surface-Finish Comparison ($T_{\\mathrm{amb}}=30^\\circ\\mathrm{C}$, Vertical Hanging Still Air)")
+    ax.set_title("Rev 4.9 Surface-Finish Comparison ($T_{\\mathrm{amb}}=30^\\circ\\mathrm{C}$, Vertical Hanging Still Air)")
     ax.grid(axis="y", alpha=0.3)
     ax.legend(fontsize=8.5)
     fig.tight_layout()

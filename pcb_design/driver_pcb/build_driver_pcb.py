@@ -541,30 +541,30 @@ def create_footprints():
     make_jst_xh("JST_XH_B2B_P2.50mm", "B2B-XH-A", 2)
     make_jst_xh("JST_XH_B3B_P2.50mm", "B3B-XH-A", 3)
 
-    # 9. MountingHole_2.7mm_M2.5_NPTH (electrically isolated unplated hole, fixes Opus A-H3!)
+    # 9. MountingHole_3.2mm_M3_NPTH (Rev 4.9 unified M3 hardware — isolated unplated hole!)
     fp = pcbnew.FOOTPRINT(None)
     fp.SetReference("H")
-    fp.SetValue("MountingHole_2.7mm_M2.5_NPTH")
+    fp.SetValue("MountingHole_3.2mm_M3_NPTH")
     fp.SetAttributes(pcbnew.FP_EXCLUDE_FROM_BOM | pcbnew.FP_EXCLUDE_FROM_POS_FILES | pcbnew.FP_BOARD_ONLY)
     p = pcbnew.PAD(fp)
     p.SetNumber("")
     p.SetAttribute(pcbnew.PAD_ATTRIB_NPTH)
     p.SetShape(pcbnew.PAD_SHAPE_CIRCLE)
     p.SetPosition(lpt(0.0, 0.0))
-    p.SetSize(pcbnew.VECTOR2I(mm(2.70), mm(2.70)))
-    p.SetDrillSize(pcbnew.VECTOR2I(mm(2.70), mm(2.70)))
+    p.SetSize(pcbnew.VECTOR2I(mm(3.20), mm(3.20)))
+    p.SetDrillSize(pcbnew.VECTOR2I(mm(3.20), mm(3.20)))
     p.SetLayerSet(lset(pcbnew.F_Mask, pcbnew.B_Mask))
-    p.SetLocalSolderMaskMargin(mm(1.25))  # 2.70 + 2*1.25 = 5.20 mm clear washer seat!
+    p.SetLocalSolderMaskMargin(mm(1.40))  # 3.20 + 2*1.40 = 6.00 mm clear insulated washer seat!
     fp.Add(p)
     c = pcbnew.PCB_SHAPE(fp)
     c.SetShape(pcbnew.SHAPE_T_CIRCLE)
     c.SetLayer(pcbnew.F_CrtYd)
     c.SetWidth(mm(0.05))
     c.SetCenter(lpt(0.0, 0.0))
-    c.SetEnd(lpt(2.75, 0.0))
+    c.SetEnd(lpt(3.10, 0.0))
     fp.Add(c)
-    _setup_fp_texts(fp, ref_xy=(0.0, -3.40), val_xy=(0.0, +3.40), ref_layer=pcbnew.F_Fab, ref_sz=0.80)
-    save(fp, "MountingHole_2.7mm_M2.5_NPTH")
+    _setup_fp_texts(fp, ref_xy=(0.0, -3.60), val_xy=(0.0, +3.60), ref_layer=pcbnew.F_Fab, ref_sz=0.80)
+    save(fp, "MountingHole_3.2mm_M3_NPTH")
 
     # 10. Bare ENIG 1.0 mm SMD Test Point Pad ($0 BOM/PCBA, paste-free)
     fp = pcbnew.FOOTPRINT(None)
@@ -990,10 +990,10 @@ def write_kicad_sch(syms, comp_rows):
         "J2": "lepiled:JST_XH_B2B_P2.50mm",
         "J3": "lepiled:JST_XH_B2B_P2.50mm",
         "J4": "lepiled:JST_XH_B3B_P2.50mm",
-        "H1": "lepiled:MountingHole_2.7mm_M2.5_NPTH",
-        "H2": "lepiled:MountingHole_2.7mm_M2.5_NPTH",
-        "H3": "lepiled:MountingHole_2.7mm_M2.5_NPTH",
-        "H4": "lepiled:MountingHole_2.7mm_M2.5_NPTH",
+        "H1": "lepiled:MountingHole_3.2mm_M3_NPTH",
+        "H2": "lepiled:MountingHole_3.2mm_M3_NPTH",
+        "H3": "lepiled:MountingHole_3.2mm_M3_NPTH",
+        "H4": "lepiled:MountingHole_3.2mm_M3_NPTH",
         "TP1": "lepiled:TestPoint_Pad_D1.0mm",
         "TP2": "lepiled:TestPoint_Pad_D1.0mm",
         "TP3": "lepiled:TestPoint_Pad_D1.0mm",
@@ -1005,7 +1005,7 @@ def write_kicad_sch(syms, comp_rows):
         "Q2": "2N7002", "Q3": "2N7002",
         "F1": "1.5A/63V",
         "D1": "SST-10-UV", "D2": "SST-10-UV", "D3": "SST-10-UV", "D4": "SST-10-UV",
-        "D5": "XP-E2 RB", "D6": "XP-E2 RB", "D7": "XP-E2 GRN", "D8": "XP-E2 CW",
+        "D5": "OSRAM RB", "D6": "OSRAM RB", "D7": "OSRAM GRN", "D8": "OSRAM CW",
         "D9": "SS34", "D10": "SS34", "D11": "SMBJ22A", "D12": "RED LED",
         "D13": "ESD 24V (DNP)", "D14": "ESD 24V (DNP)", "D15": "BAV99", "D16": "BAV99",
         "L1": "68uH", "L2": "68uH",
@@ -1020,7 +1020,7 @@ def write_kicad_sch(syms, comp_rows):
         "C11": "1uF/50V", "C14": "100nF", "C15": "100nF", "C16": "100nF",
         "J1": "USB4085", "J2": "UV_STR", "J3": "VIS_STR", "J4": "MAXI_SW",
         "SW1": "7211SYZBE Gold", "SW1_BOOT": "759D02000 Boot",
-        "H1": "M2.5_NPTH", "H2": "M2.5_NPTH", "H3": "M2.5_NPTH", "H4": "M2.5_NPTH",
+        "H1": "M3_NPTH", "H2": "M3_NPTH", "H3": "M3_NPTH", "H4": "M3_NPTH",
         "TP1": "VIN_20V", "TP2": "V_REF", "TP3": "UVLO_OK", "TP4": "GND",
     }
 
@@ -1493,12 +1493,12 @@ def write_kicad_sch(syms, comp_rows):
   (uuid "{root_uuid}")
   (paper "A3")
   (title_block
-    (title "LepiLED DIY Maxi Switch — Rev 4.8 (ENIG Full-SMD)")
+    (title "LepiLED DIY Maxi Switch — Rev 4.9 (2-Reel Hybrid HASL)")
     (date "2026-11-20")
-    (rev "4.8")
+    (rev "4.9")
     (company "LepiLED Open-Source DIY Hardware")
     (comment 1 "CH224A 20V PD + 1.5A/63V Slo-Blo F1 + 2512 R7 + LM393/TL431 UVLO")
-    (comment 2 "72 RefDes (48 JLCPCB SMD + 4 THT + 2 DNP + 4 NPTH + 4 TP + 10 Off-Board)")
+    (comment 2 "72 RefDes (41 JLCPCB SMD [2 Ext] + 11 DIY + 2 DNP + 4 M3 NPTH + 4 TP)")
   )
   (lib_symbols
 {lib_sym_txt}
@@ -2087,7 +2087,7 @@ def place_non_overlapping_silkscreen(board: pcbnew.BOARD):
 
     # Accurate J2/J3/J4 pinout legends on B.SilkS (right beside THT solder joints, 100% clear of vias!)
     board_texts = [
-        ("LEPILED REV4.8 20V-PD", 0.0, +21.75, 0.80, pcbnew.B_SilkS, True),
+        ("LEPILED REV4.9 20V-PD", 0.0, +21.75, 0.80, pcbnew.B_SilkS, True),
         ("1:UV+ 2:UV-", -5.20, +16.40, 0.75, pcbnew.B_SilkS, True),
         ("1:VIS+ 2:VIS-", +5.20, +16.40, 0.75, pcbnew.B_SilkS, True),
         ("1:UV 2:GND 3:VIS", -1.90, -0.10, 0.72, pcbnew.B_SilkS, True),
@@ -2376,8 +2376,8 @@ def build_board(fp_map, short_val, comp_rows):
         pcbnew.B_Cu, nets["GND"], priority=0, min_thickness=0.20, clearance=0.22,
     )
 
-    # P0 Safety Fix: Circular r=2.80 mm (dia 5.60 mm) F.Cu + B.Cu copper keepout rule areas around
-    # ALL FOUR unplated M2.5 mounting holes H1..H4 so ZERO GND copper sits inside the 5.20 mm mask opening!
+    # P0 Safety Fix: Circular r=3.10 mm (dia 6.20 mm) F.Cu + B.Cu copper keepout rule areas around
+    # ALL FOUR unplated M3 mounting holes H1..H4 so ZERO GND copper sits inside the 6.00 mm washer seat!
     for href in ("H1", "H2", "H3", "H4"):
         hx, hy, _ = placements[href]
         ko = pcbnew.ZONE(board)
@@ -2388,7 +2388,7 @@ def build_board(fp_map, short_val, comp_rows):
         ko.SetLayerSet(lset(pcbnew.F_Cu, pcbnew.B_Cu))
         ol = ko.Outline()
         ol.NewOutline()
-        ko_r = 2.80
+        ko_r = 3.10
         n_seg = 32
         for k_i in range(n_seg):
             ang_rad = 2.0 * math.pi * k_i / n_seg
@@ -2757,11 +2757,11 @@ JLCPCB_ROT_OFFSET = {
 LCSC_MAP = {
     "Diodes AL8860WT-7": "C125330",         # Verified In-Stock Extended: AL8860WT-7 TSOT-25
     "WCH CH224A": "C42459160",              # Verified In-Stock Extended: CH224A ESSOP-10 (1.0 mm leaded)
-    "Littelfuse 046801.5NRHF": "C151143",   # Verified In-Stock Extended: 1.5 A / 63 V 1206 Slo-Blo fuse (50 A int)
-    "Sunlord SWPA6045S680MT": "C53663",     # Verified In-Stock Extended: 68 uH 1.1 A 6045 shielded inductor
-    "RUILON SMBJ22A": "C10214",             # Verified In-Stock Extended: 22 V 600 W Uni SMB TVS
-    "UNI-ROYAL 1206W4F300LT5E": "C59882",   # Verified In-Stock Extended: 0.30 R 1% 0.25 W 1206 sense resistor
-    "UNI-ROYAL 25121WF100KT4E": "C11254",   # Verified In-Stock Extended: 1.0 R 1% 1.0 W 2512 pulse damper resistor
+    "Littelfuse 046801.5NRHF": "C151143",   # Offloaded DIY 1206 Slo-Blo fuse (Farnell UK; LCSC ref retained)
+    "Bourns SRN6045-680M": "",              # Offloaded DIY 6045 inductor (Farnell UK)
+    "Littelfuse SMBJ22A": "",               # Offloaded DIY SMB TVS (Farnell UK)
+    "Bourns CRL1206-FW-R300ELF": "",        # Offloaded DIY 1206 0.30R shunt (Farnell UK)
+    "Vishay CRCW25121R00FKEG": "",          # Offloaded DIY 2512 1W pulse resistor (Farnell UK)
     "onsemi LM393DR2G": "C7955",            # Verified In-Stock Basic: LM393DR2G SOIC-8
     "Hottech TL431": "C181103",             # Verified In-Stock Basic: TL431 SOT-23 (1=REF, 2=K, 3=A)
     "Changjing 2N7002": "C8545",            # Verified In-Stock Basic: 2N7002 SOT-23
@@ -2958,12 +2958,12 @@ def verify_and_export(comp_rows, fp_map, short_val):
         check=True,
     )
 
-    # Patch driver_pcb-job.gbrjob to Green LPI / White Silk / ENIG / Rev 4.8
+    # Patch driver_pcb-job.gbrjob to Green LPI / White Silk / Lead-Free HASL / Rev 4.9
     gbrjob_path = GERBER_DIR / "driver_pcb-job.gbrjob"
     if gbrjob_path.exists():
         job = json.loads(gbrjob_path.read_text())
-        job.setdefault("GeneralSpecs", {})["Finish"] = "ENIG"
-        job["GeneralSpecs"]["ProjectId"] = {"Name": "driver_pcb", "GUID": uid("driver_pcb_proj"), "Revision": "4.8"}
+        job.setdefault("GeneralSpecs", {})["Finish"] = "HASL lead free"
+        job["GeneralSpecs"]["ProjectId"] = {"Name": "driver_pcb", "GUID": uid("driver_pcb_proj"), "Revision": "4.9"}
         for item in job.get("MaterialStackup", []):
             if item.get("Type") == "SolderMask":
                 item["Color"] = "Green"
@@ -2971,8 +2971,8 @@ def verify_and_export(comp_rows, fp_map, short_val):
                 item["Color"] = "White"
         gbrjob_path.write_text(json.dumps(job, indent=2) + "\n")
 
-    # Hard Gerber Audit: NPTH copper keepout + DNP paste exclusion
-    audit_gerber_npth_and_dnp(GERBER_DIR, [("D13", +6.90, -20.55), ("D14", +9.20, -20.55)], min_npth_r_mm=2.70)
+    # Hard Gerber Audit: M3 NPTH copper keepout (r >= 2.95 mm) + DNP paste exclusion
+    audit_gerber_npth_and_dnp(GERBER_DIR, [("D13", +6.90, -20.55), ("D14", +9.20, -20.55)], min_npth_r_mm=2.95)
 
     zip_path = GERBER_DIR / "driver_pcb_gerbers.zip"
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -3027,7 +3027,7 @@ def verify_and_export(comp_rows, fp_map, short_val):
                 elif ref in dnp_refs:
                     asm = "Optional DNP (Excluded from Paste & PCBA)"
                 else:
-                    asm = "SMD Turnkey PCBA (JLCPCB ENIG)"
+                    asm = "SMD Turnkey PCBA (JLCPCB HASL)"
                 w_pcba.writerow([short_val.get(ref, r["Value_Rating"]), ref, r["Package_Footprint"], lcsc, r["MPN"], asm])
 
     # Automatically derive Low-Hassle Full-SMD JLCPCB PCBA + DIY THT hand-solder CSVs
@@ -3132,7 +3132,7 @@ def verify_and_export(comp_rows, fp_map, short_val):
                 check=True,
             )
             tmp_svg.unlink()
-    print("driver_pcb (Rev 4.8 ENIG Full-SMD PCBA + H1..H4 Copper Keepout + 0 DRC) verification & exports completed cleanly.")
+    print("driver_pcb (Rev 4.9 Lead-Free HASL 2-Reel Hybrid PCBA + M3 H1..H4 Copper Keepout + 0 DRC) verification & exports completed cleanly.")
 
 
 def main():

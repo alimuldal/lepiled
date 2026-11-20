@@ -58,63 +58,61 @@ class LepiLEDParams:
     process: Literal["FDM", "SLS"] = "FDM"
 
     # Unified "Field Lantern" bottom housing (MECH-CAP-BOT: Z = 0.0 .. 88.5 mm, prints INVERTED!)
-    cap_bot_base_od: float = 92.4        # Cylindrical lower skirt OD (Z = 0 .. 36.0 mm -> 3.1 mm skirt wall!)
-    cap_bot_taper_start_z: float = 36.0  # Smooth 9.8-deg frustum taper from Ø92.4 (Z=36) -> Ø74.0 (Z=88.5)
+    cap_bot_base_od: float = 94.4        # Cylindrical lower skirt OD (Z = 0 .. 36.0 mm -> 3.1 mm skirt wall!)
+    cap_bot_taper_start_z: float = 36.0  # Smooth 10.8-deg frustum taper from Ø94.4 (Z=36) -> Ø74.0 (Z=89.5)
     cap_bot_collar_od: float = 74.0      # Upper shroud collar OD (matches MECH-CAP-TOP skirt OD!)
     cap_bot_skirt_h: float = 22.0        # Deepened skirt shielding real 18.6 mm SW1 boot by 3.4 mm!
-    cap_bot_skirt_id: float = 86.2       # Recesses Ø85.6 mm MECH-LID-BOT + 4x M3 bolt heads cleanly inside!
+    cap_bot_skirt_id: float = 88.2       # Recesses Ø87.6 mm MECH-LID-BOT + 4x flush M3 CSK screws cleanly inside!
     cap_bot_portal_w: float = 16.0       # 2x opposing 45-deg gothic-arch cable/drainage portals at ±Y (0 overhang!)
     cap_bot_portal_rect_h: float = 3.0   # + 8.0 mm 45-deg pitched arch crown = 11.0 mm portal height
     cap_bot_cavity_dia: float = 71.6     # Unobstructed straight Ø71.6 mm bore from spigot to ceiling!
     cap_bot_spigot_bore_dia: float = 71.6  # Matches cavity_dia -> straight-up lid+PCB+USB-C plug insertion!
-    cap_bot_ceiling_z: float = 62.5      # 2.6 mm clear above J2/J3/J4 mated plugs (56.9) + anchor heads (59.5)
-    cap_bot_core_bot_z: float = 68.0     # Core seat on 5.5 mm solid bulkhead (1 hidden internal bridge)
-    cap_bot_glass_bot_z: float = 74.0    # Shroud bottom seat (6.0 + 14.5 = 20.5 mm intact 4-wall core socket!)
+    cap_bot_ceiling_z: float = 63.5      # Flush CSK anchor bolts -> 5.6 mm clear above J2/J3/J4 mated plugs (57.9)!
+    cap_bot_core_bot_z: float = 69.0     # Core seat on 5.5 mm solid bulkhead (1 hidden internal bridge)
+    cap_bot_glass_bot_z: float = 75.0    # Shroud bottom seat (6.0 + 14.5 = 20.5 mm intact 4-wall core socket!)
     core_hub_od: float = 49.0            # Solid R = 24.5 mm central hub in BOTH caps (2.51 mm corner wall!)
 
-    # Recessed bottom lid w/ radial O-ring spigot + 4x integral M2.5 PCB standoffs (MECH-LID-BOT: Z = 22.0 .. 29.5)
-    lid_bot_od: float = 85.6             # Slips cleanly inside Ø86.2 mm integral skirt
-    lid_bot_thick: float = 7.5           # Z = 22.0 .. 29.5 mm (1.5 mm blind solid roof above M3x4 clamp inserts!)
-    lid_bot_bolt_r: float = 40.2         # 4x M3x12 SHCS at 45/135/225/315 deg (2.4 mm inner / 4.0 mm outer wall!)
+    # Recessed bottom lid w/ radial O-ring spigot + 4x integral M3 PCB standoffs (MECH-LID-BOT: Z = 22.0 .. 30.5)
+    lid_bot_od: float = 87.6             # Slips cleanly inside Ø88.2 mm integral skirt
+    lid_bot_thick: float = 8.5           # Z = 22.0 .. 30.5 mm (1.5 mm solid roof above std M3x5.0 clamp inserts!)
+    lid_bot_bolt_r: float = 40.0         # 4x M3x12 CSK flush lid screws (2.20 mm insert inner wall & 0.55 mm outer rim!)
     lid_spigot_od: float = 70.8          # Slides cleanly inside Ø71.6 mm bore (0.40 mm/side clearance)
     lid_spigot_id: float = 62.8          # 2.25 mm solid wall behind radial O-ring groove root (R_g = 33.65 mm)
-    lid_spigot_h: float = 7.0            # Z = 29.5 .. 36.5 mm
+    lid_spigot_h: float = 7.0            # Z = 30.5 .. 37.5 mm
 
     # Bottom lid radial O-ring (MECH-GASKET-3: standard 68 x 2.5 mm VMQ70 on Ø70.8 mm spigot, 0 overhang!)
     bot_oring_groove_od: float = 67.30   # Radial gland = (71.6 - 67.3)/2 = 2.15 mm -> 14.0% nom squeeze!
     bot_oring_cs: float = 2.5
-    bot_oring_flat_w: float = 2.8        # Z = 30.9 .. 33.7 mm + 1.75 mm 45-deg top ramp
+    bot_oring_flat_w: float = 2.8        # Z = 31.9 .. 34.7 mm + 1.75 mm 45-deg top ramp
 
-    # Brass heat-set inserts & fasteners (10x M3 + 4x M2.5 modeled explicitly in B-Rep check!)
+    # Unified M3 Brass Heat-Set Inserts & CSK Fasteners (ALL 14 inserts = identical workshop M3 x 5.0 x 4.2 mm!)
     m3_clearance_dia: float = 3.4
-    m3_insert_pilot_dia: float = 4.0     # M3 x 5.0 x 4.2 mm knurled brass heat-set insert pilot bore
+    m3_insert_pilot_dia: float = 4.0     # Standard M3 x 5.0 x 4.2 mm knurled brass heat-set insert pilot bore
     m3_insert_depth: float = 6.0
-    m3_insert_blind_depth: float = 6.0   # Blind M3x4 insert bore + 45-deg self-supporting cone in 7.5 mm lid (1.5 mm roof!)
-    m25_insert_pilot_dia: float = 3.3    # M2.5 x 4.0 x 3.5 mm knurled brass heat-set insert pilot bore
-    m25_insert_depth: float = 4.6
+    m3_insert_blind_depth: float = 7.0   # Blind M3x5.0 insert bore (5.1 mm) + 1.9 mm 45-deg cone in 8.5 mm lid (1.5 mm roof!)
 
     # Staggered internal dry-bay core anchor (MECH-CORE-ANCHOR: vertical bolts ±Y, cross-pins ±X -> ZERO clash!)
     anchor_w: float = 23.4               # Slips inside 24.0 x 24.0 mm Al core bore (0.30 mm/side clearance)
-    anchor_h_in_core: float = 19.0       # Z = 68.0 .. 87.0 mm inside Al bore
-    anchor_bolt_y: float = 6.5           # 2x M3x12 SHCS upward at (0.0, ±6.5 mm) through 5.5 mm bulkhead!
-    anchor_pin_z_rel: float = 13.0       # 2x M3x8 CSK cross-pins on ±X at Z_rel = 13.0 mm (Z = 81.0 mm, flush!)
+    anchor_h_in_core: float = 19.0       # Z = 69.0 .. 88.0 mm inside Al bore
+    anchor_bolt_y: float = 6.5           # 2x M3x12 CSK flush upward at (0.0, ±6.5 mm) through 5.5 mm bulkhead!
+    anchor_pin_z_rel: float = 13.0       # 2x M3x8 CSK cross-pins on ±X at Z_rel = 13.0 mm (Z = 82.0 mm, flush!)
 
-    # Serviceable Lid-Mounted Driver PCB (SMD/JST-Side UP on 4x M2.5 standoffs rising from MECH-LID-BOT!)
+    # Serviceable Lid-Mounted Driver PCB (SMD/JST-Side UP on 4x unified M3 standoffs rising from MECH-LID-BOT!)
     pcb_w: float = 36.0                  # Along global X (±18.0 mm)
-    pcb_l: float = 46.0                  # Along global Y (centered at pcb_y_center = +7.0 mm -> Y = -16.0 .. +30.0)
-    pcb_thick: float = 1.6               # B.Cu = 45.5 mm (DOWN), F.Cu = 47.1 mm (UP — SMD/JST/D12 face UP!)
+    pcb_l: float = 46.0                  # Along global Y (centered at pcb_y_center = +7.3 mm)
+    pcb_thick: float = 1.6               # B.Cu = 46.5 mm (DOWN), F.Cu = 48.1 mm (UP — SMD/JST/D12 face UP!)
     pcb_corner_r: float = 2.0
     pcb_y_center: float = 7.3            # Balances PCB (+Y R=34.51) & realistic 15 mm 90-deg USB-C plug (-Y R=34.52)!
-    pcb_z_bcu: float = 45.5              # B.Cu bottom face resting on 4x MECH-LID-BOT standoffs (Z = 29.0 .. 45.5)
-    pcb_smd_max_h: float = 4.5           # L1/L2 SWPA6045 = 4.5 mm upward from F.Cu
-    pcb_jst_mated_h: float = 9.8         # J2..J4 JST-XH mated upward (Z = 47.1 .. 56.9 mm; 5.6 mm below ceiling!)
-    pcb_jst_pin_protrude: float = 1.8    # TH pins downward below B.Cu (Z = 43.7 .. 45.5 mm -> 3.7 mm above SW1 lugs!)
-    pcb_hole_x: float = 14.0             # H1..H4 at (±14.0, pcb_y_center ± 19.0) = (±14.0, -12.0 / +26.0)
+    pcb_z_bcu: float = 46.5              # B.Cu bottom face resting on 4x MECH-LID-BOT M3 standoffs (Z = 30.5 .. 46.5)
+    pcb_smd_max_h: float = 4.5           # L1/L2 SRN6045 = 4.5 mm upward from F.Cu
+    pcb_jst_mated_h: float = 9.8         # J2..J4 JST-XH mated upward (Z = 48.1 .. 57.9 mm; 5.6 mm below flush ceiling!)
+    pcb_jst_pin_protrude: float = 1.8    # TH pins downward below B.Cu (Z = 44.7 .. 46.5 mm -> 4.7 mm above SW1 lugs!)
+    pcb_hole_x: float = 14.0             # H1..H4 at (±14.0, pcb_y_center ± 19.0)
     pcb_hole_y: float = 19.0
-    pcb_hole_drill: float = 2.7          # M2.5 NPTH clearance drill (r=2.80 mm F/B.Cu copper keepout!)
-    pcb_hole_keepout: float = 5.5
-    pcb_standoff_tip_od: float = 5.5     # Matches Ø5.5 mm copper keepout at PCB face
-    pcb_standoff_body_od: float = 6.4    # Robust 1.55 mm wall around Ø3.3 mm M2.5 brass heat-set insert!
+    pcb_hole_drill: float = 3.2          # Unified M3 NPTH clearance drill (r=3.10 mm F/B.Cu copper keepout!)
+    pcb_hole_keepout: float = 6.2
+    pcb_standoff_tip_od: float = 6.0     # Fits cleanly inside Ø6.2 mm B.Cu copper keepout!
+    pcb_standoff_body_od: float = 7.0    # 1.50 mm solid wall around standard Ø4.0 mm M3x5.0 brass heat-set insert!
 
     # Realistic 15.0 mm 90-deg-down USB-C PD plug + blind-bolted conical radial-compression split cable clamp
     usbc_j1_overhang_mm: float = 3.18    # GCT USB4085 front mouth 7.26 mm from Row B (3.18 mm past -23 mm edge)
@@ -222,8 +220,8 @@ class LepiLEDParams:
     star_bolt_r: float = 11.7            # 23.4 mm bolt pitch -> clears EVERY Ø20.0 mm round board by 0.20 mm!
     star_washer_od: float = 7.0          # DIN 125 M3 nylon washer -> 1.80 mm positive clamping overlap onto star edge!
     led_uv_max_h: float = 2.08
-    led_vis_max_h: float = 2.39
-    m3_pan_plus_washer_h: float = 3.20
+    led_vis_max_h: float = 0.85          # ams OSRAM CSLNM1 max height = 0.81 mm!
+    m3_pan_plus_washer_h: float = 3.20   # M3 CSK + steel flat washer + 0.8 mm DIN 125 nylon washer = 3.0 mm!
 
     @property
     def print_clearance(self) -> float:
@@ -402,8 +400,8 @@ class LepiLEDParams:
         pcb_pos_corner_r = math.hypot(self.pcb_w / 2.0 - self.pcb_corner_r, self.pcb_y_center + self.pcb_l / 2.0 - self.pcb_corner_r) + self.pcb_corner_r
         pcb_neg_corner_r = math.hypot(self.pcb_w / 2.0 - self.pcb_corner_r, abs(self.pcb_y_center - self.pcb_l / 2.0) - self.pcb_corner_r) + self.pcb_corner_r
         plug_corner_r = math.hypot(self.usbc_plug_90_w / 2.0, abs(self.y_j1_mouth) + self.usbc_plug_90_len)
-        jst_top_z = self.pcb_z_fcu + self.pcb_jst_mated_h  # 56.9
-        anchor_head_bot_z = self.cap_bot_ceiling_z - 3.0   # 59.5
+        jst_top_z = self.pcb_z_fcu + self.pcb_jst_mated_h  # 57.9
+        anchor_head_bot_z = self.cap_bot_ceiling_z         # Flush M3x12 CSK anchor bolts sit flush at 63.5!
         sw1_lugs_top_z = self.z_lid_bot_start + self.sw1_wall_thick + self.sw1_body_h_z + self.sw1_lugs_h_z  # 39.97
         th_pins_bot_z = self.pcb_z_bcu - self.pcb_jst_pin_protrude  # 43.7
         plug_bot_z = (self.z_j1_center + 3.0) - self.usbc_plug_90_h  # 40.48
@@ -426,7 +424,7 @@ class LepiLEDParams:
         clamp_to_sw1_gap = (self.sw1_y - self.sw1_body_w_y / 2.0) - (self.clamp_y + self.clamp_port_l / 2.0)
         sw1_corner_r = math.hypot(self.sw1_body_w_x / 2.0, self.sw1_y + self.sw1_body_w_y / 2.0)
         sw1_boot_ground_clr = self.z_lid_bot_start - self.sw1_boot_protrude_z
-        clamp_ground_clr = self.z_lid_bot_start - self.clamp_outer_h - 3.0  # includes 3.0 mm M3 SHCS head!
+        clamp_ground_clr = self.z_lid_bot_start - self.clamp_outer_h  # Flush M3x12 CSK heads -> 13.0 mm ground clr!
         checks["clamp_port_in_spigot_clr_mm"] = {"value": round(r_spigot_in - clamp_port_outer_r, 3), "min": 1.5, "pass": (r_spigot_in - clamp_port_outer_r) >= 1.5}
         checks["clamp_bolt_in_spigot_clr_mm"] = {"value": round(r_spigot_in - (clamp_bolt_r + 2.0), 3), "min": 3.0, "pass": (r_spigot_in - (clamp_bolt_r + 2.0)) >= 3.0}
         checks["clamp_blind_insert_roof_mm"] = {"value": round(clamp_blind_roof, 3), "min": 1.5, "pass": clamp_blind_roof >= 1.5}
@@ -526,6 +524,8 @@ class LepiLEDParams:
         checks["bail_pin_engagement_mm"] = {"value": round(bail_pin_engage, 3), "min": 7.0, "pass": bail_pin_engage >= 7.0}
         checks["bail_leg_to_flange_clr_mm"] = {"value": round(bail_leg_flange_clr, 3), "min": 2.5, "pass": bail_leg_flange_clr >= 2.5}
         checks["bail_clearance_above_finial_mm"] = {"value": round(self.bail_clearance_above_finial_mm, 3), "min": 30.0, "pass": self.bail_clearance_above_finial_mm >= 30.0}
+        lid_csk_rim_clr = 0.5 * self.lid_bot_od - (self.lid_bot_bolt_r + 3.25)
+        checks["lid_csk_outer_rim_clr_mm"] = {"value": round(lid_csk_rim_clr, 3), "min": 0.3, "pass": lid_csk_rim_clr >= 0.3}
 
         return checks
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Machine-verifiable audit script for bom/bom.csv (Rev 4.8 — Low-Hassle Full-SMD ENIG PCBA Build)."""
+"""Machine-verifiable audit script for bom/bom.csv (Rev 4.9 — Value-Engineered 2-Reel Hybrid HASL + Convoy + Unified M3)."""
 
 from __future__ import annotations
 
@@ -148,7 +148,7 @@ def main() -> int:
         if len(matched) != 1 or matched[0]["Include_In_Total"] != "No" or Decimal(matched[0]["Ext_Price_Amort_GBP_exVAT"]) != 0:
             fail(f"PCB feature {label} must have single BOM row with Include_In_Total=No and £0.00")
 
-    # 1b. Programmatic Full-SMD JLCPCB PCBA parity gate (48 JLCPCB SMD + 4 DIY THT + 2 DNP = 54)
+    # 1b. Programmatic 2-Reel Hybrid JLCPCB PCBA parity gate (41 JLCPCB SMD + 11 DIY [4 THT + 7 chunky SMD] + 2 DNP = 54)
     sys.path.insert(0, str(REPO_ROOT / "pcb_design"))
     import generate_hybrid_pcba
 
@@ -162,11 +162,11 @@ def main() -> int:
         hyb_refs = {r["Designator"].strip() for r in hyb_bom_rows}
         hyb_cpl_refs = {r["Designator"].strip() for r in hyb_cpl_rows}
         diy_refs = {r["Designator"].strip() for r in diy_bom_rows}
-        if hyb_refs != hyb_cpl_refs or len(hyb_refs) != 48:
-            fail(f"JLCPCB SMD BOM ({len(hyb_refs)}) vs CPL ({len(hyb_cpl_refs)}) expected 48 matching SMDs")
+        if hyb_refs != hyb_cpl_refs or len(hyb_refs) != 41:
+            fail(f"JLCPCB 2-Reel Hybrid SMD BOM ({len(hyb_refs)}) vs CPL ({len(hyb_cpl_refs)}) expected 41 matching SMDs")
         if (hyb_refs & diy_refs) or ((hyb_refs | diy_refs) != pcba_refs):
             fail(
-                f"JLCPCB SMD ({len(hyb_refs)}) + DIY THT/DNP ({len(diy_refs)}) "
+                f"JLCPCB SMD ({len(hyb_refs)}) + DIY ({len(diy_refs)}) "
                 f"must partition canonical 54 PCBA RefDes cleanly"
             )
 
@@ -182,10 +182,10 @@ def main() -> int:
     if len(bom_harn_rows) != 4:
         fail(f"Expected 4 Harness rows, got {len(bom_harn_rows)}")
 
-    # 4. Mechanical 23-Part 1:1 Parity (Rev 4.8: 8 printed + 15 purchased/consumable incl. MECH-GROMMET-1!)
+    # 4. Mechanical 20-Part 1:1 Parity (Rev 4.9: 8 printed + 12 purchased/owned — unified M3, unpainted bare Al core!)
     mech_by_id = {r["Part_ID"].strip(): r for r in mech_rows}
-    if len(mech_by_id) != 23:
-        fail(f"MECH_PARTS.csv expected 23 rows, got {len(mech_by_id)}")
+    if len(mech_by_id) != 20:
+        fail(f"MECH_PARTS.csv expected 20 rows, got {len(mech_by_id)}")
 
     bom_mech_primary = [r for r in bom_rows if r["Domain"] == "Mechanical"]
     printed_ids = {
@@ -278,17 +278,17 @@ def main() -> int:
     owned_ex = sum(
         Decimal(r["Ext_Price_1Off_GBP_exVAT"])
         for r in bom_rows
-        if r["Source_IDs"] in {"MECH-TIM-1", "MECH-FAST-M3", "MECH-PAINT-1"}
+        if r["Source_IDs"] in {"MECH-TIM-1", "MECH-FAST-M3", "MECH-INS-M3"}
     )
     net_o = tot_o - owned_ex
 
-    print("PASS: bom/bom.csv verified 1:1 across Rev 4.8 (72 RefDes, 54 Full PCBA = 48 JLCPCB SMD [20 Basic + 7 Ext] + 4 DIY THT + 2 DNP, 4 Harness, 1 ENIG PCB, 23 MECH-*, all Datasheet_Ref verified!)")
-    print(f"  Electrical (72 RefDes incl. 8x 20mm LED stars): 1-Off = £{elec_o:.2f} ex VAT (£{round2(elec_o * VAT_RATE):.2f} inc VAT) | Amort = £{elec_a:.2f} ex VAT")
+    print("PASS: bom/bom.csv verified 1:1 across Rev 4.9 (72 RefDes, 54 PCBA = 41 JLCPCB SMD [20 Basic + 2 Ext] + 11 DIY [4 THT + 7 chunky SMD] + 2 DNP, 4 Harness, 1 HASL PCB, 20 MECH-*, all Datasheet_Ref verified!)")
+    print(f"  Electrical (72 RefDes incl. 8x Convoy Cu DTP):  1-Off = £{elec_o:.2f} ex VAT (£{round2(elec_o * VAT_RATE):.2f} inc VAT) | Amort = £{elec_a:.2f} ex VAT")
     print(f"  Harness (JST-XH + UV silicone + 90° USB-C):     1-Off = £{harn_o:.2f} ex VAT (£{round2(harn_o * VAT_RATE):.2f} inc VAT) | Amort = £{harn_a:.2f} ex VAT")
-    print(f"  PCB Fab (ENIG) + Full-SMD PCBA (driver_pcb):    1-Off = £{pcb_o:.2f} ex VAT (£{round2(pcb_o * VAT_RATE):.2f} inc VAT) | Amort = £{pcb_a:.2f} ex VAT")
-    print(f"  Mechanical (0A070 PMMA + OTTOSEAL S72, 23 IDs): 1-Off = £{mech_o:.2f} ex VAT (£{round2(mech_o * VAT_RATE):.2f} inc VAT) | Amort = £{mech_a:.2f} ex VAT")
-    print(f"  TOTAL Rev 4.8 Parts-Only (All Purchased New):   1-Off = £{tot_o:.2f} ex VAT (£{round2(tot_o * VAT_RATE):.2f} inc VAT) | Amort = £{tot_a:.2f} ex VAT (£{round2(tot_a * VAT_RATE):.2f} inc VAT)")
-    print(f"  NET Parts-Only (Owned M3/Paste/Spray Paint):    1-Off = £{net_o:.2f} ex VAT (£{round2(net_o * VAT_RATE):.2f} inc VAT)")
+    print(f"  PCB Fab (HASL) + 2-Reel Hybrid PCBA (2-pc min): 1-Off = £{pcb_o:.2f} ex VAT (£{round2(pcb_o * VAT_RATE):.2f} inc VAT) | Amort = £{pcb_a:.2f} ex VAT")
+    print(f"  Mechanical (XT PMMA + Fix ALL + Bare Al, 20):   1-Off = £{mech_o:.2f} ex VAT (£{round2(mech_o * VAT_RATE):.2f} inc VAT) | Amort = £{mech_a:.2f} ex VAT")
+    print(f"  TOTAL Rev 4.9 Parts-Only (All Purchased New):   1-Off = £{tot_o:.2f} ex VAT (£{round2(tot_o * VAT_RATE):.2f} inc VAT) | Amort = £{tot_a:.2f} ex VAT (£{round2(tot_a * VAT_RATE):.2f} inc VAT)")
+    print(f"  NET Parts-Only (Owned M3 CSK/Inserts/Paste):    1-Off = £{net_o:.2f} ex VAT (£{round2(net_o * VAT_RATE):.2f} inc VAT)")
     return 0
 
 

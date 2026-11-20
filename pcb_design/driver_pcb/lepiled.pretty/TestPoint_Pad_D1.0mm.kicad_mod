@@ -6,7 +6,7 @@
 	(property "Reference" "TP"
 		(at 0 -1.2 0)
 		(layer "F.SilkS")
-		(uuid "476c8ab6-f60b-4939-97b7-09814f35e7a4")
+		(uuid "17bde020-2989-478e-b7af-e5fa0196316e")
 		(effects
 			(font
 				(size 0.65 0.65)
@@ -17,7 +17,7 @@
 	(property "Value" "TestPoint"
 		(at 0 1.2 0)
 		(layer "F.Fab")
-		(uuid "e383fbad-35a0-4c06-8794-6eaa114ff280")
+		(uuid "669c6d1e-c801-4c5e-b4fd-1758aa8a8f18")
 		(effects
 			(font
 				(size 0.5 0.5)
@@ -29,7 +29,7 @@
 		(at 0 0 0)
 		(layer "F.Fab")
 		(hide yes)
-		(uuid "b5e87e45-2a57-4aa8-af5b-ca2329bd025b")
+		(uuid "533f6dff-344c-420c-b6b6-b94bc0af1c89")
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -40,7 +40,7 @@
 		(at 0 0 0)
 		(layer "F.Fab")
 		(hide yes)
-		(uuid "c956cdd9-f25d-4a7c-ae69-817c14b9c459")
+		(uuid "2799dfcd-4530-4bc9-be19-b3cea9eae01b")
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -58,14 +58,14 @@
 		)
 		(fill no)
 		(layer "F.CrtYd")
-		(uuid "1d6d6e66-131e-4080-a9b2-7380cfe1feac")
+		(uuid "cdce3a5a-3a39-4691-a5dc-456662c9c7a2")
 	)
 	(pad "1" smd circle
 		(at 0 0)
 		(size 1 1)
 		(layers "F.Cu" "F.Mask")
 		(solder_mask_margin 0.05)
-		(uuid "b1641f72-3830-44ed-b2b0-8981414986ca")
+		(uuid "c80c1182-edc0-4bcd-bdc9-32840373bd57")
 	)
 	(embedded_fonts no)
 )

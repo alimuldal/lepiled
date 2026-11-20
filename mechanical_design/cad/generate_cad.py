@@ -180,21 +180,23 @@ def build_lid_bot(p: LepiLEDParams) -> bd.Part:
     g3 = _radial_spigot_oring_cut(r_sp_out, p.bot_oring_groove_od / 2.0, z1 + 1.4, p.bot_oring_flat_w)
     part = part - g3
 
-    # Cut 4x blind M2.5 brass heat-set insert pilot bores in standoff tops (Z = 40.9 .. 45.5 mm)
+    # Cut 4x blind M3x5.0 brass heat-set insert pilot bores in standoff tops (Z = 40.5 .. 46.5 mm — unified M3!)
     for sx in (-1.0, 1.0):
         for sy in (-1.0, 1.0):
             hx = sx * p.pcb_hole_x
             hy = p.pcb_y_center + sy * p.pcb_hole_y
-            pilot = bd.Cylinder(p.m25_insert_pilot_dia / 2.0, p.m25_insert_depth + 0.2,
+            pilot = bd.Cylinder(p.m3_insert_pilot_dia / 2.0, p.m3_insert_depth + 0.2,
                                 align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((hx, hy, p.pcb_z_bcu + 0.2))
             part = part - pilot
 
-    # 4x plain M3 lid mounting clearance holes at R = 40.2 mm
+    # 4x M3 flush 90-deg countersunk lid mounting holes at R = 40.2 mm (exact 45-deg upright -> 0 overhang!)
     for deg in (45.0, 135.0, 225.0, 315.0):
         rad = math.radians(deg)
         hx, hy = p.lid_bot_bolt_r * math.cos(rad), p.lid_bot_bolt_r * math.sin(rad)
         c_thru = bd.Cylinder(p.m3_clearance_dia / 2.0, p.lid_bot_thick + 2.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((hx, hy, z0 - 1.0))
-        part = part - c_thru
+        c_csk = bd.Cone(3.25, p.m3_clearance_dia / 2.0, 3.25 - p.m3_clearance_dia / 2.0,
+                        align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((hx, hy, z0 - 0.05))
+        part = part - c_thru - c_csk
 
     # 16.5 x 14.5 mm stadium USB-C plug pass-through port + 45-deg lower conical radial-compression seat (Z = 22.0..25.0)!
     # Note: wider at Z=22.0 (bottom) tapering inward to Z=25.0 -> 45-deg overhang upright? Check:
@@ -211,14 +213,14 @@ def build_lid_bot(p: LepiLEDParams) -> bd.Part:
     port_cone = bd.loft([sk_cone_bot.sketch, sk_cone_top.sketch]).translate((p.clamp_x, p.clamp_y, 0.0))
     part = part - port_straight - port_cone
 
-    # P0-5 FIXED: 2x BLIND M3x4.0 brass heat-set insert pockets for MECH-CABLE-CLAMP (Z = 22.0 .. 28.0 mm -> 1.5 mm SOLID ROOF!)
-    # 4.1 mm straight Ø4.0 mm pilot bore + matched 45-deg cone (r=2.0 -> 0.10 over 1.90 mm -> watertight & 0.06 mm^2 tip!)
+    # P0-5 FIXED: 2x BLIND std workshop M3x5.0 brass heat-set insert pockets in 8.5 mm lid (Z = 22.0 .. 29.0 mm -> 1.5 mm SOLID ROOF!)
+    # 5.1 mm straight Ø4.0 mm pilot bore + matched 45-deg cone (r=2.0 -> 0.10 over 1.90 mm -> watertight & 0.06 mm^2 tip!)
     r_pil = p.m3_insert_pilot_dia / 2.0  # 2.0 mm
     for sx in (-1.0, 1.0):
-        cb_straight = bd.Cylinder(r_pil, 4.2,
+        cb_straight = bd.Cylinder(r_pil, 5.2,
                                   align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((sx * p.clamp_bolt_dx, p.clamp_y, z0 - 0.1))
         cb_cone = bd.Cone(r_pil, 0.10, r_pil - 0.10,
-                          align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((sx * p.clamp_bolt_dx, p.clamp_y, z0 + 4.1))
+                          align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((sx * p.clamp_bolt_dx, p.clamp_y, z0 + 5.1))
         part = part - cb_straight.fuse(cb_cone)
 
     # Bottom-mounted SW1 vertical Ø6.35 mm bore + 4.5 mm upper anti-rotation pocket (12.70(X) x 11.43(Y) aligned w/ throw!)
@@ -274,11 +276,13 @@ def build_cable_clamp_half(p: LepiLEDParams, side: float = 1.0) -> bd.Part:
     c_top_fl = bd.Cone(r_cab, 4.2, 2.5, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_lid + p.lid_bot_thick - 2.9))
     full = full - c_cable - c_grom_bot - c_grom_mid - c_grom_top - c_top_fl
 
-    # 2x plain vertical M3 clearance bores at X = ±13.0 mm (M3x12 head sits flat on Z=13.0 -> 10.0 mm ground clr!)
+    # 2x flush 90-deg countersunk M3 clearance bores at X = ±13.0 mm (M3x12 CSK sits flush at Z=13.0 -> 13.0 mm ground clr!)
     for sx in (-1.0, 1.0):
         b_thru = bd.Cylinder(p.m3_clearance_dia / 2.0, p.clamp_outer_h + 2.0,
                              align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((sx * p.clamp_bolt_dx, 0.0, z_lid - p.clamp_outer_h - 1.0))
-        full = full - b_thru
+        b_csk = bd.Cone(3.25, p.m3_clearance_dia / 2.0, 3.25 - p.m3_clearance_dia / 2.0,
+                        align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((sx * p.clamp_bolt_dx, 0.0, z_lid - p.clamp_outer_h - 0.05))
+        full = full - b_thru - b_csk
 
     gap = 0.30
     if side > 0:
@@ -404,11 +408,13 @@ def build_cap_bot(p: LepiLEDParams) -> bd.Part:
                        align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, p.z_core_bot))
     part = part - core_sock
 
-    # P0-2 FIXED: 2x internal vertical M3x12 dry-bay anchor bolt bores on ±Y at (0.0, ±6.5 mm) through 5.5 mm bulkhead!
+    # P0-2 FIXED: 2x internal vertical flush M3x12 CSK dry-bay anchor bores on ±Y at (0.0, ±6.5 mm) through 5.5 mm bulkhead!
     for sy in (-1.0, 1.0):
         anc_bore = bd.Cylinder(p.m3_clearance_dia / 2.0, p.bulkhead_thick + 2.0,
                                align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0.0, sy * p.anchor_bolt_y, p.cap_bot_ceiling_z - 0.5))
-        part = part - anc_bore
+        anc_csk = bd.Cone(3.25, p.m3_clearance_dia / 2.0, 3.25 - p.m3_clearance_dia / 2.0,
+                          align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0.0, sy * p.anchor_bolt_y, p.cap_bot_ceiling_z - 0.05))
+        part = part - anc_bore - anc_csk
 
     # 2x generous 9.0 x 7.5 mm wire channels at ±Y passing pre-crimped 7.4 x 5.75 mm JST-XH plugs straight through!
     y_slot_c = p.core_pocket_w / 2.0 + p.core_wire_slot_d / 2.0 - 0.1  # 19.20 mm
@@ -750,84 +756,85 @@ def build_assembly_parts(p: LepiLEDParams, core_w_override: float | None = None,
     top_lock_bore = bd.Cylinder(1.55, core_w + 2.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.CENTER)).rotate(bd.Axis.Y, 90.0).translate((0.0, 0.0, p.z_cap_top_lock))
     hs_core = hs_core - hang_bore - anchor_pin_bore - top_lock_bore
 
-    # ALL 14 Modeled Brass Heat-Set Inserts (10x M3 + 4x M2.5, hollow annular shells clearing screw shanks & pilot bores!)
+    # ALL 14 Modeled Brass Heat-Set Inserts — ALL IDENTICAL STANDARD WORKSHOP M3 x 5.0 x 4.2 mm!
     inserts_list = []
-    # a) 4x M3x5 lid inserts inside cap_bot at R=40.2 mm (Z = 29.05 .. 34.05 mm)
+    # a) 4x M3x5 lid inserts inside cap_bot at R=40.2 mm
     for deg in (45.0, 135.0, 225.0, 315.0):
         rad = math.radians(deg)
         ix, iy = p.lid_bot_bolt_r * math.cos(rad), p.lid_bot_bolt_r * math.sin(rad)
         ins = (bd.Cylinder(1.98, 5.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
                - bd.Cylinder(1.52, 5.2, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, -0.1)))
         inserts_list.append(ins.translate((ix, iy, p.z_lid_bot_end + 0.05)))
-    # b) 2x M3x4.0 blind cable-clamp inserts inside MECH-LID-BOT (Z = 22.05 .. 26.05 mm; 3.45 mm clear of dry bay!)
+    # b) 2x M3x5.0 blind cable-clamp inserts inside 8.5 mm MECH-LID-BOT (Z = 22.05 .. 27.05 mm; 3.45 mm below dry bay!)
     for sx in (-1.0, 1.0):
-        ins = (bd.Cylinder(1.98, 4.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
-               - bd.Cylinder(1.52, 4.2, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, -0.1)))
+        ins = (bd.Cylinder(1.98, 5.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
+               - bd.Cylinder(1.52, 5.2, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, -0.1)))
         inserts_list.append(ins.translate((sx * p.clamp_bolt_dx, p.clamp_y, p.z_lid_bot_start + 0.05)))
-    # c) 2x M3x5 vertical core-anchor inserts on ±Y at (0, ±6.5 mm, Z = 68.05 .. 73.05 mm)
+    # c) 2x M3x5 vertical core-anchor inserts on ±Y at (0, ±6.5 mm)
     for sy in (-1.0, 1.0):
         ins = (bd.Cylinder(1.98, 5.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
                - bd.Cylinder(1.52, 5.2, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, -0.1)))
         inserts_list.append(ins.translate((0.0, sy * p.anchor_bolt_y, p.z_core_bot + 0.05)))
-    # d) 2x M3x5 horizontal cross-pin inserts on ±X inside core_anchor at Z = 81.0 mm
+    # d) 2x M3x5 horizontal cross-pin inserts on ±X inside core_anchor
     for sx in (-1.0, 1.0):
         ins = (bd.Cylinder(1.98, 5.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX))
                - bd.Cylinder(1.52, 5.2, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((0, 0, 0.1)))
         inserts_list.append(ins.rotate(bd.Axis.Y, 90.0 if sx > 0 else -90.0).translate((sx * (p.anchor_w / 2.0 - 0.05), 0.0, p.z_anchor_pin)))
-    # e) 4x M2.5x4.0 PCB inserts in MECH-LID-BOT standoff tops (Z = 41.45 .. 45.45 mm)
+    # e) 4x M3x5.0 unified PCB standoff inserts in MECH-LID-BOT standoff tops (Z = 41.45 .. 46.45 mm!)
     for sx in (-1.0, 1.0):
         for sy in (-1.0, 1.0):
             hx = sx * p.pcb_hole_x
             hy = p.pcb_y_center + sy * p.pcb_hole_y
-            ins = (bd.Cylinder(1.63, 4.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX))
-                   - bd.Cylinder(1.26, 4.2, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((0, 0, 0.1)))
+            ins = (bd.Cylinder(1.98, 5.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX))
+                   - bd.Cylinder(1.52, 5.2, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((0, 0, 0.1)))
             inserts_list.append(ins.translate((hx, hy, p.pcb_z_bcu - 0.05)))
     inserts_brass = bd.Compound(inserts_list)
 
-    # ALL Exact Full-Length Modeled BOM Fasteners (zero shortened-screw cheating!)
+    # ALL Exact Full-Length Modeled Workshop M3 CSK Fasteners (unified M3 across the ENTIRE lamp!)
     fasteners_list = []
-    # 1. 4x M3x12 SHCS recessed lid bolts (full 12.0 mm shank through 7.0 mm lid + 5.0 mm insert)
+    # 1. 4x M3x12 CSK flush recessed lid bolts (full 12.0 mm OAL: 1.5 mm CSK head + 10.5 mm shank -> 3.5 mm into M3x5 insert!)
     for deg in (45.0, 135.0, 225.0, 315.0):
         rad = math.radians(deg)
         lx, ly = p.lid_bot_bolt_r * math.cos(rad), p.lid_bot_bolt_r * math.sin(rad)
-        lb_head = bd.Cylinder(2.75, 3.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((lx, ly, p.z_lid_bot_start - 0.05))
-        lb_shank = bd.Cylinder(1.48, 12.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((lx, ly, p.z_lid_bot_start - 0.05))
+        lb_head = bd.Cone(2.95, 1.48, 1.47, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((lx, ly, p.z_lid_bot_start + 0.05))
+        lb_shank = bd.Cylinder(1.48, 10.5, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((lx, ly, p.z_lid_bot_start + 1.52))
         fasteners_list.append(lb_head.fuse(lb_shank))
-    # 2. 2x M3x12 SHCS split cable clamp bolts (full 12.0 mm shank: 9.0 mm clamp + 3.0 mm into blind insert -> Z=25.0 < 27.2!)
+    # 2. 2x M3x12 CSK flush split cable clamp bolts (full 12.0 mm OAL: sits flush at Z=13.0 -> tip at Z=25.0 inside M3x5 blind insert!)
     for sx in (-1.0, 1.0):
         cx, cy = sx * p.clamp_bolt_dx, p.clamp_y
-        ch = bd.Cylinder(2.75, 3.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((cx, cy, p.z_lid_bot_start - p.clamp_outer_h - 0.05))
-        cs = bd.Cylinder(1.48, 12.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((cx, cy, p.z_lid_bot_start - p.clamp_outer_h - 0.05))
+        ch = bd.Cone(2.95, 1.48, 1.47, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((cx, cy, p.z_lid_bot_start - p.clamp_outer_h + 0.05))
+        cs = bd.Cylinder(1.48, 10.5, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((cx, cy, p.z_lid_bot_start - p.clamp_outer_h + 1.52))
         fasteners_list.append(ch.fuse(cs))
-    # 3. 2x M3x12 SHCS internal dry-bay core anchor bolts on ±Y at (0, ±6.5 mm, full 12.0 mm shank!)
+    # 3. 2x M3x12 CSK flush internal dry-bay core anchor bolts on ±Y at (0, ±6.5 mm; full 12.0 mm OAL!)
     for sy in (-1.0, 1.0):
         ay = sy * p.anchor_bolt_y
-        ah = bd.Cylinder(2.75, 3.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((0.0, ay, p.cap_bot_ceiling_z - 0.05))
-        ash = bd.Cylinder(1.48, 12.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0.0, ay, p.cap_bot_ceiling_z - 0.05))
+        ah = bd.Cone(2.95, 1.48, 1.47, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0.0, ay, p.cap_bot_ceiling_z + 0.05))
+        ash = bd.Cylinder(1.48, 10.5, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0.0, ay, p.cap_bot_ceiling_z + 1.52))
         fasteners_list.append(ah.fuse(ash))
-    # 4. 2x FULL-LENGTH M3x8 CSK flush cross-pin screws (exact 8.0 mm!) on ±X at Z = 81.0 mm
+    # 4. 2x FULL-LENGTH M3x8 CSK flush cross-pin screws (exact 8.0 mm!) on ±X
     for sx in (-1.0, 1.0):
         rot_y = 90.0 if sx > 0 else -90.0
         ps = bd.Cylinder(1.48, 8.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).rotate(bd.Axis.Y, rot_y).translate((sx * (0.5 * core_w - 0.1), 0.0, p.z_anchor_pin))
         fasteners_list.append(ps)
-    # 5. 2x FULL-LENGTH M3x10 SHCS radial top-cap lock screws bearing flat on |X| = 20.2 mm collar walls!
+    # 5. 2x FULL-LENGTH M3x10 CSK + M3 steel flat washer radial top-cap lock screws bearing on |X| = 20.2 mm collar walls!
     x_collar = p.cap_top_collar_w / 2.0 + 0.05  # 20.25
     for sx in (-1.0, 1.0):
         if sx > 0:
-            th = bd.Cylinder(2.75, 3.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).rotate(bd.Axis.Y, 90.0).translate((x_collar, 0.0, p.z_cap_top_lock))
-            ts = bd.Cylinder(1.48, 10.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).rotate(bd.Axis.Y, 90.0).translate((x_collar, 0.0, p.z_cap_top_lock))
+            th = bd.Cylinder(3.0, 2.2, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).rotate(bd.Axis.Y, 90.0).translate((x_collar, 0.0, p.z_cap_top_lock))
+            ts = bd.Cylinder(1.48, 9.5, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).rotate(bd.Axis.Y, 90.0).translate((x_collar, 0.0, p.z_cap_top_lock))
         else:
-            th = bd.Cylinder(2.75, 3.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).rotate(bd.Axis.Y, 90.0).translate((-x_collar, 0.0, p.z_cap_top_lock))
-            ts = bd.Cylinder(1.48, 10.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).rotate(bd.Axis.Y, 90.0).translate((-x_collar, 0.0, p.z_cap_top_lock))
+            th = bd.Cylinder(3.0, 2.2, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).rotate(bd.Axis.Y, 90.0).translate((-x_collar, 0.0, p.z_cap_top_lock))
+            ts = bd.Cylinder(1.48, 9.5, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).rotate(bd.Axis.Y, 90.0).translate((-x_collar, 0.0, p.z_cap_top_lock))
         fasteners_list.append(th.fuse(ts))
-    # 6. 4x M2.5x6 NYLON pan-head PCB screws downward through H1..H4 into MECH-LID-BOT M2.5 brass inserts!
+    # 6. 4x M3x8 CSK + M3 steel washer + Ø7.0x0.8 mm M3 nylon insulating washer securing driver_pcb into M3x5 lid inserts!
     for sx in (-1.0, 1.0):
         for sy in (-1.0, 1.0):
             hx = sx * p.pcb_hole_x
             hy = p.pcb_y_center + sy * p.pcb_hole_y
-            ph = bd.Cylinder(2.25, 1.8, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((hx, hy, p.pcb_z_fcu + 0.05))
-            ps = bd.Cylinder(1.20, 6.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((hx, hy, p.pcb_z_fcu + 0.05))
-            fasteners_list.append(ph.fuse(ps))
+            # 0.8 mm nylon washer + 0.5 mm steel washer + 1.5 mm CSK head = 2.8 mm stack above F.Cu; 6.2 mm shank below!
+            pw = bd.Cylinder(3.50, 2.8, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((hx, hy, p.pcb_z_fcu + 0.05))
+            ps = bd.Cylinder(1.48, 6.2, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((hx, hy, p.pcb_z_fcu + 0.05))
+            fasteners_list.append(pw.fuse(ps))
     fasteners_m3 = bd.Compound(fasteners_list)
 
     # Clear PLEXIGLAS XT 0A070 shroud (Ø60 x 54 x 3.0 x 115 mm)
@@ -998,18 +1005,18 @@ def check_fastener_seat_bearing(cap_bot: bd.Part, cap_top: bd.Part, lid_bot: bd.
     results: dict[str, dict | bool] = {}
     ideal_ring = math.pi * (2.75 ** 2 - 1.70 ** 2) * 2.0
 
-    # 1. cap_bot 2x internal vertical M3x12 anchor seats on ±Y at (0, ±6.5 mm, Z = 62.5 .. 64.5 mm)
+    # 1. cap_bot 2x internal vertical M3x12 CSK anchor seats behind 1.55 mm CSK cone on ±Y at (0, ±6.5 mm)
     bot_ratios = []
     for sy in (-1.0, 1.0):
         ring = (
             bd.Cylinder(2.75, 2.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
             - bd.Cylinder(1.70, 2.2, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, -0.1))
-        ).translate((0.0, sy * p.anchor_bolt_y, p.cap_bot_ceiling_z))
+        ).translate((0.0, sy * p.anchor_bolt_y, p.cap_bot_ceiling_z + 1.6))
         inter = cap_bot & ring
         bot_ratios.append((float(inter.volume) if inter is not None else 0.0) / ideal_ring)
     results["cap_bot_anchor_seat_bearing"] = {"min_contact_ratio": round(min(bot_ratios), 4), "min_required": 0.90, "pass": min(bot_ratios) >= 0.90}
 
-    # 2. cap_top 2x radial M3x10 lock seats on flat vertical collar faces |X| = 20.2 mm, Z = 203.3 mm
+    # 2. cap_top 2x radial M3x10 lock seats on flat vertical collar faces |X| = 20.2 mm
     top_ratios = []
     x_col = p.cap_top_collar_w / 2.0
     for sx in (-1.0, 1.0):
@@ -1021,7 +1028,7 @@ def check_fastener_seat_bearing(cap_bot: bd.Part, cap_top: bd.Part, lid_bot: bd.
         top_ratios.append((float(inter.volume) if inter is not None else 0.0) / ideal_ring)
     results["cap_top_lock_seat_bearing"] = {"min_contact_ratio": round(min(top_ratios), 4), "min_required": 0.85, "pass": min(top_ratios) >= 0.85}
 
-    # 3. lid_bot 4x M3x12 recessed lid bolt seats at R = 40.2 mm, Z = 22.0 .. 24.0 mm
+    # 3. lid_bot 4x M3x12 CSK recessed lid bolt seats behind 1.55 mm CSK cone at R = 40.2 mm
     lid_ratios = []
     for deg in (45.0, 135.0, 225.0, 315.0):
         rad = math.radians(deg)
@@ -1029,7 +1036,7 @@ def check_fastener_seat_bearing(cap_bot: bd.Part, cap_top: bd.Part, lid_bot: bd.
         ring = (
             bd.Cylinder(2.75, 2.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
             - bd.Cylinder(1.70, 2.2, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, -0.1))
-        ).translate((lx, ly, p.z_lid_bot_start))
+        ).translate((lx, ly, p.z_lid_bot_start + 1.6))
         inter = lid_bot & ring
         lid_ratios.append((float(inter.volume) if inter is not None else 0.0) / ideal_ring)
     results["lid_bot_bolt_seat_bearing"] = {"min_contact_ratio": round(min(lid_ratios), 4), "min_required": 0.90, "pass": min(lid_ratios) >= 0.90}

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Master End-to-End Verification & SSOT Rebuild Runner for LepiLED DIY Maxi Switch (Rev 4.8).
+Master End-to-End Verification & SSOT Rebuild Runner for LepiLED DIY Maxi Switch (Rev 4.9).
 
 Usage:
   python3 verify_all.py --check    # Fast verification of ALL gates, SHA-256 freshness & doc parity
@@ -66,8 +66,8 @@ def audit_gerbers() -> list[str]:
             continue
         pts = parse_gerber_pts(p)
         min_d = min(math.hypot(px - hx, py - hy) for px, py in pts for hx, hy in npth_holes) if pts else 999.0
-        if min_d < 2.70:
-            errs.append(f"Gerber {fname}: copper vertex {min_d:.3f} mm < 2.70 mm from H1..H4 NPTH!")
+        if min_d < 2.95:
+            errs.append(f"Gerber {fname}: copper vertex {min_d:.3f} mm < 2.95 mm from M3 H1..H4 NPTH!")
 
     p_paste = gerb_dir / "driver_pcb-F_Paste.gbr"
     if not p_paste.is_file():
@@ -154,7 +154,9 @@ def check_all() -> int:
     print("=== 4. Thermal SSOT Freshness & Pass Gate ===")
     th_dir = REPO_ROOT / "mechanical_design" / "thermal"
     th = json.loads((th_dir / "thermal_summary.json").read_text(encoding="utf-8"))
-    check(th.get("rev48_15_30C_real_modes_all_pass") is True, "Thermal 15-30 C real modes did not all pass")
+    check(th.get("rev49_uk_night_22C_real_modes_all_pass") is True, "Thermal <=22 C UK-night real-WPE modes did not all pass (PETG)")
+    check(th.get("rev49_15_30C_nom_all_pass") is True, "Thermal 15-30 C nominal modes did not all pass (PETG)")
+    check(th.get("rev49_15_30C_real_modes_asa_all_pass") is True, "Thermal 15-30 C real-WPE modes did not all pass (ASA+Comm IC)")
     th_hashes = th.get("input_hashes", {})
     check(th_hashes.get("cad_params.json") == sha256_16(cad_dir / "cad_params.json"),
           "STALE THERMAL: cad_params.json changed since thermal_analysis.py was run!")
@@ -162,7 +164,7 @@ def check_all() -> int:
           "STALE THERMAL: sim_summary.json changed since thermal_analysis.py was run!")
     check(th_hashes.get("thermal_analysis.py") == sha256_16(th_dir / "thermal_analysis.py"),
           "STALE THERMAL: thermal_analysis.py changed since thermal_summary.json was generated!")
-    print("  Thermal 24/24 15-30 C cases & 3 SSOT input hashes verified fresh.")
+    print("  Thermal UK-night (<=22 C Real-WPE), 15-30 C Nominal (PETG), 15-30 C Real-WPE (ASA) & 3 SSOT hashes verified fresh.")
 
     print("=== 5. Master BOM & Datasheet Existence Parity ===")
     proc_bom = subprocess.run([sys.executable, str(REPO_ROOT / "bom" / "verify_bom.py")],
@@ -193,8 +195,10 @@ def check_all() -> int:
     ]
     banned_stale = [
         "MF-MSMF110/33X",
-        "SRN6045-680M",
+        "SWPA6045",
         "Dow 7091",
+        "OTTOSEAL",
+        "LED-TECH.DE",
         "0805W8F100KT5E",
         "AP33771C",
         "DMN4035L",
@@ -202,6 +206,7 @@ def check_all() -> int:
         "62 x 2.5 mm",
         "28.3 mm",
         "lightpipe",
+        "M2.5",
     ]
     for doc_p in active_docs:
         txt = doc_p.read_text(encoding="utf-8")
@@ -216,12 +221,12 @@ def check_all() -> int:
             print(f"  [FAIL] {e}", file=sys.stderr)
         return 1
 
-    print("\nALL REV 4.8 AUTOMATED VERIFICATION GATES PASSED (100% FRESH & CONSISTENT).")
+    print("\nALL REV 4.9 AUTOMATED VERIFICATION GATES PASSED (100% FRESH & CONSISTENT).")
     return 0
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="LepiLED Rev 4.8 Master SSOT Rebuild & Verification Gate")
+    ap = argparse.ArgumentParser(description="LepiLED Rev 4.9 Master SSOT Rebuild & Verification Gate")
     ap.add_argument("--rebuild", action="store_true", help="Rebuild PCB, SPICE, CAD, Renders & Thermal before checking")
     ap.add_argument("--check", action="store_true", help="Run all automated verification & freshness checks (default)")
     args = ap.parse_args()
