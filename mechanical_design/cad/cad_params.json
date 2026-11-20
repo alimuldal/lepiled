@@ -32,8 +32,8 @@
   "cap_bot_mid_od": 71.0,
   "cap_bot_waist_od": 65.0,
   "cap_top_od": 84.0,
-  "cap_top_brim_od": 108.0,
-  "cap_top_brim_rim_h": 3.5,
+  "cap_top_brim_od": 116.0,
+  "cap_top_brim_rim_h": 3.8,
   "cap_chamfer": 0.8,
   "min_wall": 2.5,
   "cap_bot_cavity_dia": 61.0,
@@ -100,15 +100,6 @@
   "plug_top_insert_h": 10.0,
   "plug_top_cap_w": 40.4,
   "plug_top_cap_h": 4.0,
-  "rain_hat_od": 136.0,
-  "rain_hat_thick": 2.5,
-  "rain_hat_lip_h": 5.0,
-  "rain_hat_lip_wall": 2.8,
-  "rain_hat_collar_id": 41.2,
-  "rain_hat_collar_wall": 2.8,
-  "rain_hat_collar_h": 5.5,
-  "rain_hat_cord_hole_x": 28.0,
-  "rain_hat_cord_hole_dia": 6.0,
   "star_dia": 20.0,
   "star_thick": 1.5,
   "star_tim_thick": 0.15,
@@ -136,8 +127,7 @@
     "core_protrusion_mm": 85.5,
     "z_hang_hole": 305.0,
     "z_plug_top_end": 327.0,
-    "z_rain_hat_top": 329.55,
-    "total_height_with_hat_mm": 347.55,
+    "total_height_mm": 345.0,
     "exposed_glass_window_mm": 126.0,
     "z_optical_center": 148.0,
     "z_led_uv": 166.0,
@@ -353,14 +343,9 @@
       "min": 3.0,
       "pass": true
     },
-    "hang_hole_to_rain_hat_collar_mm": {
-      "value": 12.55,
-      "min": 8.0,
-      "pass": true
-    },
     "cap_top_brim_overhang_mm": {
-      "value": 8.0,
-      "min": 6.0,
+      "value": 12.0,
+      "min": 10.0,
       "pass": true
     },
     "shroud_oring_squeeze_min_pct": {

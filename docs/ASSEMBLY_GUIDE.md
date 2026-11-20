@@ -7,13 +7,12 @@
 - **Single Custom PCB (`driver_pcb` ONLY):** Upload [driver_pcb_gerbers.zip](file:///home/alimuldal/src/lepiled/pcb_design/gerbers/driver_pcb/driver_pcb_gerbers.zip) (`36 × 46 mm`, 2-layer `1.6 mm` FR4, 1 oz Cu, **ENIG**, Green LPI / White silk) to JLCPCB along with [driver_pcb_bom_pcba.csv](file:///home/alimuldal/src/lepiled/pcb_design/driver_pcb_bom_pcba.csv) and [driver_pcb_cpl.csv](file:///home/alimuldal/src/lepiled/pcb_design/driver_pcb_cpl.csv) (`57` SMD parts assembled via JLCPCB Economic PCBA; `J1..J4` THT hand-soldered on the bench using [assembly_map.pdf](file:///home/alimuldal/src/lepiled/pcb_design/driver_pcb/renders/assembly_map.pdf)).
 - **UV-Transmitting PMMA Shroud (`MECH-TUBE-1`):** Order `Ø75.0 × 69.0 × 3.0 mm × 150 mm` **UV-transmitting / unstabilized cast PMMA (acrylic)** tubing (`85–92%` @ `365 nm`). **Do NOT use polycarbonate** (blocks `> 98%` of `365 nm` UV-A). Quick arrival sanity check: shine a `365 nm` torch through the tube wall onto white paper or a banknote—fluorescence should stay bright.
 - **Pre-Mounted LEDs (`Zero Bare-SMD Reflow`):** Order `8×` pre-mounted **`20 mm` Copper DTP star MCPCBs** (`4× Luminus SST-10-UV 365 nm`, `2× Cree XP-E2 Royal Blue 455 nm`, `1× XP-E2 Green 528 nm`, `1× XP-E2 Cool White 6200–6500 K`) from Kaidomain/Convoy (or EU specialist `LED-Tech.de`).
-- **3D Printing (8 Support-Free FDM Parts in PETG or ASA, `0.2 mm` layers, `4` perimeters, `25%` gyroid infill, `0` supports):**
+- **3D Printing (7 Support-Free FDM Parts in PETG or ASA, `0.2 mm` layers, `4` perimeters, `25%` gyroid infill, `0` supports):**
   - [mech_base_ring.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_base_ring.step) — inverted (`Z = 0` mating face on bed, `0.000 mm²` overhang).
   - [mech_lid_bot.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_lid_bot.step) — upright (`Z = 0` flat bottom face on bed, `0.000 mm²` overhang).
   - [mech_cap_bot.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_cap_bot.step) — upright (flat bottom face on bed, `0.787 mm²` overhang).
-  - [mech_cap_top.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_cap_top.step) — inverted (flat `Ø108 mm` drip-brim face on bed, `0.000 mm²` overhang).
+  - [mech_cap_top.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_cap_top.step) — inverted (flat `Ø116 mm` drip-brim face on bed, `0.000 mm²` overhang).
   - [mech_plug_top.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_plug_top.step) — inverted (flat cap face on bed, `0.000 mm²` overhang).
-  - [mech_rain_hat.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_rain_hat.step) — inverted (flat `Ø136 mm` top disc on bed, `0.000 mm²` overhang).
   - [mech_plug_bot.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_plug_bot.step) — upright (flat bottom face on bed, `0.000 mm²` overhang).
   - [mech_drill_jig.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_drill_jig.step) — flat back plate on bed (`0.000 mm²` overhang).
 
@@ -60,11 +59,10 @@
 ## 4. Final Mechanical Assembly & Weatherproofing
 
 1. **Bottom Core Plug & Bulkhead:** Drop `2×` `M3` hex nuts into the top pockets of `MECH-PLUG-BOT`, slide it flush into the bottom end of `MECH-HS-CORE`, and pin it with `4× M3 × 8 mm` flush CSK screws on the `±X` walls. Route the `J2`/`J3` JST-XH pigtails down the outside corners of the core through the `MECH-CAP-BOT` wire slots, seat the core in the square socket, and bolt it down from inside the bottom cavity with `2× M3 × 16 mm` CSK screws.
-2. **UVT PMMA Shroud, Top Cap, Rain Plug & Detachable Rain Hat:**
+2. **UVT PMMA Shroud, Top Cap & Rain Plug:**
    - Seat `MECH-GASKET-1` (`68 × 3.5 mm`) in `MECH-CAP-BOT`, lower the UVT PMMA acrylic tube (`MECH-TUBE-1`) onto it, seat `MECH-GASKET-2` in `MECH-CAP-TOP`, and slide `MECH-CAP-TOP` down over the protruding aluminum core until both O-rings compress snugly.
-   - Thread `2× M3 × 12 mm` SHCS screws through the `±X` locking bores tucked beneath `MECH-CAP-TOP`'s `Ø108 mm` drip-brim into the tapped holes in `MECH-HS-CORE`. Run a neat bead of clear silicone sealant into the top square chamfer groove where the aluminum tube exits `MECH-CAP-TOP`.
-   - Smear a thin ring of silicone sealant around the skirt of `MECH-PLUG-TOP` and press it firmly into the top end of the hollow `40 × 40` aluminum tube to weatherproof the bore.
-   - For wet-weather operation, drop the detachable `MECH-RAIN-HAT` collar over `MECH-PLUG-TOP`, pass paracord through the `Ø8.0 mm` aluminum hanging hole, run both cord tails upward through the `2× Ø6.0 mm` holes in `MECH-RAIN-HAT`, and tie a hanging loop above the hat (holds the umbrella securely in wind and pops off in seconds to pack flat).
+   - Thread `2× M3 × 12 mm` SHCS screws through the `±X` locking bores tucked beneath `MECH-CAP-TOP`'s `Ø116 mm` drip-brim into the tapped holes in `MECH-HS-CORE`. Run a neat bead of clear silicone sealant into the top square chamfer groove where the aluminum tube exits `MECH-CAP-TOP`.
+   - Smear a thin ring of silicone sealant around the skirt of `MECH-PLUG-TOP` and press it firmly into the top end of the hollow `40 × 40` aluminum tube to weatherproof the bore. Clip any carabiner or tie paracord straight through the unobstructed `Ø8.0 mm` hanging hole below the cap.
 3. **Bottom Lid, Protective Base Ring & `20 mm` Rubber Membrane Grommet:**
    - Drop `4×` `M3` hex nuts into the `4×` side-entry captive nut slots around the lower flange of `MECH-CAP-BOT`.
    - Plug `J2`, `J3`, and `J4` into `driver_pcb`, drop `driver_pcb`'s `H1..H4` holes straight onto the `4× Ø2.45 mm` printed locating pins of `MECH-LID-BOT` (confirm `SW1` lugs and wires sit cleanly below the PCB), align `J1` with the `-Y` tunnel, seat `MECH-BASE-RING` flush beneath `MECH-LID-BOT`, and clamp both together with `4× M3 × 16 mm` SHCS screws through the base-ring counterbores.

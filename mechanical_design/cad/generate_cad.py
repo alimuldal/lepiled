@@ -295,17 +295,19 @@ def build_cap_bot(p: LepiLEDParams) -> bd.Part:
 
 def build_cap_top(p: LepiLEDParams) -> bd.Part:
     """
-    Build Rev 4.3 MECH-CAP-TOP with integral Ø108 mm 45-deg flared rain drip-brim:
-      - Prints 100% flat inverted (Z_cap_top_top on bed -> wide Ø108 mm brim tapers inward at 45 deg -> 0.00 mm^2 overhang!)
+    Build Rev 4.3 MECH-CAP-TOP with integral Ø116 mm rain drip-brim + underside drip-break groove:
+      - Prints 100% flat inverted (Z_cap_top_top on bed -> 0.00 mm^2 overhang!)
+      - 3.8 mm thick Ø116 mm brim overhangs lower body & USB-C grommet by 12 mm/side; a 1.5 mm deep
+        underside drip-break groove near the rim detaches runoff cleanly before it can creep inward
       - Shroud socket + MECH-GASKET-2 (68x3.5 mm) groove
       - 41.0 x 41.0 mm through-aperture for protruding bare 40x40x3 mm Al core + top 1.5 mm silicone-seal bevel
-      - 2x radial M3 locking screw bores + counterbores at ±X, Z = 231.5 mm tapping straight into core walls
+      - 2x radial M3 locking screw bores + counterbores at ±X, Z = 230.0 mm tucked cleanly beneath the brim
     """
     r_cap = p.cap_top_od / 2.0         # 42.0
-    r_brim = p.cap_top_brim_od / 2.0   # 54.0
+    r_brim = p.cap_top_brim_od / 2.0   # 58.0
     z_bot = p.z_cap_top_bot            # 211.0
     z_top = p.z_cap_top_top            # 237.5
-    z_brim_bot = z_top - p.cap_top_brim_rim_h       # 234.0 (3.5 mm flat rain drip-brim flange -> 0 deg overhang inverted!)
+    z_brim_bot = z_top - p.cap_top_brim_rim_h       # 233.7 (3.8 mm flat rain drip-brim flange -> 0 deg overhang inverted!)
     gusset = 3.0                                    # 3.0 mm 45-deg structural root fillet under drip-brim
     h_tot = z_top - z_bot
 
@@ -313,6 +315,12 @@ def build_cap_top(p: LepiLEDParams) -> bd.Part:
     c_gusset = bd.Cone(r_cap, r_cap + gusset, gusset, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_brim_bot - gusset))
     c_brim = bd.Cylinder(r_brim, p.cap_top_brim_rim_h, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_brim_bot))
     part = c_body.fuse(c_gusset).fuse(c_brim)
+
+    # Underside drip-break groove (2.0 mm wide x 1.5 mm deep at R = 53.5..55.5 mm; prints facing UP inverted -> 0 overhang!)
+    dg_out = bd.Cylinder(r_brim - 2.5, 1.55, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
+    dg_in = bd.Cylinder(r_brim - 4.5, 1.55, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
+    drip_groove = (dg_out - dg_in).translate((0, 0, z_brim_bot - 0.05))
+    part = part - drip_groove
 
     # Chamfer bottom shroud skirt edge and top outer brim edge
     bot_c = part.edges().filter_by(bd.GeomType.CIRCLE).filter_by_position(bd.Axis.Z, z_bot - 0.1, z_bot + 0.1)
@@ -373,45 +381,6 @@ def build_plug_top(p: LepiLEDParams) -> bd.Part:
     top_edges = cap.edges().filter_by_position(bd.Axis.Z, p.z_plug_top_end - 0.1, p.z_plug_top_end + 0.1)
     cap = bd.chamfer(top_edges, length=1.2)
     return insert.fuse(cap)
-
-
-def build_rain_hat(p: LepiLEDParams) -> bd.Part:
-    """
-    Build MECH-RAIN-HAT: detachable pack-flat Ø144 x 9.2 mm rain umbrella keyed onto MECH-PLUG-TOP:
-      - Flat Ø144 x 3.2 mm top plate + 6.0 mm downward outer drip lip (3.0 mm wall)
-      - Central 47x47 mm square centering collar (41x41 mm ID) drops over MECH-PLUG-TOP & core top
-      - 2x Ø6.0 mm vertical cord pass-through holes at (±28.0, 0) so the hanging cord retains the hat
-        automatically (zero fasteners, pops off in seconds to pack flat in a rucksack!)
-      - Prints flat upside-down (Z_rain_hat_top on build plate) with 0.00 mm^2 >46 deg overhang!
-    """
-    z_roof_bot = p.z_plug_top_end + 0.05  # 327.05 mm (0.05 mm nominal clearance above MECH-PLUG-TOP)
-    r_out = p.rain_hat_od / 2.0
-    r_in = r_out - p.rain_hat_lip_wall
-
-    disc = bd.Cylinder(r_out, p.rain_hat_thick, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_roof_bot))
-    top_edge = disc.edges().filter_by(bd.GeomType.CIRCLE).filter_by_position(bd.Axis.Z, p.z_rain_hat_top - 0.1, p.z_rain_hat_top + 0.1)
-    disc = bd.chamfer(top_edge, length=1.0)
-
-    lip = (
-        bd.Cylinder(r_out, p.rain_hat_lip_h, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX))
-        - bd.Cylinder(r_in, p.rain_hat_lip_h + 1.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((0, 0, 0.5))
-    ).translate((0, 0, z_roof_bot))
-
-    c_out_w = p.rain_hat_collar_id + 2.0 * p.rain_hat_collar_wall
-    collar_out = bd.Box(c_out_w, c_out_w, p.rain_hat_collar_h, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX))
-    collar_out = bd.fillet(collar_out.edges().filter_by(bd.Axis.Z), 2.5)
-    collar_in = bd.Box(p.rain_hat_collar_id, p.rain_hat_collar_id, p.rain_hat_collar_h + 1.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((0, 0, 0.5))
-    collar = (collar_out - collar_in).translate((0, 0, z_roof_bot))
-
-    part = disc.fuse(lip).fuse(collar)
-
-    # 2x Ø6.0 mm cord pass-through holes at X = ±28.0 mm, Y = 0.0 mm
-    for sx in (-1.0, 1.0):
-        chole = bd.Cylinder(p.rain_hat_cord_hole_dia / 2.0, p.rain_hat_thick + 2.0,
-                            align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((sx * p.rain_hat_cord_hole_x, 0.0, z_roof_bot - 1.0))
-        part = part - chole
-
-    return part
 
 
 def build_plug_bot(p: LepiLEDParams) -> bd.Part:
@@ -489,7 +458,6 @@ def build_assembly_parts(p: LepiLEDParams, core_w_override: float | None = None,
     cap_bot = build_cap_bot(p)
     cap_top = build_cap_top(p)
     plug_top = build_plug_top(p)
-    rain_hat = build_rain_hat(p)
     plug_bot = build_plug_bot(p)
 
     # Driver PCB (isolated NPTH H1..H4 dropped onto MECH-LID-BOT Ø2.45 mm locating pins!)
@@ -610,7 +578,6 @@ def build_assembly_parts(p: LepiLEDParams, core_w_override: float | None = None,
         cap_bot=cap_bot,
         cap_top=cap_top,
         plug_top=plug_top,
-        rain_hat=rain_hat,
         plug_bot=plug_bot,
         pcb_assy=pcb_assy,
         hs_core=hs_core,
@@ -830,12 +797,10 @@ def check_alcove_insertion(lid_bot: bd.Part, cap_bot: bd.Part, p: LepiLEDParams)
 
 def compute_mass_budget(mesh_checks: dict, assy_nom: dict[str, bd.Shape]) -> dict[str, float]:
     """Compute exact lamp mass budget (g) from B-Rep volumes and stock material densities."""
-    lamp_printed_keys = ("mech_base_ring", "mech_lid_bot", "mech_cap_bot", "mech_cap_top", "mech_plug_top", "mech_plug_bot", "mech_rain_hat")
+    lamp_printed_keys = ("mech_base_ring", "mech_lid_bot", "mech_cap_bot", "mech_cap_top", "mech_plug_top", "mech_plug_bot")
     vol_printed_cm3 = sum(mesh_checks[k]["brep_volume_mm3"] for k in lamp_printed_keys) / 1000.0
-    vol_no_hat_cm3 = sum(mesh_checks[k]["brep_volume_mm3"] for k in lamp_printed_keys if k != "mech_rain_hat") / 1000.0
     petg_solid_g = vol_printed_cm3 * 1.27
     petg_fdm_g = vol_printed_cm3 * 1.27 * 0.60  # 4 perimeters + 25% gyroid infill (~60% effective fill on contoured shells)
-    petg_fdm_no_hat_g = vol_no_hat_cm3 * 1.27 * 0.60
 
     al_core_g = (float(assy_nom["hs_core"].volume) / 1000.0) * 2.70
     pmma_shroud_g = (float(assy_nom["glass_tube"].volume) / 1000.0) * 1.18
@@ -844,16 +809,15 @@ def compute_mass_budget(mesh_checks: dict, assy_nom: dict[str, bd.Shape]) -> dic
     return {
         "printed_lamp_volume_cm3": round(vol_printed_cm3, 1),
         "cap_bot_volume_cm3": round(mesh_checks["mech_cap_bot"]["brep_volume_mm3"] / 1000.0, 1),
-        "rain_hat_volume_cm3": round(mesh_checks["mech_rain_hat"]["brep_volume_mm3"] / 1000.0, 1),
+        "cap_top_volume_cm3": round(mesh_checks["mech_cap_top"]["brep_volume_mm3"] / 1000.0, 1),
         "base_ring_volume_cm3": round(mesh_checks["mech_base_ring"]["brep_volume_mm3"] / 1000.0, 1),
         "petg_fdm_60pct_g": round(petg_fdm_g, 1),
         "petg_solid_100pct_g": round(petg_solid_g, 1),
         "al_core_3mm_g": round(al_core_g, 1),
         "uvt_pmma_shroud_g": round(pmma_shroud_g, 1),
         "elec_stars_hardware_g": elec_stars_hw_g,
-        "total_fdm_with_hat_g": round(petg_fdm_g + al_core_g + pmma_shroud_g + elec_stars_hw_g, 1),
-        "total_fdm_no_hat_g": round(petg_fdm_no_hat_g + al_core_g + pmma_shroud_g + elec_stars_hw_g, 1),
-        "total_solid_with_hat_g": round(petg_solid_g + al_core_g + pmma_shroud_g + elec_stars_hw_g, 1),
+        "total_fdm_g": round(petg_fdm_g + al_core_g + pmma_shroud_g + elec_stars_hw_g, 1),
+        "total_solid_g": round(petg_solid_g + al_core_g + pmma_shroud_g + elec_stars_hw_g, 1),
     }
 
 
@@ -862,17 +826,22 @@ def main() -> None:
     p_fdm = LepiLEDParams(process="FDM")
     (out_dir / "cad_params.json").write_text(json.dumps(p_fdm.to_dict(), indent=2))
 
+    # Remove deprecated rain_hat exports (replaced by unobstructed hanging hole + Ø116 mm cap_top drip-brim)
+    for old_hat in ("mech_rain_hat.step", "mech_rain_hat.stl"):
+        hp = out_dir / old_hat
+        if hp.exists():
+            hp.unlink()
+
     assy_nom = build_assembly_parts(p_fdm)
     drill_jig = build_drill_jig(p_fdm)
 
-    # 1. Export all 8 3D-printable FDM STEP & STL files
+    # 1. Export all 7 3D-printable FDM STEP & STL files
     mesh_checks = {
         "mech_base_ring": export_and_verify_stl(assy_nom["base_ring"], out_dir / "mech_base_ring.step", out_dir / "mech_base_ring.stl"),
         "mech_lid_bot": export_and_verify_stl(assy_nom["lid_bot"], out_dir / "mech_lid_bot.step", out_dir / "mech_lid_bot.stl"),
         "mech_cap_bot": export_and_verify_stl(assy_nom["cap_bot"], out_dir / "mech_cap_bot.step", out_dir / "mech_cap_bot.stl"),
         "mech_cap_top": export_and_verify_stl(assy_nom["cap_top"], out_dir / "mech_cap_top.step", out_dir / "mech_cap_top.stl"),
         "mech_plug_top": export_and_verify_stl(assy_nom["plug_top"], out_dir / "mech_plug_top.step", out_dir / "mech_plug_top.stl"),
-        "mech_rain_hat": export_and_verify_stl(assy_nom["rain_hat"], out_dir / "mech_rain_hat.step", out_dir / "mech_rain_hat.stl"),
         "mech_plug_bot": export_and_verify_stl(assy_nom["plug_bot"], out_dir / "mech_plug_bot.step", out_dir / "mech_plug_bot.stl"),
         "mech_drill_jig": export_and_verify_stl(drill_jig, out_dir / "mech_drill_jig.step", out_dir / "mech_drill_jig.stl"),
     }
@@ -882,7 +851,7 @@ def main() -> None:
     comp_dir.mkdir(exist_ok=True)
     for old_f in comp_dir.glob("*.stl"):
         old_f.unlink()
-    printed_map = ("base_ring", "lid_bot", "cap_bot", "cap_top", "plug_top", "rain_hat", "plug_bot")
+    printed_map = ("base_ring", "lid_bot", "cap_bot", "cap_top", "plug_top", "plug_bot")
     for name, shp in assy_nom.items():
         if name in printed_map:
             (comp_dir / f"{name}.stl").write_bytes((out_dir / f"mech_{name}.stl").read_bytes())
@@ -892,14 +861,13 @@ def main() -> None:
     assy_compound = bd.Compound(list(assy_nom.values()))
     bd.export_step(assy_compound, str(out_dir / "lepiled_assembly.step"))
 
-    # 3. Overhang audits (all 8 printed parts in actual build-plate orientations!)
+    # 3. Overhang audits (all 7 printed parts in actual build-plate orientations!)
     overhang_checks = {
         "mech_base_ring": audit_stl_overhangs(out_dir / "mech_base_ring.stl", (0.0, 0.0, -1.0)),
         "mech_lid_bot": audit_stl_overhangs(out_dir / "mech_lid_bot.stl", (0.0, 0.0, 1.0)),
         "mech_cap_bot": audit_stl_overhangs(out_dir / "mech_cap_bot.stl", (0.0, 0.0, 1.0)),
         "mech_cap_top": audit_stl_overhangs(out_dir / "mech_cap_top.stl", (0.0, 0.0, -1.0)),
         "mech_plug_top": audit_stl_overhangs(out_dir / "mech_plug_top.stl", (0.0, 0.0, -1.0)),
-        "mech_rain_hat": audit_stl_overhangs(out_dir / "mech_rain_hat.stl", (0.0, 0.0, -1.0)),
         "mech_plug_bot": audit_stl_overhangs(out_dir / "mech_plug_bot.stl", (0.0, 0.0, 1.0)),
         "mech_drill_jig": audit_stl_overhangs(out_dir / "mech_drill_jig.stl", (0.0, 0.0, 1.0)),
     }
@@ -956,7 +924,7 @@ def main() -> None:
     verif_path = out_dir / "cad_verification.json"
     verif_path.write_text(json.dumps(report, indent=2))
 
-    print("=== Mesh Verification (8 FDM Printable Parts) ===")
+    print("=== Mesh Verification (7 FDM Printable Parts) ===")
     for name, m in mesh_checks.items():
         print(f"  {name:16s}: vol={m['stl_volume_mm3']:8.1f} mm^3 | tri={m['triangles']:6d} | wt={m['is_watertight']} | wind={m['is_winding_consistent']} | euler={m['euler_number']:3d}")
     print("=== Overhang Verification ===")
@@ -968,13 +936,13 @@ def main() -> None:
     for k in ("sw1_bottom_lid_insertion", "m3x16_bolt_insertion", "usbc_plug_insertion"):
         v = alcove_checks[k]
         print(f"  {k:26s}: waypoints={v['waypoints_tested']:2d}, max_vol={v['max_intersection_vol_mm3']:.6f} mm^3 | pass={v['pass']}")
-    print("=== All-Pairs B-Rep Intersection (incl. UVT PMMA Shroud, Base Ring, Rain Hat & ALL Fasteners) ===")
+    print("=== All-Pairs B-Rep Intersection (incl. UVT PMMA Shroud, Base Ring, Ø116mm Brim & ALL Fasteners) ===")
     for label, d in [("NOMINAL", inter_nom), ("WORST_CASE", inter_wc)]:
         print(f"  {label:10s}: {d['total_pairs_checked']} pairs, nonzero={d['nonzero_count']} {d['nonzero_pairs']}")
     print("=== Verified Mass Budget (Rev 4.3) ===")
-    print(f"  Printed lamp parts ({mass_budget['printed_lamp_volume_cm3']} cm^3; cap_bot={mass_budget['cap_bot_volume_cm3']} cm^3): {mass_budget['petg_fdm_60pct_g']} g FDM (60%) / {mass_budget['petg_solid_100pct_g']} g solid")
+    print(f"  Printed lamp parts ({mass_budget['printed_lamp_volume_cm3']} cm^3; cap_bot={mass_budget['cap_bot_volume_cm3']}, cap_top={mass_budget['cap_top_volume_cm3']} cm^3): {mass_budget['petg_fdm_60pct_g']} g FDM (60%) / {mass_budget['petg_solid_100pct_g']} g solid")
     print(f"  Al core (3 mm): {mass_budget['al_core_3mm_g']} g | UVT PMMA shroud: {mass_budget['uvt_pmma_shroud_g']} g | Elec+Stars+HW: {mass_budget['elec_stars_hardware_g']} g")
-    print(f"  TOTAL LAMP WEIGHT (FDM): {mass_budget['total_fdm_with_hat_g']} g w/ rain hat ({mass_budget['total_fdm_no_hat_g']} g w/o hat)")
+    print(f"  TOTAL LAMP WEIGHT (FDM): {mass_budget['total_fdm_g']} g ({mass_budget['total_solid_g']} g 100% solid)")
 
     if not report["summary"]["overall_pass"]:
         raise SystemExit(1)

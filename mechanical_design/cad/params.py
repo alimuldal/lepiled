@@ -13,11 +13,10 @@ Rev 4.3 Physical Upgrades (Building on Rev 4.2 20 mm Copper DTP Stars + Bare 250
        at (X = 0.0, Y = +8.5 mm), safely clear of driver_pcb bottom (4.0 mm air gap) and all TH pins/bosses.
      - Adds a support-free bolt-on MECH-BASE-RING (Ø92 x 19 mm, 4x arched drainage cutouts) clamped by the
        same 4x M3x16 lid bolts, shielding the toggle boot by 4.0 mm so the lamp stands safely upright.
-  3. Dual-Layer Rain Roof System:
-     - Integral Ø108 mm 45-deg flared drip-brim built into MECH-CAP-TOP (0.00 mm^2 overhang when printed
-       inverted), shedding rain clear of the shroud and USB-C grommet while leaving the 85.5 mm Al core open.
-     - Detachable pack-flat MECH-RAIN-HAT (Ø144 mm x 9.7 mm, 0.00 mm^2 overhang) keyed onto MECH-PLUG-TOP
-       and retained automatically by the hanging cord passing through 2x Ø6.0 mm holes.
+  3. Integral Ø116 mm Rain Drip-Brim on MECH-CAP-TOP (Unobstructed Hanging Hole):
+     - Built directly into MECH-CAP-TOP with a 1.5 mm underside drip-break groove (0.00 mm^2 overhang when
+       printed inverted), shedding rain 12 mm clear of the lower housing & USB-C grommet while leaving the
+       entire 85.5 mm bare Al core and Ø8.0 mm hanging hole 100% open and unobstructed.
   4. Weight-Trimmed, Robust MECH-CAP-BOT Shell:
      - Keeps the sturdy 40x40x3.0 mm Al 6063 core (300 g, full M3 thread engagement) while contouring
        excess solid plastic bulk out of MECH-CAP-BOT (~337 cm^3 -> ~200 cm^3, all walls >= 3.5 mm robust).
@@ -82,8 +81,8 @@ class LepiLEDParams:
     cap_bot_mid_od: float = 71.0        # Contoured mid-body cylinder (5.0 mm robust wall around Ø61 mm cavity!)
     cap_bot_waist_od: float = 65.0      # Tapered upper waist (>= 8.5 mm robust wall around wire slots & cone!)
     cap_top_od: float = 84.0            # Upper shroud socket skirt OD (3.5 mm skirt wall)
-    cap_top_brim_od: float = 108.0      # Integral Ø108 mm rain drip-brim flange on MECH-CAP-TOP (0 deg overhang inverted!)
-    cap_top_brim_rim_h: float = 3.5     # Sturdy 3.5 mm brim flange + 3.0 mm 45-deg gusset at Z_cap_top_top
+    cap_top_brim_od: float = 116.0      # Integral Ø116 mm rain drip-brim flange (+12 mm/side past base; 0 deg overhang inverted!)
+    cap_top_brim_rim_h: float = 3.8     # Sturdy 3.8 mm brim flange w/ 1.5 mm underside drip-break groove + 3.0 mm gusset
     cap_chamfer: float = 0.8
     min_wall: float = 2.5
 
@@ -169,18 +168,7 @@ class LepiLEDParams:
     plug_top_w: float = 33.5
     plug_top_insert_h: float = 10.0       # Z = 313.0 .. 323.0 mm (clears Ø8 mm hang hole at Z = 305.0 mm by 4.0 mm!)
     plug_top_cap_w: float = 40.4
-    plug_top_cap_h: float = 4.0           # Z = 323.0 .. 327.0 mm
-
-    # Detachable pack-flat rain umbrella (MECH-RAIN-HAT: Ø136 mm disc + 5 mm drip lip, keyed onto MECH-PLUG-TOP)
-    rain_hat_od: float = 136.0            # Wide rain shield; packs flat (7.5 mm thick!) in a rucksack
-    rain_hat_thick: float = 2.5           # Sturdy flat top disc (prints upside-down on Z_top -> 0.00 mm^2 overhang!)
-    rain_hat_lip_h: float = 5.0           # Downward outer drip lip (Z = 322.05 .. 327.05 mm)
-    rain_hat_lip_wall: float = 2.8        # Robust 2.8 mm rim wall
-    rain_hat_collar_id: float = 41.2      # Slip-fits cleanly over 40.4 mm MECH-PLUG-TOP & 40.5 mm max Al core (sharp corners!)
-    rain_hat_collar_wall: float = 2.8     # 46.8 x 46.8 mm outer collar
-    rain_hat_collar_h: float = 5.5        # Overlaps MECH-PLUG-TOP (4 mm) + Al core (1.5 mm), 12.5 mm above hang hole!
-    rain_hat_cord_hole_x: float = 28.0    # 2x Ø6.0 mm cord pass-through holes cleanly outside collar (holds hat down!)
-    rain_hat_cord_hole_dia: float = 6.0
+    plug_top_cap_h: float = 4.0           # Z = 323.0 .. 327.0 mm (unobstructed Ø8.0 mm carabiner/cord hang hole!)
 
     # 8x Off-the-shelf pre-mounted 20 mm Copper DTP LED stars (4x UV + 4x Vis; ZERO custom led_mcpcb!)
     star_dia: float = 20.0
@@ -271,12 +259,8 @@ class LepiLEDParams:
         return self.z_core_top + self.plug_top_cap_h  # 327.0
 
     @property
-    def z_rain_hat_top(self) -> float:
-        return self.z_plug_top_end + 0.05 + self.rain_hat_thick  # 330.25
-
-    @property
-    def total_height_with_hat_mm(self) -> float:
-        return self.z_rain_hat_top - self.z_base_ring_bot  # 349.25
+    def total_height_mm(self) -> float:
+        return self.z_plug_top_end - self.z_base_ring_bot  # 345.0
 
     @property
     def exposed_glass_window(self) -> float:
@@ -414,14 +398,12 @@ class LepiLEDParams:
         checks["pilot_corner_min_wall_mm"] = {"value": round(pilot_corner_wall, 3), "min": self.min_wall, "pass": pilot_corner_wall >= self.min_wall}
         checks["top_lock_above_gasket2_mm"] = {"value": round(top_lock_above_g2, 3), "min": self.min_wall, "pass": top_lock_above_g2 >= self.min_wall}
 
-        # 8. Protruding core, top rain plug & detachable rain hat clearances
+        # 8. Protruding core, top rain plug & integral drip-brim clearances
         hang_to_plug_clr = (self.z_core_top - self.plug_top_insert_h) - (self.z_hang_hole + self.core_hang_hole_dia / 2.0)
-        hang_to_hat_collar_clr = (self.z_plug_top_end + 0.05 - self.rain_hat_collar_h) - (self.z_hang_hole + self.core_hang_hole_dia / 2.0)
         hat_brim_overhang_cap = 0.5 * (self.cap_top_brim_od - self.cap_bot_od)
         checks["core_protrusion_mm"] = {"value": round(self.core_protrusion_mm, 3), "min": 60.0, "max": 100.0, "pass": 60.0 <= self.core_protrusion_mm <= 100.0}
         checks["hang_hole_to_top_plug_mm"] = {"value": round(hang_to_plug_clr, 3), "min": 3.0, "pass": hang_to_plug_clr >= 3.0}
-        checks["hang_hole_to_rain_hat_collar_mm"] = {"value": round(hang_to_hat_collar_clr, 3), "min": 8.0, "pass": hang_to_hat_collar_clr >= 8.0}
-        checks["cap_top_brim_overhang_mm"] = {"value": round(hat_brim_overhang_cap, 3), "min": 6.0, "pass": hat_brim_overhang_cap >= 6.0}
+        checks["cap_top_brim_overhang_mm"] = {"value": round(hat_brim_overhang_cap, 3), "min": 10.0, "pass": hat_brim_overhang_cap >= 10.0}
 
         # 9. Shroud length tolerance O-ring squeeze & gland fill (149.0 .. 151.0 mm)
         squeeze_nom = (self.glass_oring_cs - self.glass_oring_depth) / self.glass_oring_cs
@@ -458,8 +440,7 @@ class LepiLEDParams:
             "core_protrusion_mm": self.core_protrusion_mm,
             "z_hang_hole": self.z_hang_hole,
             "z_plug_top_end": self.z_plug_top_end,
-            "z_rain_hat_top": self.z_rain_hat_top,
-            "total_height_with_hat_mm": self.total_height_with_hat_mm,
+            "total_height_mm": self.total_height_mm,
             "exposed_glass_window_mm": self.exposed_glass_window,
             "z_optical_center": self.z_optical_center,
             "z_led_uv": self.z_led_uv,

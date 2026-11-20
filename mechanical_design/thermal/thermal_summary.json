@@ -1,5 +1,5 @@
 {
-  "architecture": "Rev 4.3 (UVT PMMA Acrylic Shroud + 85.5 mm Bare Protruding 3 mm Al Core + 20 mm Cu DTP Stars + Dual Rain Roof)",
+  "architecture": "Rev 4.3 (UVT PMMA Acrylic Shroud + 85.5 mm Bare Protruding 3 mm Al Core + 20 mm Cu DTP Stars + \u00d8116 mm Drip-Brim)",
   "cad_reconciliation": {
     "core_length_mm": 250.0,
     "core_protrusion_mm": 85.5,
@@ -2067,20 +2067,6 @@
       "dsreal_T_pcb_top_C": 69.91
     },
     {
-      "case": "Rev 4.3 w/ Detachable MECH-RAIN-HAT (+10% top conv derating, 30 C Horiz)",
-      "T_amb_C": 30.0,
-      "nom_Tj_uv_C": 61.86,
-      "nom_T_shroud_in_C": 38.88,
-      "nom_T_core_C": 60.22,
-      "nom_T_pcb_top_C": 60.64,
-      "nom_Tj_u1_jedec_C": 69.97,
-      "dsreal_Tj_uv_C": 70.21,
-      "dsreal_T_shroud_in_C": 41.2,
-      "dsreal_Tj_vis_C": 76.83,
-      "dsreal_T_core_C": 68.11,
-      "dsreal_T_pcb_top_C": 70.69
-    },
-    {
       "case": "Comparison: Borosilicate 3.5mm Glass vs UVT PMMA 3.0mm (30 C Horiz)",
       "T_amb_C": 30.0,
       "nom_Tj_uv_C": 60.6,
@@ -2093,6 +2079,20 @@
       "dsreal_Tj_vis_C": 75.28,
       "dsreal_T_core_C": 66.52,
       "dsreal_T_pcb_top_C": 69.67
+    },
+    {
+      "case": "Optional Matte-Black Painted Core (eps=0.88, 30 C Horiz)",
+      "T_amb_C": 30.0,
+      "nom_Tj_uv_C": 52.17,
+      "nom_T_shroud_in_C": 39.09,
+      "nom_T_core_C": 50.54,
+      "nom_T_pcb_top_C": 54.39,
+      "nom_Tj_u1_jedec_C": 63.72,
+      "dsreal_Tj_uv_C": 58.09,
+      "dsreal_T_shroud_in_C": 41.52,
+      "dsreal_Tj_vis_C": 64.84,
+      "dsreal_T_core_C": 55.99,
+      "dsreal_T_pcb_top_C": 62.87
     },
     {
       "case": "Thick TIM bondline under 20mm star (R_tim_led=0.80 K/W, 30 C)",

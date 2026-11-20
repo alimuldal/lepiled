@@ -883,12 +883,12 @@ def main() -> None:
             )
             sweep_data[m_name].append({"T_amb": float(Ta), **{k: round(v, 3) for k, v in r.items()}})
 
-    # Sensitivity Cases (Rev 4.3 Baseline: UVT PMMA Shroud + Dual Rain Roof + Bare Protruding Core)
+    # Sensitivity Cases (Rev 4.3 Baseline: UVT PMMA Shroud + Ø116mm Drip-Brim + Bare Protruding Core)
     sens_specs = [
         ("Rev 4.3 Baseline (UVT PMMA + 85.5mm Bare Al + Cu DTP Stars, 22 C UK Night)", 22.0, dict(eps_core=0.20, r_tim_led=0.30, rth_penalty_factor=1.0), PROTRUDING_BARE_85),
         ("Rev 4.3 Baseline (UVT PMMA + 85.5mm Bare Al + Cu DTP Stars, 30 C Horiz)", 30.0, dict(eps_core=0.20, r_tim_led=0.30, rth_penalty_factor=1.0), PROTRUDING_BARE_85),
-        ("Rev 4.3 w/ Detachable MECH-RAIN-HAT (+10% top conv derating, 30 C Horiz)", 30.0, dict(eps_core=0.20, r_tim_led=0.30, rth_penalty_factor=1.10), PROTRUDING_BARE_85),
         ("Comparison: Borosilicate 3.5mm Glass vs UVT PMMA 3.0mm (30 C Horiz)", 30.0, dict(eps_core=0.20, r_tim_led=0.30, rth_penalty_factor=1.0, k_shroud=1.14, eps_shroud=0.90), PROTRUDING_BARE_85),
+        ("Optional Matte-Black Painted Core (eps=0.88, 30 C Horiz)", 30.0, dict(eps_core=0.88, r_tim_led=0.30, rth_penalty_factor=1.0), PROTRUDING_BLACK_85),
         ("Thick TIM bondline under 20mm star (R_tim_led=0.80 K/W, 30 C)", 30.0, dict(eps_core=0.20, r_tim_led=0.80, rth_penalty_factor=1.0), PROTRUDING_BARE_85),
         ("Worst-case +20% still-air convection penalty (30 C Horiz)", 30.0, dict(eps_core=0.20, r_tim_led=0.30, rth_penalty_factor=1.20), PROTRUDING_BARE_85),
         ("Hot summer night T_amb = 35 C (Horizontal, UVT PMMA)", 35.0, dict(eps_core=0.20, r_tim_led=0.30, rth_penalty_factor=1.0), PROTRUDING_BARE_85),
@@ -917,7 +917,7 @@ def main() -> None:
     cfg0_all_22_30 = [r for r in cfg0_rows if r["T_amb_C"] <= 30.0]
     cfg0_real_35 = [r for r in cfg0_rows if r["T_amb_C"] == 35.0 and "DS-100%" not in r["mode"]]
     summary = {
-        "architecture": "Rev 4.3 (UVT PMMA Acrylic Shroud + 85.5 mm Bare Protruding 3 mm Al Core + 20 mm Cu DTP Stars + Dual Rain Roof)",
+        "architecture": "Rev 4.3 (UVT PMMA Acrylic Shroud + 85.5 mm Bare Protruding 3 mm Al Core + 20 mm Cu DTP Stars + Ø116 mm Drip-Brim)",
         "cad_reconciliation": {
             "core_length_mm": params.core_length,
             "core_protrusion_mm": params.core_protrusion_mm,
