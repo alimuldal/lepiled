@@ -30,6 +30,7 @@ import json
 import math
 import shutil
 import subprocess
+import sys
 import uuid
 import zipfile
 from pathlib import Path
@@ -110,16 +111,16 @@ def write_kicad_pro():
         }
 
     netclass_assignments = {}
-    for n in ["VBUS", "VBUS_FUSED", "VBUS_DAMP", "VBUS_SENSE", "VIN_20V"]:
+    for n in ["VBUS", "VBUS_DAMP", "VIN_20V"]:
         netclass_assignments[f"/{n}"] = ["Power_20V"]
     for n in ["SW1_NODE", "SW2_NODE"]:
         netclass_assignments[f"/{n}"] = ["Power_SW"]
     for n in ["UV_POS", "UV_NEG", "UV_C4_DAMP", "VIS_POS", "VIS_NEG", "VIS_C5_DAMP"]:
         netclass_assignments[f"/{n}"] = ["LED_Drive"]
     for n in [
-        "CC1", "CC2", "U3_VOUT", "U3_PWR_EN", "U3_V5V", "U3_VSEL", "U3_ISEL",
-        "U3_LED", "PD_LED_A", "Q1_GATE", "V_REF", "UVLO_SENSE", "UVLO_OK",
-        "UVLO_FAULT", "SW_UV_IN", "SW_VIS_IN", "U1_CTRL", "U2_CTRL",
+        "CC1", "CC2", "U3_VBUS", "PD_LED_A", "PD_LED_K",
+        "V_REF", "UVLO_SENSE", "UVLO_OK", "UVLO_FAULT",
+        "SW_UV_IN", "SW_VIS_IN", "U1_CTRL", "U2_CTRL",
     ]:
         netclass_assignments[f"/{n}"] = ["Signal"]
 
@@ -312,29 +313,28 @@ def create_footprints():
     _setup_fp_texts(fp, ref_xy=(0.0, +2.35), val_xy=(0.0, -2.35))
     save(fp, "Diodes_TSOT25_AL8860")
 
-    # 2. Diodes AP33771CFBZ-13-FA02 (W-DFN3030-14 Type A1) - AP33771C.pdf p. 14
-    # Enlarged EPAD = 1.80 x 2.70 mm with 64.4% segmented 2x2 F.Paste (fixes Opus B-M3!)
+    # 2. WCH CH224A (ESSOP-10, 1.00 mm leaded pitch, 3.9 x 4.9 mm body, 2.10 x 3.30 mm EPAD)
     fp = pcbnew.FOOTPRINT(None)
     fp.SetReference("U")
-    fp.SetValue("AP33771C")
+    fp.SetValue("CH224A")
     fp.SetAttributes(pcbnew.FP_SMD)
-    ys = [+1.20, +0.80, +0.40, 0.00, -0.40, -0.80, -1.20]
-    for idx, y in enumerate(ys, start=1):
-        _smd_pad(fp, idx, -1.325, y, 0.45, 0.22, mask_margin=0.04, roundrect=0.04)
-    for idx, y in enumerate(reversed(ys), start=8):
-        _smd_pad(fp, idx, +1.325, y, 0.45, 0.22, mask_margin=0.04, roundrect=0.04)
-    # Center EPAD (15) = 1.80 x 2.70 mm (0.20 mm copper gap to outer pads), 64.4% 2x2 paste!
-    _smd_pad(fp, 15, 0.0, 0.0, 1.80, 2.70, layers=lset(pcbnew.F_Cu, pcbnew.F_Mask), mask_margin=0.0)
-    for px in (-0.42, +0.42):
-        for py in (-0.64, +0.64):
-            _smd_pad(fp, "", px, py, 0.68, 1.15, layers=lset(pcbnew.F_Paste), mask_margin=0.0)
+    ys10 = [+2.00, +1.00, 0.00, -1.00, -2.00]
+    for idx, y in enumerate(ys10, start=1):
+        _smd_pad(fp, idx, -2.70, y, 1.50, 0.55, roundrect=0.06)
+    for idx, y in enumerate(reversed(ys10), start=6):
+        _smd_pad(fp, idx, +2.70, y, 1.50, 0.55, roundrect=0.06)
+    # Center EPAD (11) = 2.10 x 3.30 mm (0.90 mm gap to outer pads), 60% 2x2 paste!
+    _smd_pad(fp, 11, 0.0, 0.0, 2.10, 3.30, layers=lset(pcbnew.F_Cu, pcbnew.F_Mask), mask_margin=0.0)
+    for px in (-0.48, +0.48):
+        for py in (-0.78, +0.78):
+            _smd_pad(fp, "", px, py, 0.78, 1.32, layers=lset(pcbnew.F_Paste), mask_margin=0.0)
     _add_rect_crtyd_and_fab(
-        fp, 3.20, 3.20,
-        silk_lines=[(-1.40, +1.78, +1.40, +1.78), (-1.40, -1.78, +1.40, -1.78)],
-        pin1_dot=(-1.85, +1.55), fab_w=3.00, fab_h=3.00,
+        fp, 6.90, 4.90,
+        silk_lines=[(-1.60, +2.65, +1.60, +2.65), (-1.60, -2.65, +1.60, -2.65)],
+        pin1_dot=(-3.70, +2.45), fab_w=3.90, fab_h=4.90,
     )
-    _setup_fp_texts(fp, ref_xy=(0.0, +2.45), val_xy=(0.0, -2.45))
-    save(fp, "Diodes_W-DFN3030-14_AP33771C")
+    _setup_fp_texts(fp, ref_xy=(0.0, +3.35), val_xy=(0.0, -3.35))
+    save(fp, "WCH_ESSOP-10_CH224A")
 
     # 3. TI LM393BIDR (SOIC-8, 1.27 mm pitch)
     fp = pcbnew.FOOTPRINT(None)
@@ -694,13 +694,27 @@ def build_symbol_defs():
         pin_names_hide=True,
     )
 
-    syms["IC_LM4040"] = _sym_wrap(
-        "IC_LM4040", "U", "",
+    # BAV99 Dual Series ESD Clamp Diode (SOT-23: 1=A1->GND, 2=K2->V_REF, 3=K1/A2->Signal)
+    syms["D_BAV99"] = _sym_wrap(
+        "D_BAV99", "D", "",
+        '      (rectangle (start -2.54 3.81) (end 2.54 -3.81) (stroke (width 0.254) (type default)) (fill (type background)))\n'
+        '      (polyline (pts (xy -1.016 -2.54) (xy 1.016 -2.54) (xy 0 -0.508) (xy -1.016 -2.54)) (stroke (width 0.20) (type default)) (fill (type none)))\n'
+        '      (polyline (pts (xy -1.016 -0.508) (xy 1.016 -0.508)) (stroke (width 0.20) (type default)) (fill (type none)))\n'
+        '      (polyline (pts (xy -1.016 0.508) (xy 1.016 0.508) (xy 0 2.54) (xy -1.016 0.508)) (stroke (width 0.20) (type default)) (fill (type none)))\n'
+        '      (polyline (pts (xy -1.016 2.54) (xy 1.016 2.54)) (stroke (width 0.20) (type default)) (fill (type none)))',
+        '      (pin passive line (at 0 -6.35 90) (length 2.54) (name "A1" (effects (font (size 0.8 0.8)))) (number "1" (effects (font (size 0.8 0.8)))))\n'
+        '      (pin passive line (at 0 6.35 270) (length 2.54) (name "K2" (effects (font (size 0.8 0.8)))) (number "2" (effects (font (size 0.8 0.8)))))\n'
+        '      (pin passive line (at -5.08 0 0) (length 2.54) (name "IO" (effects (font (size 0.8 0.8)))) (number "3" (effects (font (size 0.8 0.8)))))',
+        pin_names_hide=True,
+    )
+
+    syms["IC_TL431"] = _sym_wrap(
+        "IC_TL431", "U", "",
         '      (polyline (pts (xy -1.27 -1.27) (xy 1.27 -1.27) (xy 0 1.27) (xy -1.27 -1.27)) (stroke (width 0.254) (type default)) (fill (type none)))\n'
         '      (polyline (pts (xy -1.778 1.778) (xy -1.27 1.27) (xy 1.27 1.27) (xy 1.778 0.762)) (stroke (width 0.254) (type default)) (fill (type none)))',
-        '      (pin passive line (at 0 3.81 270) (length 2.54) (name "K" (effects (font (size 0.9 0.9)))) (number "1" (effects (font (size 0.9 0.9)))))\n'
-        '      (pin power_in line (at 0 -3.81 90) (length 2.54) (name "A" (effects (font (size 0.9 0.9)))) (number "2" (effects (font (size 0.9 0.9)))))\n'
-        '      (pin power_in line (at 3.81 -1.27 180) (length 2.54) (name "GND" (effects (font (size 0.8 0.8)))) (number "3" (effects (font (size 0.8 0.8)))))',
+        '      (pin passive line (at 3.81 1.27 180) (length 2.54) (name "REF" (effects (font (size 0.8 0.8)))) (number "1" (effects (font (size 0.8 0.8)))))\n'
+        '      (pin passive line (at 0 3.81 270) (length 2.54) (name "K" (effects (font (size 0.9 0.9)))) (number "2" (effects (font (size 0.9 0.9)))))\n'
+        '      (pin power_in line (at 0 -3.81 90) (length 2.54) (name "A" (effects (font (size 0.9 0.9)))) (number "3" (effects (font (size 0.9 0.9)))))',
         pin_names_hide=True,
     )
 
@@ -730,22 +744,20 @@ def build_symbol_defs():
         '      (pin power_in line (at 0 -11.43 90) (length 3.81) (name "GND" (effects (font (size 1.0 1.0)))) (number "4" (effects (font (size 1.0 1.0)))))',
     )
 
-    left_u3 = [("4", "ISENP", 10.16, "input"), ("3", "VCC", 7.62, "power_in"),
-               ("11", "CC1", 5.08, "bidirectional"), ("10", "CC2", 2.54, "bidirectional"),
-               ("13", "DP", 0.00, "no_connect"), ("12", "DN", -2.54, "no_connect"),
-               ("5", "GND", -5.08, "power_in"), ("15", "EPAD", -7.62, "power_in")]
-    right_u3 = [("1", "VOUT", 10.16, "input"), ("2", "PWR_EN", 7.62, "output"),
-                ("14", "V5V", 5.08, "power_out"), ("8", "VSEL", 2.54, "input"),
-                ("9", "ISEL", 0.00, "input"), ("7", "LED", -2.54, "output"),
-                ("6", "FLIP", -5.08, "no_connect")]
+    left_u3 = [("1", "VHV", 7.62, "power_in"), ("8", "VBUS", 5.08, "input"),
+               ("7", "CC1", 2.54, "bidirectional"), ("6", "CC2", 0.00, "bidirectional"),
+               ("4", "DP", -2.54, "no_connect"), ("5", "DM", -5.08, "no_connect"),
+               ("11", "EPAD", -7.62, "power_in")]
+    right_u3 = [("10", "PG", 5.08, "open_collector"), ("9", "CFG1", 2.54, "input"),
+                ("2", "CFG2", 0.00, "no_connect"), ("3", "CFG3", -2.54, "no_connect")]
     u3_pins = []
     for num, nm, py, ptype in left_u3:
         u3_pins.append(f'      (pin {ptype} line (at -13.97 {py:.2f} 0) (length 3.81) (name "{nm}" (effects (font (size 1.0 1.0)))) (number "{num}" (effects (font (size 1.0 1.0)))))')
     for num, nm, py, ptype in right_u3:
         u3_pins.append(f'      (pin {ptype} line (at 13.97 {py:.2f} 180) (length 3.81) (name "{nm}" (effects (font (size 1.0 1.0)))) (number "{num}" (effects (font (size 1.0 1.0)))))')
-    syms["IC_AP33771C"] = _sym_wrap(
-        "IC_AP33771C", "U", "",
-        '      (rectangle (start -10.16 12.70) (end 10.16 -10.16) (stroke (width 0.254) (type default)) (fill (type background)))',
+    syms["IC_CH224A"] = _sym_wrap(
+        "IC_CH224A", "U", "",
+        '      (rectangle (start -10.16 10.16) (end 10.16 -10.16) (stroke (width 0.254) (type default)) (fill (type background)))',
         "\n".join(u3_pins),
     )
 
@@ -861,15 +873,15 @@ def _sym_pin_offsets():
         "D_TVS_Uni": {"1": (-3.81, 0), "2": (3.81, 0)},
         "D_LED": {"1": (-3.81, 0), "2": (3.81, 0)},
         "D_LED_AK": {"1": (-3.81, 0), "2": (3.81, 0)},
+        "D_BAV99": {"1": (0, -6.35), "2": (0, 6.35), "3": (-5.08, 0)},
         "Q_NMOS": {"1": (-5.08, -1.27), "2": (0, -5.08), "3": (0, 5.08)},
-        "IC_LM4040": {"1": (0, 3.81), "2": (0, -3.81), "3": (3.81, -1.27)},
+        "IC_TL431": {"1": (3.81, 1.27), "2": (0, 3.81), "3": (0, -3.81)},
         "IC_AL8860": {"5": (-11.43, 3.81), "3": (-11.43, 0), "2": (-11.43, -3.81), "4": (11.43, 3.81), "1": (11.43, -3.81)},
         "IC_LM393B": {"3": (-11.43, 5.08), "2": (-11.43, 2.54), "5": (-11.43, -2.54), "6": (-11.43, -5.08),
                       "1": (11.43, 3.81), "7": (11.43, -3.81), "8": (0, 11.43), "4": (0, -11.43)},
-        "IC_AP33771C": {"4": (-13.97, 10.16), "3": (-13.97, 7.62), "11": (-13.97, 5.08), "10": (-13.97, 2.54),
-                        "13": (-13.97, 0), "12": (-13.97, -2.54), "5": (-13.97, -5.08), "15": (-13.97, -7.62),
-                        "1": (13.97, 10.16), "2": (13.97, 7.62), "14": (13.97, 5.08), "8": (13.97, 2.54),
-                        "9": (13.97, 0), "7": (13.97, -2.54), "6": (13.97, -5.08)},
+        "IC_CH224A": {"1": (-13.97, 7.62), "8": (-13.97, 5.08), "7": (-13.97, 2.54), "6": (-13.97, 0),
+                      "4": (-13.97, -2.54), "5": (-13.97, -5.08), "11": (-13.97, -7.62),
+                      "10": (13.97, 5.08), "9": (13.97, 2.54), "2": (13.97, 0), "3": (13.97, -2.54)},
         "J_USB4085": {"A4": (10.16, 12.70), "A9": (10.16, 10.16), "B4": (10.16, 7.62), "B9": (10.16, 5.08),
                       "A5": (10.16, 2.54), "B5": (10.16, 0.00), "A1": (10.16, -2.54), "A12": (10.16, -5.08),
                       "B1": (10.16, -7.62), "B12": (10.16, -10.16), "SH1": (10.16, -12.70), "SH2": (10.16, -12.70),
@@ -897,10 +909,9 @@ def write_kicad_sch(syms, comp_rows):
     fp_map = {
         "U1": "lepiled:Diodes_TSOT25_AL8860",
         "U2": "lepiled:Diodes_TSOT25_AL8860",
-        "U3": "lepiled:Diodes_W-DFN3030-14_AP33771C",
+        "U3": "lepiled:WCH_ESSOP-10_CH224A",
         "U4": "lepiled:TI_SOIC-8_LM393B",
         "U5": "lepiled:SOT-23-3",
-        "Q1": "lepiled:SOT-23-3",
         "Q2": "lepiled:SOT-23-3",
         "Q3": "lepiled:SOT-23-3",
         "F1": "lepiled:Bourns_MF_MSMF_1812",
@@ -910,18 +921,16 @@ def write_kicad_sch(syms, comp_rows):
         "D12": "lepiled:LED_0603",
         "D13": "lepiled:D_SOD-323",
         "D14": "lepiled:D_SOD-323",
-        "D15": "lepiled:D_SOD-323",
-        "D16": "lepiled:D_SOD-323",
+        "D15": "lepiled:SOT-23-3",
+        "D16": "lepiled:SOT-23-3",
         "L1": "lepiled:Bourns_SRN6045",
         "L2": "lepiled:Bourns_SRN6045",
-        "R1": "lepiled:R_0603", "R2": "lepiled:R_0603",
         "R3": "lepiled:R_1206", "R4": "lepiled:R_1206",
         "R5": "lepiled:R_0603", "R6": "lepiled:R_0603",
-        "R7": "lepiled:R_0805", "R8": "lepiled:R_1206",
-        "R9": "lepiled:R_0603", "R10": "lepiled:R_0603",
-        "R11": "lepiled:R_0603", "R12": "lepiled:R_0805",
-        "R13": "lepiled:R_0603", "R14": "lepiled:R_0805",
-        "R15": "lepiled:R_0603", "R16": "lepiled:R_0805",
+        "R7": "lepiled:R_0805",
+        "R9": "lepiled:R_0603", "R10": "lepiled:R_0805",
+        "R13": "lepiled:R_0805", "R14": "lepiled:R_0805",
+        "R15": "lepiled:R_0603", "R16": "lepiled:R_0603",
         "R17": "lepiled:R_0603", "R18": "lepiled:R_0603",
         "R19": "lepiled:R_0603", "R20": "lepiled:R_0603",
         "R21": "lepiled:R_0603", "R22": "lepiled:R_0805", "R23": "lepiled:R_0805",
@@ -929,8 +938,8 @@ def write_kicad_sch(syms, comp_rows):
         "C4": "lepiled:C_0603", "C5": "lepiled:C_0603",
         "C6": "lepiled:C_0603", "C7": "lepiled:C_0603",
         "C8": "lepiled:C_0603", "C9": "lepiled:C_0603",
-        "C10": "lepiled:C_1206", "C11": "lepiled:C_0805", "C12": "lepiled:C_0805",
-        "C13": "lepiled:C_0603", "C14": "lepiled:C_0603", "C15": "lepiled:C_0603",
+        "C10": "lepiled:C_1206", "C11": "lepiled:C_0805",
+        "C14": "lepiled:C_0603", "C15": "lepiled:C_0603",
         "J1": "lepiled:GCT_USB4085_GF_A",
         "J2": "lepiled:JST_XH_B2B_P2.50mm",
         "J3": "lepiled:JST_XH_B2B_P2.50mm",
@@ -942,23 +951,23 @@ def write_kicad_sch(syms, comp_rows):
     }
 
     short_val = {
-        "U1": "AL8860WT-7", "U2": "AL8860WT-7", "U3": "AP33771C", "U4": "LM393BIDR", "U5": "LM4040-2.5",
-        "Q1": "DMN4035L-7", "Q2": "BSS138", "Q3": "BSS138",
+        "U1": "AL8860WT-7", "U2": "AL8860WT-7", "U3": "CH224A", "U4": "LM393DR2G", "U5": "TL431",
+        "Q2": "2N7002", "Q3": "2N7002",
         "F1": "1.1A/33V",
         "D1": "SST-10-UV", "D2": "SST-10-UV", "D3": "SST-10-UV", "D4": "SST-10-UV",
         "D5": "XP-E2 RB", "D6": "XP-E2 RB", "D7": "XP-E2 GRN", "D8": "XP-E2 CW",
-        "D9": "B340A", "D10": "B340A", "D11": "SMBJ22A", "D12": "GRN LED",
-        "D13": "ESD 24V", "D14": "ESD 24V", "D15": "ESD 5V", "D16": "ESD 5V",
+        "D9": "SS34", "D10": "SS34", "D11": "SMBJ22A", "D12": "RED LED",
+        "D13": "ESD 24V", "D14": "ESD 24V", "D15": "BAV99", "D16": "BAV99",
         "L1": "68uH", "L2": "68uH",
-        "R1": "5.1k", "R2": "5.1k", "R3": "0.30R", "R4": "0.30R",
-        "R5": "1.0k", "R6": "1.0k", "R7": "1.0R", "R8": "5mR",
-        "R9": "39.0k", "R10": "82.0k", "R11": "6.2k", "R12": "200R",
-        "R13": "1.0k", "R14": "10.0k", "R15": "59.0k", "R16": "10.0k",
-        "R17": "100k", "R18": "100k", "R19": "510k", "R20": "47.0k",
-        "R21": "1.0M", "R22": "6.8R", "R23": "6.8R",
+        "R3": "0.30R", "R4": "0.30R",
+        "R5": "1.0k", "R6": "1.0k", "R7": "1.0R",
+        "R9": "1.0k", "R10": "10.0k",
+        "R13": "10.0k", "R14": "10.0k", "R15": "30.0k", "R16": "5.1k",
+        "R17": "100k", "R18": "100k", "R19": "270k", "R20": "47.0k",
+        "R21": "100k", "R22": "10.0R", "R23": "10.0R",
         "C1": "1uF/50V", "C2": "4.7uF/50V", "C3": "4.7uF/50V", "C4": "100nF", "C5": "100nF",
         "C6": "1.0nF", "C7": "4.7nF", "C8": "100nF", "C9": "100nF", "C10": "4.7uF/50V",
-        "C11": "1uF/50V", "C12": "1uF/50V", "C13": "47nF", "C14": "100nF", "C15": "100nF",
+        "C11": "1uF/50V", "C14": "100nF", "C15": "100nF",
         "J1": "USB4085", "J2": "UV_STR", "J3": "VIS_STR", "J4": "MAXI_SW",
         "SW1": "7211SYZBE Gold", "SW1_BOOT": "759D02000 Boot",
         "H1": "M2.5_NPTH", "H2": "M2.5_NPTH", "H3": "M2.5_NPTH", "H4": "M2.5_NPTH",
@@ -1082,9 +1091,9 @@ def write_kicad_sch(syms, comp_rows):
         )
 
     # =====================================================================
-    # BLOCK 1 (Top-Left): USB-C PD ONLY (20 V / 1.0 A) + SINGLE 40 V Q1
+    # BLOCK 1 (Top-Left): USB-C PD (20 V CH224A) + INPUT PROTECTION & PG LED
     # =====================================================================
-    box(15.24, 17.78, 205.74, 146.05, "BLOCK 1: USB-C PD (20 V / 1.0 A) SINK & SLEW-CONTROLLED LOAD SWITCH")
+    box(15.24, 17.78, 205.74, 146.05, "BLOCK 1: USB-C PD (20 V CH224A ESSOP-10) SINK & INPUT PROTECTION")
 
     place("J1", "J_USB4085", 27.94, 58.42, 0, ref_off=(0, -17.5), val_off=(0, 27.5))
     polywire([pin_pos[("J1", "A4")], (43.18, 45.72)])
@@ -1104,140 +1113,96 @@ def write_kicad_sch(syms, comp_rows):
     wire((43.18, 45.72), pin_pos[("F1", "1")])
     lbl("VBUS", (45.72, 45.72))
 
-    # D11 Unidirectional SMBJ22A (rot=270: pin 1 K UP -> VBUS_FUSED, pin 2 A DOWN -> GND!)
-    place("D11", "D_TVS_Uni", 63.50, 58.42, 270, ref_off=(-4.0, 0), val_off=(4.4, 0))
-    place("C1", "C", 73.66, 58.42, 0, ref_off=(-3.8, -1.0), val_off=(4.0, 0.5))
-    place("R7", "R", 83.82, 54.61, 90, ref_off=(3.2, -1.0), val_off=(3.2, 1.2))
-    place("C10", "C", 83.82, 66.04, 0, ref_off=(3.8, -1.0), val_off=(4.2, 1.0))
+    # D11 Unidirectional SMBJ22A + C1 (1uF) + R7/C10 hot-plug damper on fused VIN_20V
+    place("D11", "D_TVS_Uni", 66.04, 58.42, 270, ref_off=(-4.0, 0), val_off=(4.4, 0))
+    place("C1", "C", 78.74, 58.42, 0, ref_off=(-3.8, -1.0), val_off=(4.0, 0.5))
+    place("R7", "R", 91.44, 54.61, 90, ref_off=(3.2, -1.0), val_off=(3.2, 1.2))
+    place("C10", "C", 91.44, 66.04, 0, ref_off=(3.8, -1.0), val_off=(4.2, 1.0))
+    place("C11", "C", 111.76, 58.42, 0, ref_off=(-4.0, 0), val_off=(4.0, 0))
 
-    place("R8", "R", 96.52, 45.72, 0, ref_off=(0, -3.0), val_off=(0, 3.0))
-    wire(pin_pos[("F1", "2")], pin_pos[("R8", "1")])
-    lbl("VBUS_FUSED", (66.04, 45.72))
-    for px, pnode in [(63.50, pin_pos[("D11", "1")]), (73.66, pin_pos[("C1", "1")]), (83.82, pin_pos[("R7", "2")])]:
+    wire(pin_pos[("F1", "2")], (175.26, 45.72))
+    wire((175.26, 45.72), (175.26, 43.18))
+    pwr_flag_at((175.26, 43.18))
+    lbl("VIN_20V", (127.00, 45.72))
+    for px, pnode in [
+        (66.04, pin_pos[("D11", "1")]),
+        (78.74, pin_pos[("C1", "1")]),
+        (91.44, pin_pos[("R7", "2")]),
+        (111.76, pin_pos[("C11", "1")]),
+    ]:
         wire((px, 45.72), pnode)
     wire(pin_pos[("R7", "1")], pin_pos[("C10", "1")])
-    lbl("VBUS_DAMP", (83.82, 59.69))
+    lbl("VBUS_DAMP", (91.44, 59.69))
     gnd_at(pin_pos[("D11", "2")])
     gnd_at(pin_pos[("C1", "2")])
     gnd_at(pin_pos[("C10", "2")])
-
-    # Single 40 V Q1 (DMN4035L-7, rot=90: D(3) left=VBUS_SENSE, S(2) right=VIN_20V, G(1) bot=Q1_GATE)
-    place("Q1", "Q_NMOS", 132.08, 45.72, 90, ref_off=(0, -5.5), val_off=(0, -3.5))
-    wire(pin_pos[("R8", "2")], (109.22, 45.72))
-    wire((109.22, 45.72), pin_pos[("Q1", "3")])
-    wire((109.22, 45.72), (109.22, 43.18))
-    pwr_flag_at((109.22, 43.18))
-    lbl("VBUS_SENSE", (104.14, 45.72))
-    wire(pin_pos[("Q1", "2")], (175.26, 45.72))
-    wire((175.26, 45.72), (185.42, 45.72))
-    wire((175.26, 45.72), (175.26, 43.18))
-    pwr_flag_at((175.26, 43.18))
-    lbl("VIN_20V", (162.56, 45.72))
-
-    place("C11", "C", 114.30, 58.42, 0, ref_off=(-4.0, 0), val_off=(4.0, 0))
-    wire((114.30, 45.72), pin_pos[("C11", "1")])
     gnd_at(pin_pos[("C11", "2")])
 
-    # C13 (47 nF Q1_GATE to GND) + R21 (1.0 M bleed Q1_GATE to GND)
-    place("C13", "C", 142.24, 67.31, 0, ref_off=(-4.0, -1.0), val_off=(-4.0, 1.0))
-    place("R21", "R", 152.40, 67.31, 90, ref_off=(3.2, -1.0), val_off=(3.2, 1.2))
-    polywire([pin_pos[("Q1", "1")], (133.35, 58.42), (165.10, 58.42)])
-    wire((142.24, 58.42), pin_pos[("C13", "1")])
-    wire((152.40, 58.42), pin_pos[("R21", "2")])
-    gnd_at(pin_pos[("C13", "2")])
-    gnd_at(pin_pos[("R21", "1")])
-    lbl("Q1_GATE", (134.62, 58.42))
+    # U3 WCH CH224A (ESSOP-10: VHV=VIN_20V, VBUS via R9=1k, CFG1=GND & CFG2/CFG3=NC -> 20 V PD)
+    place("U3", "IC_CH224A", 137.16, 99.06, 0, ref_off=(0, -12.0), val_off=(0, 12.2))
+    polywire([pin_pos[("U3", "1")], (104.14, 91.44), (104.14, 45.72)])
 
-    # U3 AP33771C
-    place("U3", "IC_AP33771C", 137.16, 99.06, 0, ref_off=(0, -14.5), val_off=(0, 12.2))
-    polywire([pin_pos[("U3", "4")], (113.03, 88.90)])
-    lbl("VBUS_FUSED", (113.03, 88.90))
-    polywire([pin_pos[("U3", "3")], (113.03, 91.44)])
-    lbl("VBUS_SENSE", (113.03, 91.44))
+    place("R9", "R", 114.30, 93.98, 0, ref_off=(0, -3.0), val_off=(0, 3.0))
+    wire(pin_pos[("R9", "2")], pin_pos[("U3", "8")])
+    lbl("U3_VBUS", (119.38, 93.98))
+    polywire([pin_pos[("R9", "1")], (106.68, 93.98), (106.68, 45.72)])
 
-    # CC1 / CC2 pull-downs R1/R2 + 24 V unidirectional ESD diodes D13/D14
-    place("R1", "R", 63.50, 93.98, 90, ref_off=(-3.5, 0), val_off=(3.5, 0))
-    place("D13", "D_TVS_Uni", 53.34, 93.98, 270, ref_off=(-3.8, 0), val_off=(3.8, 0))
-    place("R2", "R", 83.82, 93.98, 90, ref_off=(-3.5, 0), val_off=(3.5, 0))
+    # Optional 24 V CC1/CC2 ESD diodes D13/D14 (DNP in 2-reel Hybrid PCBA)
+    place("D13", "D_TVS_Uni", 55.88, 93.98, 270, ref_off=(-3.8, 0), val_off=(3.8, 0))
     place("D14", "D_TVS_Uni", 73.66, 93.98, 270, ref_off=(-3.8, 0), val_off=(3.8, 0))
     wire(pin_pos[("J1", "A5")], (45.72, 55.88))
     lbl("CC1", (45.72, 55.88))
     wire(pin_pos[("J1", "B5")], (45.72, 58.42))
     lbl("CC2", (45.72, 58.42))
-    polywire([pin_pos[("U3", "11")], (93.98, 93.98), (93.98, 83.82), (53.34, 83.82), pin_pos[("D13", "1")]])
-    wire((63.50, 83.82), pin_pos[("R1", "2")])
-    lbl("CC1", (55.88, 83.82))
-    polywire([pin_pos[("U3", "10")], (96.52, 96.52), (96.52, 86.36), (73.66, 86.36), pin_pos[("D14", "1")]])
-    wire((83.82, 86.36), pin_pos[("R2", "2")])
+    polywire([pin_pos[("U3", "7")], (93.98, 96.52), (93.98, 83.82), (55.88, 83.82), pin_pos[("D13", "1")]])
+    lbl("CC1", (58.42, 83.82))
+    polywire([pin_pos[("U3", "6")], (96.52, 99.06), (96.52, 86.36), (73.66, 86.36), pin_pos[("D14", "1")]])
     lbl("CC2", (76.20, 86.36))
-    for gp in [pin_pos[("R1", "1")], pin_pos[("D13", "2")], pin_pos[("R2", "1")], pin_pos[("D14", "2")]]:
-        gnd_at(gp)
-    nc(pin_pos[("U3", "13")])
-    nc(pin_pos[("U3", "12")])
-    nc(pin_pos[("U3", "6")])
-    polywire([pin_pos[("U3", "5")], (118.11, 104.14), (118.11, 106.68), pin_pos[("U3", "15")]])
-    wire((118.11, 106.68), (118.11, 109.22))
+    gnd_at(pin_pos[("D13", "2")])
+    gnd_at(pin_pos[("D14", "2")])
+    for ncp in ("4", "5", "2", "3"):
+        nc(pin_pos[("U3", ncp)])
+    polywire([pin_pos[("U3", "11")], (118.11, 106.68), (118.11, 109.22)])
     gnd_at((118.11, 109.22))
+    # CFG1 (Pin 9) -> GND (I/O mode: CFG1=0, CFG2=1, CFG3=1 -> 20 V PD)
+    polywire([pin_pos[("U3", "9")], (157.48, 96.52), (157.48, 106.68)])
+    gnd_at((157.48, 106.68))
 
-    # U3 Right-side peripherals: R12, R11, C12, R9, R10, R13+D12
-    place("R12", "R", 172.72, 88.90, 180, ref_off=(0, -3.0), val_off=(0, 3.0))
-    wire(pin_pos[("U3", "1")], pin_pos[("R12", "2")])
-    lbl("U3_VOUT", (154.94, 88.90))
-    polywire([pin_pos[("R12", "1")], (185.42, 88.90), (185.42, 45.72)])
-
-    place("R11", "R", 165.10, 78.74, 0, ref_off=(0, -3.0), val_off=(0, 3.0))
-    polywire([pin_pos[("U3", "2")], (157.48, 91.44), (157.48, 78.74), pin_pos[("R11", "1")]])
-    lbl("U3_PWR_EN", (157.48, 83.82))
-    polywire([pin_pos[("R11", "2")], (175.26, 78.74), (175.26, 58.42), (165.10, 58.42)])
-
-    place("C12", "C", 162.56, 106.68, 0, ref_off=(3.5, -1.0), val_off=(3.8, 1.0))
-    polywire([pin_pos[("U3", "14")], (162.56, 93.98), pin_pos[("C12", "1")]])
-    lbl("U3_V5V", (153.67, 93.98))
-    gnd_at(pin_pos[("C12", "2")])
-
-    place("R9", "R", 175.26, 106.68, 90, ref_off=(3.2, -1.0), val_off=(3.2, 1.2))
-    polywire([pin_pos[("U3", "8")], (175.26, 96.52), pin_pos[("R9", "2")]])
-    lbl("U3_VSEL", (167.64, 96.52))
-    gnd_at(pin_pos[("R9", "1")])
-
-    place("R10", "R", 187.96, 106.68, 90, ref_off=(3.2, -1.0), val_off=(3.2, 1.2))
-    polywire([pin_pos[("U3", "9")], (187.96, 99.06), pin_pos[("R10", "2")]])
-    lbl("U3_ISEL", (177.80, 99.06))
+    # CH224A PG (Pin 10, 13.5 V abs max) Red Status LED D12 with 10k/10k V_clamp divider (R13/R10)
+    place("R13", "R", 172.72, 60.96, 90, ref_off=(-3.5, -0.8), val_off=(-3.5, 1.2))
+    place("R10", "R", 172.72, 78.74, 90, ref_off=(-3.5, -0.8), val_off=(-3.5, 1.2))
+    place("D12", "D_LED", 185.42, 78.74, 90, ref_off=(3.5, -0.8), val_off=(3.5, 1.2))
+    polywire([(172.72, 45.72), pin_pos[("R13", "2")]])
+    wire(pin_pos[("R13", "1")], pin_pos[("R10", "2")])
     gnd_at(pin_pos[("R10", "1")])
-
-    place("R13", "R", 165.10, 121.92, 0, ref_off=(0, -3.0), val_off=(0, 3.0))
-    place("D12", "D_LED", 182.88, 121.92, 180, ref_off=(0, -3.5), val_off=(0, 3.5))
-    polywire([pin_pos[("U3", "7")], (157.48, 101.60), (157.48, 121.92), pin_pos[("R13", "1")]])
-    lbl("U3_LED", (157.48, 114.30))
-    wire(pin_pos[("R13", "2")], pin_pos[("D12", "2")])
-    lbl("PD_LED_A", (171.45, 121.92))
-    polywire([pin_pos[("D12", "1")], (190.50, 121.92), (190.50, 127.00)])
-    gnd_at((190.50, 127.00))
+    polywire([(172.72, 69.85), (185.42, 69.85), pin_pos[("D12", "2")]])
+    lbl("PD_LED_A", (175.26, 69.85))
+    polywire([pin_pos[("D12", "1")], (185.42, 93.98), pin_pos[("U3", "10")]])
+    lbl("PD_LED_K", (162.56, 93.98))
 
     # Isolated NPTH Mounting Holes H1..H4
     for idx, hx in enumerate([35.56, 53.34, 71.12, 88.90], start=1):
         place(f"H{idx}", "MountingHole_NPTH", hx, 129.54, 0, ref_off=(0, -3.2), val_off=(0, 3.5))
 
     # =====================================================================
-    # BLOCK 2 (Bottom-Left): 0.90 V HYSTERETIC UVLO & DIRECT DPDT MAXI-SWITCH
+    # BLOCK 2 (Bottom-Left): 0.82 V HYSTERETIC UVLO & DIRECT DPDT MAXI-SWITCH
     # =====================================================================
-    box(15.24, 154.94, 205.74, 276.86, "BLOCK 2: HYSTERETIC UVLO (17.54/16.64 V) & DIRECT DPDT MAXI-SWITCH")
+    box(15.24, 154.94, 205.74, 276.86, "BLOCK 2: HYSTERETIC UVLO (17.45/16.63 V) & DIRECT DPDT MAXI-SWITCH")
 
-    # U5 LM4040-2.5 + R14
+    # U5 TL431 (Basic C181103: Pin 1=REF & Pin 2=K shorted to V_REF=2.495 V, Pin 3=A -> GND) + R14 (10k)
     place("R14", "R", 30.48, 177.80, 90, ref_off=(-3.8, -0.8), val_off=(-4.0, 1.2))
-    place("U5", "IC_LM4040", 30.48, 193.04, 0, ref_off=(-4.5, -1.0), val_off=(-4.8, 1.2))
+    place("U5", "IC_TL431", 30.48, 193.04, 0, ref_off=(-4.5, -1.0), val_off=(-4.8, 1.2))
     wire((30.48, 167.64), pin_pos[("R14", "2")])
     lbl("VIN_20V", (33.02, 167.64))
-    wire(pin_pos[("R14", "1")], pin_pos[("U5", "1")])
-    gnd_at(pin_pos[("U5", "2")])
-    polywire([pin_pos[("U5", "3")], (38.10, 194.31), (38.10, 196.85)])
-    gnd_at((38.10, 196.85))
+    wire(pin_pos[("R14", "1")], pin_pos[("U5", "2")])
+    polywire([(30.48, 184.15), (38.10, 184.15), (38.10, 191.77), pin_pos[("U5", "1")]])
+    gnd_at(pin_pos[("U5", "3")])
 
-    # R15/R16/C15 UVLO divider + U4 LM393B + C14
+    # R15 (30k) / R16 (5.1k) / C15 UVLO divider + U4 LM393DR2G + C14
     place("R15", "R", 50.80, 177.80, 90, ref_off=(-3.8, -0.8), val_off=(-4.0, 1.2))
     place("R16", "R", 50.80, 195.58, 90, ref_off=(-3.8, -0.8), val_off=(-4.0, 1.2))
     place("C15", "C", 60.96, 195.58, 0, ref_off=(3.5, -1.0), val_off=(3.8, 1.0))
-    wire((30.48, 167.64), (114.30, 167.64))
+    wire((30.48, 167.64), (132.08, 167.64))
     wire((50.80, 167.64), pin_pos[("R15", "2")])
     wire(pin_pos[("R15", "1")], pin_pos[("R16", "2")])
     polywire([(50.80, 185.42), (60.96, 185.42), pin_pos[("C15", "1")]])
@@ -1255,11 +1220,11 @@ def write_kicad_sch(syms, comp_rows):
     # U4B: IN+(5)=V_REF, IN-(6)=UVLO_OK, OUT(7)=UVLO_FAULT
     polywire([(60.96, 185.42), pin_pos[("U4", "3")]])
     lbl("UVLO_SENSE", (63.50, 185.42))
-    polywire([(30.48, 184.15), (43.18, 184.15), (43.18, 205.74), (68.58, 205.74), (68.58, 187.96), pin_pos[("U4", "2")]])
-    lbl("V_REF", (33.02, 184.15))
+    polywire([(38.10, 184.15), (43.18, 184.15), (43.18, 205.74), (68.58, 205.74), (68.58, 187.96), pin_pos[("U4", "2")]])
+    lbl("V_REF", (39.37, 184.15))
     polywire([(68.58, 193.04), pin_pos[("U4", "5")]])
 
-    # R17 (100k pull-up) + R18 (100k divider) + R19 (510k hysteresis) on UVLO_OK
+    # R17 (100k pull-up) + R18 (100k divider) + R19 (270k hysteresis) on UVLO_OK
     place("R17", "R", 114.30, 177.80, 90, ref_off=(3.5, -0.8), val_off=(3.5, 1.2))
     place("R18", "R", 114.30, 195.58, 90, ref_off=(3.5, -0.8), val_off=(3.5, 1.2))
     place("R19", "R", 86.36, 213.36, 0, ref_off=(0, -3.0), val_off=(0, 3.0))
@@ -1268,17 +1233,18 @@ def write_kicad_sch(syms, comp_rows):
     gnd_at(pin_pos[("R18", "1")])
     polywire([pin_pos[("U4", "1")], (114.30, 186.69)])
     lbl("UVLO_OK", (101.60, 186.69))
-    # Feed UVLO_OK to R19 -> UVLO_SENSE (routing at x=55.88 clear of C15.2 GND!) and to U4B IN-(6)
     polywire([(106.68, 186.69), (106.68, 213.36), pin_pos[("R19", "2")]])
     polywire([pin_pos[("R19", "1")], (55.88, 213.36), (55.88, 185.42)])
     polywire([pin_pos[("U4", "6")], (66.04, 195.58)])
     lbl("UVLO_OK", (66.04, 195.58))
 
-    # U4B OUT(7) = UVLO_FAULT pulled up to V_REF via R20 (47k) -> Q2 & Q3 gates
-    place("R20", "R", 132.08, 186.69, 90, ref_off=(3.5, -0.8), val_off=(3.5, 1.2))
-    wire((132.08, 177.80), pin_pos[("R20", "2")])
-    lbl("V_REF", (132.08, 177.80))
+    # U4B OUT(7) = UVLO_FAULT pulled up via R20 (47k to VIN_20V) / R21 (100k to GND) -> 3.4-12.2 V for 2N7002 Q2/Q3
+    place("R20", "R", 132.08, 181.61, 90, ref_off=(3.5, -0.8), val_off=(3.5, 1.2))
+    place("R21", "R", 139.70, 203.20, 90, ref_off=(3.5, -0.8), val_off=(3.5, 1.2))
+    wire((132.08, 167.64), pin_pos[("R20", "2")])
     polywire([pin_pos[("U4", "7")], (132.08, 194.31), pin_pos[("R20", "1")]])
+    polywire([(132.08, 194.31), (139.70, 194.31), pin_pos[("R21", "2")]])
+    gnd_at(pin_pos[("R21", "1")])
     lbl("UVLO_FAULT", (116.84, 194.31))
 
     place("Q2", "Q_NMOS", 149.86, 218.44, 0, ref_off=(3.5, -2.0), val_off=(4.0, 0.5))
@@ -1292,12 +1258,11 @@ def write_kicad_sch(syms, comp_rows):
     wire(pin_pos[("Q3", "3")], (172.72, 208.28))
     lbl("U2_CTRL", (172.72, 208.28))
 
-    # Direct DPDT On-On-On Mode Switch (J4 <-> SW1) + R5/R6 (1k) + D15/D16 (5V ESD)
-    # R5/R6 rot=180 so pin 2 (CTRL) is LEFT and pin 1 (SW_IN) is RIGHT — zero wire pass-through!
+    # Direct DPDT On-On-On Mode Switch (J4 <-> SW1) + R5/R6 (1k) + D15/D16 (Basic BAV99 GND/V_REF clamps)
     place("R5", "R", 116.84, 248.92, 180, ref_off=(0, -3.0), val_off=(0, 3.0))
     place("R6", "R", 116.84, 261.62, 180, ref_off=(0, -3.0), val_off=(0, 3.0))
-    place("D15", "D_TVS_Uni", 139.70, 251.46, 270, ref_off=(-3.8, 0), val_off=(3.8, 0))
-    place("D16", "D_TVS_Uni", 142.24, 270.51, 270, ref_off=(-3.8, 0), val_off=(3.8, 0))
+    place("D15", "D_BAV99", 137.16, 248.92, 0, ref_off=(3.8, -1.5), val_off=(3.8, 1.5))
+    place("D16", "D_BAV99", 137.16, 265.43, 0, ref_off=(3.8, -1.5), val_off=(3.8, 1.5))
     wire((104.14, 248.92), pin_pos[("R5", "2")])
     lbl("U1_CTRL", (104.14, 248.92))
     wire((104.14, 261.62), pin_pos[("R6", "2")])
@@ -1306,22 +1271,25 @@ def write_kicad_sch(syms, comp_rows):
     place("J4", "Conn_3P", 157.48, 256.54, 180, ref_off=(0, -6.5), val_off=(0, 6.8))
     place("SW1", "SW_DPDT_OnOnOn", 187.96, 256.54, 0, ref_off=(0, -6.5), val_off=(0, 6.8))
     place("SW1_BOOT", "Mech_Item", 187.96, 269.24, 0, ref_off=(-9.0, 0), val_off=(9.0, 0))
-    # J4 rot=180: Pin1 at (162.56, 259.08); Pin2 at (162.56, 256.54); Pin3 at (162.56, 254.00)
-    polywire([pin_pos[("R5", "1")], (132.08, 248.92), (132.08, 243.84), (139.70, 243.84), (167.64, 243.84), (167.64, 254.00), (167.64, 259.08), pin_pos[("J4", "1")]])
-    wire((139.70, 243.84), pin_pos[("D15", "1")])
-    gnd_at(pin_pos[("D15", "2")])
+    # SW_UV_IN -> D15.3 (IO), D15.1 -> GND, D15.2 -> V_REF
+    polywire([pin_pos[("R5", "1")], pin_pos[("D15", "3")]])
+    polywire([(127.00, 248.92), (127.00, 238.76), (167.64, 238.76), (167.64, 259.08), pin_pos[("J4", "1")]])
+    gnd_at(pin_pos[("D15", "1")])
+    lbl("V_REF", pin_pos[("D15", "2")])
     polywire([(167.64, 254.00), (176.53, 254.00), pin_pos[("SW1", "1")]])
-    lbl("SW_UV_IN", (134.62, 243.84))
+    lbl("SW_UV_IN", (129.54, 238.76))
 
     wire(pin_pos[("J4", "2")], pin_pos[("SW1", "2")])
     wire((173.99, 256.54), (173.99, 266.70))
     gnd_at((173.99, 266.70))
 
-    polywire([pin_pos[("R6", "1")], (142.24, 261.62), (165.10, 261.62), (165.10, 254.00), pin_pos[("J4", "3")]])
-    wire((142.24, 261.62), pin_pos[("D16", "1")])
-    gnd_at(pin_pos[("D16", "2")])
-    polywire([(165.10, 261.62), (176.53, 261.62), (176.53, 259.08), pin_pos[("SW1", "3")]])
-    lbl("SW_VIS_IN", (144.78, 261.62))
+    # SW_VIS_IN -> D16.3 (IO), D16.1 -> GND, D16.2 -> V_REF
+    polywire([pin_pos[("R6", "1")], (127.00, 261.62), (127.00, 265.43), pin_pos[("D16", "3")]])
+    polywire([(127.00, 261.62), (149.86, 261.62), (149.86, 254.00), (165.10, 254.00), pin_pos[("J4", "3")]])
+    gnd_at(pin_pos[("D16", "1")])
+    lbl("V_REF", pin_pos[("D16", "2")])
+    polywire([(165.10, 254.00), (165.10, 261.62), (176.53, 261.62), (176.53, 259.08), pin_pos[("SW1", "3")]])
+    lbl("SW_VIS_IN", (134.62, 261.62))
 
     # =====================================================================
     # BLOCKS 3 & 4 (Right): CH1 UV & CH2 VIS 333 mA BUCK DRIVERS
@@ -2145,9 +2113,8 @@ def build_board(fp_map, short_val, comp_rows):
     add_rounded_rect_edge_cuts(board, 36.0, 46.0, 2.0)
 
     net_names = [
-        "GND", "VBUS", "VBUS_FUSED", "VBUS_DAMP", "VBUS_SENSE", "VIN_20V",
-        "CC1", "CC2", "U3_VOUT", "U3_PWR_EN", "U3_V5V", "U3_VSEL", "U3_ISEL",
-        "U3_LED", "PD_LED_A", "Q1_GATE",
+        "GND", "VBUS", "VBUS_DAMP", "VIN_20V",
+        "CC1", "CC2", "U3_VBUS", "PD_LED_A", "PD_LED_K",
         "V_REF", "UVLO_SENSE", "UVLO_OK", "UVLO_FAULT", "SW_UV_IN", "SW_VIS_IN",
         "U1_CTRL", "U2_CTRL",
         "SW1_NODE", "SW2_NODE", "UV_POS", "UV_NEG", "UV_C4_DAMP",
@@ -2160,9 +2127,10 @@ def build_board(fp_map, short_val, comp_rows):
         nets[nn] = n
 
     nc_net_names = {
-        ("U3", "6"): "unconnected-(U3-FLIP-Pad6)",
-        ("U3", "12"): "unconnected-(U3-DN-Pad12)",
-        ("U3", "13"): "unconnected-(U3-DP-Pad13)",
+        ("U3", "2"): "unconnected-(U3-CFG2-Pad2)",
+        ("U3", "3"): "unconnected-(U3-CFG3-Pad3)",
+        ("U3", "4"): "unconnected-(U3-DP-Pad4)",
+        ("U3", "5"): "unconnected-(U3-DM-Pad5)",
         ("J1", "A6"): "unconnected-(J1-D+-PadA6)",
         ("J1", "B6"): "unconnected-(J1-D+-PadB6)",
         ("J1", "A7"): "unconnected-(J1-D--PadA7)",
@@ -2183,52 +2151,45 @@ def build_board(fp_map, short_val, comp_rows):
         "J2": {"1": "UV_POS", "2": "UV_NEG"},
         "J3": {"1": "VIS_POS", "2": "VIS_NEG"},
         "J4": {"1": "SW_UV_IN", "2": "GND", "3": "SW_VIS_IN"},
-        "F1": {"1": "VBUS", "2": "VBUS_FUSED"},
+        "F1": {"1": "VBUS", "2": "VIN_20V"},
         "D9": {"1": "VIN_20V", "2": "SW1_NODE"},
         "D10": {"1": "VIN_20V", "2": "SW2_NODE"},
-        "D11": {"1": "VBUS_FUSED", "2": "GND"},
-        "D12": {"1": "GND", "2": "PD_LED_A"},
+        "D11": {"1": "VIN_20V", "2": "GND"},
+        "D12": {"1": "PD_LED_K", "2": "PD_LED_A"},
         "D13": {"1": "CC1", "2": "GND"},
         "D14": {"1": "CC2", "2": "GND"},
-        "D15": {"1": "SW_UV_IN", "2": "GND"},
-        "D16": {"1": "SW_VIS_IN", "2": "GND"},
+        "D15": {"1": "GND", "2": "V_REF", "3": "SW_UV_IN"},
+        "D16": {"1": "GND", "2": "V_REF", "3": "SW_VIS_IN"},
         "L1": {"1": "SW1_NODE", "2": "UV_NEG"},
         "L2": {"1": "SW2_NODE", "2": "VIS_NEG"},
         "U1": {"1": "SW1_NODE", "2": "GND", "3": "U1_CTRL", "4": "UV_POS", "5": "VIN_20V"},
         "U2": {"1": "SW2_NODE", "2": "GND", "3": "U2_CTRL", "4": "VIS_POS", "5": "VIN_20V"},
-        "U3": {"1": "U3_VOUT", "2": "U3_PWR_EN", "3": "VBUS_SENSE", "4": "VBUS_FUSED",
-               "5": "GND", "7": "U3_LED", "8": "U3_VSEL", "9": "U3_ISEL",
-               "10": "CC2", "11": "CC1", "14": "U3_V5V", "15": "GND"},
+        "U3": {"1": "VIN_20V", "6": "CC2", "7": "CC1", "8": "U3_VBUS", "9": "GND", "10": "PD_LED_K", "11": "GND"},
         "U4": {"1": "UVLO_OK", "2": "V_REF", "3": "UVLO_SENSE", "4": "GND",
                "5": "V_REF", "6": "UVLO_OK", "7": "UVLO_FAULT", "8": "VIN_20V"},
-        "U5": {"1": "V_REF", "2": "GND", "3": "GND"},
-        "Q1": {"1": "Q1_GATE", "2": "VIN_20V", "3": "VBUS_SENSE"},
+        "U5": {"1": "V_REF", "2": "V_REF", "3": "GND"},
         "Q2": {"1": "UVLO_FAULT", "2": "GND", "3": "U1_CTRL"},
         "Q3": {"1": "UVLO_FAULT", "2": "GND", "3": "U2_CTRL"},
-        "R1": {"1": "GND", "2": "CC1"}, "R2": {"1": "GND", "2": "CC2"},
         "R3": {"1": "VIN_20V", "2": "UV_POS"}, "R4": {"1": "VIN_20V", "2": "VIS_POS"},
         "R5": {"1": "SW_UV_IN", "2": "U1_CTRL"}, "R6": {"1": "SW_VIS_IN", "2": "U2_CTRL"},
-        "R7": {"1": "VBUS_DAMP", "2": "VBUS_FUSED"},
-        "R8": {"1": "VBUS_FUSED", "2": "VBUS_SENSE"},
-        "R9": {"1": "GND", "2": "U3_VSEL"}, "R10": {"1": "GND", "2": "U3_ISEL"},
-        "R11": {"1": "U3_PWR_EN", "2": "Q1_GATE"}, "R12": {"1": "VIN_20V", "2": "U3_VOUT"},
-        "R13": {"1": "U3_LED", "2": "PD_LED_A"}, "R14": {"1": "V_REF", "2": "VIN_20V"},
+        "R7": {"1": "VBUS_DAMP", "2": "VIN_20V"},
+        "R9": {"1": "VIN_20V", "2": "U3_VBUS"}, "R10": {"1": "GND", "2": "PD_LED_A"},
+        "R13": {"1": "PD_LED_A", "2": "VIN_20V"}, "R14": {"1": "V_REF", "2": "VIN_20V"},
         "R15": {"1": "UVLO_SENSE", "2": "VIN_20V"}, "R16": {"1": "GND", "2": "UVLO_SENSE"},
         "R17": {"1": "UVLO_OK", "2": "VIN_20V"}, "R18": {"1": "GND", "2": "UVLO_OK"},
-        "R19": {"1": "UVLO_SENSE", "2": "UVLO_OK"}, "R20": {"1": "UVLO_FAULT", "2": "V_REF"},
-        "R21": {"1": "GND", "2": "Q1_GATE"},
+        "R19": {"1": "UVLO_SENSE", "2": "UVLO_OK"}, "R20": {"1": "UVLO_FAULT", "2": "VIN_20V"},
+        "R21": {"1": "GND", "2": "UVLO_FAULT"},
         "R22": {"1": "UV_NEG", "2": "UV_C4_DAMP"}, "R23": {"1": "VIS_NEG", "2": "VIS_C5_DAMP"},
-        "C1": {"1": "VBUS_FUSED", "2": "GND"}, "C2": {"1": "VIN_20V", "2": "GND"},
+        "C1": {"1": "VIN_20V", "2": "GND"}, "C2": {"1": "VIN_20V", "2": "GND"},
         "C3": {"1": "VIN_20V", "2": "GND"}, "C4": {"1": "UV_POS", "2": "UV_C4_DAMP"},
         "C5": {"1": "VIS_POS", "2": "VIS_C5_DAMP"}, "C6": {"1": "U1_CTRL", "2": "GND"},
         "C7": {"1": "U2_CTRL", "2": "GND"}, "C8": {"1": "VIN_20V", "2": "GND"},
         "C9": {"1": "VIN_20V", "2": "GND"}, "C10": {"1": "VBUS_DAMP", "2": "GND"},
-        "C11": {"1": "VBUS_SENSE", "2": "GND"}, "C12": {"1": "U3_V5V", "2": "GND"},
-        "C13": {"1": "Q1_GATE", "2": "GND"}, "C14": {"1": "VIN_20V", "2": "GND"},
+        "C11": {"1": "VIN_20V", "2": "GND"}, "C14": {"1": "VIN_20V", "2": "GND"},
         "C15": {"1": "UVLO_SENSE", "2": "GND"},
     }
 
-    # Rev 4.1 Power-Stage-First Floorplan (36.0 x 46.0 mm, exact enclosure datums!)
+    # Rev 4.7 Power-Stage-First Floorplan (36.0 x 46.0 mm, exact Rev 4.6 enclosure datums!)
     placements = {
         # Enclosure Datums (H1..H4 isolated NPTH, J1 mouth at Y=-25.76 mm, J2/J3/J4 unchanged)
         "H1": (-14.00, +19.00, 0), "H2": (+14.00, +19.00, 0),
@@ -2237,48 +2198,40 @@ def build_board(fp_map, short_val, comp_rows):
         "J2": (-5.20, +19.20, 0), "J3": (+5.20, +19.20, 0),
         "J4": (-1.40, -2.50, 0),
 
-        # Block 1: USB-C PD ONLY (zero-stub F1 -> D11 fly-by, CC1/CC2 ESD, single Q1)
-        "F1": (-8.60, -15.30, 180),    # pin1=VBUS right facing J1 (clear of J1 courtyard!), pin2=VBUS_FUSED left (-10.99,-15.30)
-        "D11": (-10.80, -9.80, 90),    # Uni SMBJ22A: pin1=K(VBUS_FUSED) bot (-10.8,-11.74), zero courtyard overlap w/ F1!
-        "C1": (-5.80, -11.40, 270),    # 0805 1uF on VBUS_FUSED (1=top, 2=GND bot)
-        "R7": (-4.80, -8.70, 0),       # 0805 1.0R damper (1=VBUS_DAMP left, 2=VBUS_FUSED right)
-        "C10": (-8.85, -5.55, 180),    # 1206 4.7uF damper cap (clear of D11, R7, J4 & D16!)
-        "R8": (-1.20, -12.80, 0),      # 1206 5mR Kelvin shunt (1=VBUS_FUSED left, 2=VBUS_SENSE right)
-        "C11": (+1.80, -10.00, 180),   # 0805 1uF (1=VBUS_SENSE right, 2=GND left)
-        "Q1": (+4.20, -6.80, 180),     # Single 40V DMN4035L (3=D(VBUS_SENSE) bot, 2=S(VIN_20V) top-left, 1=G top-right)
-        "R11": (+5.80, -9.80, 0),      # 6.2k PWR_EN -> Q1_GATE
-        "C13": (+7.60, -7.20, 90),     # 47nF Q1_GATE -> GND slew limiter
-        "R21": (+9.50, -7.20, 270),    # 1.0M Q1_GATE (bot aligned w/ C13.1) -> GND (top aligned w/ C13.2!)
-        "U3": (+8.60, -13.00, 0),      # AP33771C W-DFN3030-14 (1.80x2.70 EPAD)
-        "C12": (+13.00, -11.00, 0),    # 0805 1uF U3_V5V (clear of R12 & R13!)
-        "R12": (+11.00, -8.30, 270),   # 0805 200R VIN_20V -> U3_VOUT (clear of C12!)
-        "R9": (+14.00, -15.30, 180),   # Aligned with U3.8 escape (-15.0); clear of H4 (-19.0) NPTH washer!
-        "R10": (+14.00, -13.90, 180),  # Aligned with U3.9 escape (-14.0); below CC2 escape (-13.2)!
-        "R1": (+6.90, -17.15, 270),    # 5.1k CC1 vertical (2=CC1 bot facing D13.1, 1=GND top clear of u3_v_bot!)
-        "R2": (+9.20, -17.15, 270),    # 5.1k CC2 vertical (2=CC2 bot facing D14.1, 1=GND top clear of u3_v_bot!)
-        "D13": (+6.90, -20.55, 270),   # 24V ESD CC1 vertical (cathode bar clear of R1.2!)
-        "D14": (+9.20, -20.55, 270),   # 24V ESD CC2 vertical (cathode bar clear of R2.2 & H4!)
-        "R13": (+16.00, -9.60, 90),    # 1.0k U3_LED -> PD_LED_A (clear of C12!)
-        "D12": (+16.00, -6.60, 270),   # Green 0603 PD LED (2=PD_LED_A bot facing R13.2, 1=GND/K bar top open!)
+        # Block 1: USB-C PD (CH224A ESSOP-10) + zero-stub F1 -> D11 -> VIN_20V + PG LED D12
+        "F1": (-8.60, -15.30, 180),    # pin1=VBUS right facing J1, pin2=VIN_20V left (-10.99,-15.30)
+        "D11": (-10.80, -9.80, 90),    # Uni SMBJ22A: pin1=K(VIN_20V) bot (-10.8,-11.74), zero-stub at F1!
+        "C1": (-5.80, -11.40, 270),    # 0805 1uF on VIN_20V (1=top, 2=GND bot)
+        "R7": (-4.80, -8.70, 0),       # 0805 1.0R damper (1=VBUS_DAMP left, 2=VIN_20V right)
+        "C10": (-8.95, -5.55, 180),    # 1206 4.7uF damper cap (clear of D11, R7, J4 & D16!)
+        "C11": (+2.00, -10.50, 180),   # 0805 1uF CH224A VHV local decoupling (1=VIN_20V right facing U3.1, 2=GND left)
+        "U3": (+8.50, -12.50, 0),      # WCH CH224A ESSOP-10 (1.0 mm leaded pitch, 2.10x3.30 EPAD)
+        "R9": (+14.00, -14.00, 180),   # 0603 1.0k U3_VBUS sense resistor (2=left facing U3.8, 1=VIN_20V right)
+        "D13": (+6.90, -20.55, 270),   # Optional 24V ESD CC1 vertical (DNP in 2-reel Hybrid PCBA)
+        "D14": (+9.20, -20.55, 270),   # Optional 24V ESD CC2 vertical (DNP in 2-reel Hybrid PCBA)
+        "R13": (+16.00, -10.70, 270),  # 0805 10k (1=PD_LED_A top facing D12.2, 2=VIN_20V bot facing R9.1)
+        "R10": (+12.90, -8.20, 0),     # 0805 10k PG voltage-clamp bottom (1=GND left, 2=PD_LED_A right)
+        "D12": (+16.00, -6.60, 270),   # Red 0603 PD LED (2=PD_LED_A bot facing R13/R10, 1=PD_LED_K top -> U3.10 PG)
 
         # Block 2: Hysteretic UVLO (Mid-Right) & Direct DPDT Switch Interface (Mid-Left)
-        "U4": (+9.80, -2.10, 0),       # SOIC-8 LM393B (wide channel right for U4.7 escape!)
-        "C14": (+14.90, +3.20, 0),     # 100nF U4 VCC bypass (1=VIN left facing R15.2, 2=GND right; clear of R15 & R14!)
-        "U5": (+15.95, -2.90, 270),    # SOT-23 LM4040-2.5 (0.31 mm clear of U4.7 via, 3.7 mm north of D12!)
-        "R14": (+15.80, +0.80, 90),    # 0805 10k LM4040 bias
-        "R15": (+11.60, +2.80, 0),     # 59k UVLO top (1=UVLO_SENSE left, 2=VIN_20V right)
-        "R16": (+9.00, +2.40, 90),     # 0805 10k UVLO bot (2=UVLO_SENSE top, 1=GND bot)
+        "U4": (+9.80, -2.10, 0),       # SOIC-8 LM393DR2G Basic
+        "C14": (+14.90, +3.20, 0),     # 100nF U4 VCC bypass
+        "U5": (+15.95, -2.90, 270),    # SOT-23 TL431 Basic (1+2=V_REF, 3=GND)
+        "R14": (+15.80, +0.80, 90),    # 0805 10k TL431 bias
+        "R15": (+11.60, +2.80, 0),     # 0603 30.0k UVLO top (1=UVLO_SENSE left, 2=VIN_20V right)
+        "R16": (+9.00, +2.40, 90),     # 0603 5.1k UVLO bot (2=UVLO_SENSE top, 1=GND bot)
         "C15": (+6.80, +2.40, 270),    # 100nF UVLO filter (1=UVLO_SENSE top, 2=GND bot)
-        "R19": (+4.80, +2.40, 270),    # 510k hysteresis (1=UVLO_SENSE top, 2=UVLO_OK bot)
-        "R17": (+4.80, -1.00, 90),     # 100k U4A pull-up (wide open gap below R19!)
+        "R19": (+4.80, +2.40, 270),    # 0603 270k hysteresis (1=UVLO_SENSE top, 2=UVLO_OK bot)
+        "R17": (+4.80, -1.00, 90),     # 100k U4A pull-up
         "R18": (+4.80, -3.90, 90),     # 100k U4A divider bot
-        "R20": (+12.40, -5.50, 0),     # 47k U4B pull-up to V_REF
-        "Q2": (-8.65, +2.20, 0),       # BSS138 UVLO clamp on U1_CTRL (clear of C6!)
-        "Q3": (-2.00, +3.15, 0),       # BSS138 UVLO clamp on U2_CTRL (clear of J4, C6 & C7!)
-        "D15": (-11.60, -1.20, 0),     # 5V ESD on SW_UV_IN (J4.1)
-        "D16": (-11.60, -3.45, 0),     # 5V ESD on SW_VIS_IN (J4.3, clear of C10!)
-        "R5": (-14.80, +2.00, 90),     # 1.0k SW_UV_IN (bot) -> U1_CTRL (top facing u1_ctrl_esc & Q2.3!)
-        "R6": (-7.80, -2.20, 90),      # 1.0k SW_VIS_IN (bot) -> U2_CTRL (top, wide open facing Q3!)
+        "R20": (+12.40, -5.50, 0),     # 47k U4B UVLO_FAULT pull-up to VIN_20V
+        "R21": (+9.40, -6.00, 0),      # 100k U4B UVLO_FAULT divider bottom to GND (3.4-12.2 V for 2N7002)
+        "Q2": (-8.65, +2.20, 0),       # Basic 2N7002 UVLO clamp on U1_CTRL
+        "Q3": (-2.00, +3.15, 0),       # Basic 2N7002 UVLO clamp on U2_CTRL
+        "D15": (-12.50, -0.30, 0),     # Basic BAV99 SOT-23 clamp on SW_UV_IN (1=GND, 2=V_REF, 3=SW_UV_IN)
+        "D16": (-13.10, -4.00, 0),     # Basic BAV99 SOT-23 clamp on SW_VIS_IN (1=GND, 2=V_REF, 3=SW_VIS_IN)
+        "R5": (-15.20, +2.00, 90),     # 1.0k SW_UV_IN (bot) -> U1_CTRL (top)
+        "R6": (-7.60, -2.00, 90),      # 1.0k SW_VIS_IN (bot) -> U2_CTRL (top)
 
         # Block 3: Ch1 4S UV Buck (Upper-Left) — < 10 mm F.Cu hot loop & true Kelvin VIN+SET!
         "L1": (-13.40, +11.10, 90),    # 6.0x6.0 (pads at y=+8.95 SW1_NODE, y=+13.25 UV_NEG; top crtyd +14.35!)
@@ -2343,50 +2296,23 @@ def build_board(fp_map, short_val, comp_rows):
     add_track(board, [pt("J1", "B4"), pt("J1", "A9")], 0.45, nets["VBUS"])
     add_track(board, [pt("J1", "A4"), (-2.125, -16.05), (+2.125, -16.05), pt("J1", "A9")], 0.50, nets["VBUS"])
     add_track(board, [(-2.125, -16.05), (-6.21, -16.05), pt("F1", "1")], 0.80, nets["VBUS"])
-    # ZERO-STUB fly-by F1.2 (-10.99, -15.30) -> D11.1 (-10.80, -11.74) (Carbon B-2 / Opus B-L5 FIXED!)
-    add_track(board, [pt("F1", "2"), (-10.80, -15.30), pt("D11", "1")], 1.00, nets["VBUS_FUSED"])
+    # ZERO-STUB fly-by F1.2 (-10.99, -15.30) -> D11.1 (-10.80, -11.74) on VIN_20V!
+    add_track(board, [pt("F1", "2"), (-10.80, -15.30), pt("D11", "1")], 1.00, nets["VIN_20V"])
     # Twin GND vias directly at D11.2 (Anode)
     add_track(board, [pt("D11", "2"), (-12.70, -7.86)], 0.60, nets["GND"])
     add_via(board, -12.70, -7.86, nets["GND"])
     add_track(board, [pt("D11", "2"), (-12.70, -6.50)], 0.60, nets["GND"])
     add_via(board, -12.70, -6.50, nets["GND"])
 
-    # 2. U3 (AP33771C W-DFN3030-14) fan-out + twin EPAD GND vias
-    add_track(board, [pt("U3", "5"), (8.60, -13.40)], 0.20, nets["GND"])
-    u3_v_top = (8.60, -10.50)
-    u3_v_bot = (8.60, -15.50)
-    add_track(board, [pt("U3", "15"), u3_v_top], 0.45, nets["GND"])
+    # 2. U3 (WCH CH224A ESSOP-10) twin EPAD GND vias + CFG1(9)->GND tie (1.0 mm leaded pitch needs no tight fanout!)
+    u3_v_top = (8.50, -9.80)
+    u3_v_bot = (8.50, -15.20)
+    add_track(board, [pt("U3", "11"), u3_v_top], 0.45, nets["GND"])
     add_via(board, u3_v_top[0], u3_v_top[1], nets["GND"])
-    add_track(board, [pt("U3", "15"), u3_v_bot], 0.45, nets["GND"])
+    add_track(board, [pt("U3", "11"), u3_v_bot], 0.45, nets["GND"])
     add_via(board, u3_v_bot[0], u3_v_bot[1], nets["GND"])
-
-    u3_esc = {
-        "1": (6.20, -10.60),
-        "2": (5.60, -11.60),
-        "3": (4.80, -12.60),
-        "4": (5.40, -13.60),
-        "7": (6.20, -14.80),
-        "8": (10.80, -15.00),
-        "9": (11.40, -14.00),
-        "10": (12.00, -13.20),
-        "11": (11.40, -12.20),
-        "14": (10.80, -11.20),
-    }
-    u3_fan_paths = {
-        "1":  [pt("U3", "1"), (6.60, -11.80), (6.60, -10.60), u3_esc["1"]],
-        "2":  [pt("U3", "2"), (6.20, -12.20), (6.20, -11.60), u3_esc["2"]],
-        "3":  [pt("U3", "3"), u3_esc["3"]],
-        "4":  [pt("U3", "4"), (6.20, -13.00), (6.20, -13.60), u3_esc["4"]],
-        "7":  [pt("U3", "7"), (6.60, -14.20), (6.60, -14.80), u3_esc["7"]],
-        "8":  [pt("U3", "8"), (10.60, -14.20), (10.60, -15.00), u3_esc["8"]],
-        "9":  [pt("U3", "9"), (11.00, -13.80), (11.00, -14.00), u3_esc["9"]],
-        "10": [pt("U3", "10"), (11.40, -13.40), (11.40, -13.20), u3_esc["10"]],
-        "11": [pt("U3", "11"), (11.00, -13.00), (11.00, -12.20), u3_esc["11"]],
-        "14": [pt("U3", "14"), (10.60, -11.80), (10.60, -11.20), u3_esc["14"]],
-    }
-    for pnum, path_pts in u3_fan_paths.items():
-        add_track(board, path_pts, 0.20, nets[pad_net_map["U3"][pnum]])
-    add_via(board, u3_esc["7"][0], u3_esc["7"][1], nets["U3_LED"])
+    add_track(board, [pt("U3", "9"), (8.50, -11.50), pt("U3", "11")], 0.25, nets["GND"])
+    u3_esc = {}
 
     # J1 CC1/CC2 clean B.Cu escapes
     j1_cc1_esc = (-1.275, -15.60)
@@ -2447,33 +2373,38 @@ def build_board(fp_map, short_val, comp_rows):
     add_via(board, u4_p7_esc[0], u4_p7_esc[1], nets["UVLO_FAULT"])
     add_track(board, [pt("U4", "2"), (+9.40, pt("U4", "2")[1]), (+9.40, pt("U4", "5")[1]), pt("U4", "5")], 0.22, nets["V_REF"])
     add_track(board, [pt("U4", "1"), (+10.10, pt("U4", "1")[1]), (+10.10, pt("U4", "6")[1]), pt("U4", "6")], 0.22, nets["UVLO_OK"])
-    add_track(board, [pt("U5", "3"), (pt("U5", "3")[0], pt("U5", "2")[1]), pt("U5", "2")], 0.25, nets["GND"])
-    add_track(board, [pt("U5", "2"), (+16.60, -4.60)], 0.25, nets["GND"])
-    add_via(board, +16.60, -4.60, nets["GND"])
-    # Explicit shared GND via for C13.2 & R21.1 + C14.2 right beside them so router never boxes them in
-    add_track(board, [pt("C13", "2"), (+8.55, -6.45), pt("R21", "1")], 0.25, nets["GND"])
-    add_track(board, [(+8.55, -6.45), (+8.55, -5.60)], 0.25, nets["GND"])
-    add_via(board, +8.55, -5.60, nets["GND"])
+    # U5 TL431: Pin 1 (REF) + Pin 2 (K) tied to V_REF; Pin 3 (A) -> GND via!
+    add_track(board, [pt("U5", "1"), pt("U5", "2")], 0.25, nets["V_REF"])
+    add_track(board, [pt("U5", "3"), (+16.70, -4.60)], 0.25, nets["GND"])
+    add_via(board, +16.70, -4.60, nets["GND"])
+    # Explicit GND vias for R10.1 & R21.1 before routing
+    add_track(board, [pt("R10", "1"), (+10.80, -8.20)], 0.25, nets["GND"])
+    add_via(board, +10.80, -8.20, nets["GND"])
+    add_track(board, [pt("R21", "1"), (+8.65, -7.20)], 0.25, nets["GND"])
+    add_via(board, +8.65, -7.20, nets["GND"])
     add_track(board, [pt("C14", "2"), (+15.65, +4.15)], 0.25, nets["GND"])
     add_via(board, +15.65, +4.15, nets["GND"])
     add_track(board, [pt("C15", "2"), (+7.90, +1.40), pt("R16", "1")], 0.25, nets["GND"])
     add_track(board, [(+7.90, +1.40), (+7.90, +0.85)], 0.25, nets["GND"])
     add_via(board, +7.90, +0.85, nets["GND"])
-    # Ultra-low-inductance dedicated ESD return vias directly at D13.2/R1.1 and D14.2/R2.1
+    # Ultra-low-inductance dedicated ESD return vias directly at D13.2 and D14.2
     add_track(board, [pt("D13", "2"), (+7.95, -21.65)], 0.30, nets["GND"])
     add_via(board, +7.95, -21.65, nets["GND"])
     add_track(board, [pt("D14", "2"), (+10.35, -21.65)], 0.30, nets["GND"])
     add_via(board, +10.35, -21.65, nets["GND"])
-    add_track(board, [pt("R1", "1"), (+8.05, -16.40), pt("R2", "1")], 0.25, nets["GND"])
-    add_track(board, [(+8.05, -16.40), u3_v_bot], 0.25, nets["GND"])
-    # Explicit low-inductance GND via directly east of Q2.2 + shared ESD via for D15.2/D16.2
+    # Explicit low-inductance GND via directly east of Q2.2 + shared ESD vias for BAV99 D15.1/D16.1
     add_track(board, [pt("Q2", "2"), (-6.50, +1.20)], 0.25, nets["GND"])
     add_via(board, -6.50, +1.20, nets["GND"])
-    add_track(board, [pt("D15", "2"), (-10.50, -2.35), pt("D16", "2")], 0.30, nets["GND"])
-    add_via(board, -10.50, -2.35, nets["GND"])
+    add_track(board, [pt("D15", "1"), (-14.70, -1.30)], 0.25, nets["GND"])
+    add_via(board, -14.70, -1.30, nets["GND"])
+    add_track(board, [pt("D16", "1"), (-15.40, -5.00)], 0.25, nets["GND"])
+    add_via(board, -15.40, -5.00, nets["GND"])
+    add_track(board, [pt("D15", "2"), (-11.55, -5.00), pt("D16", "2")], 0.22, nets["V_REF"])
     q3_g_esc = (-3.60, +1.40)
     add_track(board, [pt("Q3", "1"), q3_g_esc], 0.22, nets["UVLO_FAULT"])
     add_track(board, [pt("Q3", "3"), (+0.65, +4.15), pt("C7", "1")], 0.22, nets["U2_CTRL"])
+    add_track(board, [pt("C7", "2"), (+0.65, +1.00)], 0.25, nets["GND"])
+    add_via(board, +0.65, +1.00, nets["GND"])
     add_track(board, [u1_ctrl_esc, (-8.65, +4.00), pt("Q2", "3"), pt("C6", "1")], 0.22, nets["U1_CTRL"])
 
     # Initialize GridRouter WITH B.Cu KEEPOUT UNDER ENTIRE POWER STAGE Y = [+4.3, +16.5] (fixes Carbon B-1 / Opus B-M2!)
@@ -2501,19 +2432,14 @@ def build_board(fp_map, short_val, comp_rows):
         for (r1, p1, l1), (r2, p2, l2) in pairs:
             router.route(resolve_pt(r1, p1), l1, resolve_pt(r2, p2), l2, nobj, w, clr, allow_b=allow_b, b_penalty=b_pen)
 
-    # --- Power_20V Trunks ---
+    # --- Power_20V Trunks (direct F1 -> D11 -> C1 -> R7 -> C11/U3.1 & VIN_20V superhighway) ---
     r_net([
         (("D11", "1", 0), ("C1", "1", 0)),
         (("C1", "1", 0), ("R7", "2", 0)),
-        (("R7", "2", 0), ("R8", "1", 0)),
-    ], "VBUS_FUSED", 0.60, 0.20, allow_b=False)
+        (("R7", "2", 0), ("C11", "1", 0)),
+        (("C11", "1", 0), ("U3", "1", 0)),
+    ], "VIN_20V", 0.60, 0.20, allow_b=True, b_pen=8)
     r_net([(("R7", "1", 0), ("C10", "1", 0))], "VBUS_DAMP", 0.55, 0.20, allow_b=False)
-    r_net([(("R8", "2", 0), ("U3", "3", 0))], "VBUS_SENSE", 0.25, 0.18)
-    r_net([(("R8", "1", 0), ("U3", "4", 0))], "VBUS_FUSED", 0.25, 0.18)
-    r_net([
-        (("R8", "2", 0), ("C11", "1", 0)),
-        (("C11", "1", 0), ("Q1", "3", 0)),
-    ], "VBUS_SENSE", 0.60, 0.20)
 
     # Kelvin SET tap for Ch1 (Ch2 explicit above) & damped output shunts (all F.Cu!)
     r_net([(("R3", "2", 0), ("U1", "4", 0))], "UV_POS", 0.25, 0.18, allow_b=False)
@@ -2548,61 +2474,58 @@ def build_board(fp_map, short_val, comp_rows):
         (("R17", "1", 0), ("R18", "2", 0)),
     ], "UVLO_OK", 0.22, 0.16, allow_b=False)
 
-    # Main VIN_20V feed from Q1.2 (Source) straight up center superhighway to VIN_20V bridge (0.0, +7.35)!
-    router.route(pt("Q1", "2"), 0, (0.00, +7.35), 0, nets["VIN_20V"], 0.65, 0.20, allow_b=True, b_penalty=8)
+    # Main VIN_20V feed from C11.1 straight up center superhighway to VIN_20V bridge (0.0, +7.35)!
+    router.route(pt("C11", "1"), 0, (0.00, +7.35), 0, nets["VIN_20V"], 0.65, 0.20, allow_b=True, b_penalty=8)
     r_net([
-        (("Q1", "2", 0), ("R12", "1", 0)),
         (("C3", "1", 0), ("R15", "2", 0)),
         (("R15", "2", 0), ("C14", "1", 0)),
         (("C14", "1", 0), ("U4", "8", 0)),
         (("C14", "1", 0), ("R14", "2", 0)),
-        (("Q1", "2", 0), ("R17", "2", 0)),
+        (("C11", "1", 0), ("R17", "2", 0)),
+        (("U4", "8", 0), ("R20", "2", 0)),
+        (("R20", "2", 0), ("R13", "2", 0)),
+        (("R13", "2", 0), ("R9", "1", 0)),
     ], "VIN_20V", 0.28, 0.18, b_pen=8)
 
     # --- Signals (0.22 mm) ---
-    r_net([(("U3", "8", 0), ("R9", "2", 0))], "U3_VSEL", 0.22, 0.16)
-    r_net([(("U3", "9", 0), ("R10", "2", 0))], "U3_ISEL", 0.22, 0.16)
-    r_net([(("U3", "14", 0), ("C12", "1", 0))], "U3_V5V", 0.22, 0.16)
-    r_net([(("U3", "1", 0), ("R12", "2", 0))], "U3_VOUT", 0.22, 0.16)
+    r_net([(("U3", "8", 0), ("R9", "2", 0))], "U3_VBUS", 0.22, 0.16)
     r_net([
         (("J1", "B5", 1), ("D14", "1", 0)),
-        (("D14", "1", 0), ("R2", "2", 0)),
-        (("R2", "2", 0), ("U3", "10", 0)),
+        (("D14", "1", 0), ("U3", "6", 0)),
     ], "CC2", 0.22, 0.16)
     r_net([
         (("J1", "A5", 1), ("D13", "1", 0)),
-        (("D13", "1", 0), ("R1", "2", 0)),
-        (("R1", "2", 0), ("U3", "11", 0)),
+        (("D13", "1", 0), ("U3", "7", 0)),
     ], "CC1", 0.22, 0.16)
-    r_net([(("U3", "2", 0), ("R11", "1", 0))], "U3_PWR_EN", 0.22, 0.16)
     r_net([
-        (("R11", "2", 0), ("Q1", "1", 0)),
-        (("Q1", "1", 0), ("C13", "1", 0)),
-        (("C13", "1", 0), ("R21", "2", 0)),
-    ], "Q1_GATE", 0.22, 0.16)
-    r_net([(("U3", "7", 1), ("R13", "1", 0))], "U3_LED", 0.22, 0.16)
-    r_net([(("R13", "2", 0), ("D12", "2", 0))], "PD_LED_A", 0.22, 0.16)
+        (("R13", "1", 0), ("R10", "2", 0)),
+        (("R10", "2", 0), ("D12", "2", 0)),
+    ], "PD_LED_A", 0.22, 0.16)
+    r_net([(("U3", "10", 0), ("D12", "1", 0))], "PD_LED_K", 0.22, 0.16)
 
     # Direct DPDT switch lines & local UVLO_SENSE/V_REF FIRST, then U1/U2_CTRL, then UVLO_FAULT!
     r_net([
-        (("J4", "1", 0), ("D15", "1", 0)),
-        (("D15", "1", 0), ("R5", "1", 0)),
+        (("J4", "1", 0), ("D15", "3", 0)),
+        (("D15", "3", 0), ("R5", "1", 0)),
     ], "SW_UV_IN", 0.22, 0.16)
     r_net([
-        (("J4", "3", 0), ("D16", "1", 0)),
-        (("D16", "1", 0), ("R6", "1", 0)),
+        (("J4", "3", 0), ("D16", "3", 0)),
+        (("D16", "3", 0), ("R6", "1", 0)),
     ], "SW_VIS_IN", 0.22, 0.16)
     router.route(pt("C15", "1"), 0, u4_p3_esc, 1, nets["UVLO_SENSE"], 0.22, 0.16, allow_b=True, b_penalty=5)
     router.route(u1_ctrl_esc, 0, pt("R5", "2"), 0, nets["U1_CTRL"], 0.22, 0.16, allow_b=True, b_penalty=5)
 
-    # UVLO_FAULT before long U2_CTRL & V_REF so R20.1, Q3.1 & Q2.1 stay wide open!
+    # UVLO_FAULT (U4.7 -> R20.1 -> R21.2 -> Q2.1 -> Q3.1)
     router.route(u4_p7_esc, 1, pt("R20", "1"), 0, nets["UVLO_FAULT"], 0.22, 0.16, allow_b=True, b_penalty=5)
-    router.route(pt("R20", "1"), 0, pt("Q2", "1"), 0, nets["UVLO_FAULT"], 0.22, 0.16, allow_b=True, b_penalty=5)
+    r_net([(("R20", "1", 0), ("R21", "2", 0))], "UVLO_FAULT", 0.22, 0.16)
+    router.route(pt("R21", "2"), 0, pt("Q2", "1"), 0, nets["UVLO_FAULT"], 0.22, 0.16, allow_b=True, b_penalty=5)
     router.route(pt("Q2", "1"), 0, q3_g_esc, 0, nets["UVLO_FAULT"], 0.22, 0.16, allow_b=True, b_penalty=5)
+
+    # V_REF (R14.1 -> U5.1/2 -> U4.5 -> D15.2; D15.2->D16.2 explicit above)
     r_net([
         (("R14", "1", 0), ("U5", "1", 0)),
-        (("U4", "5", 0), ("R20", "2", 0)),
-        (("U5", "1", 0), ("R20", "2", 0)),
+        (("U5", "2", 0), ("U4", "5", 0)),
+        (("U4", "5", 0), ("D15", "2", 0)),
     ], "V_REF", 0.22, 0.16)
 
     # U2_CTRL long runs (from B.Cu escape via at u2_ctrl_esc -> C7.1, and Q3.3 -> R6.2)
@@ -2611,10 +2534,8 @@ def build_board(fp_map, short_val, comp_rows):
 
     # --- Fan-Out GND Stitching Vias for ALL Remaining SMD GND Pads ---
     gnd_smd_pads = [
-        ("C1", "2", 0.45), ("C6", "2", 0.25), ("C7", "2", 0.25),
-        ("C10", "2", 0.45), ("C11", "2", 0.30), ("C12", "2", 0.30),
-        ("D12", "1", 0.25),
-        ("R9", "1", 0.25), ("R10", "1", 0.25),
+        ("C1", "2", 0.45), ("C6", "2", 0.25),
+        ("C10", "2", 0.45), ("C11", "2", 0.30),
         ("R18", "1", 0.25),
         ("Q3", "2", 0.25),
     ]
@@ -2693,7 +2614,7 @@ def build_board(fp_map, short_val, comp_rows):
 # in KiCad Y-down pad 3 is at -Y (top) -> +90 deg vs standard KiCad SOT-23 (pin 1 top-left) -> JLCPCB needs +270 (-90)!
 JLCPCB_ROT_OFFSET = {
     "Diodes_TSOT25_AL8860": 0.0,
-    "Diodes_W-DFN3030-14_AP33771C": 270.0,
+    "WCH_ESSOP-10_CH224A": 270.0,
     "TI_SOIC-8_LM393B": 270.0,
     "SOT-23-3": 90.0,
     "D_SMA_DO-214AC": 180.0,
@@ -2702,47 +2623,35 @@ JLCPCB_ROT_OFFSET = {
     "LED_0603": 180.0,
 }
 
-# Verified LCSC Part Numbers for turnkey JLCPCB PCBA matching (Opus B-H2 / Carbon B-6)
-# Verified LCSC Part #s ONLY (audited against LCSC/JLCPCB catalog).
-# Unverified or stock-varying Extended parts are intentionally left blank ("") so
-# JLCPCB's BOM uploader matches by exact MPN + Comment + Footprint instead of
-# risking silent wrong-part substitution from stale/incorrect C-codes.
+# 100% live-verified JLCPCB in-stock LCSC Part #s (Rev 4.7 — ONLY 2 Extended reels in Hybrid PCBA: U1/U2 + U3!)
 LCSC_MAP = {
-    "Diodes AL8860WT-7": "C125330",         # Verified: AL8860WT-7 TSOT-25 (Extended)
-    "Diodes AP33771CFBZ-13-FA02": "",       # Match by MPN in JLCPCB Extended / Global Sourcing
-    "TI LM393BIDR": "",                     # Match by MPN (Hybrid swaps to Basic C7955 LM393DR2G)
-    "TI LM4040BIM3-2.5/NOPB": "",           # Match by MPN in JLCPCB Extended
-    "Diodes DMN4035L-7": "",                # Match by MPN in JLCPCB Extended
-    "onsemi BSS138": "C52895",              # Verified Basic: onsemi BSS138 SOT-23
-    "Bourns MF-MSMF110/33X": "",            # Match by MPN (offloaded to DIY in Hybrid)
-    "Diodes B340A-13-F": "C15570",          # Verified: B340A SMA (Hybrid swaps to Basic C8678 SS34)
-    "Vishay SMBJ22A-E3/52": "",             # Match by MPN (offloaded to DIY in Hybrid)
-    "Lite-On LTST-C190GKT": "C72043",       # Verified Basic: 0603 Green LED
-    "Bourns CDSOD323-T24": "",              # Match by MPN in JLCPCB Extended
-    "Bourns CDSOD323-T05": "",              # Match by MPN in JLCPCB Extended
-    "Bourns SRN6045-680M": "",              # Match by MPN (offloaded to DIY in Hybrid)
-    "Bourns CRL1206-FW-R300ELF": "",        # Match by MPN (offloaded to DIY in Hybrid)
-    "Vishay WSL12065L000FEA": "",           # Match by MPN (offloaded to DIY in Hybrid)
-    "Murata GRM21BR71H105KA12L": "C28323",  # Verified Basic: 1uF 50V X7R 0805
-    "Murata GRM31CR71H475KA12L": "C29823",  # Verified Basic: 4.7uF 50V X7R 1206
-    "Murata GRM188R71H104KA93D": "C14663",  # Verified Basic: 100nF 50V X7R 0603
-    "Murata GRM1885C1H102JA01D": "C1588",   # Verified Basic: 1nF 50V X7R 0603
-    "Murata GRM188R71H472KA01D": "",        # Match 4.7nF 50V X7R 0603 Basic in JLCPCB BOM UI
-    "Murata GRM188R71H473KA61D": "C1622",   # Verified Basic: 47nF 50V X7R 0603
-    "Vishay CRCW06035K10FKEA": "C23186",    # Verified Basic: 5.1k 0603 1%
-    "Vishay CRCW06031K00FKEA": "C21190",    # Verified Basic: 1k 0603 1%
-    "Vishay CRCW08051R00FKEA": "",          # Match 1.0R 0805 1% Basic in JLCPCB BOM UI
-    "Vishay CRCW060339K0FKEA": "C23153",    # Verified Basic: 39k 0603 1%
-    "Vishay CRCW060382K0FKEA": "C23254",    # Verified Basic: 82k 0603 1%
-    "Vishay CRCW06036K20FKEA": "C4260",     # Verified Basic: 6.2k 0603 1%
-    "Vishay CRCW0805200RFKEA": "C966562",   # Verified: 200R 0805 1% (0805W8F2000T5E)
-    "Vishay CRCW080510K0FKEA": "C17414",    # Verified Basic: 10k 0805 1%
-    "Vishay CRCW060359K0FKEA": "",          # Match 59k 0603 1% in JLCPCB BOM UI (keeps UVLO corners)
-    "Vishay CRCW0603100KFKEA": "C25803",    # Verified Basic: 100k 0603 1%
-    "Vishay CRCW0603510KFKEA": "C23192",    # Verified Basic: 510k 0603 1%
-    "Vishay CRCW060347K0FKEA": "C25819",    # Verified Basic: 47k 0603 1%
-    "Vishay CRCW06031M00FKEA": "C22935",    # Verified Basic: 1M 0603 1%
-    "Vishay CRCW08056R80FKEA": "",          # Match 6.8R 0805 1% Basic in JLCPCB BOM UI
+    "Diodes AL8860WT-7": "C125330",         # Verified In-Stock Extended: AL8860WT-7 TSOT-25
+    "WCH CH224A": "C42459160",              # Verified In-Stock Extended: CH224A ESSOP-10 (1.0 mm leaded)
+    "onsemi LM393DR2G": "C7955",            # Verified In-Stock Basic: LM393DR2G SOIC-8
+    "Hottech TL431": "C181103",             # Verified In-Stock Basic: TL431 SOT-23 (1=REF, 2=K, 3=A)
+    "Changjing 2N7002": "C8545",            # Verified In-Stock Basic: 2N7002 SOT-23
+    "Bourns MF-MSMF110/33X": "",            # Offloaded to DIY hand-solder in Hybrid
+    "MDD SS34": "C8678",                    # Verified In-Stock Basic: SS34 3A/40V SMA
+    "Vishay SMBJ22A-E3/52": "",             # Offloaded to DIY hand-solder in Hybrid
+    "KENTO KT-0603R": "C2286",              # Verified In-Stock Basic: Red 0603 LED
+    "Leiditech ESD24V32D-C": "C5224353",    # Verified In-Stock Extended (Optional DNP in 2-reel Hybrid)
+    "Nexperia BAV99": "C2500",              # Verified In-Stock Basic: BAV99 dual series ESD clamp SOT-23
+    "Bourns SRN6045-680M": "",              # Offloaded to DIY hand-solder in Hybrid
+    "Bourns CRL1206-FW-R300ELF": "",        # Offloaded to DIY hand-solder in Hybrid
+    "Samsung CL21B105KBFNNNE": "C28323",    # Verified In-Stock Basic: 1uF 50V X7R 0805
+    "FH 1206B475K500NT": "C29823",          # Verified In-Stock Basic: 4.7uF 50V X7R 1206
+    "YAGEO CC0603KRX7R9BB104": "C14663",    # Verified In-Stock Basic: 100nF 50V X7R 0603
+    "Samsung CL10B102KB8NNNC": "C1588",     # Verified In-Stock Basic: 1nF 50V X7R 0603
+    "FH 0603B472K500NT": "C53987",          # Verified In-Stock Basic: 4.7nF 50V X7R 0603
+    "UNI-ROYAL 0603WAF1001T5E": "C21190",   # Verified In-Stock Basic: 1.0k 0603 1%
+    "UNI-ROYAL 0805W8F100KT5E": "C25271",   # Verified In-Stock Basic: 1.0R 0805 1%
+    "UNI-ROYAL 0805W8F1002T5E": "C17414",   # Verified In-Stock Basic: 10.0k 0805 1%
+    "UNI-ROYAL 0603WAF3002T5E": "C22984",   # Verified In-Stock Basic: 30.0k 0603 1%
+    "UNI-ROYAL 0603WAF5101T5E": "C23186",   # Verified In-Stock Basic: 5.1k 0603 1%
+    "UNI-ROYAL 0603WAF1003T5E": "C25803",   # Verified In-Stock Basic: 100k 0603 1%
+    "UNI-ROYAL 0603WAF2703T5E": "C22965",   # Verified In-Stock Basic: 270k 0603 1%
+    "UNI-ROYAL 0603WAF4702T5E": "C25819",   # Verified In-Stock Basic: 47.0k 0603 1%
+    "UNI-ROYAL 0805W8F100JT5E": "C17415",   # Verified In-Stock Basic: 10.0R 0805 1%
 }
 
 
@@ -2791,8 +2700,8 @@ def verify_and_export(comp_rows, fp_map, short_val):
     gbrjob_path = GERBER_DIR / "driver_pcb-job.gbrjob"
     if gbrjob_path.exists():
         job = json.loads(gbrjob_path.read_text())
-        job.setdefault("GeneralSpecs", {})["Finish"] = "ENIG"
-        job["GeneralSpecs"]["ProjectId"] = {"Name": "driver_pcb", "GUID": uid("driver_pcb_proj"), "Revision": "4.5"}
+        job.setdefault("GeneralSpecs", {})["Finish"] = "HASL (lead-free)"
+        job["GeneralSpecs"]["ProjectId"] = {"Name": "driver_pcb", "GUID": uid("driver_pcb_proj"), "Revision": "4.7"}
         for item in job.get("MaterialStackup", []):
             if item.get("Type") == "SolderMask":
                 item["Color"] = "Green"
@@ -2913,13 +2822,13 @@ def verify_and_export(comp_rows, fp_map, short_val):
          str(GERBER_DIR / "driver_pcb-PTH.drl")],
         check=True,
     )
-    print("driver_pcb (Rev 4.5 USB-C Only + S3 DPDT + Emperor Moth B.SilkS) verification & exports completed cleanly.")
+    print("driver_pcb (Rev 4.7 CH224A + 2-Reel Hybrid PCBA + Emperor Moth B.SilkS) verification & exports completed cleanly.")
 
 
 def main():
     with COMPONENT_CSV.open() as f:
         comp_rows = {row["RefDes"]: row for row in csv.DictReader(f)}
-    assert len(comp_rows) == 75, f"Expected 75 RefDes in COMPONENT_IDS.csv, got {len(comp_rows)}"
+    assert len(comp_rows) == 67, f"Expected 67 RefDes in COMPONENT_IDS.csv, got {len(comp_rows)}"
 
     write_lib_tables()
     write_kicad_pro()

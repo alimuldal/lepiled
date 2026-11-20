@@ -51,7 +51,7 @@ An open-source DIY implementation of Gunnar Brehm's *LepiLED* moth lamp ([Brehm,
         <img src="pcb_design/driver_pcb/renders/render_top.png" alt="Driver PCB Top 3D Render" height="360" />
       </a>
       <br />
-      <sub><b>Driver PCB — Top (36 × 46 mm, 2L FR4 ENIG, JLCPCB Basic-Optimized PCBA)</b><br/>AP33771C 20 V PD sink, 40 V DMN4035L load switch, hysteretic LM393B UVLO, dual AL8860WT-7 333 mA bucks.</sub>
+      <sub><b>Driver PCB — Top (36 × 46 mm, 2L FR4 Lead-Free HASL, 2-Extended-Reel Hybrid PCBA)</b><br/>CH224A 20 V PD sink (ESSOP-10), hysteretic LM393/TL431 UVLO, dual AL8860WT-7 333 mA bucks.</sub>
     </td>
     <td align="center" width="50%">
       <a href="pcb_design/driver_pcb/renders/render_bottom.png">

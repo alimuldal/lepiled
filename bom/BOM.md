@@ -1,19 +1,19 @@
-# LepiLED DIY Maxi Switch — Master Bill of Materials (Rev 4.6 — "Field Lantern")
+# LepiLED DIY Maxi Switch — Master Bill of Materials (Rev 4.7 — `CH224A` 2-Reel Hybrid PCBA)
 
-Machine-verified master BOM in [bom.csv](bom.csv), audited 1:1 against [COMPONENT_IDS.csv](../circuit_design/COMPONENT_IDS.csv) (`75` RefDes), [driver_pcb_bom_pcba.csv](../pcb_design/driver_pcb_bom_pcba.csv) (`61` populated PCBA parts), the programmatically derived Hybrid PCBA files ([driver_pcb_bom_pcba_hybrid.csv](../pcb_design/driver_pcb_bom_pcba_hybrid.csv), [driver_pcb_cpl_hybrid.csv](../pcb_design/driver_pcb_cpl_hybrid.csv), [driver_pcb_diy_hand_solder.csv](../pcb_design/driver_pcb_diy_hand_solder.csv)), and [MECH_PARTS.csv](../mechanical_design/MECH_PARTS.csv) (`22` mechanical IDs) via [verify_bom.py](verify_bom.py).
+Machine-verified master BOM in [bom.csv](bom.csv), audited 1:1 against [COMPONENT_IDS.csv](../circuit_design/COMPONENT_IDS.csv) (`67` RefDes), [driver_pcb_bom_pcba.csv](../pcb_design/driver_pcb_bom_pcba.csv) (`53` populated PCBA parts), the programmatically derived 2-Extended-reel Hybrid PCBA files ([driver_pcb_bom_pcba_hybrid.csv](../pcb_design/driver_pcb_bom_pcba_hybrid.csv), [driver_pcb_cpl_hybrid.csv](../pcb_design/driver_pcb_cpl_hybrid.csv), [driver_pcb_diy_hand_solder.csv](../pcb_design/driver_pcb_diy_hand_solder.csv)), and [MECH_PARTS.csv](../mechanical_design/MECH_PARTS.csv) (`22` mechanical IDs) via [verify_bom.py](verify_bom.py).
 
 ## 1. Single-Unit Hobby Cost Summary (UK GBP)
 
-Rev 4.6 eliminates the colliding `£3.33` `M20` cable gland (replaced by the 3D-printed 2-piece split clamp `MECH-CABLE-CLAMP`) and honestly adds `M3` + `M2.5` brass heat-set inserts (`MECH-INS-M3/M25`) plus matte-black high-temp spray paint (`MECH-PAINT-1`):
+Rev 4.7 switches `driver_pcb` to the locally stocked `WCH CH224A` (`C42459160`, `1.0 mm` leaded `ESSOP-10`) and 100% live-verified JLCPCB Basic passives/semiconductors (`TL431`, `LM393DR2G`, `2N7002`, `SS34`, `KT-0603R`, `BAV99`), dropping Hybrid PCBA to **only `2` Extended reels (`$6` feeder fees)** and Lead-Free HASL (`-£9.57` ex-VAT vs Rev 4.6):
 
 | Domain | 1-Off Hobby Checkout (ex-VAT) | 1-Off Hobby Checkout (inc 20% VAT) | Amortized Per-Lamp (ex-VAT) |
 |---|---:|---:|---:|
-| **Electrical (`75` RefDes incl. `8×` `20 mm` Copper DTP LED stars)** | £42.72 | £51.26 | £41.00 |
+| **Electrical (`67` RefDes incl. `8×` `20 mm` Copper DTP LED stars)** | £38.15 | £45.78 | £36.95 |
 | **Harness (JST-XH 2P/3P pigtails + `24 AWG` UV silicone wire + captured `90°` USB-C PD cable)** | £8.34 | £10.01 | £6.59 |
-| **PCB Fab + JLCPCB Economic PCBA (`driver_pcb` ONLY, 2-pc min)** | £20.00 | £24.00 | £10.00 |
+| **PCB Fab + 2-Reel Hybrid Economic PCBA (`driver_pcb` ONLY, Lead-Free HASL, 2-pc min)** | £15.00 | £18.00 | £7.50 |
 | **Mechanical (`200 mm` `30×30×3` Al core, `Ø60×54` XT PMMA, 3 radial O-rings, ePTFE vent, oxime silicone, matte-black spray, brass inserts, screws)** | £43.93 | £52.72 | £43.10 |
-| **TOTAL Rev 4.6 1-Off Build (All Items Purchased New)** | **£114.99** | **£137.99** | **£100.69** |
-| **NET 1-Off Out-of-Pocket (Using Owned Workshop Screws, PC Paste & Matte-Black Spray)** | **£103.14** | **£123.77** | — |
+| **TOTAL Rev 4.7 1-Off Build (All Items Purchased New)** | **£105.42** | **£126.50** | **£94.14** |
+| **NET 1-Off Out-of-Pocket (Using Owned Workshop Screws, PC Paste & Matte-Black Spray)** | **£93.57** | **£112.28** | — |
 
 > **Scope Notes:** All 8 3D-printed parts (`MECH-CAP-BOT`, `MECH-LID-BOT`, `MECH-CABLE-CLAMP` `2×`, `MECH-CORE-ANCHOR`, `MECH-CAP-TOP`, `MECH-PLUG-TOP`, `MECH-HANG-BUSHING` `2×`, `MECH-DRILL-JIG`) are printed in-house (`£0.00`, support-free FDM Black ASA + Signal-Orange accent). External USB-C PD power sources (laptop charger or `20 V` PD power bank) are excluded.
 

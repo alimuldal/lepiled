@@ -364,7 +364,7 @@
       "/PD_LED_A": [
         "Signal"
       ],
-      "/Q1_GATE": [
+      "/PD_LED_K": [
         "Signal"
       ],
       "/SW1_NODE": [
@@ -385,22 +385,7 @@
       "/U2_CTRL": [
         "Signal"
       ],
-      "/U3_ISEL": [
-        "Signal"
-      ],
-      "/U3_LED": [
-        "Signal"
-      ],
-      "/U3_PWR_EN": [
-        "Signal"
-      ],
-      "/U3_V5V": [
-        "Signal"
-      ],
-      "/U3_VOUT": [
-        "Signal"
-      ],
-      "/U3_VSEL": [
+      "/U3_VBUS": [
         "Signal"
       ],
       "/UVLO_FAULT": [
@@ -425,12 +410,6 @@
         "Power_20V"
       ],
       "/VBUS_DAMP": [
-        "Power_20V"
-      ],
-      "/VBUS_FUSED": [
-        "Power_20V"
-      ],
-      "/VBUS_SENSE": [
         "Power_20V"
       ],
       "/VIN_20V": [

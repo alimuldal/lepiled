@@ -310,14 +310,14 @@ def run_monte_carlo(n: int = 2000, seed: int = 20261119) -> dict:
         - 4 * 0.0015 * (t_j_led - 25.0)
     )
 
-    # UVLO threshold sampling (LM4040BIM3-2.5 +/-0.85% full temp range per datasheet Note 3)
-    r15 = rng.normal(59.0e3, 59.0e3 * 0.01 / 3.0, n).clip(58.41e3, 59.59e3)
-    r16 = rng.normal(10.0e3, 10.0e3 * 0.01 / 3.0, n).clip(9.90e3, 10.10e3)
+    # UVLO threshold sampling (Rev 4.7: Hottech TL431 2.495 V +/-1.5% over-temp, LM393DR2G +/-5 mV, Basic 30k/5.1k/270k)
+    r15 = rng.normal(30.0e3, 30.0e3 * 0.01 / 3.0, n).clip(29.70e3, 30.30e3)
+    r16 = rng.normal(5.1e3, 5.1e3 * 0.01 / 3.0, n).clip(5.049e3, 5.151e3)
     r17 = rng.normal(100.0e3, 100.0e3 * 0.01 / 3.0, n).clip(99.0e3, 101.0e3)
     r18 = rng.normal(100.0e3, 100.0e3 * 0.01 / 3.0, n).clip(99.0e3, 101.0e3)
-    r19 = rng.normal(510.0e3, 510.0e3 * 0.01 / 3.0, n).clip(504.9e3, 515.1e3)
-    v_ref = rng.normal(2.500, 0.02125 / 3.0, n).clip(2.47875, 2.52125)
-    v_io = rng.normal(0.0, 0.004 / 3.0, n).clip(-0.004, 0.004)
+    r19 = rng.normal(270.0e3, 270.0e3 * 0.01 / 3.0, n).clip(267.3e3, 272.7e3)
+    v_ref = rng.normal(2.495, 2.495 * 0.015 / 3.0, n).clip(2.4576, 2.5324)
+    v_io = rng.normal(0.0, 0.005 / 3.0, n).clip(-0.005, 0.005)
     v_on, v_off = uvlo_thresholds(r15, r16, r17, r18, r19, v_ref, v_io)
     v_hyst = v_on - v_off
 
@@ -353,8 +353,8 @@ def run_monte_carlo(n: int = 2000, seed: int = 20261119) -> dict:
             and c1["i_pk"] < 0.70 and c2["i_pk"] < 0.70
             and c1["f_sw"] < 1.0e6 and c2["f_sw"] < 1.0e6
             and tj1 < 100.0 and tj2 < 100.0
-            and 16.0 < v_off[k] < 17.2
-            and 17.0 < v_on[k] < 18.2
+            and 16.0 < v_off[k] < 17.3
+            and 16.8 < v_on[k] < 18.2
             and v_hyst[k] >= 0.75
             and i_in_tot < 0.73
         )

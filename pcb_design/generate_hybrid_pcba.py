@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """Programmatically derive Hybrid JLCPCB Economic PCBA files from the canonical full BOM & CPL.
 
-Single source of truth:
-  - pcb_design/driver_pcb_bom_pcba.csv (61 populated On-PCB parts: 57 SMD + 4 THT)
-  - pcb_design/driver_pcb_cpl.csv      (57 SMD placements)
+Rev 4.7 (CH224A + 2-Extended-Reel Budget PCBA):
+  Single source of truth:
+    - pcb_design/driver_pcb_bom_pcba.csv (53 populated On-PCB parts: 49 SMD + 4 THT)
+    - pcb_design/driver_pcb_cpl.csv      (49 SMD placements)
 
-Derived outputs (never hand-edit; verified 1:1 by bom/verify_bom.py):
-  - pcb_design/driver_pcb_bom_pcba_hybrid.csv  (50 SMD parts assembled by JLCPCB; 0 THT, 0 chunky 2-pad offloads)
-  - pcb_design/driver_pcb_cpl_hybrid.csv       (50 SMD placements matching the hybrid BOM 1:1)
-  - pcb_design/driver_pcb_diy_hand_solder.csv  (11 bench hand-solder parts: 4 THT + 7 chunky 2-pad Extended SMDs)
+  Derived outputs (never hand-edit; verified 1:1 by bom/verify_bom.py):
+    - pcb_design/driver_pcb_bom_pcba_hybrid.csv  (41 SMD parts assembled by JLCPCB; ONLY 2 Extended reels: U1/U2 + U3!)
+    - pcb_design/driver_pcb_cpl_hybrid.csv       (41 SMD placements matching the hybrid BOM 1:1)
+    - pcb_design/driver_pcb_diy_hand_solder.csv  (10 bench hand-solder parts: 4 THT + 6 chunky 2-pad SMDs; plus 2 optional DNP notes)
 
 Usage:
   python3 pcb_design/generate_hybrid_pcba.py          # regenerate all 3 derived CSVs
@@ -32,8 +33,8 @@ HYBRID_CPL_PATH = PCB_DESIGN_DIR / "driver_pcb_cpl_hybrid.csv"
 DIY_BOM_PATH = PCB_DESIGN_DIR / "driver_pcb_diy_hand_solder.csv"
 
 # 1. Chunky 2-pad Extended SMDs offloaded from JLCPCB PCBA to DIY bench hand-soldering.
-#    Eliminates 5 Extended feeder reels ($15 / ~£12) while keeping all fine-pitch ICs,
-#    SOT-23, SOD-323, and 0603/0805/1206 passives assembled by JLCPCB.
+#    Eliminates 4 Extended feeder reels ($12) while keeping all fine-pitch ICs, SOT-23,
+#    and 0603/0805/1206 passives assembled by JLCPCB.
 HYBRID_DIY_OFFLOAD: dict[str, str] = {
     "F1": "1812 2-pad PPTC fuse (Extended reel offload; easy hand-solder)",
     "D11": "DO-214AA (SMB) 2-pad TVS diode (Extended reel offload; easy hand-solder)",
@@ -41,36 +42,20 @@ HYBRID_DIY_OFFLOAD: dict[str, str] = {
     "L2": "6.0x6.0 mm 2-pad power inductor (Extended reel offload; easy hand-solder)",
     "R3": "1206 2-pad 0.30R shunt (Extended reel offload; easy hand-solder)",
     "R4": "1206 2-pad 0.30R shunt (Extended reel offload; easy hand-solder)",
-    "R8": "1206 2-pad 5mR shunt (Extended reel offload; easy hand-solder)",
 }
 
-# 2. Electrically verified JLCPCB Basic part substitutions applied ONLY in the Hybrid PCBA BOM.
-#    - U4: onsemi LM393DR2G (C7955, Basic, SOIC-8, 2-36 V, 0..70 C commercial).
-#      Worst-case UVLO corners with R15=59.0k (+/-1% R, +/-0.85% LM4040, +/-9 mV Vio):
-#      V_ON = [17.03, 18.06] V, V_OFF = [16.15, 17.13] V, hyst >= 0.85 V (100% PASS).
-#    - D9, D10: MDD SS34 (C8678, Basic, SMA DO-214AC, 3 A / 40 V Schottky catch diode).
-#    Note: R15 is intentionally kept at 59.0k (56k drops WC V_OFF to 15.49 V < 15.75 V PD max;
-#    62k pushes WC V_ON to 18.85 V > 18.5 V).
-HYBRID_BASIC_SWAPS: dict[str, dict[str, str]] = {
-    "U4": {
-        "Comment": "LM393DR2G",
-        "LCSC Part #": "C7955",
-        "MPN": "onsemi LM393DR2G",
-        "Hybrid_Note": "JLCPCB Basic drop-in for LM393BIDR (identical SOIC-8; 0..70 C grade; WC UVLO 17.03-18.06/16.15-17.13 V)",
-    },
-    "D9": {
-        "Comment": "SS34",
-        "LCSC Part #": "C8678",
-        "MPN": "MDD SS34",
-        "Hybrid_Note": "JLCPCB Basic 3A/40V SMA Schottky drop-in for B340A-13-F",
-    },
-    "D10": {
-        "Comment": "SS34",
-        "LCSC Part #": "C8678",
-        "MPN": "MDD SS34",
-        "Hybrid_Note": "JLCPCB Basic 3A/40V SMA Schottky drop-in for B340A-13-F",
-    },
+# 2. Optional ESD diodes left DNP (unpopulated) in the 2-Extended-reel Hybrid BOM.
+#    Because the 90-deg USB-C cable is permanently captured inside the sealed ASA base
+#    and CH224A includes internal ESD protection, leaving D13/D14 unpopulated saves $3
+#    and brings the entire Hybrid PCBA down to ONLY 2 Extended reels (U1/U2 + U3).
+HYBRID_DNP_EXCLUDE: dict[str, str] = {
+    "D13": "Optional CC1 24 V ESD diode (left DNP in 2-reel Hybrid PCBA; pads remain available)",
+    "D14": "Optional CC2 24 V ESD diode (left DNP in 2-reel Hybrid PCBA; pads remain available)",
 }
+
+# 3. Basic swaps map (empty in Rev 4.7 because Basic parts U4/U5/Q2/Q3/D9/D10/D12/D15/D16
+#    and all passives are already canonical in driver_pcb_bom_pcba.csv).
+HYBRID_BASIC_SWAPS: dict[str, dict[str, str]] = {}
 
 HYBRID_BOM_COLS = ["Comment", "Designator", "Footprint", "LCSC Part #", "MPN", "Hybrid_Note"]
 DIY_BOM_COLS = ["Comment", "Designator", "Footprint", "MPN", "Assembly_Method", "DIY_Reason"]
@@ -102,15 +87,18 @@ def derive_hybrid_tables(
     cpl_header, full_cpl = _read_csv(full_cpl_path)
 
     full_refs = {r["Designator"].strip() for r in full_bom}
-    unknown_offloads = set(HYBRID_DIY_OFFLOAD) - full_refs
-    unknown_swaps = set(HYBRID_BASIC_SWAPS) - full_refs
-    overlap = set(HYBRID_DIY_OFFLOAD) & set(HYBRID_BASIC_SWAPS)
-    if unknown_offloads:
-        raise ValueError(f"HYBRID_DIY_OFFLOAD references unknown Designators: {sorted(unknown_offloads)}")
-    if unknown_swaps:
-        raise ValueError(f"HYBRID_BASIC_SWAPS references unknown Designators: {sorted(unknown_swaps)}")
-    if overlap:
-        raise ValueError(f"Designators present in both offload and swap maps: {sorted(overlap)}")
+    for name, mapping in [
+        ("HYBRID_DIY_OFFLOAD", HYBRID_DIY_OFFLOAD),
+        ("HYBRID_DNP_EXCLUDE", HYBRID_DNP_EXCLUDE),
+        ("HYBRID_BASIC_SWAPS", HYBRID_BASIC_SWAPS),
+    ]:
+        unknown = set(mapping) - full_refs
+        if unknown:
+            raise ValueError(f"{name} references unknown Designators: {sorted(unknown)}")
+    if (set(HYBRID_DIY_OFFLOAD) & set(HYBRID_DNP_EXCLUDE)) or (
+        (set(HYBRID_DIY_OFFLOAD) | set(HYBRID_DNP_EXCLUDE)) & set(HYBRID_BASIC_SWAPS)
+    ):
+        raise ValueError("Overlapping Designators across offload/DNP/swap maps")
 
     hybrid_bom_rows: list[list[str]] = []
     diy_bom_rows: list[list[str]] = []
@@ -137,6 +125,15 @@ def derive_hybrid_tables(
                 row["MPN"],
                 "SMD Hand-Solder (DIY Hybrid Offload)",
                 HYBRID_DIY_OFFLOAD[ref],
+            ])
+        elif ref in HYBRID_DNP_EXCLUDE:
+            diy_bom_rows.append([
+                row["Comment"],
+                ref,
+                row["Footprint"],
+                row["MPN"],
+                "Optional DNP (Omit in 2-Reel Hybrid)",
+                HYBRID_DNP_EXCLUDE[ref],
             ])
         else:
             swap = HYBRID_BASIC_SWAPS.get(ref)
@@ -166,7 +163,7 @@ def derive_hybrid_tables(
         "hybrid_pcba_rows": len(hybrid_bom_rows),
         "hybrid_cpl_rows": len(hybrid_cpl_rows),
         "diy_hand_solder_rows": len(diy_bom_rows),
-        "basic_swaps": len(HYBRID_BASIC_SWAPS),
+        "dnp_rows": len(HYBRID_DNP_EXCLUDE),
         "smd_offloads": len(HYBRID_DIY_OFFLOAD),
     }
 
@@ -222,9 +219,9 @@ def main() -> int:
     print(
         f"Generated Hybrid PCBA outputs from {stats['full_bom_rows']} canonical PCBA rows "
         f"({stats['full_cpl_rows']} SMD CPL): "
-        f"{stats['hybrid_pcba_rows']} JLCPCB Hybrid SMD ({stats['basic_swaps']} Basic swaps) + "
-        f"{stats['diy_hand_solder_rows']} DIY hand-solder ({stats['smd_offloads']} offloaded chunky SMDs + "
-        f"{stats['diy_hand_solder_rows'] - stats['smd_offloads']} THT)."
+        f"{stats['hybrid_pcba_rows']} JLCPCB Hybrid SMD (ONLY 2 Extended reels: U1/U2 + U3!) + "
+        f"{stats['diy_hand_solder_rows'] - stats['dnp_rows']} DIY hand-solder "
+        f"({stats['smd_offloads']} offloaded chunky SMDs + 4 THT) + {stats['dnp_rows']} optional DNP."
     )
     return 0
 
