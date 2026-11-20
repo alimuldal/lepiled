@@ -1,6 +1,6 @@
-# LepiLED DIY Maxi Switch — PCB Design & Verification Summary (Rev 4.5)
+# LepiLED DIY Maxi Switch — PCB Design & Verification Summary (Rev 4.6)
 
-Rev 4.5 uses **a single custom PCB (`driver_pcb`)**, authored natively in **KiCad 9.0.8** and verified with automated real-pin-type ERC, DRC (`--schematic-parity --severity-all`), zero-via-in-pad and unbroken-`B.Cu`-power-plane audits, Gerber/Excellon exports, and 3D raytraced renders. The legacy `led_mcpcb` strip board was retired in Rev 4.2 in favor of off-the-shelf pre-mounted `20 mm` Copper Direct-Thermal-Path (DTP) LED stars.
+Rev 4.6 uses **a single custom PCB (`driver_pcb`, unchanged electrically from Rev 4.5)**, authored natively in **KiCad 9.0.8** and verified with automated real-pin-type ERC, DRC (`--schematic-parity --severity-all`), zero-via-in-pad and unbroken-`B.Cu`-power-plane audits, Gerber/Excellon exports, and 3D raytraced renders. The legacy `led_mcpcb` strip board was retired in Rev 4.2 in favor of off-the-shelf pre-mounted `20 mm` Copper Direct-Thermal-Path (DTP) LED stars.
 
 ## 1. Board Overview & Verification Status
 
@@ -17,7 +17,7 @@ Rev 4.5 uses **a single custom PCB (`driver_pcb`)**, authored natively in **KiCa
 
 ## 2. Layout, Silkscreen & JLCPCB Economic PCBA Highlights
 
-- **Isolated Horizontal Enclosure Mounting:** `H1..H4` at `(±14.0, ±19.0 mm)` are unplated isolated NPTH (`Ø2.7 mm` drill, `Ø5.5 mm` copper keepout) bolting horizontally (SMD/JST side down for easy field access) onto `MECH-CAP-BOT`'s four integral `Ø5.5 mm` bulkhead standoffs via `4× M2.5 × 8 mm` pan-head screws. All `57` SMD 3D bodies from [driver_pcb_cpl.csv](driver_pcb_cpl.csv) are verified `0.000 mm³` collision-free in CAD.
+- **Isolated Horizontal Enclosure Mounting:** `H1..H4` at `(±14.0, ±19.0 mm)` are unplated isolated NPTH (`Ø2.7 mm` drill, `Ø5.5 mm` copper keepout) bolting horizontally (SMD/JST side down for easy field access) onto `MECH-CAP-BOT`'s four filleted `M2.5` brass heat-set insert standoffs via `4× M2.5 × 6 mm` pan-head screws. All `57` SMD 3D bodies from [driver_pcb_cpl.csv](driver_pcb_cpl.csv) are verified `0.000 mm³` collision-free in CAD.
 - **JLCPCB Basic-Part Optimization:** Standard `0603`/`0805`/`1206` passives and green `0603` status LED `D12` (`C72043`, `R9=C23153`, `R11=C4260`, `R19=C23192`, etc.) map directly to JLCPCB Basic LCSC reels to minimize Economic PCBA feeder fees; `J1..J4` THT are excluded from `driver_pcb_cpl.csv` for bench hand-soldering.
 - **Back Silkscreen & Moth Graphic:** Features `LEPILED REV4.5 20V-PD`, mirrored `B.SilkS` pinout legends (`1:UV+ 2:UV-`, `1:VIS+ 2:VIS-`, `1:UV 2:GND 3:VIS`), and a centered Emperor-moth (*Saturnia pavonia*) graphic (with `JLCJLCJLCJLC` removed — select *"Remove order number"* at JLCPCB checkout to keep the back clean).
 - **High-Speed Power Stage & Footprints:** Unbroken `B.Cu` `GND` plane beneath `U1/U2/D9/D10/L1/L2/R3/R4/C2/C3/C8/C9`; `< 10 mm` `F.Cu` switching loops; Kelvin `VIN`+`SET` taps at `R3`/`R4` (`0.30 Ω`) and `R8` (`5 mΩ`); zero-stub `F1 -> D11 (SMBJ22A)` fly-by; `J1` `Ø0.40 mm` signal drills; `U3` `1.80 × 2.70 mm` EPAD with `64.4%` segmented paste; `F1` Style-2 `1812` land pattern.
