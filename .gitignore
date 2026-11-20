@@ -7,11 +7,27 @@ venv/
 *.tmp
 *.bak
 .DS_Store
-circuit_design/sim/outputs/*_trace.txt
 .mypy_cache/
+
+# KiCad local UI state & backups
 *-backups/
 *.kicad_pcb-bak
 *.kicad_sch-bak
+*.kicad_prl
 *.lck
 ~*.lck
 _autosave-*
+
+# Regenerable SPICE raw waveform dumps and logs
+circuit_design/sim/outputs/*.txt
+circuit_design/sim/outputs/*.log
+
+# Regenerable CAD render scratch & duplicate/oversized meshes
+mechanical_design/cad/parts_stl/
+mechanical_design/cad/lepiled_assembly.stl
+mechanical_design/cad/mech_lid_bot_sls.step
+mechanical_design/cad/mech_lid_bot_sls.stl
+
+# Duplicate schematic exports (canonical copies live in circuit_design/)
+pcb_design/driver_pcb/renders/driver_pcb.svg
+pcb_design/driver_pcb/renders/schematic.pdf

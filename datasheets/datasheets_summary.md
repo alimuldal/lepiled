@@ -1,6 +1,6 @@
 # LepiLED DIY Maxi Switch — Verified Datasheet Summary (Rev 4.1)
 
-All electrical, thermal, and mechanical parameters below are extracted from manufacturer datasheets archived in `datasheets/` (legacy deprecated PDFs moved to `datasheets/archive_legacy/`) and mirrored in machine-readable form in [datasheets_summary.json](file:///home/alimuldal/src/lepiled/datasheets/datasheets_summary.json).
+All electrical, thermal, and mechanical parameters below are extracted from manufacturer datasheets archived in `datasheets/` and mirrored in machine-readable form in [datasheets_summary.json](file:///home/alimuldal/src/lepiled/datasheets/datasheets_summary.json).
 
 ## 1. Power Input, USB-C PD 3.1 (`20 V / 1.0 A`) & Protection
 
