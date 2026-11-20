@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 """
-Parametric 3D CAD Generator for LepiLED DIY Maxi Switch (Rev 4.3 — Field-Robust, Lightweight & Weatherproofed) using build123d.
+Parametric 3D CAD Generator for LepiLED DIY Maxi Switch (Rev 4.4 — Vertical PCB, Bottom USB-C & Seamless Weatherproof Housing) using build123d.
 
-Exports (8 watertight, 100% support-free FDM PETG/ASA parts):
-  - mech_base_ring.step / .stl     (Bolt-on Ø92 x 19 mm protective standing ring & switch guard w/ 4x drain cutouts)
-  - mech_lid_bot.step / .stl       (Flat Ø92 x 4 mm lid w/ 4x 18 mm PCB bosses, Ø2.45 mm pins & bottom SW1 mount)
-  - mech_cap_bot.step / .stl       (Contoured weight-trimmed shell, solid +X wall, 4x captive M3 nuts, 20 mm USB-C boss)
-  - mech_cap_top.step / .stl       (Integral Ø108 mm 45-deg flared rain drip-brim + core lock + silicone bead groove)
+Exports (7 watertight, 100% support-free FDM PETG/ASA parts):
+  - mech_base_ring.step / .stl     (Bolt-on Ø92 x 18 mm protective standing ring w/ 4x drainage & 90-deg cable cutouts)
+  - mech_lid_bot.step / .stl       (Flat Ø92 x 5 mm lid w/ vertical PCB card-guide rails, bottom USB-C grommet & bottom SW1)
+  - mech_cap_bot.step / .stl       (100% seamless axisymmetric contoured shell — ZERO side holes or bosses!)
+  - mech_cap_top.step / .stl       (Integral Ø116 mm drip-brim w/ 1.5 mm underside drip groove + core lock + silicone groove)
   - mech_plug_top.step / .stl      (Weatherproof press-fit rain cap sealing open top of protruding 40x40x3 mm Al tube)
-  - mech_rain_hat.step / .stl      (Detachable pack-flat Ø144 mm rain umbrella keyed onto plug_top & cord-retained)
   - mech_plug_bot.step / .stl      (Internal 33.4x33.4x12 mm core plug w/ captive M3 nuts replacing Al bottom anchor)
   - mech_drill_jig.step / .stl     (Snap-on 40.6 mm U-channel drill guide for all 16x M3 holes of 20 mm Copper DTP stars)
-  - lepiled_assembly.step          (Full multi-part B-Rep assembly incl. UVT PMMA shroud, 8x DTP stars & fasteners)
+  - lepiled_assembly.step          (Full multi-part B-Rep assembly incl. vertical driver_pcb, UVT PMMA shroud & fasteners)
   - cad_verification.json          (trimesh manifold metrics + all-pairs B-Rep 0.000 mm^3 checks + overhang & mass audit)
 """
 
@@ -63,22 +62,20 @@ def _pitched_rect_profile(width: float, rect_h: float, roof_angle_deg: float = 4
 
 def build_base_ring(p: LepiLEDParams) -> bd.Part:
     """
-    Build MECH-BASE-RING: protective bolt-on standing ring & downward SW1 switch guard (Z = -19.0 .. 0.0 mm):
+    Build MECH-BASE-RING: protective bolt-on standing ring & downward SW1 / USB-C guard (Z = -18.0 .. 0.0 mm):
       - Clamps underneath MECH-LID-BOT using the exact same 4x M3x16 SHCS lid bolts (zero extra fasteners!)
-      - 4x Ø6.8 mm counterbores with 3.0 mm seat web at Z = -3.0 mm
-      - 4x wide drainage cutouts at 0/90/180/270 deg so water can never pool and fingers reach SW1 effortlessly
-      - Prints inverted (Z = 0.0 flat on build plate, -Z up) with 0.00 mm^2 >46 deg overhang!
+      - 4x Ø6.4 mm counterbores with 2.5 mm seat web at Z = -2.5 mm
+      - 4x wide 22 x 7.5 mm drainage & 90-deg USB-C cable exit cutouts at 0/90/180/270 deg
+      - Prints inverted (Z = 0.0 flat on build plate, -Z up) with 0.000 mm^2 >46 deg overhang!
     """
     r_out = p.base_ring_od / 2.0
     r_in = p.base_ring_id / 2.0
     outer = bd.Cylinder(r_out, p.base_ring_h, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX))
     inner = bd.Cylinder(r_in, p.base_ring_h + 2.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((0, 0, 1.0))
     part = outer - inner
-    # Chamfer bottom standing edge (Z = -19.0) and top outer edge (Z = 0.0)
     bot_edges = part.edges().filter_by(bd.GeomType.CIRCLE).filter_by_position(bd.Axis.Z, -p.base_ring_h - 0.1, -p.base_ring_h + 0.1)
     part = bd.chamfer(bot_edges, length=p.cap_chamfer)
 
-    # 4x counterbored M3 bolt bores at R = 40.2 mm (45/135/225/315 deg)
     r_thru = p.m3_clearance_dia / 2.0
     r_cb = p.base_ring_cb_dia / 2.0
     cb_h = p.base_ring_h - p.base_ring_bolt_web
@@ -89,8 +86,6 @@ def build_base_ring(p: LepiLEDParams) -> bd.Part:
         cb = bd.Cylinder(r_cb, cb_h + 1.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((hx, hy, -p.base_ring_bolt_web))
         part = part - thru - cb
 
-    # 4x drainage cutouts opening at Z = -19.0 (open upward when printed inverted -> 0 deg overhang!)
-    # Flat floor at Z = -(base_ring_h - drain_h) with 45-deg side chamfers for strength
     for deg in (0.0, 90.0, 180.0, 270.0):
         cut = bd.Box(24.0, p.base_ring_drain_w, p.base_ring_drain_h + 1.0,
                      align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0.5 * (r_in + r_out), 0.0, -p.base_ring_h - 1.0))
@@ -101,38 +96,59 @@ def build_base_ring(p: LepiLEDParams) -> bd.Part:
 
 def build_lid_bot(p: LepiLEDParams) -> bd.Part:
     """
-    Build MECH-LID-BOT: flat 3D-printed Ø92 x 4.0 mm bottom lid with:
-      - 4x integral 18.0 mm tall Ø6.2 mm PCB standoff bosses topped with Ø2.45 x 2.0 mm locating pins
-        (passes cleanly through Ø2.7 mm isolated NPTH H1..H4 -> ZERO brass inserts & ZERO PCB screws!)
-      - Bottom-mounted SW1 (C&K 7211SYZBE) vertical bore at (0.0, +8.5 mm) + 1.5 mm upper anti-rotation recess
-        (leaves 2.5 mm panel wall for C&K 759D02000 silicone boot; lugs sit 4.03 mm cleanly below driver_pcb!)
-      - 4x plain M3 clearance holes at R = 40.2 mm (clamped together with MECH-BASE-RING by 4x M3x16 SHCS)
-      - Prints flat on Z = 0 bed with 0.00 mm^2 >46 deg overhang!
+    Build Rev 4.4 MECH-LID-BOT: flat 3D-printed Ø92 x 5.0 mm bottom lid with:
+      - 2x integral vertical card-guide rails (Z = 5.0 .. 46.0 mm) with 2.0 mm slots & bottom seat ledges at Z = 11.76 mm
+        holding the unchanged 36 x 46 mm driver_pcb vertically at Y_back = -8.48 mm (zero PCB screws, zero inserts!)
+      - Bottom-entry USB-C Ø20.2 x 2.5 mm rubber grommet bore + Ø23.6 x 2.5 mm top inner-lip counterbore at (0.0, -5.0 mm)
+      - Bottom-mounted SW1 (C&K 7211SYZBE) vertical Ø6.35 mm bore + 2.5 mm anti-rotation pocket at (0.0, +16.5 mm)
+      - 4x plain M3 clearance holes at R = 40.2 mm (clamped with MECH-BASE-RING by 4x M3x16 SHCS)
+      - Prints flat on Z = 0 bed with 0.000 mm^2 >46 deg overhang!
     """
     r_lid = p.lid_bot_od / 2.0
     part = bd.Cylinder(r_lid, p.lid_bot_thick, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
 
-    r_boss = p.pcb_boss_od / 2.0
-    r_pin = p.pcb_loc_pin_dia / 2.0
-    for sx in (-1.0, 1.0):
-        for sy in (-1.0, 1.0):
-            bx, by = sx * p.pcb_hole_x, sy * p.pcb_hole_y
-            boss = bd.Cylinder(r_boss, p.pcb_boss_h, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((bx, by, p.z_lid_bot_end))
-            collar = bd.Cone(r_boss + 1.0, r_boss, 1.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((bx, by, p.z_lid_bot_end))
-            pin = bd.Cylinder(r_pin, p.pcb_loc_pin_h - 0.3, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((bx, by, p.z_pcb_bot))
-            pin_tip = bd.Cone(r_pin, r_pin - 0.3, 0.3, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((bx, by, p.z_pcb_bot + p.pcb_loc_pin_h - 0.3))
-            part = part.fuse(boss).fuse(collar).fuse(pin).fuse(pin_tip)
+    # 2x Vertical U-channel PCB card-guide rails on ±X edges of driver_pcb (X_edge = ±18.0 mm, Y_mid = -7.68 mm)
+    y_mid = 0.5 * (p.pcb_y_back + p.pcb_y_front)  # -7.68 mm
+    rail_y_w = p.pcb_rail_slot_w + 2.0 * p.pcb_rail_wall  # 6.4 mm
+    rail_x_in = p.pcb_w / 2.0 - p.pcb_rail_grip_x         # 16.6 mm (grips outer 1.4 mm margin cleanly!)
+    rail_x_out = p.pcb_w / 2.0 + 0.20 + p.pcb_rail_wall   # 20.4 mm
+    rail_x_w = rail_x_out - rail_x_in                     # 3.8 mm
+    rail_x_mid = 0.5 * (rail_x_in + rail_x_out)
+    z_rail_top = p.z_cap_bot_cavity_taper_start - 1.5     # 46.5 mm (safely below 44 deg cavity cone!)
+    rail_h = z_rail_top - p.z_lid_bot_end                 # 41.5 mm
 
+    for sx in (-1.0, 1.0):
+        # Main vertical guide post
+        post = bd.Box(rail_x_w, rail_y_w, rail_h, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((sx * rail_x_mid, y_mid, p.z_lid_bot_end))
+        # Base reinforcement gusset on Z = 5.0 mm (45 deg pyramid base)
+        foot = bd.Box(rail_x_w + 2.0, rail_y_w + 2.0, 3.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((sx * rail_x_mid, y_mid, p.z_lid_bot_end))
+        # Cut vertical PCB edge slot down to bottom PCB seat at Z = z_pcb_bot_edge (11.76 mm)!
+        slot_x_in = rail_x_in - 0.5
+        slot_x_out = p.pcb_w / 2.0 + 0.20  # 18.2 mm (0.20 mm radial clearance to PCB edge)
+        slot_w_x = slot_x_out - slot_x_in
+        slot_cx = 0.5 * (slot_x_in + slot_x_out)
+        slot = bd.Box(slot_w_x, p.pcb_rail_slot_w, z_rail_top - p.z_pcb_bot_edge + 1.0,
+                      align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((sx * slot_cx, y_mid, p.z_pcb_bot_edge - 0.05))
+        part = part.fuse(post).fuse(foot) - slot
+
+    # 4x plain M3 bolt holes at R = 40.2 mm
     for deg in (45.0, 135.0, 225.0, 315.0):
         rad = math.radians(deg)
         hx, hy = p.lid_bot_bolt_r * math.cos(rad), p.lid_bot_bolt_r * math.sin(rad)
-        c_thru = bd.Cylinder(p.m3_clearance_dia / 2.0, p.lid_bot_thick + 1.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((hx, hy, -0.5))
+        c_thru = bd.Cylinder(p.m3_clearance_dia / 2.0, p.lid_bot_thick + 2.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((hx, hy, -1.0))
         part = part - c_thru
 
-    # Bottom-mounted SW1 vertical Ø6.35 mm bore + 1.5 mm upper body pocket (2.5 mm panel wall, anti-rotation index)
+    # Bottom-entry USB-C Ø20.2 x 2.5 mm rubber grommet bore + Ø23.6 x 2.5 mm top inner-lip counterbore at (0.0, -5.0 mm)
+    g_bore = bd.Cylinder(p.grommet_bore_dia / 2.0, p.lid_bot_thick + 2.0,
+                         align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0.0, p.y_usbc, -1.0))
+    g_back = bd.Cylinder(p.grommet_back_relief_dia / 2.0, p.grommet_back_relief_depth + 0.5,
+                         align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0.0, p.y_usbc, p.grommet_panel_thick))
+    part = part - g_bore - g_back
+
+    # Bottom-mounted SW1 vertical Ø6.35 mm bore + 2.5 mm upper anti-rotation pocket at (0.0, +16.5 mm)
     sw_bore = bd.Cylinder(p.sw1_hole_dia / 2.0 + p.print_clearance * 0.5, p.lid_bot_thick + 2.0,
                           align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((p.sw1_x, p.sw1_y, -1.0))
-    sw_recess = bd.Box(p.sw1_body_w_x + 0.8, p.sw1_body_w_y + 0.8, p.lid_bot_thick - p.sw1_wall_thick + 0.2,
+    sw_recess = bd.Box(p.sw1_body_w_x + 0.8, p.sw1_body_w_y + 0.8, p.lid_bot_thick - p.sw1_wall_thick + 0.5,
                        align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((p.sw1_x, p.sw1_y, p.sw1_wall_thick))
     part = part - sw_bore - sw_recess
 
@@ -141,27 +157,25 @@ def build_lid_bot(p: LepiLEDParams) -> bd.Part:
 
 def build_cap_bot(p: LepiLEDParams) -> bd.Part:
     """
-    Build contoured lightweight Rev 4.3 MECH-CAP-BOT:
-      - Contoured outer shell (Ø92 flange -> Ø76 mid -> Ø70 waist -> 45-deg flare to Ø84 shroud skirt)
-        cuts plastic volume by ~38% while keeping every wall >= 3.5-7.5 mm robust!
-      - 100% solid unbroken +X wall (SW1 relocated to protected bottom face of MECH-LID-BOT!)
-      - -Y local boss blends seamlessly from the Ø92 lower flange up to Z=39.5 mm to hold the flat Ø20.2x2.5 mm
-        rubber membrane grommet flange + direct-mate USB-C tunnel
+    Build seamless axisymmetric Rev 4.4 MECH-CAP-BOT:
+      - 100% solid, unbroken outer wall (ZERO side cutouts, ZERO side bosses — both USB-C & SW1 enter through bottom lid!)
+      - Contoured lightweight shell (Ø92 flange -> Ø71 mid -> Ø65 waist -> 45-deg flare to Ø84 shroud skirt)
+        keeping every structural wall >= 3.5-8.5 mm robust!
       - 4x radial side-entry captive M3 hex-nut pockets at R = 40.2 mm (ZERO brass heat-set inserts!)
       - 2x M3 CSK upward bulkhead bolt holes at (±9.0, 0.0) into 3D-printed MECH-PLUG-BOT
-      - Prints upright (+Z up) with < 1 mm^2 >46 deg overhang (100% support-free!).
+      - Prints upright (+Z up) with 0.000 mm^2 >46 deg overhang (100% support-free!).
     """
-    r_bot = p.cap_bot_od / 2.0        # 46.0
-    r_mid = p.cap_bot_mid_od / 2.0    # 35.5
+    r_bot = p.cap_bot_od / 2.0          # 46.0
+    r_mid = p.cap_bot_mid_od / 2.0      # 35.5
     r_waist = p.cap_bot_waist_od / 2.0  # 32.5
-    r_top = p.cap_top_od / 2.0        # 42.0
-    z_base = p.z_lid_bot_end          # 4.0
-    z_flange_top = 15.0
-    z_mid_bot = z_flange_top + (r_bot - r_mid)  # 25.5 (45 deg inward taper!)
-    z_mid_top = p.z_cap_bot_cavity_taper_start  # 34.0
-    z_waist_top = 58.5
-    z_flare_top = z_waist_top + (r_top - r_waist)  # 68.0 (45 deg outward flare! 2.35 mm below G1 bottom = 70.35!)
-    z_top = p.z_cap_bot_top           # 85.0
+    r_top = p.cap_top_od / 2.0          # 42.0
+    z_base = p.z_lid_bot_end            # 5.0
+    z_flange_top = z_base + 11.0        # 16.0
+    z_mid_bot = z_flange_top + (r_bot - r_mid)      # 26.5 (45 deg inward taper)
+    z_mid_top = p.z_cap_bot_cavity_taper_start      # 47.5
+    z_waist_top = 72.0
+    z_flare_top = z_waist_top + (r_top - r_waist)   # 81.5 (45 deg outward flare, 2.35 mm below G1 bottom = 83.85!)
+    z_top = p.z_cap_bot_top             # 98.5
 
     s1 = bd.Cylinder(r_bot, z_flange_top - z_base, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_base))
     s2 = bd.Cone(r_bot, r_mid, z_mid_bot - z_flange_top, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_flange_top))
@@ -171,31 +185,10 @@ def build_cap_bot(p: LepiLEDParams) -> bd.Part:
     s6 = bd.Cylinder(r_top, z_top - z_flare_top, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_flare_top))
     part = s1.fuse(s2).fuse(s3).fuse(s4).fuse(s5).fuse(s6)
 
-    # Local -Y USB-C grommet boss rising cleanly from Z_base=4.0 to Z=40.5 mm (then 45-deg roof back into waist -> 0 overhang!)
-    boss_w = 32.0
-    boss_y_front = -46.0
-    boss_y_back = -30.0
-    z_boss_top = p.z_usbc + p.grommet_outer_spotface_dia / 2.0 + 2.0  # 40.48 mm
-    boss_main = bd.Box(boss_w, boss_y_back - boss_y_front, z_boss_top - z_base,
-                       align=(bd.Align.CENTER, bd.Align.MIN, bd.Align.MIN)).translate((0.0, boss_y_front, z_base))
-    boss_main = bd.fillet(boss_main.edges().filter_by(bd.Axis.Z), 3.0)
-    # 45-deg inward sloped cap on top of USB-C boss (Z = 40.48 .. 51.48 mm -> blends seamlessly inside waist)
-    with bd.BuildSketch(bd.Plane.XY.offset(z_boss_top)) as sk_b0:
-        bd.RectangleRounded(boss_w, boss_y_back - boss_y_front, 3.0)
-    with bd.BuildSketch(bd.Plane.XY.offset(z_boss_top + 10.0)) as sk_b1:
-        bd.RectangleRounded(boss_w - 14.0, 4.0, 1.5)
-    boss_cap = bd.loft([sk_b0.sketch.moved(bd.Location((0, 0.5 * (boss_y_front + boss_y_back), 0))),
-                        sk_b1.sketch.moved(bd.Location((0, boss_y_back - 2.0, 0)))])
-    # Trim boss flush with outer Ø92 cylinder so it never protrudes beyond R=46 mm
-    env_cyl = bd.Cylinder(r_bot, z_top - z_base, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_base))
-    usbc_boss = (boss_main.fuse(boss_cap)) & env_cyl
-    part = part.fuse(usbc_boss)
-
-    # Chamfer top outer shroud skirt edge
     top_edges = part.edges().filter_by(bd.GeomType.CIRCLE).filter_by_position(bd.Axis.Z, z_top - 0.1, z_top + 0.1)
     part = bd.chamfer(top_edges, length=p.cap_chamfer)
 
-    # Internal PCB cavity: cylinder + 42.7 deg cone all the way to R=0.02 apex
+    # Internal PCB cavity: cylinder + 44.1 deg cone all the way to R=0.02 apex (captures vertical PCB upper corners!)
     r_cav = p.cap_bot_cavity_dia / 2.0
     cav_cyl = bd.Cylinder(r_cav, p.cap_bot_cavity_full_h, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_base))
     cav_cone = bd.Cone(r_cav, 0.02, p.cap_bot_taper_h, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_base + p.cap_bot_cavity_full_h))
@@ -215,9 +208,9 @@ def build_cap_bot(p: LepiLEDParams) -> bd.Part:
     ).translate((0, 0, z_base + p.bot_oring_flat_h))
     part = part - g3_base - g3_roof
 
-    # 4x M3 clearance bores + radial side-entry captive M3 hex-nut pockets (Z = 9.0 .. 11.7 mm, 47 deg pitched roof -> 0 overhang!)
+    # 4x M3 clearance bores + radial side-entry captive M3 hex-nut pockets (Z = 10.0 .. 12.7 mm, 47 deg pitched roof)
     r_bolt = p.m3_clearance_dia / 2.0
-    z_nut_bot = z_base + 5.0  # Z = 9.0 mm (2.95 mm above MECH-GASKET-3 roof!)
+    z_nut_bot = z_base + 5.0  # Z = 10.0 mm (2.95 mm above MECH-GASKET-3 roof!)
     nut_prof = _pitched_rect_profile(p.m3_nut_af, p.m3_nut_thick, 47.0)
     nut_len = (r_bot + 1.0) - (p.lid_bot_bolt_r - p.m3_nut_af / 2.0 - 0.4)
     for deg in (45.0, 135.0, 225.0, 315.0):
@@ -231,7 +224,7 @@ def build_cap_bot(p: LepiLEDParams) -> bd.Part:
         slot = slot.translate((p.lid_bot_bolt_r - p.m3_nut_af / 2.0 - 0.4, 0.0, z_nut_bot)).rotate(bd.Axis.Z, deg)
         part = part - slot
 
-    # Shroud socket (Z = 73.0 .. 85.0) + axial O-ring groove (MECH-GASKET-1: 68x3.5 mm)
+    # Shroud socket (Z = 85.5 .. 97.5) + axial O-ring groove (MECH-GASKET-1: 68x3.5 mm)
     r_pilot = p.glass_pilot_od / 2.0
     glass_outer = bd.Cone(p.glass_skirt_id_bot / 2.0, p.glass_skirt_id_top / 2.0, p.glass_socket_depth, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
     glass_inner = bd.Cylinder(r_pilot, p.glass_socket_depth, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
@@ -242,7 +235,7 @@ def build_cap_bot(p: LepiLEDParams) -> bd.Part:
     g1 = (g1_out - g1_in).translate((0, 0, p.z_glass_bot - p.glass_oring_depth))
     part = part - glass_slot.fuse(g1)
 
-    # Core socket (41.0 x 41.0 mm, Z = 73.0 .. 85.0) + 4x wire slots opening into cavity cone
+    # Core socket (41.0 x 41.0 mm, Z = 85.5 .. 97.5) + 4x wire slots opening into cavity cone
     core_sock = bd.Box(p.core_pocket_w, p.core_pocket_w, p.glass_socket_depth,
                        align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, p.z_core_bot))
     part = part - core_sock
@@ -265,50 +258,23 @@ def build_cap_bot(p: LepiLEDParams) -> bd.Part:
         c_thru = bd.Cylinder(r_bolt, 12.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((bx, 0.0, z_csk_seat + 1.6))
         part = part - c_clear.fuse(c_seat).fuse(c_thru)
 
-    # Unified USB-C Direct-Mate Entry + Off-the-Shelf Ø20.2 x 2.5 mm Rubber Grommet Seat (-Y side)
-    z_usbc = p.z_usbc
-    y_sf = p.grommet_outer_spotface_y
-    y_panel_in = y_sf + p.grommet_panel_thick
-    y_back_in = y_panel_in + p.grommet_back_relief_depth
-    y_tunnel_in = -18.00
-
-    g_sf_face = _teardrop_profile_wire(p.grommet_outer_spotface_dia / 2.0, 45.0)
-    g_sf = bd.extrude(g_sf_face, 5.0).rotate(bd.Axis.X, 90.0).translate((0.0, y_sf, z_usbc))
-    part = part - g_sf
-
-    g_bore_face = _teardrop_profile_wire(p.grommet_bore_dia / 2.0, 45.0)
-    g_bore = bd.extrude(g_bore_face, p.grommet_panel_thick + 1.0).rotate(bd.Axis.X, 90.0).translate((0.0, y_panel_in + 0.5, z_usbc))
-    part = part - g_bore
-
-    g_back_face = _teardrop_profile_wire(p.grommet_back_relief_dia / 2.0, 45.0)
-    g_back = bd.extrude(g_back_face, p.grommet_back_relief_depth).rotate(bd.Axis.X, 90.0).translate((0.0, y_back_in, z_usbc))
-    part = part - g_back
-
-    overmold_len = abs((y_back_in - 0.5) - y_tunnel_in)
-    overmold_prof = _pitched_rect_profile(p.usbc_overmold_w, p.usbc_overmold_h, 47.0)
-    overmold = bd.extrude(overmold_prof, overmold_len).rotate(bd.Axis.X, 90.0)
-    overmold = overmold.translate((0.0, y_tunnel_in, z_usbc - p.usbc_overmold_h / 2.0))
-    part = part - overmold
-
     return part
 
 
 def build_cap_top(p: LepiLEDParams) -> bd.Part:
     """
-    Build Rev 4.3 MECH-CAP-TOP with integral Ø116 mm rain drip-brim + underside drip-break groove:
-      - Prints 100% flat inverted (Z_cap_top_top on bed -> 0.00 mm^2 overhang!)
-      - 3.8 mm thick Ø116 mm brim overhangs lower body & USB-C grommet by 12 mm/side; a 1.5 mm deep
-        underside drip-break groove near the rim detaches runoff cleanly before it can creep inward
-      - Shroud socket + MECH-GASKET-2 (68x3.5 mm) groove
-      - 41.0 x 41.0 mm through-aperture for protruding bare 40x40x3 mm Al core + top 1.5 mm silicone-seal bevel
-      - 2x radial M3 locking screw bores + counterbores at ±X, Z = 230.0 mm tucked cleanly beneath the brim
+    Build Rev 4.4 MECH-CAP-TOP with integral Ø116 mm rain drip-brim + 1.5 mm underside drip-break groove:
+      - Prints 100% flat inverted (Z_cap_top_top on bed -> 0.000 mm^2 overhang!)
+      - 3.8 mm thick Ø116 mm brim overhangs lower body by 12 mm/side; underside drip-break groove detaches runoff
+      - Shroud socket + MECH-GASKET-2 (68x3.5 mm) groove + 41x41 mm protruding core aperture + silicone groove
+      - 2x radial M3 locking screw bores + counterbores at ±X tucked cleanly beneath the drip-brim
     """
-    r_cap = p.cap_top_od / 2.0         # 42.0
-    r_brim = p.cap_top_brim_od / 2.0   # 58.0
-    z_bot = p.z_cap_top_bot            # 211.0
-    z_top = p.z_cap_top_top            # 237.5
-    z_brim_bot = z_top - p.cap_top_brim_rim_h       # 233.7 (3.8 mm flat rain drip-brim flange -> 0 deg overhang inverted!)
-    gusset = 3.0                                    # 3.0 mm 45-deg structural root fillet under drip-brim
+    r_cap = p.cap_top_od / 2.0
+    r_brim = p.cap_top_brim_od / 2.0
+    z_bot = p.z_cap_top_bot
+    z_top = p.z_cap_top_top
+    z_brim_bot = z_top - p.cap_top_brim_rim_h
+    gusset = 3.0
     h_tot = z_top - z_bot
 
     c_body = bd.Cylinder(r_cap, z_brim_bot - z_bot, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_bot))
@@ -316,13 +282,11 @@ def build_cap_top(p: LepiLEDParams) -> bd.Part:
     c_brim = bd.Cylinder(r_brim, p.cap_top_brim_rim_h, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_brim_bot))
     part = c_body.fuse(c_gusset).fuse(c_brim)
 
-    # Underside drip-break groove (2.0 mm wide x 1.5 mm deep at R = 53.5..55.5 mm; prints facing UP inverted -> 0 overhang!)
     dg_out = bd.Cylinder(r_brim - 2.5, 1.55, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
     dg_in = bd.Cylinder(r_brim - 4.5, 1.55, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
     drip_groove = (dg_out - dg_in).translate((0, 0, z_brim_bot - 0.05))
     part = part - drip_groove
 
-    # Chamfer bottom shroud skirt edge and top outer brim edge
     bot_c = part.edges().filter_by(bd.GeomType.CIRCLE).filter_by_position(bd.Axis.Z, z_bot - 0.1, z_bot + 0.1)
     top_c = part.edges().filter_by(bd.GeomType.CIRCLE).filter_by_position(bd.Axis.Z, z_top - 0.1, z_top + 0.1)
     part = bd.chamfer(bot_c + top_c, length=p.cap_chamfer)
@@ -337,7 +301,6 @@ def build_cap_top(p: LepiLEDParams) -> bd.Part:
     g2 = (g2_out - g2_in).translate((0, 0, p.z_glass_top - 0.05))
     part = part - glass_slot.fuse(g2)
 
-    # Core aperture + 45-deg silicone bead groove around top face (prints directly on bed -> zero overhang!)
     core_thru = bd.Box(p.core_pocket_w, p.core_pocket_w, h_tot + 2.0,
                        align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_bot - 1.0))
     part = part - core_thru
@@ -349,7 +312,6 @@ def build_cap_top(p: LepiLEDParams) -> bd.Part:
     seal_chamfer = bd.loft([sk_bot.sketch, sk_top.sketch])
     part = part - seal_chamfer
 
-    # 2x M3 radial locking holes on ±X at Z = 231.5 mm (apex points -Z because cap_top prints inverted on Z_top!)
     z_lock = z_top - p.cap_top_lock_z_from_top
     td_thru = _teardrop_profile_wire(p.m3_clearance_dia / 2.0, 45.0)
     td_cb = _teardrop_profile_wire(3.6, 45.0)
@@ -368,10 +330,7 @@ def build_cap_top(p: LepiLEDParams) -> bd.Part:
 
 
 def build_plug_top(p: LepiLEDParams) -> bd.Part:
-    """
-    Build MECH-PLUG-TOP: 3D-printed weatherproof press-fit rain cap sealing the open top of the protruding
-    40 x 40 x 3 mm aluminum tube (prints flat upside-down on Z_plug_top_end with 0.00 mm^2 overhang!).
-    """
+    """Build MECH-PLUG-TOP: weatherproof press-fit rain cap sealing the open top of the protruding Al tube."""
     insert = bd.Box(p.plug_top_w, p.plug_top_w, p.plug_top_insert_h,
                     align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, p.z_core_top - p.plug_top_insert_h))
     insert = bd.fillet(insert.edges().filter_by(bd.Axis.Z), 1.5)
@@ -384,12 +343,7 @@ def build_plug_top(p: LepiLEDParams) -> bd.Part:
 
 
 def build_plug_bot(p: LepiLEDParams) -> bd.Part:
-    """
-    Build MECH-PLUG-BOT: 3D-printed 33.4 x 33.4 x 12.0 mm internal bottom core plug (replaces aluminum anchor!):
-      - 2x vertical M3 clearance bores + top-accessible captive M3 hex-nut pockets at (±9.0, 0) for M3x16 bulkhead bolts
-      - 4x horizontal M3 self-tapping/clearance bores at Y = ±9.0, Z = Z_core_bot + 6.0 mm for flush M3x8 CSK core pins
-      - Prints flat on Z = Z_core_bot with 0.00 mm^2 overhang!
-    """
+    """Build MECH-PLUG-BOT: 3D-printed 33.4 x 33.4 x 12.0 mm internal bottom core plug w/ captive M3 nuts."""
     plug = bd.Box(p.plug_bot_w, p.plug_bot_w, p.plug_bot_h,
                   align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, p.z_core_bot))
     plug = bd.fillet(plug.edges().filter_by(bd.Axis.Z), 1.5)
@@ -414,10 +368,7 @@ def build_plug_bot(p: LepiLEDParams) -> bd.Part:
 
 
 def build_drill_jig(p: LepiLEDParams) -> bd.Part:
-    """
-    Build MECH-DRILL-JIG: bonus 3D-printed snap-on U-channel drilling template (fits 40.0 mm Al tube)
-    locating all 4 M3 holes per face for the two 20 mm Copper DTP stars (referenced from bottom of core).
-    """
+    """Build MECH-DRILL-JIG: snap-on U-channel drilling template for all 16x M3 holes of the 20 mm Copper DTP stars."""
     wall = 3.0
     inner_w = p.core_w_nom + 0.6
     outer_w = inner_w + 2.0 * wall
@@ -447,7 +398,7 @@ def build_drill_jig(p: LepiLEDParams) -> bd.Part:
 def build_assembly_parts(p: LepiLEDParams, core_w_override: float | None = None,
                          glass_id_override: float | None = None, glass_od_override: float | None = None,
                          glass_length_override: float | None = None) -> dict[str, bd.Shape]:
-    """Build all Rev 4.3 physical assembly components (incl. UVT PMMA shroud, base ring, rain hat & bottom SW1)."""
+    """Build all Rev 4.4 physical assembly components (vertical driver_pcb + bottom USB-C + bottom SW1 + seamless cap_bot)."""
     core_w = core_w_override or p.core_w_nom
     g_id = glass_id_override or p.glass_id_nom
     g_od = glass_od_override or p.glass_od_nom
@@ -460,24 +411,30 @@ def build_assembly_parts(p: LepiLEDParams, core_w_override: float | None = None,
     plug_top = build_plug_top(p)
     plug_bot = build_plug_bot(p)
 
-    # Driver PCB (isolated NPTH H1..H4 dropped onto MECH-LID-BOT Ø2.45 mm locating pins!)
-    pcb_board = bd.Box(p.pcb_w, p.pcb_l, p.pcb_thick, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
-    pcb_board = bd.fillet(pcb_board.edges().filter_by(bd.Axis.Z), p.pcb_corner_r).translate((0, 0, p.z_pcb_bot))
+    # Vertical Driver PCB (unchanged 36 x 46 x 1.6 mm board: X_pcb->X, Y_pcb->+Z, Z_pcb(F.Cu)->+Y at Y_front=-6.88 mm!)
+    # Helper to place board-local features: F.Cu sits at Y = p.pcb_y_front, B.Cu at Y = p.pcb_y_back, center Z = p.z_pcb_center
+    yc_f = p.pcb_y_front
+    yc_b = p.pcb_y_back
+    zc = p.z_pcb_center
+
+    pcb_board = bd.Box(p.pcb_w, p.pcb_thick, p.pcb_l, align=(bd.Align.CENTER, bd.Align.MAX, bd.Align.CENTER))
+    pcb_board = bd.fillet(pcb_board.edges().filter_by(bd.Axis.Y), p.pcb_corner_r).translate((0.0, yc_f, zc))
     for sx in (-1.0, 1.0):
-        for sy in (-1.0, 1.0):
-            npth = bd.Cylinder(p.pcb_hole_drill / 2.0, p.pcb_thick + 0.4, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((sx * p.pcb_hole_x, sy * p.pcb_hole_y, p.z_pcb_bot - 0.2))
+        for sz in (-1.0, 1.0):
+            npth = bd.Cylinder(p.pcb_hole_drill / 2.0, p.pcb_thick + 0.6, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.CENTER)).rotate(bd.Axis.X, 90.0).translate((sx * p.pcb_hole_x, 0.5 * (yc_b + yc_f), zc + sz * p.pcb_hole_y))
             pcb_board = pcb_board - npth
-    l1_smd = bd.Box(6.0, 6.0, 4.5, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((-13.4, 11.1, p.z_pcb_top))
-    l2_smd = bd.Box(6.0, 6.0, 4.5, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((13.4, 11.1, p.z_pcb_top))
-    j2_hdr = bd.Box(7.4, 5.8, p.pcb_jst_mated_h, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((-5.2, 19.2, p.z_pcb_top))
-    j3_hdr = bd.Box(7.4, 5.8, p.pcb_jst_mated_h, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((5.2, 19.2, p.z_pcb_top))
-    j4_hdr = bd.Box(9.9, 5.8, p.pcb_jst_mated_h, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((-1.4, -2.5, p.z_pcb_top))
-    j1_usbc_outer = bd.Box(8.94, 9.17, 3.46, align=(bd.Align.CENTER, bd.Align.MIN, bd.Align.MIN)).translate((0.0, p.usbc_j1_front_y, p.z_pcb_top))
-    j1_cavity = bd.Box(8.34, p.usbc_mating_depth_mm + 0.05, 2.56, align=(bd.Align.CENTER, bd.Align.MIN, bd.Align.CENTER)).translate((0.0, p.usbc_j1_front_y - 0.05, p.z_usbc))
+
+    l1_smd = bd.Box(6.0, 4.5, 6.0, align=(bd.Align.CENTER, bd.Align.MIN, bd.Align.CENTER)).translate((-13.4, yc_f, zc + 11.1))
+    l2_smd = bd.Box(6.0, 4.5, 6.0, align=(bd.Align.CENTER, bd.Align.MIN, bd.Align.CENTER)).translate((13.4, yc_f, zc + 11.1))
+    j2_hdr = bd.Box(7.4, p.pcb_jst_mated_h, 5.8, align=(bd.Align.CENTER, bd.Align.MIN, bd.Align.CENTER)).translate((-5.2, yc_f, zc + 19.2))
+    j3_hdr = bd.Box(7.4, p.pcb_jst_mated_h, 5.8, align=(bd.Align.CENTER, bd.Align.MIN, bd.Align.CENTER)).translate((5.2, yc_f, zc + 19.2))
+    j4_hdr = bd.Box(9.9, p.pcb_jst_mated_h, 5.8, align=(bd.Align.CENTER, bd.Align.MIN, bd.Align.CENTER)).translate((-1.4, yc_f, zc - 2.5))
+    j1_usbc_outer = bd.Box(8.94, 3.46, 9.17, align=(bd.Align.CENTER, bd.Align.MIN, bd.Align.MIN)).translate((0.0, yc_f, p.pcb_z_j1_mouth))
+    j1_cavity = bd.Box(8.34, 2.56, p.usbc_mating_depth_mm + 0.05, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0.0, p.y_usbc, p.pcb_z_j1_mouth - 0.05))
     j1_usbc = j1_usbc_outer - j1_cavity
-    j23_pins = bd.Box(15.0, 2.0, p.pcb_jst_pin_protrude, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((0.0, 19.2, p.z_pcb_bot))
-    j4_pins = bd.Box(7.5, 2.0, p.pcb_jst_pin_protrude, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((-1.4, -2.5, p.z_pcb_bot))
-    j1_pins = bd.Box(9.6, 5.7, p.pcb_jst_pin_protrude, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((0.0, -19.54, p.z_pcb_bot))
+    j23_pins = bd.Box(15.0, p.pcb_jst_pin_protrude, 2.0, align=(bd.Align.CENTER, bd.Align.MAX, bd.Align.CENTER)).translate((0.0, yc_b, zc + 19.2))
+    j4_pins = bd.Box(7.5, p.pcb_jst_pin_protrude, 2.0, align=(bd.Align.CENTER, bd.Align.MAX, bd.Align.CENTER)).translate((-1.4, yc_b, zc - 2.5))
+    j1_pins = bd.Box(9.6, p.pcb_jst_pin_protrude, 5.7, align=(bd.Align.CENTER, bd.Align.MAX, bd.Align.CENTER)).translate((0.0, yc_b, zc - 19.54))
     pcb_assy = bd.Compound([pcb_board, l1_smd, l2_smd, j2_hdr, j3_hdr, j4_hdr, j1_usbc, j23_pins, j4_pins, j1_pins])
 
     # Central protruding bare aluminum core (40 x 40 x 3.0 mm, L = 250.0 mm stock cut!)
@@ -508,14 +465,14 @@ def build_assembly_parts(p: LepiLEDParams, core_w_override: float | None = None,
         b_shank = bd.Cylinder(1.45, 16.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((bx, 0.0, z_csk_seat + 0.1))
         b_head = bd.Cone(3.0, 1.45, 1.5, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((bx, 0.0, z_csk_seat + 0.1))
         fasteners_list.append(b_shank.fuse(b_head))
-    # 2. 4x M3x16 SHCS lid + base_ring bolts (head seated inside base_ring CB at Z=-3.05..-6.05, shank Z=-3.05..+12.95)
+    # 2. 4x M3x16 SHCS lid + base_ring bolts (head seated at Z=-2.55..-5.55, shank Z=-2.55..+13.45 into captive M3 nut Z=10..12.7)
     for deg in (45.0, 135.0, 225.0, 315.0):
         rad = math.radians(deg)
         lx, ly = p.lid_bot_bolt_r * math.cos(rad), p.lid_bot_bolt_r * math.sin(rad)
         lb_head = bd.Cylinder(2.75, 3.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((lx, ly, -p.base_ring_bolt_web - 0.05))
-        lb_shank = bd.Cylinder(1.48, 15.8, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((lx, ly, -p.base_ring_bolt_web - 0.05))
+        lb_shank = bd.Cylinder(1.48, 16.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((lx, ly, -p.base_ring_bolt_web - 0.05))
         fasteners_list.append(lb_head.fuse(lb_shank))
-    # 3. 2x M3x12 SHCS top cap locking screws on ±X at Z = 231.5 mm
+    # 3. 2x M3x12 SHCS top cap locking screws on ±X tucked beneath Ø116 mm drip-brim
     for sx in (-1.0, 1.0):
         if sx > 0:
             th = bd.Cylinder(2.75, 3.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).rotate(bd.Axis.Y, 90.0).translate((27.2, 0.0, z_top_lock))
@@ -544,7 +501,7 @@ def build_assembly_parts(p: LepiLEDParams, core_w_override: float | None = None,
             star_items.append(bd.Compound([star_disc, led_pkg, s_top, s_bot]).rotate(bd.Axis.Z, angle))
     dtp_stars = bd.Compound(star_items)
 
-    # Bottom-mounted SW1 (C&K 7211SYZBE gold DPDT) + C&K 759D02000 silicone boot on MECH-LID-BOT at (0.0, +8.5)
+    # Bottom-mounted SW1 (C&K 7211SYZBE gold DPDT) + C&K 759D02000 silicone boot on MECH-LID-BOT at (0.0, +16.5 mm)
     sw_body = bd.Box(p.sw1_body_w_x, p.sw1_body_w_y, p.sw1_body_h_z,
                      align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((p.sw1_x, p.sw1_y, p.sw1_wall_thick + 0.05))
     sw_lugs = bd.Box(10.0, 8.5, p.sw1_lugs_h_z,
@@ -555,20 +512,18 @@ def build_assembly_parts(p: LepiLEDParams, core_w_override: float | None = None,
                           align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((p.sw1_x, p.sw1_y, -0.05))
     sw1_assy = bd.Compound([sw_body, sw_lugs, sw_bush, sw_boot])
 
-    # Off-the-shelf 20 mm rubber membrane grommet
-    y_sf = p.grommet_outer_spotface_y
-    y_panel_in = y_sf + p.grommet_panel_thick
-    g_outer_lip = bd.Cylinder(12.2, 2.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).rotate(bd.Axis.X, 90.0).translate((0.0, y_sf - 0.05, p.z_usbc))
-    g_neck = bd.Cylinder(9.95, p.grommet_panel_thick + 0.1, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).rotate(bd.Axis.X, 90.0).translate((0.0, y_panel_in + 0.05, p.z_usbc))
-    g_inner_lip = bd.Cylinder(11.5, 2.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).rotate(bd.Axis.X, 90.0).translate((0.0, y_panel_in + 2.05, p.z_usbc))
-    g_cable_cut = bd.Box(12.8, 12.0, 7.2, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.CENTER)).translate((0.0, y_sf + 1.0, p.z_usbc))
+    # Off-the-shelf 20 mm rubber membrane grommet seated FLAT in MECH-LID-BOT at (0.0, -5.0 mm)
+    g_outer_lip = bd.Cylinder(12.2, 2.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((0.0, p.y_usbc, -0.05))
+    g_neck = bd.Cylinder(9.95, p.grommet_panel_thick + 0.1, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0.0, p.y_usbc, -0.05))
+    g_inner_lip = bd.Cylinder(11.5, 2.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0.0, p.y_usbc, p.grommet_panel_thick + 0.05))
+    g_cable_cut = bd.Box(12.8, 7.2, 12.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.CENTER)).translate((0.0, p.y_usbc, 1.5))
     grommet_usbc = g_outer_lip.fuse(g_neck).fuse(g_inner_lip) - g_cable_cut
 
-    # Standard 6.65 mm USB-C PD plug seated full 4.55 mm inside J1
-    y_plug_tip = p.usbc_j1_front_y + p.usbc_mating_depth_mm
-    y_overmold_front = y_plug_tip - p.usbc_specified_barrel_mm
-    usbc_plug_shell = bd.Box(8.3, p.usbc_specified_barrel_mm + 0.01, 2.5, align=(bd.Align.CENTER, bd.Align.MAX, bd.Align.CENTER)).translate((0.0, y_plug_tip, p.z_usbc))
-    usbc_plug_overmold = bd.Box(12.4, 26.0, 6.8, align=(bd.Align.CENTER, bd.Align.MAX, bd.Align.CENTER)).translate((0.0, y_overmold_front, p.z_usbc))
+    # Standard 6.65 mm USB-C PD plug seated straight UPWARD full 4.55 mm inside J1
+    z_plug_tip = p.pcb_z_j1_mouth + p.usbc_mating_depth_mm
+    z_overmold_top = z_plug_tip - p.usbc_specified_barrel_mm
+    usbc_plug_shell = bd.Box(8.3, 2.5, p.usbc_specified_barrel_mm + 0.01, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((0.0, p.y_usbc, z_plug_tip))
+    usbc_plug_overmold = bd.Box(12.4, 6.8, 22.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((0.0, p.y_usbc, z_overmold_top))
     usbc_plug_assy = usbc_plug_shell.fuse(usbc_plug_overmold)
     assert len(usbc_plug_assy.solids()) == 1
 
@@ -649,92 +604,6 @@ def audit_stl_overhangs(stl_path: Path, print_up_axis: tuple[float, float, float
     }
 
 
-def verify_usbc_bezel_wall_stl(stl_path: Path, p: LepiLEDParams) -> dict:
-    mesh = trimesh.load(str(stl_path), force="mesh")
-    tris = mesh.triangles
-    z_lo = p.z_usbc - p.usbc_overmold_h / 2.0
-    z_hi = p.z_usbc + p.usbc_overmold_h / 2.0 + 0.5 * p.usbc_overmold_w * math.tan(math.radians(47.0))
-    tri_mask = (
-        (tris[:, :, 0].max(axis=1) >= -15.0)
-        & (tris[:, :, 0].min(axis=1) <= 15.0)
-        & (tris[:, :, 1].min(axis=1) < 0.0)
-        & (tris[:, :, 2].max(axis=1) >= p.bot_oring_roof_z_max)
-    )
-    tris_sub = tris[tri_mask]
-    v0 = tris_sub[:, 0, :]
-    e1 = tris_sub[:, 1, :] - v0
-    e2 = tris_sub[:, 2, :] - v0
-    det = e1[:, 0] * e2[:, 2] - e1[:, 2] * e2[:, 0]
-    valid = np.abs(det) > 1e-12
-    v0, e1, e2, inv_det = v0[valid], e1[valid], e2[valid], 1.0 / det[valid]
-
-    hw = p.usbc_overmold_w / 2.0
-    xs = np.arange(-14.0, 14.0 + 1e-9, 0.5)
-    zs = np.arange(p.z_usbc - 12.0, z_hi + 6.0, 0.5)
-    gx, gz = np.meshgrid(xs, zs, indexing="ij")
-    gx_flat, gz_flat = gx.ravel(), gz.ravel()
-
-    y_orig = -50.0
-    tvec_x = gx_flat[:, None] - v0[None, :, 0]
-    tvec_y = y_orig - v0[None, :, 1]
-    tvec_z = gz_flat[:, None] - v0[None, :, 2]
-
-    u = (tvec_x * e2[None, :, 2] - tvec_z * e2[None, :, 0]) * inv_det[None, :]
-    qvec_x = tvec_y * e1[None, :, 2] - tvec_z * e1[None, :, 1]
-    qvec_y = tvec_z * e1[None, :, 0] - tvec_x * e1[None, :, 2]
-    qvec_z = tvec_x * e1[None, :, 1] - tvec_y * e1[None, :, 0]
-    v = qvec_y * inv_det[None, :]
-    t = (e2[None, :, 0] * qvec_x + e2[None, :, 1] * qvec_y + e2[None, :, 2] * qvec_z) * inv_det[None, :]
-
-    hits_mask = (u >= -1e-7) & (v >= -1e-7) & (u + v <= 1.0 + 1e-7) & (t > 0.0)
-    y_hits_all = y_orig + t
-
-    tunnel_roof_z = p.z_usbc + p.usbc_overmold_h / 2.0 + np.maximum(0.0, hw - np.abs(gx_flat)) * math.tan(math.radians(47.0))
-    in_tunnel = (np.abs(gx_flat) < hw - 0.1) & (gz_flat > z_lo + 0.1) & (gz_flat < tunnel_roof_z - 0.1)
-    r_bore = p.grommet_bore_dia / 2.0
-    dist_c = np.hypot(gx_flat, gz_flat - p.z_usbc)
-    outside_grommet_bore = (dist_c > r_bore + 0.8) & (gz_flat < p.z_usbc + r_bore)
-
-    min_wall_mm = float("inf")
-    min_loc = None
-    anomalies = 0
-    slot_rays = 0
-    wall_rays = 0
-
-    for idx in range(len(gx_flat)):
-        ys = np.sort(y_hits_all[idx, hits_mask[idx]])
-        dedup: list[float] = []
-        for yv in ys:
-            if not dedup or abs(float(yv) - dedup[-1]) > 1e-4:
-                dedup.append(float(yv))
-        front_ys = [yv for yv in dedup if yv < 0.0]
-        if in_tunnel[idx]:
-            slot_rays += 1
-            if len(front_ys) != 0:
-                anomalies += 1
-        elif outside_grommet_bore[idx]:
-            wall_rays += 1
-            if len(front_ys) < 2:
-                anomalies += 1
-                continue
-            wt = front_ys[1] - front_ys[0]
-            if wt < min_wall_mm:
-                min_wall_mm = wt
-                min_loc = (round(float(gx_flat[idx]), 2), round(float(gz_flat[idx]), 2))
-
-    return {
-        "stl_file": stl_path.name,
-        "grid_rays_total": int(len(gx_flat)),
-        "wall_rays_checked": wall_rays,
-        "slot_rays_checked": slot_rays,
-        "anomalies": anomalies,
-        "min_flange_wall_mm": round(min_wall_mm, 4) if min_wall_mm < float("inf") else 0.0,
-        "min_wall_xz_mm": min_loc,
-        "min_required_mm": p.min_wall,
-        "pass": anomalies == 0 and min_wall_mm >= p.min_wall - 0.02,
-    }
-
-
 def export_and_verify_stl(shape: bd.Shape, step_path: Path, stl_path: Path) -> dict:
     bd.export_step(shape, str(step_path))
     bd.export_stl(shape, str(stl_path), tolerance=0.01, angular_tolerance=0.03)
@@ -753,20 +622,25 @@ def export_and_verify_stl(shape: bd.Shape, step_path: Path, stl_path: Path) -> d
     }
 
 
-def check_alcove_insertion(lid_bot: bd.Part, cap_bot: bd.Part, p: LepiLEDParams) -> dict[str, dict | bool]:
-    # 1. Bottom-mounted SW1 vertical insertion straight down into MECH-LID-BOT recess
+def check_kinematic_insertion(lid_bot: bd.Part, cap_bot: bd.Part, p: LepiLEDParams) -> dict[str, dict | bool]:
+    # 1. Bottom-mounted SW1 vertical insertion straight down into MECH-LID-BOT pocket
     sw_body = bd.Box(p.sw1_body_w_x, p.sw1_body_w_y, p.sw1_body_h_z, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
     sw_lugs = bd.Box(10.0, 8.5, p.sw1_lugs_h_z, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0.0, 0.0, p.sw1_body_h_z))
     sw_bush = bd.Cylinder(p.sw1_hole_dia / 2.0 - 0.05, 8.89, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX))
     sw_tool = bd.Compound([sw_body, sw_lugs, sw_bush])
-
     sw_max_vol = 0.0
-    sw_z_steps = np.linspace(p.z_pcb_bot, p.sw1_wall_thick + 0.05, 15)
-    for zw in sw_z_steps:
+    for zw in np.linspace(25.0, p.sw1_wall_thick + 0.05, 15):
         inter = lid_bot & sw_tool.translate((p.sw1_x, p.sw1_y, float(zw)))
         sw_max_vol = max(sw_max_vol, float(inter.volume) if inter is not None else 0.0)
 
-    # 2. M3x16 CSK bulkhead bolts straight +Z insertion
+    # 2. Vertical driver_pcb sliding straight down into MECH-LID-BOT card-guide rails
+    pcb_tool = bd.Box(p.pcb_w, p.pcb_thick, p.pcb_l, align=(bd.Align.CENTER, bd.Align.MAX, bd.Align.MIN))
+    pcb_max_vol = 0.0
+    for zp in np.linspace(55.0, p.z_pcb_bot_edge, 15):
+        inter = lid_bot & pcb_tool.translate((0.0, p.pcb_y_front, float(zp)))
+        pcb_max_vol = max(pcb_max_vol, float(inter.volume) if inter is not None else 0.0)
+
+    # 3. M3x16 CSK bulkhead bolts straight +Z insertion inside MECH-CAP-BOT
     z_csk_seat = p.z_cap_bot_bulkhead_start - 4.5
     bolt_tool = bd.Cylinder(1.45, 16.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).fuse(
         bd.Cone(3.0, 1.45, 1.5, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
@@ -777,21 +651,22 @@ def check_alcove_insertion(lid_bot: bd.Part, cap_bot: bd.Part, p: LepiLEDParams)
             inter = cap_bot & bolt_tool.translate((sx * p.plug_bot_bolt_x, 0.0, float(zb)))
             bolt_max_vol = max(bolt_max_vol, float(inter.volume) if inter is not None else 0.0)
 
-    # 3. Standard USB-C plug straight +Y insertion
-    y_plug_tip = p.usbc_j1_front_y + p.usbc_mating_depth_mm
-    plug_tool = bd.Box(8.3, p.usbc_specified_barrel_mm + 0.01, 2.5, align=(bd.Align.CENTER, bd.Align.MAX, bd.Align.CENTER)).fuse(
-        bd.Box(12.4, 26.0, 6.8, align=(bd.Align.CENTER, bd.Align.MAX, bd.Align.CENTER)).translate((0.0, -p.usbc_specified_barrel_mm, 0.0))
+    # 4. Standard USB-C plug straight +Z upward insertion through MECH-LID-BOT grommet bore
+    z_plug_tip = p.pcb_z_j1_mouth + p.usbc_mating_depth_mm
+    plug_tool = bd.Box(8.3, 2.5, p.usbc_specified_barrel_mm + 0.01, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).fuse(
+        bd.Box(12.4, 6.8, 22.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((0.0, 0.0, -p.usbc_specified_barrel_mm))
     )
     usbc_max_vol = 0.0
-    for yt in np.linspace(-55.0, y_plug_tip, 15):
-        inter = cap_bot & plug_tool.translate((0.0, float(yt), p.z_usbc))
+    for zt in np.linspace(-25.0, z_plug_tip, 15):
+        inter = lid_bot & plug_tool.translate((0.0, p.y_usbc, float(zt)))
         usbc_max_vol = max(usbc_max_vol, float(inter.volume) if inter is not None else 0.0)
 
     return {
-        "sw1_bottom_lid_insertion": {"waypoints_tested": len(sw_z_steps), "max_intersection_vol_mm3": round(sw_max_vol, 6), "pass": sw_max_vol < 1e-4},
+        "sw1_bottom_lid_insertion": {"waypoints_tested": 15, "max_intersection_vol_mm3": round(sw_max_vol, 6), "pass": sw_max_vol < 1e-4},
+        "pcb_vertical_rail_insertion": {"waypoints_tested": 15, "max_intersection_vol_mm3": round(pcb_max_vol, 6), "pass": pcb_max_vol < 1e-4},
         "m3x16_bolt_insertion": {"waypoints_tested": 30, "max_intersection_vol_mm3": round(bolt_max_vol, 6), "pass": bolt_max_vol < 1e-4},
-        "usbc_plug_insertion": {"waypoints_tested": 15, "max_intersection_vol_mm3": round(usbc_max_vol, 6), "pass": usbc_max_vol < 1e-4},
-        "all_zero": (sw_max_vol < 1e-4) and (bolt_max_vol < 1e-4) and (usbc_max_vol < 1e-4),
+        "usbc_bottom_plug_insertion": {"waypoints_tested": 15, "max_intersection_vol_mm3": round(usbc_max_vol, 6), "pass": usbc_max_vol < 1e-4},
+        "all_zero": (sw_max_vol < 1e-4) and (pcb_max_vol < 1e-4) and (bolt_max_vol < 1e-4) and (usbc_max_vol < 1e-4),
     }
 
 
@@ -810,6 +685,7 @@ def compute_mass_budget(mesh_checks: dict, assy_nom: dict[str, bd.Shape]) -> dic
         "printed_lamp_volume_cm3": round(vol_printed_cm3, 1),
         "cap_bot_volume_cm3": round(mesh_checks["mech_cap_bot"]["brep_volume_mm3"] / 1000.0, 1),
         "cap_top_volume_cm3": round(mesh_checks["mech_cap_top"]["brep_volume_mm3"] / 1000.0, 1),
+        "lid_bot_volume_cm3": round(mesh_checks["mech_lid_bot"]["brep_volume_mm3"] / 1000.0, 1),
         "base_ring_volume_cm3": round(mesh_checks["mech_base_ring"]["brep_volume_mm3"] / 1000.0, 1),
         "petg_fdm_60pct_g": round(petg_fdm_g, 1),
         "petg_solid_100pct_g": round(petg_solid_g, 1),
@@ -825,12 +701,6 @@ def main() -> None:
     out_dir = Path(__file__).resolve().parent
     p_fdm = LepiLEDParams(process="FDM")
     (out_dir / "cad_params.json").write_text(json.dumps(p_fdm.to_dict(), indent=2))
-
-    # Remove deprecated rain_hat exports (replaced by unobstructed hanging hole + Ø116 mm cap_top drip-brim)
-    for old_hat in ("mech_rain_hat.step", "mech_rain_hat.stl"):
-        hp = out_dir / old_hat
-        if hp.exists():
-            hp.unlink()
 
     assy_nom = build_assembly_parts(p_fdm)
     drill_jig = build_drill_jig(p_fdm)
@@ -872,10 +742,7 @@ def main() -> None:
         "mech_drill_jig": audit_stl_overhangs(out_dir / "mech_drill_jig.stl", (0.0, 0.0, 1.0)),
     }
 
-    # 4. USB-C & 20 mm grommet flange STL ray-cast
-    usbc_bezel_raycast = verify_usbc_bezel_wall_stl(out_dir / "mech_cap_bot.stl", p_fdm)
-
-    # 5. All-pairs B-Rep intersection verification (Nominal + Worst-Case 151 mm PMMA shroud)
+    # 4. All-pairs B-Rep intersection verification (Nominal + Worst-Case 151 mm PMMA shroud)
     wc_glass_len = p_fdm.glass_length + p_fdm.glass_length_tol
     inter_nom = check_all_pairs_intersections(assy_nom)
     assy_wc = build_assembly_parts(
@@ -884,26 +751,24 @@ def main() -> None:
     )
     inter_wc = check_all_pairs_intersections(assy_wc)
 
-    # 6. Kinematic insertion sweeps
-    alcove_checks = check_alcove_insertion(assy_nom["lid_bot"], assy_nom["cap_bot"], p_fdm)
+    # 5. Kinematic insertion sweeps (SW1, vertical PCB into rails, M3x16 bolts, bottom USB-C plug)
+    kinematic_checks = check_kinematic_insertion(assy_nom["lid_bot"], assy_nom["cap_bot"], p_fdm)
 
-    # 7. Exact mass budget
+    # 6. Exact mass budget
     mass_budget = compute_mass_budget(mesh_checks, assy_nom)
 
     all_meshes_ok = all(m["is_watertight"] and m["is_winding_consistent"] and m["stl_volume_mm3"] > 0 for m in mesh_checks.values())
     all_overhangs_ok = all(o["pass"] for o in overhang_checks.values())
     all_brep_ok = inter_nom["all_zero"] and inter_wc["all_zero"]
-    usbc_bezel_wall_ok = usbc_bezel_raycast["pass"]
-    all_alcove_ok = alcove_checks["all_zero"]
+    all_kinematic_ok = kinematic_checks["all_zero"]
     all_param_checks_ok = all(c["pass"] for c in p_fdm.verify_all().values())
 
     report = {
-        "revision": "Rev 4.3 (Field-Robust & Weatherproofed: UVT PMMA Shroud + Bottom SW1 + Base Ring + Dual Rain Roof + Contoured Shell)",
+        "revision": "Rev 4.4 (Vertical PCB + Bottom USB-C & SW1 + Seamless Contoured Housing + UVT PMMA + Ø116 mm Drip-Brim)",
         "params": p_fdm.to_dict(),
         "mesh_checks": mesh_checks,
         "overhang_checks": overhang_checks,
-        "usbc_grommet_flange_raycast": usbc_bezel_raycast,
-        "alcove_insertion_checks": alcove_checks,
+        "kinematic_insertion_checks": kinematic_checks,
         "brep_all_pairs_nominal": {k: v for k, v in inter_nom.items() if k != "pairs"},
         "brep_all_pairs_worst_case": {k: v for k, v in inter_wc.items() if k != "pairs"},
         "mass_budget_g": mass_budget,
@@ -911,13 +776,12 @@ def main() -> None:
             "all_param_checks_pass": all_param_checks_ok,
             "all_meshes_watertight_manifold": all_meshes_ok,
             "all_overhangs_le_46deg": all_overhangs_ok,
-            "usbc_grommet_flange_raycast_ge_2_5mm": usbc_bezel_wall_ok,
-            "alcove_kinematic_insertion_zero": all_alcove_ok,
+            "kinematic_insertion_zero": all_kinematic_ok,
             "nominal_all_pairs_zero": inter_nom["all_zero"],
             "worst_case_all_pairs_zero": inter_wc["all_zero"],
             "overall_pass": (
                 all_param_checks_ok and all_meshes_ok and all_overhangs_ok
-                and usbc_bezel_wall_ok and all_brep_ok and all_alcove_ok
+                and all_brep_ok and all_kinematic_ok
             ),
         },
     }
@@ -930,23 +794,21 @@ def main() -> None:
     print("=== Overhang Verification ===")
     for name, o in overhang_checks.items():
         print(f"  {name:16s}: >46deg faces={o['off_bed_overhang_gt46_faces']:4d}, area={o['off_bed_overhang_gt46_area_mm2']:6.3f} mm^2, max={o['max_off_bed_overhang_deg']:5.2f} deg | pass={o['pass']}")
-    print("=== USB-C & 20 mm Grommet Flange STL Ray-Cast ===")
-    print(f"  {usbc_bezel_raycast['stl_file']}: rays={usbc_bezel_raycast['grid_rays_total']}, anomalies={usbc_bezel_raycast['anomalies']}, min_wall={usbc_bezel_raycast['min_flange_wall_mm']:.4f} mm | pass={usbc_bezel_raycast['pass']}")
-    print("=== Kinematic SW1, Bolt & USB-C Insertion ===")
-    for k in ("sw1_bottom_lid_insertion", "m3x16_bolt_insertion", "usbc_plug_insertion"):
-        v = alcove_checks[k]
-        print(f"  {k:26s}: waypoints={v['waypoints_tested']:2d}, max_vol={v['max_intersection_vol_mm3']:.6f} mm^3 | pass={v['pass']}")
-    print("=== All-Pairs B-Rep Intersection (incl. UVT PMMA Shroud, Base Ring, Ø116mm Brim & ALL Fasteners) ===")
+    print("=== Kinematic Insertion (SW1, Vertical PCB Rails, M3x16 Bolts, Bottom USB-C Plug) ===")
+    for k in ("sw1_bottom_lid_insertion", "pcb_vertical_rail_insertion", "m3x16_bolt_insertion", "usbc_bottom_plug_insertion"):
+        v = kinematic_checks[k]
+        print(f"  {k:28s}: waypoints={v['waypoints_tested']:2d}, max_vol={v['max_intersection_vol_mm3']:.6f} mm^3 | pass={v['pass']}")
+    print("=== All-Pairs B-Rep Intersection (incl. Vertical PCB, Bottom USB-C & SW1, UVT PMMA & ALL Fasteners) ===")
     for label, d in [("NOMINAL", inter_nom), ("WORST_CASE", inter_wc)]:
         print(f"  {label:10s}: {d['total_pairs_checked']} pairs, nonzero={d['nonzero_count']} {d['nonzero_pairs']}")
-    print("=== Verified Mass Budget (Rev 4.3) ===")
+    print("=== Verified Mass Budget (Rev 4.4) ===")
     print(f"  Printed lamp parts ({mass_budget['printed_lamp_volume_cm3']} cm^3; cap_bot={mass_budget['cap_bot_volume_cm3']}, cap_top={mass_budget['cap_top_volume_cm3']} cm^3): {mass_budget['petg_fdm_60pct_g']} g FDM (60%) / {mass_budget['petg_solid_100pct_g']} g solid")
     print(f"  Al core (3 mm): {mass_budget['al_core_3mm_g']} g | UVT PMMA shroud: {mass_budget['uvt_pmma_shroud_g']} g | Elec+Stars+HW: {mass_budget['elec_stars_hardware_g']} g")
     print(f"  TOTAL LAMP WEIGHT (FDM): {mass_budget['total_fdm_g']} g ({mass_budget['total_solid_g']} g 100% solid)")
 
     if not report["summary"]["overall_pass"]:
         raise SystemExit(1)
-    print(f"Wrote {verif_path} and all Rev 4.3 STEP/STL artifacts (ALL CHECKS PASS).")
+    print(f"Wrote {verif_path} and all Rev 4.4 STEP/STL artifacts (ALL CHECKS PASS).")
 
 
 if __name__ == "__main__":

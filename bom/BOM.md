@@ -1,10 +1,10 @@
-# LepiLED DIY Maxi Switch — Master Bill of Materials (Rev 4.3 — Field-Robust 1-Off Hobby Build)
+# LepiLED DIY Maxi Switch — Master Bill of Materials (Rev 4.4 — Field-Robust 1-Off Hobby Build)
 
 Machine-verified master BOM in [bom.csv](file:///home/alimuldal/src/lepiled/bom/bom.csv), audited 1:1 against [COMPONENT_IDS.csv](file:///home/alimuldal/src/lepiled/circuit_design/COMPONENT_IDS.csv) (`75` RefDes), [driver_pcb_bom_pcba.csv](file:///home/alimuldal/src/lepiled/pcb_design/driver_pcb_bom_pcba.csv) (`61` populated PCBA parts), and [MECH_PARTS.csv](file:///home/alimuldal/src/lepiled/mechanical_design/MECH_PARTS.csv) (`15` mechanical IDs) via [verify_bom.py](file:///home/alimuldal/src/lepiled/bom/verify_bom.py).
 
 ## 1. Single-Unit Hobby Cost Summary (UK GBP)
 
-Rev 4.3 keeps every Rev 4.2 cost/buildability win (pre-mounted `20 mm` Copper DTP stars, single custom `driver_pcb`, single bare protruding `250 mm` Al core, zero brass inserts, single `M3` fastener size) while replacing brittle borosilicate glass with a **shatter-resistant UV-transmitting PMMA acrylic tube** (`-£2.09` ex-VAT, `-143 g`) and adding 3D-printed weatherproofing (`MECH-BASE-RING` switch guard and an integral `Ø116 mm` shroud drip-brim with drip-break groove):
+Rev 4.4 keeps the exact same low 1-off cost (`£0` BOM delta from vertical `driver_pcb` and bottom-entry USB-C) while delivering a shatter-resistant UV-transmitting PMMA shroud, seamless unbroken lower housing, bottom-mounted `SW1` inside `MECH-BASE-RING`, and an integral `Ø116 mm` shroud drip-brim:
 
 | Domain | 1-Off Hobby Checkout (ex-VAT) | 1-Off Hobby Checkout (inc 20% VAT) | Amortized Per-Lamp (ex-VAT) |
 |---|---:|---:|---:|
@@ -12,7 +12,7 @@ Rev 4.3 keeps every Rev 4.2 cost/buildability win (pre-mounted `20 mm` Copper DT
 | **Harness (Pre-crimped `22 AWG` JST-XH 2P & 3P pigtails — no crimper)** | £2.50 | £3.00 | £0.75 |
 | **PCB Fab + JLCPCB Economic PCBA (`driver_pcb` ONLY, 2-pc min)** | £20.00 | £24.00 | £10.00 |
 | **Mechanical (`250 mm` bare `3 mm` Al tube, UVT PMMA shroud, seals, M3 + nylon washers)** | £26.13 | £31.36 | £26.13 |
-| **TOTAL Rev 4.3 1-Off Build (All Items Purchased New)** | **£91.35** | **£109.62** | **£77.88** |
+| **TOTAL Rev 4.4 1-Off Build (All Items Purchased New)** | **£91.35** | **£109.62** | **£77.88** |
 | **NET 1-Off Out-of-Pocket (Using Owned Workshop `M3` Screws/Nuts & PC Paste)** | **£84.80** | **£101.76** | — |
 
 > **Scope Notes:** All 7 3D-printed parts (`MECH-BASE-RING`, `MECH-LID-BOT`, `MECH-CAP-BOT`, `MECH-CAP-TOP`, `MECH-PLUG-TOP`, `MECH-PLUG-BOT`, `MECH-DRILL-JIG`) are printed in-house (`£0.00`, support-free FDM PETG/ASA). External USB-C PD power sources (laptop charger or `20 V` PD power bank) and courier delivery fees are excluded.

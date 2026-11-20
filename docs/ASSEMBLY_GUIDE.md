@@ -1,4 +1,4 @@
-# LepiLED DIY Maxi Switch — Assembly, Commissioning & Bring-Up Guide (Rev 4.3)
+# LepiLED DIY Maxi Switch — Assembly, Commissioning & Bring-Up Guide (Rev 4.4)
 
 ## 1. Pre-Assembly Safety & Ordering Checklist
 
@@ -10,7 +10,7 @@
 - **3D Printing (7 Support-Free FDM Parts in PETG or ASA, `0.2 mm` layers, `4` perimeters, `25%` gyroid infill, `0` supports):**
   - [mech_base_ring.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_base_ring.step) — inverted (`Z = 0` mating face on bed, `0.000 mm²` overhang).
   - [mech_lid_bot.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_lid_bot.step) — upright (`Z = 0` flat bottom face on bed, `0.000 mm²` overhang).
-  - [mech_cap_bot.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_cap_bot.step) — upright (flat bottom face on bed, `0.787 mm²` overhang).
+  - [mech_cap_bot.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_cap_bot.step) — upright (flat bottom face on bed, `0.178 mm²` overhang, seamless outer cylinder).
   - [mech_cap_top.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_cap_top.step) — inverted (flat `Ø116 mm` drip-brim face on bed, `0.000 mm²` overhang).
   - [mech_plug_top.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_plug_top.step) — inverted (flat cap face on bed, `0.000 mm²` overhang).
   - [mech_plug_bot.step](file:///home/alimuldal/src/lepiled/mechanical_design/cad/mech_plug_bot.step) — upright (flat bottom face on bed, `0.000 mm²` overhang).
@@ -44,7 +44,7 @@
 | **Lug `3`** | **`J4.3` (`SW_VIS_IN`)** | Closed to `GND` (`U2` OFF) | Closed to `GND` (`U2` OFF) | Open (`U2` ON) |
 | **Lugs `1` and `4`** | **No Connect (leave bare)** | — | — | — |
 
-   - Verify continuity in all three switch positions, seat `SW1` into the anti-rotation pocket on top of `MECH-LID-BOT` (`X = 0, Y = +8.5 mm`) with the toggle pointing straight **downward**, and tighten `SW1_BOOT` (`C&K 759D02000`) from underneath.
+   - Verify continuity in all three switch positions, seat `SW1` into the anti-rotation pocket on top of `MECH-LID-BOT` (`X = 0, Y = +16.5 mm`) with the toggle pointing straight **downward**, and tighten `SW1_BOOT` (`C&K 759D02000`) from underneath.
 
 ## 3. Staged Bench Bring-Up (Standard USB-C PD Laptop Charger)
 
@@ -63,7 +63,8 @@
    - Seat `MECH-GASKET-1` (`68 × 3.5 mm`) in `MECH-CAP-BOT`, lower the UVT PMMA acrylic tube (`MECH-TUBE-1`) onto it, seat `MECH-GASKET-2` in `MECH-CAP-TOP`, and slide `MECH-CAP-TOP` down over the protruding aluminum core until both O-rings compress snugly.
    - Thread `2× M3 × 12 mm` SHCS screws through the `±X` locking bores tucked beneath `MECH-CAP-TOP`'s `Ø116 mm` drip-brim into the tapped holes in `MECH-HS-CORE`. Run a neat bead of clear silicone sealant into the top square chamfer groove where the aluminum tube exits `MECH-CAP-TOP`.
    - Smear a thin ring of silicone sealant around the skirt of `MECH-PLUG-TOP` and press it firmly into the top end of the hollow `40 × 40` aluminum tube to weatherproof the bore. Clip any carabiner or tie paracord straight through the unobstructed `Ø8.0 mm` hanging hole below the cap.
-3. **Bottom Lid, Protective Base Ring & `20 mm` Rubber Membrane Grommet:**
+3. **Vertical `driver_pcb`, Bottom Lid, Protective Base Ring & Bottom `20 mm` USB-C Grommet:**
    - Drop `4×` `M3` hex nuts into the `4×` side-entry captive nut slots around the lower flange of `MECH-CAP-BOT`.
-   - Plug `J2`, `J3`, and `J4` into `driver_pcb`, drop `driver_pcb`'s `H1..H4` holes straight onto the `4× Ø2.45 mm` printed locating pins of `MECH-LID-BOT` (confirm `SW1` lugs and wires sit cleanly below the PCB), align `J1` with the `-Y` tunnel, seat `MECH-BASE-RING` flush beneath `MECH-LID-BOT`, and clamp both together with `4× M3 × 16 mm` SHCS screws through the base-ring counterbores.
-   - Slit the `20 mm` rubber membrane grommet (`MECH-GROMMET-1`) radially from edge to center, plug in your standard USB-C PD cable, wrap the grommet snugly around the cable jacket behind the plug, and snap it into the `Ø20.2 × 2.5 mm` flat panel flange (form a small downward drip loop in the cable outside the grommet).
+   - Slide `driver_pcb` straight down into the two vertical card-guide rails on `MECH-LID-BOT` (`J1` USB-C pointing straight downward over the `Ø20.2 mm` grommet bore, `J2/J3` at the top, component side facing `+Y` toward `SW1`) until the bottom edge seats firmly on the rail ledges.
+   - Plug `J2`, `J3`, and `J4` into `driver_pcb`, slide `MECH-LID-BOT` straight up into `MECH-CAP-BOT` (the `42.75°` upper cavity cone captures the top corners of `driver_pcb` to absorb upward USB-C insertion force), seat `MECH-BASE-RING` flush beneath `MECH-LID-BOT`, and clamp both together with `4× M3 × 16 mm` SHCS screws through the base-ring counterbores.
+   - Slit the `20 mm` rubber membrane grommet (`MECH-GROMMET-1`) radially from edge to center, plug your USB-C PD cable straight upward into `J1`, wrap the grommet snugly around the cable jacket behind the plug, and snap it into the `Ø20.2 × 2.5 mm` bore in `MECH-LID-BOT`. *(When hanging, the cable exits straight down with zero lamp tilt; to stand the lamp flat while powered, use a low-profile 90° USB-C cable routed out through one of `MECH-BASE-RING`'s four `22 × 7.5 mm` bottom cutouts.)*

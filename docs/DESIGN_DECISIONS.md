@@ -108,3 +108,13 @@ Following Rev 4.2, four targeted mechanical and material refinements were implem
    - Replaced the idea of a separate hat above the aluminum core (which would obstruct a carabiner/cord through the `Ø8 mm` hanging hole and derate top airflow) with a `Ø116 × 3.8 mm` drip-brim built straight into `MECH-CAP-TOP` (`0.000 mm²` overhang inverted) plus a `1.5 mm` deep underside drip-break groove near the rim. Overhangs the entire lower housing and `-Y` USB-C grommet by `12 mm` per side while shielding the `2× M3` core locking screws underneath and leaving `100%` of the `85.5 mm` bare Al core and `Ø8 mm` hanging hole completely open.
 4. **Contoured Lightweight `MECH-CAP-BOT` Shell (`3 mm` Al Core Retained):**
    - Trimmed excess solid bulk out of `MECH-CAP-BOT` (`336.7 -> 228.4 cm³`, `-32%`) while maintaining robust `>= 3.5–8.5 mm` walls and keeping the `3.0 mm` Al core wall for full `M3` thread engagement. Total FDM lamp weight drops to **`861.9 g`** (`~177 g` lighter than Rev 4.2), and 1-off UK BOM drops to **`£91.35` ex-VAT (`£109.62` inc-VAT; `£84.80` ex-VAT / `£101.76` inc-VAT using owned M3 + PC paste)**.
+
+---
+
+## 9. Rev 4.4 Vertical Driver PCB, Bottom USB-C Entry & Seamless Lower Housing
+
+1. **Vertical `driver_pcb` & Bottom-Entry USB-C (`£0` BOM delta, zero PCB redesign):**
+   - Eliminated the side USB-C penetration and `-Y` side boss by standing the unchanged `36 × 46 mm` `driver_pcb` vertically in two integral card-guide rails on `MECH-LID-BOT` (`Y_front = -6.88 mm`, `J1` pointing straight downward through the existing `20 mm` rubber membrane grommet at `(0, -5.0 mm)`, `SW1` seated beside it at `(0, +16.5 mm)`).
+   - Eliminates side cable-induced hanging tilt, makes `MECH-CAP-BOT` a **100% seamless axisymmetric cylinder** (`0.178 mm²` `>46°` overhang), captures the PCB upper corners `1.21 mm` beneath the `42.75°` cavity cone for upward plug-insertion support, and keeps total FDM weight at **`871.2 g`** (`358.5 mm` total height, `£91.35` ex-VAT 1-off).
+2. **Closed-Bottom Core Retained (Through-Chimney Evaluated & Declined):**
+   - Running the `40 × 40 mm` tube open all the way through the bottom cavity leaves only `4.6 mm` radial clearance beside the tube wall at `X = ±18 mm` inside the `Ø61 mm` cavity—unable to fit the `36 × 46 mm` PCB + JST headers without widening the lower housing to `~Ø115 mm`, adding a second rectangular waterproof seal right beside the electronics, and breaking thermal bulkhead isolation, while the closed `85.5 mm` bare core already maintains `39–47 °C` UV junction margin (`T_j,UV = 53.2–60.9 °C`).

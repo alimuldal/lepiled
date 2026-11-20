@@ -6,9 +6,9 @@
 
 *4× 365 nm UV-A · 2× 455 nm Royal Blue · 1× 528 nm Green · 1× 6200 K Cool White*
 
-![Revision](https://img.shields.io/badge/Revision-4.3-blue?style=flat-square)
+![Revision](https://img.shields.io/badge/Revision-4.4-blue?style=flat-square)
 ![Input](https://img.shields.io/badge/Power-20V%20USB--C%20PD-blueviolet?style=flat-square)
-![Weight](https://img.shields.io/badge/Weight-~862g%20FDM-teal?style=flat-square)
+![Weight](https://img.shields.io/badge/Weight-~871g%20FDM-teal?style=flat-square)
 ![Shroud](https://img.shields.io/badge/Shroud-UVT%20PMMA%20Acrylic-informational?style=flat-square)
 ![KiCad](https://img.shields.io/badge/KiCad%209-0%20ERC%20%7C%200%20DRC-success?style=flat-square)
 ![BOM](https://img.shields.io/badge/1--Off%20UK%20BOM-%C2%A391.35%20ex--VAT-orange?style=flat-square)
@@ -19,7 +19,7 @@
 
 ---
 
-An open-source DIY implementation of Gunnar Brehm's *LepiLED* moth lamp ([Brehm, 2017, *Nota Lepidopterologica* 40(1): 87–108](https://doi.org/10.3897/nl.40.11887)), engineered for a rugged, weatherproof, portable single-unit hobby build running straight off any `45 W+` USB-C PD laptop charger or `20 V` USB-C PD power bank. **Rev 4.3** pairs **pre-mounted `20 mm` Copper DTP LED stars** (zero bare-LED reflow, single custom PCB), a **shatter-resistant UV-transmitting PMMA (acrylic) shroud** (`120 g`, `85–92%` @ `365 nm`), a **single stock `250 mm` bare `40 × 40 × 3 mm` aluminum core** protruding `85.5 mm` out the top with an unobstructed `Ø8 mm` hanging hole, a **bottom-mounted toggle switch inside a bolt-on protective standing ring**, an **integral `Ø116 mm` rain drip-brim with underside drip-break groove** at the top of the shroud, and a **contoured lightweight lower housing** (`~862 g` FDM)—bringing the complete **1-off UK build to `£91.35` ex-VAT (`£109.62` inc-VAT; `£101.76` inc-VAT with workshop `M3` hardware & PC thermal paste)**.
+An open-source DIY implementation of Gunnar Brehm's *LepiLED* moth lamp ([Brehm, 2017, *Nota Lepidopterologica* 40(1): 87–108](https://doi.org/10.3897/nl.40.11887)), engineered for a rugged, weatherproof, portable single-unit hobby build running straight off any `45 W+` USB-C PD laptop charger or `20 V` USB-C PD power bank. **Rev 4.4** pairs **pre-mounted `20 mm` Copper DTP LED stars** (zero bare-LED reflow, single custom PCB), a **shatter-resistant UV-transmitting PMMA (acrylic) shroud** (`120 g`, `85–92%` @ `365 nm`), a **single stock `250 mm` bare `40 × 40 × 3 mm` aluminum core** protruding `85.5 mm` out the top with an unobstructed `Ø8 mm` hanging hole, an **integral `Ø116 mm` rain drip-brim with underside drip-break groove**, a **vertical `driver_pcb` with bottom-entry USB-C power & bottom-mounted toggle switch** (leaving `MECH-CAP-BOT` **100% seamless with zero side holes and zero cable tilt**), and a **bolt-on protective standing ring** (`~871 g` FDM)—bringing the complete **1-off UK build to `£91.35` ex-VAT (`£109.62` inc-VAT; `£101.76` inc-VAT with workshop `M3` hardware & PC thermal paste)**.
 
 ## Whole Lamp Assembly
 
@@ -27,17 +27,17 @@ An open-source DIY implementation of Gunnar Brehm's *LepiLED* moth lamp ([Brehm,
   <tr>
     <td align="center" width="50%">
       <a href="mechanical_design/cad/assembly_iso.png">
-        <img src="mechanical_design/cad/assembly_iso.png" alt="LepiLED Rev 4.3 3D Isometric Assembly" height="460" />
+        <img src="mechanical_design/cad/assembly_iso.png" alt="LepiLED Rev 4.4 3D Isometric Assembly" height="460" />
       </a>
       <br />
-      <sub><b>3D Assembly (345 mm tall; ~862 g FDM)</b> — Shatter-resistant UVT PMMA cylinder, bare stock 250 mm 40×40×3 mm Al core protruding 85.5 mm with unobstructed Ø8 mm hang hole &amp; rain plug, integral Ø116 mm drip-brim with underside drip groove, contoured lower shell (solid +X wall), and protective base stand ring.</sub>
+      <sub><b>3D Assembly (358.5 mm tall; ~871 g FDM)</b> — Shatter-resistant UVT PMMA cylinder, bare stock 250 mm 40×40×3 mm Al core protruding 85.5 mm with unobstructed Ø8 mm hang hole &amp; rain plug, integral Ø116 mm drip-brim, 100% seamless lower housing (zero side penetrations), and protective base stand ring.</sub>
     </td>
     <td align="center" width="50%">
       <a href="mechanical_design/cad/assembly_section_yz.png">
-        <img src="mechanical_design/cad/assembly_section_yz.png" alt="LepiLED Rev 4.3 YZ Cross-Section" height="460" />
+        <img src="mechanical_design/cad/assembly_section_yz.png" alt="LepiLED Rev 4.4 YZ Cross-Section" height="460" />
       </a>
       <br />
-      <sub><b>YZ Cross-Section</b> — Unobstructed Ø8 mm hang hole &amp; press-fit rain plug, Ø116 mm drip-brim, 8× 20 mm Copper DTP stars, 6.0 mm bulkhead, printed bottom core plug, integral PCB locating pins, direct-mate USB-C grommet boss, and downward-pointing booted DPDT switch shielded inside the base stand ring.</sub>
+      <sub><b>YZ Cross-Section</b> — Unobstructed Ø8 mm hang hole &amp; rain plug, Ø116 mm drip-brim, 8× 20 mm Copper DTP stars, 6.0 mm bulkhead, vertical <code>driver_pcb</code> in integral card-guide rails, bottom-entry 20 mm USB-C rubber grommet, and downward-pointing booted DPDT switch shielded inside the base stand ring.</sub>
     </td>
   </tr>
 </table>
@@ -90,8 +90,8 @@ This DIY build retains the paper's 8-LED insect-tuned spectrum (`4× UV-A`, `2×
 |---|---|---|---|
 | **Circuit & SPICE** | 6 `ngspice` benches + `2,565` datasheet corners + `2,000`-trial Monte Carlo | **15/15 PASS** (`0` corner fails, `100.0%` MC yield, `0` UVLO chatter) | [sim_summary.json](circuit_design/sim/outputs/sim_summary.json) |
 | **Driver PCB** | KiCad 9.0.8 real-pin ERC + DRC (`--schematic-parity --severity-all`) + copper audits | **0 ERC, 0 DRC, 0 parity, 0 via-in-pad, 0 `B.Cu` power slots** | [driver_pcb.kicad_pcb](pcb_design/driver_pcb/driver_pcb.kicad_pcb) |
-| **Thermal (Rev 4.3)** | Coupled network: UVT PMMA (`k=0.19`) + `85.5 mm` bare core + Cu DTP stars + sealed lid | **16/16 Real-WPE PASS** (`22–30 °C`) + **4/4** (`35 °C`) + **10/10** (`22 °C`); `T_shroud <= 46 °C` | [thermal_summary.json](mechanical_design/thermal/thermal_summary.json) |
-| **Mechanical CAD** | `45` param checks + `7` watertight FDM STLs + `3,363`-ray flange check + `182` B-Rep pairs | **ALL PASS** (`0/182` collisions Nom/WC, `0.000–0.787 mm²` `>46°` overhangs, `~862 g` FDM) | [cad_verification.json](mechanical_design/cad/cad_verification.json) |
+| **Thermal (Rev 4.4)** | Coupled network: UVT PMMA (`k=0.19`) + `85.5 mm` bare core + Cu DTP stars + sealed lid | **16/16 Real-WPE PASS** (`22–30 °C`) + **4/4** (`35 °C`) + **10/10** (`22 °C`); `T_shroud <= 46 °C` | [thermal_summary.json](mechanical_design/thermal/thermal_summary.json) |
+| **Mechanical CAD** | `41` param checks + `7` watertight FDM STLs + `75` kinematic sweeps + `182` B-Rep pairs | **ALL PASS** (`0/182` collisions Nom/WC, `0.000–0.178 mm²` `>46°` overhangs, `~871 g` FDM) | [cad_verification.json](mechanical_design/cad/cad_verification.json) |
 | **UK 1-Off BOM** | 1:1 RefDes (`75`) / PCBA (`61`) / Pigtails (`2`) / PCB (`1`) / Mech (`15`) parity | **PASS** (`£91.35` ex-VAT / `£109.62` inc-VAT 1-off; `£101.76` w/ owned M3 & paste) | [bom.csv](bom/bom.csv) |
 
 <details>

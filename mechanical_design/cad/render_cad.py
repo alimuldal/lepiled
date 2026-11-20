@@ -38,8 +38,8 @@ def render_assembly_iso(parts: dict[str, pv.PolyData], out_path: Path) -> None:
     for k, mesh in parts.items():
         st = PART_STYLES[k]
         pl.add_mesh(mesh, color=st["color"], opacity=st["opacity"], smooth_shading=True, split_sharp_edges=True)
-    pl.camera_position = [(520, -550, 310), (0, 0, 160), (0, 0, 1)]
-    pl.add_title("LepiLED Rev 4.3 (UVT PMMA Shroud + Bottom SW1 + Ø116mm Drip-Brim)", font_size=12, color="black")
+    pl.camera_position = [(520, -550, 320), (0, 0, 165), (0, 0, 1)]
+    pl.add_title("LepiLED Rev 4.4 (Vertical PCB + Bottom USB-C & SW1 + Seamless Body)", font_size=12, color="black")
     pl.add_axes()
     pl.screenshot(str(out_path))
     pl.close()
@@ -88,22 +88,22 @@ def main() -> None:
     render_assembly_iso(parts, cad_dir / "assembly_iso.png")
     render_section(
         parts,
-        bounds=(-120, 120, 0, 120, -30, 360),
-        title="Section XZ (Y = 0) — Rev 4.3 Ø116mm Drip-Brim, Solid +X Wall & Base Ring",
-        cam_pos=[(0, -820, 160), (0, 0, 160), (0, 0, 1)],
+        bounds=(-120, 120, 0, 120, -40, 370),
+        title="Section XZ (Y = 0) — Rev 4.4 Seamless Lower Shell, Ø116mm Brim & Base Ring",
+        cam_pos=[(0, -840, 165), (0, 0, 165), (0, 0, 1)],
         out_path=cad_dir / "assembly_section_xz.png",
     )
     render_section(
         parts,
-        bounds=(-120, 0, -120, 120, -30, 360),
-        title="Section YZ (X = 0) — Rev 4.3 Bottom SW1, Contoured Shell & Open Hang Hole",
-        cam_pos=[(820, 0, 160), (0, 0, 160), (0, 0, 1)],
+        bounds=(-120, 0, -120, 120, -40, 370),
+        title="Section YZ (X = 0) — Rev 4.4 Vertical PCB, Bottom USB-C Grommet & SW1",
+        cam_pos=[(840, 0, 165), (0, 0, 165), (0, 0, 1)],
         out_path=cad_dir / "assembly_section_yz.png",
     )
-    render_cap_detail(cad_dir / "mech_lid_bot.stl", "MECH-LID-BOT (Bottom SW1 + PCB Pins)", 10.0, cad_dir / "lid_bot_detail.png", color="#c25a1e")
-    render_cap_detail(cad_dir / "mech_cap_bot.stl", "MECH-CAP-BOT (Contoured Lightweight Shell)", 45.0, cad_dir / "cap_bot_detail.png")
-    render_cap_detail(cad_dir / "mech_cap_top.stl", "MECH-CAP-TOP (Ø116mm Brim + Drip Groove)", 224.0, cad_dir / "cap_top_detail.png")
-    print("Rendered all 6 Rev 4.3 CAD PNGs cleanly.")
+    render_cap_detail(cad_dir / "mech_lid_bot.stl", "MECH-LID-BOT (Vertical PCB Rails + Bottom USB-C & SW1)", 22.0, cad_dir / "lid_bot_detail.png", color="#c25a1e")
+    render_cap_detail(cad_dir / "mech_cap_bot.stl", "MECH-CAP-BOT (Seamless Contoured Shell)", 52.0, cad_dir / "cap_bot_detail.png")
+    render_cap_detail(cad_dir / "mech_cap_top.stl", "MECH-CAP-TOP (Ø116mm Brim + Drip Groove)", 236.0, cad_dir / "cap_top_detail.png")
+    print("Rendered all 6 Rev 4.4 CAD PNGs cleanly.")
 
 
 if __name__ == "__main__":
