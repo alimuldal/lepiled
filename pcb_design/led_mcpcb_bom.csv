@@ -1,5 +1,0 @@
-Variant_Strip,Comment,Designator,Footprint,MPN,Qty_Per_Strip,Qty_Per_Lamp_4x,Notes
-ALL (Strips 1-4),365nm UV LED 3535,D_UV,LED_Luminus_SST-10-UV_A130,Luminus SST-10-UV-A130-G365-00,1,4,D1..D4 on MECH-MCPCB-1..4; bottom thermal pad notch = Cathode
-Strips 1 & 2 (RB),455nm Royal Blue LED 3535,D_VIS,LED_Cree_XP-E2,Cree XPEBRY-L1-0000-00S02,1,2,D5..D6 on MECH-MCPCB-1..2 (active Cree bin 38); bottom notch = Anode
-Strip 3 (GR),528nm Green LED 3535,D_VIS,LED_Cree_XP-E2,Cree XPEBGR-L1-0000-00K01,1,1,"D7 on MECH-MCPCB-3 (active Cree bin S3, +28% flux); bottom notch = Anode"
-Strip 4 (CW),6200K Cool White LED 3535,D_VIS,LED_Cree_XP-E2,Cree XPEBWT-L1-0000-00H51,1,1,D8 on MECH-MCPCB-4 (active Cree bin R5); bottom notch = Anode

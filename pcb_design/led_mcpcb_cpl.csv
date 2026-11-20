@@ -1,3 +1,0 @@
-Designator,Mid X,Mid Y,Layer,Rotation,Polarity_Note
-D_UV,0.000,18.000,Top,0.0,Luminus SST-10-UV BTM NOTCH=K (verify on preview)
-D_VIS,0.000,-18.000,Top,180.0,Cree XP-E2 BTM NOTCH=A (+180 deg tape offset vs SST-10-UV; verify on preview)

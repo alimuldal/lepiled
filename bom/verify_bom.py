@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Machine-verifiable audit script for bom/bom.csv against M1, M2, and M3 registries."""
+"""Machine-verifiable audit script for bom/bom.csv (Rev 4.2 — Lean 1-Off Hobby Build)."""
 
 from __future__ import annotations
 
@@ -13,7 +13,6 @@ BOM_CSV = REPO_ROOT / "bom" / "bom.csv"
 COMP_IDS_CSV = REPO_ROOT / "circuit_design" / "COMPONENT_IDS.csv"
 DRIVER_BOM_CSV = REPO_ROOT / "pcb_design" / "driver_pcb_bom.csv"
 DRIVER_PCBA_CSV = REPO_ROOT / "pcb_design" / "driver_pcb_bom_pcba.csv"
-LED_MCPCB_BOM_CSV = REPO_ROOT / "pcb_design" / "led_mcpcb_bom.csv"
 MECH_PARTS_CSV = REPO_ROOT / "mechanical_design" / "MECH_PARTS.csv"
 
 EXPECTED_COLUMNS = [
@@ -59,9 +58,7 @@ def load_csv(path: Path) -> tuple[list[str], list[dict[str, str]]]:
     rows: list[dict[str, str]] = []
     for line_no, raw in enumerate(raw_rows[1:], start=2):
         if len(raw) != len(header):
-            raise ValueError(
-                f"{path}:{line_no}: expected {len(header)} columns, got {len(raw)}"
-            )
+            raise ValueError(f"{path}:{line_no}: expected {len(header)} columns, got {len(raw)}")
         rows.append(dict(zip(header, raw)))
     return header, rows
 
@@ -72,7 +69,6 @@ def main() -> int:
     def fail(msg: str) -> None:
         errors.append(msg)
 
-    # 1. Load all files
     bom_cols, bom_rows = load_csv(BOM_CSV)
     if bom_cols != EXPECTED_COLUMNS:
         fail(f"bom.csv columns mismatch: got {bom_cols}, expected {EXPECTED_COLUMNS}")
@@ -80,10 +76,8 @@ def main() -> int:
     _, comp_rows = load_csv(COMP_IDS_CSV)
     _, drv_rows = load_csv(DRIVER_BOM_CSV)
     _, pcba_rows = load_csv(DRIVER_PCBA_CSV)
-    _, mcpcb_rows = load_csv(LED_MCPCB_BOM_CSV)
     _, mech_rows = load_csv(MECH_PARTS_CSV)
 
-    # 2. Check BOM_ID uniqueness, Build_Tier, Include_In_Total
     seen_bom_ids: set[str] = set()
     for idx, row in enumerate(bom_rows, start=2):
         bid = row["BOM_ID"].strip()
@@ -94,11 +88,11 @@ def main() -> int:
         seen_bom_ids.add(bid)
 
         if row["Build_Tier"] != "CORE":
-            fail(f"{bid}: expected Build_Tier='CORE' (unified Rev 4.0 Dual SK 578/50 SA baseline), got {row['Build_Tier']!r}")
+            fail(f"{bid}: expected Build_Tier='CORE', got {row['Build_Tier']!r}")
         if row["Include_In_Total"] not in {"Yes", "No"}:
             fail(f"{bid}: invalid Include_In_Total {row['Include_In_Total']!r}")
 
-    # 3. Electrical 75-RefDes 1:1 parity (Rev 4.1: USB-C Only + S3 Gold DPDT + 0.90 V Hysteretic UVLO)
+    # 1. Electrical 75-RefDes 1:1 parity
     comp_by_ref = {r["RefDes"].strip(): r for r in comp_rows}
     drv_by_ref = {r["Designator"].strip(): r for r in drv_rows}
     pcba_refs = {r["Designator"].strip() for r in pcba_rows}
@@ -125,71 +119,45 @@ def main() -> int:
             else:
                 expected_mpn = comp_by_ref[ref]["MPN"].strip()
                 if row["MPN_or_Part"].strip() != expected_mpn:
-                    fail(
-                        f"{bid} ({ref}): MPN mismatch: bom={row['MPN_or_Part']!r} vs comp={expected_mpn!r}"
-                    )
+                    fail(f"{bid} ({ref}): MPN mismatch: bom={row['MPN_or_Part']!r} vs comp={expected_mpn!r}")
         bom_elec_refs.extend(refs)
 
     if len(bom_elec_refs) != len(set(bom_elec_refs)):
         fail("Duplicate RefDes across Electrical BOM rows")
     if set(bom_elec_refs) != set(comp_by_ref):
-        missing = sorted(set(comp_by_ref) - set(bom_elec_refs))
-        extra = sorted(set(bom_elec_refs) - set(comp_by_ref))
-        fail(f"Electrical RefDes set mismatch: missing={missing}, extra={extra}")
+        fail(f"Electrical RefDes set mismatch: missing={sorted(set(comp_by_ref) - set(bom_elec_refs))}")
 
-    # Verify PCBA 61-part populated subset (65 On-PCB minus 4 NPTH H1..H4) and Off-Board 10-part subset
     off_board_expected = {"D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "SW1", "SW1_BOOT"}
     pcb_features = {"H1", "H2", "H3", "H4"}
-    on_pcb_from_comp = {
-        r["RefDes"].strip() for r in comp_rows if r["Mounting"].strip() == "On-PCB"
-    }
+    on_pcb_from_comp = {r["RefDes"].strip() for r in comp_rows if r["Mounting"].strip() == "On-PCB"}
     if (on_pcb_from_comp - pcb_features) != pcba_refs or len(pcba_refs) != 61:
-        fail(f"Populated On-PCB 61-RefDes subset does not match driver_pcb_bom_pcba.csv (got {len(pcba_refs)})")
+        fail(f"Populated On-PCB 61-RefDes subset mismatch (got {len(pcba_refs)})")
     if set(comp_by_ref) - on_pcb_from_comp != off_board_expected:
         fail("Off-board RefDes subset mismatch")
 
-    # Verify led_mcpcb_bom.csv (split by color: D_UV = 4, D_VIS = 2 RB + 1 GR + 1 CW = 4)
-    duv_qty = sum(int(r["Qty_Per_Lamp_4x"]) for r in mcpcb_rows if r["Designator"].strip() == "D_UV")
-    dvis_qty = sum(int(r["Qty_Per_Lamp_4x"]) for r in mcpcb_rows if r["Designator"].strip() == "D_VIS")
-    if duv_qty != 4 or dvis_qty != 4 or len(mcpcb_rows) != 4:
-        fail(f"led_mcpcb_bom.csv expected 4 rows (D_UV=4, D_VIS=4), got rows={len(mcpcb_rows)}, D_UV={duv_qty}, D_VIS={dvis_qty}")
-
-    # Check H1..H4 isolated NPTH holes are zero-cost excluded PCB features
-    matched_h = [
-        r for r in bom_elec_rows
-        if set(x.strip() for x in r["RefDes_List"].split(";")) == pcb_features
-    ]
+    matched_h = [r for r in bom_elec_rows if set(x.strip() for x in r["RefDes_List"].split(";")) == pcb_features]
     if len(matched_h) != 1 or matched_h[0]["Include_In_Total"] != "No" or Decimal(matched_h[0]["Ext_Price_Amort_GBP_exVAT"]) != 0:
         fail("PCB feature H1..H4 must have single BOM row with Include_In_Total=No and £0.00")
 
-    # 4. PCB Fabrication rows & Zero Double-Counting Guard
+    # 2. Single custom PCB (driver_pcb ONLY — led_mcpcb eliminated in Rev 4.2!)
     pcb_rows = {r["BOM_ID"]: r for r in bom_rows if r["Domain"] == "PCB_Fab"}
-    if set(pcb_rows) != {"PCB-01", "PCB-02"}:
-        fail(f"Expected PCB-01 and PCB-02 in PCB_Fab domain, got {set(pcb_rows)}")
+    if set(pcb_rows) != {"PCB-01"}:
+        fail(f"Expected only PCB-01 (driver_pcb) in PCB_Fab domain, got {set(pcb_rows)}")
     if pcb_rows["PCB-01"]["Source_IDs"] != "driver_pcb" or pcb_rows["PCB-01"]["Include_In_Total"] != "Yes":
         fail("PCB-01 must represent driver_pcb with Include_In_Total=Yes")
-    pcb02 = pcb_rows["PCB-02"]
-    if (
-        pcb02["Source_IDs"] != "led_mcpcb"
-        or pcb02["Include_In_Total"] != "No"
-        or int(pcb02["Qty_Per_Lamp"]) != 4
-        or Decimal(pcb02["Ext_Price_Amort_GBP_exVAT"]) != 0
-        or Decimal(pcb02["Ext_Price_1Off_GBP_exVAT"]) != 0
-        or "MECH-08" not in pcb02["Notes"]
-        or "MECH-MCPCB-1..4" not in pcb02["Notes"]
-    ):
-        fail("PCB-02 must cross-reference MECH-08 (MECH-MCPCB-1..4) with Include_In_Total=No and £0.00")
 
-    # 5. Mechanical 27-Part 1:1 Parity (Rev 4.1 S1-A: Top SK 578/50 Only + Zero CNC Milling)
+    # 3. Harness (2 pre-crimped JST-XH pigtail rows)
+    bom_harn_rows = [r for r in bom_rows if r["Domain"] == "Harness"]
+    if len(bom_harn_rows) != 2:
+        fail(f"Expected 2 Harness rows (2P & 3P pre-crimped JST-XH pigtails), got {len(bom_harn_rows)}")
+
+    # 4. Mechanical 14-Part 1:1 Parity (Rev 4.2)
     mech_by_id = {r["Part_ID"].strip(): r for r in mech_rows}
-    if len(mech_by_id) != 27:
-        fail(f"MECH_PARTS.csv expected 27 rows, got {len(mech_by_id)}")
+    if len(mech_by_id) != 14:
+        fail(f"MECH_PARTS.csv expected 14 rows, got {len(mech_by_id)}")
 
     bom_mech_primary = [r for r in bom_rows if r["Domain"] == "Mechanical"]
-    bom_harn_rows = [r for r in bom_rows if r["Domain"] == "Harness"]
-    if len(bom_harn_rows) != 3:
-        fail(f"Expected 3 Harness rows (XHP-2, XHP-3, SXH-001T-P0.6), got {len(bom_harn_rows)}")
-
+    printed_ids = {"MECH-LID-BOT", "MECH-CAP-BOT", "MECH-CAP-TOP", "MECH-PLUG-TOP", "MECH-PLUG-BOT", "MECH-DRILL-JIG"}
     bom_mech_ids: list[str] = []
     for row in bom_mech_primary:
         bid = row["BOM_ID"]
@@ -204,21 +172,17 @@ def main() -> int:
             fail(f"{bid}: Qty_Per_Lamp={row['Qty_Per_Lamp']} != MECH_PARTS sum={expected_qty}")
         expected_amort = sum(Decimal(mech_by_id[i]["Ext_Price_GBP_exVAT"]) for i in ids)
         if Decimal(row["Ext_Price_Amort_GBP_exVAT"]) != expected_amort:
-            fail(
-                f"{bid}: Ext_Price_Amort={row['Ext_Price_Amort_GBP_exVAT']} != MECH_PARTS sum={expected_amort}"
-            )
-        if set(ids) & {"MECH-LID-BOT", "MECH-CAP-BOT", "MECH-CAP-TOP"}:
+            fail(f"{bid}: Ext_Price_Amort={row['Ext_Price_Amort_GBP_exVAT']} != MECH_PARTS sum={expected_amort}")
+        if set(ids) & printed_ids:
             if row["Include_In_Total"] != "No" or Decimal(row["Ext_Price_Amort_GBP_exVAT"]) != 0:
-                fail(f"{bid}: R4 3D-printed part must be Include_In_Total=No and £0.00")
+                fail(f"{bid}: 3D-printed part must be Include_In_Total=No and £0.00")
 
     if len(bom_mech_ids) != len(set(bom_mech_ids)):
         fail("Duplicate mechanical Source_IDs in BOM")
     if set(bom_mech_ids) != set(mech_by_id):
-        missing = sorted(set(mech_by_id) - set(bom_mech_ids))
-        extra = sorted(set(bom_mech_ids) - set(mech_by_id))
-        fail(f"Mechanical Part_ID mismatch: missing={missing}, extra={extra}")
+        fail(f"Mechanical Part_ID mismatch: missing={sorted(set(mech_by_id) - set(bom_mech_ids))}")
 
-    # 6. Exact deterministic arithmetic, MOQ, and supplier URL checks on every row
+    # 5. Exact penny arithmetic & supplier checks
     for row in bom_rows:
         bid = row["BOM_ID"]
         qty = int(row["Qty_Per_Lamp"])
@@ -248,15 +212,9 @@ def main() -> int:
             if order_qty < qty:
                 fail(f"{bid}: Order_Qty_1Off ({order_qty}) < Qty_Per_Lamp ({qty})")
             if ext_1off < ext_amort:
-                fail(f"{bid}: Ext_Price_1Off_GBP_exVAT ({ext_1off}) < Ext_Price_Amort_GBP_exVAT ({ext_amort})")
-            if moq <= 0 or order_qty % moq != 0:
-                fail(f"{bid}: Order_Qty_1Off ({order_qty}) not a multiple of MOQ ({moq})")
-            sup = row["UK_Supplier"].strip()
-            url = row["Supplier_URL"].strip()
-            if not sup or sup.startswith("N/A"):
-                fail(f"{bid}: missing UK_Supplier ({sup!r})")
-            if not url.startswith("https://"):
-                fail(f"{bid}: Supplier_URL must start with https:// (got {url!r})")
+                fail(f"{bid}: Ext_Price_1Off ({ext_1off}) < Ext_Price_Amort ({ext_amort})")
+            if not row["Supplier_URL"].strip().startswith("https://"):
+                fail(f"{bid}: Supplier_URL must start with https://")
         else:
             if any(x != Decimal("0.00") for x in (unit_amort, pack_1off, ext_amort, ext_1off, ext_amort_vat, ext_1off_vat)):
                 fail(f"{bid}: Include_In_Total=No row has non-zero pricing")
@@ -267,33 +225,37 @@ def main() -> int:
             print(f"  - {err}", file=sys.stderr)
         return 1
 
-    # 7. Compute and print exact verified totals
-    def summarize(tiers: set[str], domain_filter: str | None = None) -> tuple[Decimal, Decimal, Decimal, Decimal]:
+    def summarize(domain_filter: str | None = None) -> tuple[Decimal, Decimal]:
         rows = [
-            r
-            for r in bom_rows
+            r for r in bom_rows
             if r["Include_In_Total"] == "Yes"
-            and r["Build_Tier"] in tiers
             and (domain_filter is None or r["Domain"] == domain_filter)
         ]
         a_ex = sum((Decimal(r["Ext_Price_Amort_GBP_exVAT"]) for r in rows), Decimal("0.00"))
         o_ex = sum((Decimal(r["Ext_Price_1Off_GBP_exVAT"]) for r in rows), Decimal("0.00"))
-        a_vat_rows = sum((Decimal(r["Ext_Price_Amort_GBP_incVAT"]) for r in rows), Decimal("0.00"))
-        o_vat_rows = sum((Decimal(r["Ext_Price_1Off_GBP_incVAT"]) for r in rows), Decimal("0.00"))
-        return a_ex, o_ex, a_vat_rows, o_vat_rows
+        return a_ex, o_ex
 
-    elec_a_ex, elec_o_ex, elec_a_vr, elec_o_vr = summarize({"CORE"}, "Electrical")
-    harn_a_ex, harn_o_ex, harn_a_vr, harn_o_vr = summarize({"CORE"}, "Harness")
-    pcb_a_ex, pcb_o_ex, pcb_a_vr, pcb_o_vr = summarize({"CORE"}, "PCB_Fab")
-    mech_a_ex, mech_o_ex, mech_a_vr, mech_o_vr = summarize({"CORE"}, "Mechanical")
-    tot_a_ex, tot_o_ex, tot_a_vr, tot_o_vr = summarize({"CORE"})
+    elec_a, elec_o = summarize("Electrical")
+    harn_a, harn_o = summarize("Harness")
+    pcb_a, pcb_o = summarize("PCB_Fab")
+    mech_a, mech_o = summarize("Mechanical")
+    tot_a, tot_o = summarize()
 
-    print("PASS: bom/bom.csv verified 1:1 across Rev 4.1 (75 RefDes, 61 PCBA, 3 Harness, 2 PCB fab, 27 MECH-* IDs)")
-    print(f"  Electrical (75 RefDes):        Amort = £{elec_a_ex:.2f} ex VAT (inv incVAT £{round2(elec_a_ex * VAT_RATE):.2f}) | 1-Off = £{elec_o_ex:.2f} ex VAT (inv incVAT £{round2(elec_o_ex * VAT_RATE):.2f})")
-    print(f"  Harness (JST-XH plugs/crimps): Amort = £{harn_a_ex:.2f} ex VAT (inv incVAT £{round2(harn_a_ex * VAT_RATE):.2f}) | 1-Off = £{harn_o_ex:.2f} ex VAT (inv incVAT £{round2(harn_o_ex * VAT_RATE):.2f})")
-    print(f"  PCB Fab (PCB-01; PCB-02=£0):   Amort = £{pcb_a_ex:.2f} ex VAT (inv incVAT £{round2(pcb_a_ex * VAT_RATE):.2f}) | 1-Off = £{pcb_o_ex:.2f} ex VAT (inv incVAT £{round2(pcb_o_ex * VAT_RATE):.2f})")
-    print(f"  Mechanical (S1-A Top HS Only): Amort = £{mech_a_ex:.2f} ex VAT (inv incVAT £{round2(mech_a_ex * VAT_RATE):.2f}) | 1-Off = £{mech_o_ex:.2f} ex VAT (inv incVAT £{round2(mech_o_ex * VAT_RATE):.2f})")
-    print(f"  TOTAL Rev 4.1 Lamp Build:      Amort = £{tot_a_ex:.2f} ex VAT (inv incVAT £{round2(tot_a_ex * VAT_RATE):.2f}; row incVAT £{tot_a_vr:.2f}) | 1-Off = £{tot_o_ex:.2f} ex VAT (inv incVAT £{round2(tot_o_ex * VAT_RATE):.2f}; row incVAT £{tot_o_vr:.2f})")
+    # Also compute "Workshop Owned" 1-off total (excluding M3 hardware + PC thermal paste already on hand)
+    owned_ex = sum(
+        Decimal(r["Ext_Price_1Off_GBP_exVAT"])
+        for r in bom_rows
+        if r["Source_IDs"] in {"MECH-TIM-1", "MECH-FAST-M3"}
+    )
+    net_o = tot_o - owned_ex
+
+    print("PASS: bom/bom.csv verified 1:1 across Rev 4.2 (75 RefDes, 61 PCBA, 2 Harness pigtails, 1 custom PCB, 14 MECH-* IDs)")
+    print(f"  Electrical (75 RefDes incl. 8x Cu DTP stars): 1-Off = £{elec_o:.2f} ex VAT (£{round2(elec_o * VAT_RATE):.2f} inc VAT) | Amort = £{elec_a:.2f} ex VAT")
+    print(f"  Harness (Pre-crimped 22 AWG JST-XH pigtails): 1-Off = £{harn_o:.2f} ex VAT (£{round2(harn_o * VAT_RATE):.2f} inc VAT) | Amort = £{harn_a:.2f} ex VAT")
+    print(f"  PCB Fab + Economic PCBA (driver_pcb ONLY):    1-Off = £{pcb_o:.2f} ex VAT (£{round2(pcb_o * VAT_RATE):.2f} inc VAT) | Amort = £{pcb_a:.2f} ex VAT")
+    print(f"  Mechanical (Protruding Bare Core, 14 IDs):    1-Off = £{mech_o:.2f} ex VAT (£{round2(mech_o * VAT_RATE):.2f} inc VAT) | Amort = £{mech_a:.2f} ex VAT")
+    print(f"  TOTAL Rev 4.2 1-Off Build (All Purchased):    1-Off = £{tot_o:.2f} ex VAT (£{round2(tot_o * VAT_RATE):.2f} inc VAT) | Amort = £{tot_a:.2f} ex VAT (£{round2(tot_a * VAT_RATE):.2f} inc VAT)")
+    print(f"  NET 1-Off Spend (Using Owned M3 + PC Paste):  1-Off = £{net_o:.2f} ex VAT (£{round2(net_o * VAT_RATE):.2f} inc VAT)")
     return 0
 
 

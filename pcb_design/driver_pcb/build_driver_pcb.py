@@ -1460,7 +1460,7 @@ def write_kicad_sch(syms, comp_rows):
   (uuid "{root_uuid}")
   (paper "A3")
   (title_block
-    (title "LepiLED DIY Maxi Switch — Rev 4.1 (USB-C PD Only + Dual AL8860 Buck)")
+    (title "LepiLED DIY Maxi Switch — Rev 4.2 (USB-C PD Only + Dual AL8860 Buck)")
     (date "2026-11-19")
     (rev "4.1")
     (company "LepiLED Open-Source DIY Hardware")
@@ -1950,7 +1950,7 @@ def place_non_overlapping_silkscreen(board: pcbnew.BOARD):
 
     # Accurate J2/J3/J4 pinout legends on B.SilkS (right beside THT solder joints, 100% consistent!)
     board_texts = [
-        ("LEPILED REV4.1 20V-PD", 0.0, +21.75, 0.80, pcbnew.B_SilkS, True),
+        ("LEPILED REV4.2 20V-PD", 0.0, +21.75, 0.80, pcbnew.B_SilkS, True),
         ("1:UV+ 2:UV-", -5.20, +16.40, 0.75, pcbnew.B_SilkS, True),
         ("1:VIS+ 2:VIS-", +5.20, +16.40, 0.75, pcbnew.B_SilkS, True),
         ("1:UV 2:GND 3:VIS", -1.40, -5.95, 0.72, pcbnew.B_SilkS, True),
@@ -2609,7 +2609,7 @@ LCSC_MAP = {
     "Bourns MF-MSMF110/33X": "C413136",
     "Diodes B340A-13-F": "C85364",
     "Vishay SMBJ22A-E3/52": "C135776",
-    "Lite-On LTST-C190GKT": "C125107",
+    "Lite-On LTST-C190GKT": "C72043",
     "Bourns CDSOD323-T24": "C129457",
     "Bourns CDSOD323-T05": "C129446",
     "Bourns SRN6045-680M": "C205469",
@@ -2624,14 +2624,14 @@ LCSC_MAP = {
     "Vishay CRCW06035K10FKEA": "C23186",
     "Vishay CRCW06031K00FKEA": "C21190",
     "Vishay CRCW08051R00FKEA": "C17513",
-    "Vishay CRCW060339K0FKEA": "C23024",
+    "Vishay CRCW060339K0FKEA": "C23153",
     "Vishay CRCW060382K0FKEA": "C23254",
-    "Vishay CRCW06036K20FKEA": "C23215",
+    "Vishay CRCW06036K20FKEA": "C4260",
     "Vishay CRCW0805200RFKEA": "C17548",
     "Vishay CRCW080510K0FKEA": "C17414",
     "Vishay CRCW060359K0FKEA": "C23209",
     "Vishay CRCW0603100KFKEA": "C25803",
-    "Vishay CRCW0603510KFKEA": "C23193",
+    "Vishay CRCW0603510KFKEA": "C23192",
     "Vishay CRCW060347K0FKEA": "C25819",
     "Vishay CRCW06031M00FKEA": "C22935",
     "Vishay CRCW08056R80FKEA": "C17761",

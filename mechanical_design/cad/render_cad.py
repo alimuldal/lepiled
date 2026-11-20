@@ -1,15 +1,7 @@
 #!/usr/bin/env python3
 """
-Headless PyVista 3D CAD Renderer for LepiLED DIY Maxi Switch (Rev 4.1 — S1-A / S2-A / S3).
+Headless PyVista 3D CAD Renderer for LepiLED DIY Maxi Switch (Rev 4.2 — Lean 1-Off Hobby Build).
 Must be run under `xvfb-run -a /home/alimuldal/.local/share/lepiled-cad-venv/bin/python render_cad.py`.
-
-Generates:
-  - assembly_iso.png
-  - assembly_section_xz.png
-  - assembly_section_yz.png
-  - lid_bot_detail.png
-  - cap_bot_detail.png
-  - cap_top_detail.png
 """
 
 from __future__ import annotations
@@ -19,23 +11,19 @@ import pyvista as pv
 
 
 PART_STYLES = {
-    "lid_bot":           dict(color="#c25a1e", opacity=1.0),
-    "cap_bot":           dict(color="#d96b27", opacity=1.0),
-    "cap_top":           dict(color="#d96b27", opacity=1.0),
-    "hs_top":            dict(color="#22252a", opacity=1.0),
-    "adapt_top":         dict(color="#b8c0c8", opacity=1.0),
-    "spacer_washers":    dict(color="#e2e8f0", opacity=1.0),
-    "pcb_assy":          dict(color="#1f6f3b", opacity=1.0),
-    "hs_core":           dict(color="#30343b", opacity=1.0),
-    "anchor_bot":        dict(color="#9aa5b1", opacity=1.0),
-    "anchor_top":        dict(color="#a8b2bc", opacity=1.0),
-    "fasteners_anchors": dict(color="#dbe2ea", opacity=1.0),
-    "eye_bolt":          dict(color="#cfd6de", opacity=1.0),
-    "glass_tube":        dict(color="#bfe6ff", opacity=0.28),
-    "mcpcbs":            dict(color="#e5e7eb", opacity=1.0),
-    "sw1_assy":          dict(color="#b03030", opacity=1.0),
-    "grommet_usbc":      dict(color="#333840", opacity=1.0),
-    "usbc_plug_assy":    dict(color="#55606e", opacity=1.0),
+    "lid_bot":        dict(color="#c25a1e", opacity=1.0),
+    "cap_bot":        dict(color="#d96b27", opacity=1.0),
+    "cap_top":        dict(color="#d96b27", opacity=1.0),
+    "plug_top":       dict(color="#c25a1e", opacity=1.0),
+    "plug_bot":       dict(color="#e08040", opacity=1.0),
+    "pcb_assy":       dict(color="#1f6f3b", opacity=1.0),
+    "hs_core":        dict(color="#b8c0c8", opacity=1.0),  # Bare mill-finish Al 6063!
+    "fasteners_m3":   dict(color="#dbe2ea", opacity=1.0),
+    "glass_tube":     dict(color="#bfe6ff", opacity=0.28),
+    "dtp_stars":      dict(color="#c87533", opacity=1.0),  # Copper DTP 20 mm stars!
+    "sw1_assy":       dict(color="#b03030", opacity=1.0),
+    "grommet_usbc":   dict(color="#333840", opacity=1.0),
+    "usbc_plug_assy": dict(color="#55606e", opacity=1.0),
 }
 
 
@@ -49,8 +37,8 @@ def render_assembly_iso(parts: dict[str, pv.PolyData], out_path: Path) -> None:
     for k, mesh in parts.items():
         st = PART_STYLES[k]
         pl.add_mesh(mesh, color=st["color"], opacity=st["opacity"], smooth_shading=True, split_sharp_edges=True)
-    pl.camera_position = [(460, -490, 290), (0, 0, 155), (0, 0, 1)]
-    pl.add_title("LepiLED Rev 4.1 (S1-A Zero-Milling + USB-C + 20mm Grommet)", font_size=12, color="black")
+    pl.camera_position = [(480, -510, 310), (0, 0, 165), (0, 0, 1)]
+    pl.add_title("LepiLED Rev 4.2 (20mm Copper DTP Stars + Bare Protruding Al Core)", font_size=12, color="black")
     pl.add_axes()
     pl.screenshot(str(out_path))
     pl.close()
@@ -100,21 +88,21 @@ def main() -> None:
     render_section(
         parts,
         bounds=(-100, 100, 0, 100, -10, 360),
-        title="Section XZ (Y = 0) — Rev 4.1 Top Heatsink, B-H3 Preload & C&K 7211 DPDT",
-        cam_pos=[(0, -720, 155), (0, 0, 155), (0, 0, 1)],
+        title="Section XZ (Y = 0) — Rev 4.2 Protruding Core, Top Lock M3 & C&K 7211 DPDT",
+        cam_pos=[(0, -760, 165), (0, 0, 165), (0, 0, 1)],
         out_path=cad_dir / "assembly_section_xz.png",
     )
     render_section(
         parts,
         bounds=(-100, 0, -100, 100, -10, 360),
-        title="Section YZ (X = 0) — Rev 4.1 MECH-LID-BOT Bosses, 20mm Grommet & Direct USB-C",
-        cam_pos=[(720, 0, 155), (0, 0, 155), (0, 0, 1)],
+        title="Section YZ (X = 0) — Rev 4.2 Printed PCB Pins, 20mm Grommet & Rain Plug",
+        cam_pos=[(760, 0, 165), (0, 0, 165), (0, 0, 1)],
         out_path=cad_dir / "assembly_section_yz.png",
     )
-    render_cap_detail(cad_dir / "mech_lid_bot.stl", "MECH-LID-BOT (4x M2.5 Bosses)", 8.0, cad_dir / "lid_bot_detail.png", color="#c25a1e")
-    render_cap_detail(cad_dir / "mech_cap_bot.stl", "MECH-CAP-BOT (USB-C + 20mm Grommet)", 43.0, cad_dir / "cap_bot_detail.png")
-    render_cap_detail(cad_dir / "mech_cap_top.stl", "MECH-CAP-TOP (Flat Top)", 221.25, cad_dir / "cap_top_detail.png")
-    print("Rendered all 6 Rev 4.1 CAD PNGs cleanly.")
+    render_cap_detail(cad_dir / "mech_lid_bot.stl", "MECH-LID-BOT (Printed PCB Pins)", 8.0, cad_dir / "lid_bot_detail.png", color="#c25a1e")
+    render_cap_detail(cad_dir / "mech_cap_bot.stl", "MECH-CAP-BOT (Captive M3 Nuts + Grommet)", 43.0, cad_dir / "cap_bot_detail.png")
+    render_cap_detail(cad_dir / "mech_cap_top.stl", "MECH-CAP-TOP (Protruding Core Lock)", 221.25, cad_dir / "cap_top_detail.png")
+    print("Rendered all 6 Rev 4.2 CAD PNGs cleanly.")
 
 
 if __name__ == "__main__":

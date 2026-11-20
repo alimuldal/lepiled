@@ -1,6 +1,6 @@
-# Interface Contract (Rev 4.1) — Electronics ↔ PCB & Mechanical / Thermal
+# Interface Contract (Rev 4.2) — Electronics ↔ PCB & Mechanical / Thermal
 
-**Canonical Registry:** [COMPONENT_IDS.csv](file:///home/alimuldal/src/lepiled/circuit_design/COMPONENT_IDS.csv) (**75 unique RefDes:** `61` Populated On-PCB = `57` SMD + `4` THT `J1..J4`; `4` Isolated NPTH `H1..H4`; `10` Off-Board)
+**Canonical Registry:** [COMPONENT_IDS.csv](file:///home/alimuldal/src/lepiled/circuit_design/COMPONENT_IDS.csv) (**75 unique RefDes:** `61` Populated On-PCB = `57` SMD JLCPCB PCBA + `4` THT `J1..J4`; `4` Isolated NPTH `H1..H4`; `10` Off-Board = `8×` pre-mounted `20 mm` Copper DTP stars + `SW1` + `SW1_BOOT`)
 **Datasheet Source of Truth:** [datasheets_summary.json](file:///home/alimuldal/src/lepiled/datasheets/datasheets_summary.json)
 **Simulation Verification:** [sim_summary.json](file:///home/alimuldal/src/lepiled/circuit_design/sim/outputs/sim_summary.json)
 
@@ -8,13 +8,12 @@
 
 ## 1. Electronics ↔ PCB Design & Manufacturing Contract
 
-### 1.1 Physical Board Envelopes & Mounting Holes
-- **Board 1 (`driver_pcb`):** **`36.0 mm × 46.0 mm`**, 2-layer `1.6 mm` FR4, `2.0 mm` corner radii, 1 oz Cu, **ENIG** finish, Green LPI (`min_solder_mask_bridge >= 0.10 mm`) / White silk.
+### 1.1 Physical Board Envelope & Mounting Holes
+- **Single Custom PCB (`driver_pcb` — `led_mcpcb` eliminated in Rev 4.2):** **`36.0 mm × 46.0 mm`**, 2-layer `1.6 mm` FR4, `2.0 mm` corner radii, 1 oz Cu, **ENIG** finish, Green LPI (`min_solder_mask_bridge >= 0.10 mm`) / White silk.
   - SMD power/signal envelope: `<= 4.5 mm` (`L1`/`L2` `SRN6045-680M` = `4.5 mm` max; `J1` `USB4085-GF-A` = `3.46 mm`).
-  - Through-hole wire headers `J2..J4` (`JST B2B-XH-A` / `B3B-XH-A`, `1.00 mm` drills): `7.0 mm` unmated (`9.8 mm` mated).
-  - **Mounting Holes (`H1..H4`):** `4× M2.5` **unplated isolated NPTH** (`Ø2.7 mm` drill, `Ø5.5 mm` copper keepout, no GND connection) at `(±14.0, ±19.0) mm`, fastened with nylon `M2.5 × 6 mm` screws into `MECH-LID-BOT` bosses.
-- **Board 2 (`led_mcpcb`, `4×` per lamp):** **`20.0 mm × 80.0 mm`**, 1-layer `1.6 mm` Aluminum MCPCB (`1.0 W/m·K`, `100 µm` dielectric), 1 oz Cu, **ENIG** finish, White / Black silk.
-  - `D_UV` at `(0, +18.0 mm)`, `D_VIS` at `(0, -18.0 mm)`, `MH1`/`MH2` `Ø3.2 mm` NPTH at `(0, ±32.0 mm)`, wire solder pads shifted north to **`Y = -24.0 mm`** (`>= 6.0 mm` clear of `MH2` `M3` SHCS head).
+  - Through-hole wire headers `J2..J4` (`JST B2B-XH-A` / `B3B-XH-A`, `1.00 mm` drills, mated via pre-crimped `22 AWG` JST-XH pigtails): `7.0 mm` unmated (`9.8 mm` mated).
+  - **Mounting Holes (`H1..H4`):** `4× M2.5` **unplated isolated NPTH** (`Ø2.7 mm` drill, `Ø5.5 mm` copper keepout, no GND connection) at `(±14.0, ±19.0) mm`, dropping straight onto `MECH-LID-BOT`'s `4× Ø2.45 mm` 3D-printed locating pins (zero PCB screws, zero brass inserts).
+- **Off-Board LEDs (`8×` `20 mm` Copper DTP Stars):** `4×` UV-A (`SST-10-UV`, `Z = 163.0 mm`) and `4×` Visible (`Cree XP-E2`, `Z = 127.0 mm`) bolted directly to the 4 faces of `MECH-HS-CORE` with `16× M3` screws + `16× M3` nylon insulating washers (electrically neutral thermal pads verified safe on shared Al core).
 
 ### 1.2 Copper, Stackup & Layout Design Rules (`driver_pcb`)
 - **Zero Unplugged Via-in-Pad:** Every via sits outside every SMD pad copper `+ 0.25 mm` solder-mask dam (`48` vias / `143` SMD pads, `0` violations). `U3` (`W-DFN3030-14`) `1.80 × 2.70 mm` EPAD uses `2×2` segmented paste (`64.4%`) and fans out externally to `0.30/0.60 mm` `GND` vias.
@@ -37,7 +36,7 @@
 
 ## 2. Electronics ↔ Mechanical & Thermal Contract
 
-### 2.1 Thermal Dissipation Budget (Fanless `S1-A` Top-Heatsink-Only Sizing)
+### 2.1 Thermal Dissipation Budget (Fanless Protruding Bare `250 mm` Al Core)
 Nominal drive current = **`333 mA`** (`V_SENSE = 100 mV`, `R3 = R4 = 0.30 Ω ±1%`), supplied from **`20.0 V` USB-C PD** (`I_in = 0.455 A` nominal, `0.581 A` worst-case corner).
 
 | Subsystem | `8-ALL` Electrical (W) | `8-ALL` Nominal Heat (W) | `8-ALL` Worst-Case Corner (W) | `4-UV` Nominal Heat (W) | Thermal Limit |
@@ -48,11 +47,11 @@ Nominal drive current = **`333 mA`** (`V_SENSE = 100 mV`, `R3 = R4 = 0.30 Ω ±1
 | **`U2` (`AL8860WT-7` Ch2 Vis)** | `0.071 W` loss | **`0.071 W`** | **`0.115 W`** | `0.000 W` | $T_{j,\max} = 150^\circ\text{C}$ ($125^\circ\text{C}$ derated) |
 | **`D9`/`D10` + `L1`/`L2` + `R3`/`R4`** | `0.206 W` | **`0.206 W`** | `0.307 W` | `0.095 W` | $T_{\max} = 125^\circ\text{C}$ |
 | **`U3`/`U4`/`U5`/`Q1`/`F1`/Bias Overhead** | `0.206 W` | **`0.206 W`** | `0.260 W` | `0.158 W` | `F1` $I_{\text{hold}}(60^\circ\text{C})=0.73\text{ A}$ (`1.26×` margin) |
-| **Driver PCB Total Loss** | **`0.550 W`** | **`0.550 W`** | **`0.797 W`** (`<= 0.85 W` bound) | **`0.320 W`** | **Passes 20/20 (`22–30 °C`) & 5/5 (`35 °C`) on sealed `MECH-LID-BOT` (`<= 75 °C` PETG)** |
+| **Driver PCB Total Loss** | **`0.550 W`** | **`0.550 W`** | **`0.797 W`** (`<= 0.85 W` bound) | **`0.320 W`** | **Passes `16/16` Real-WPE (`22–30 °C`) & `4/4` (`35 °C`) on sealed `MECH-LID-BOT` (`<= 75 °C` PETG)** |
 | **Total Lamp Power (`20.0 V` PD)** | **`9.10 W`** (`0.455 A`) | **`5.12 W` LEDs + `0.55 W` PCB** | `10.37 W` LEDs + `0.80 W` PCB | **`2.84 W` LEDs + `0.32 W` PCB** | Overall electrical efficiency **`93.8%`** |
 
 ### 2.2 Mechanical Interface Datums (Synced with `mechanical_design/cad/params.py`)
-- **Bottom Lid & PCB Elevation (`S1-A`):** `MECH-LID-BOT` (`Ø92 × 4.0 mm`) carries `4×` integral `11.5 mm` bosses (`Z_pcb_bot = 15.5 mm`, `Z_pcb_top = 17.1 mm`), giving `9.7 mm` open air below through-hole pins (`0` Kapton lining or gap pad needed) and `8.98 mm` vertical headroom above mated JST-XH plugs.
+- **Bottom Lid & Screwless PCB Retention:** `MECH-LID-BOT` (`Ø92 × 4.0 mm`) carries `4×` integral `11.5 mm` bosses topped with `Ø2.45 × 2.0 mm` printed locating pins (`Z_pcb_bot = 15.5 mm`, `Z_pcb_top = 17.1 mm`) passing directly into `driver_pcb`'s isolated NPTH `H1..H4` (zero PCB screws, zero brass inserts), giving `9.7 mm` open air below through-hole pins (`0` Kapton lining or gap pad needed) and `8.98 mm` vertical headroom above mated JST-XH plugs.
 - **USB-C Direct-Mate Tunnel & `20 mm` Grommet Flange:** `J1` front datum `Y = -25.76 mm`, centerline `Z = 18.98 mm`. Outer `-Y` wall carries a flat `Ø26.0 mm` spotface at `Y = -43.5 mm` with a **`Ø20.2 × 2.5 mm`** grommet bore and `Ø23.6 mm` back-lip groove accepting a standard `20 mm` rubber membrane grommet around any `6.65 mm` USB-C cable (`2.10 mm` exposed plug barrel at full `4.55 mm` mating).
 - **`C&K 7211SYZBE` Switch Alcove (`+X` Wall):** `Ø6.35 mm` (`1/4-40`) bushing bore at `Z = 30.0 mm` (`2.50 mm` panel thickness), `15.0 × 13.5 mm` internal alcove clearing the `12.7 × 11.43 × 10.67 mm` DPDT body (`4.53 mm` radial clearance to PCB, `2.39 mm` vertical clearance above SMD envelope).
-- **Top Butt-Joint Preload (`Opus B-H3` Fix):** `MECH-ANCHOR-TOP` (`32 × 32 × 14.0 mm` stock Al bar) sits recessed **`0.50 mm`** below the top end face of `MECH-HS-CORE` via tight `Ø4.2 mm` round cross-pin bores, ensuring `MECH-EYE-1` torque always preloads the core against `MECH-ADAPT-TOP` (`Ø76.2 × 3.0 mm` stock Al disc) and `MECH-HS-EXT-TOP` (`SK 578/50 SA`).
+- **Protruding Bare Aluminum Core & Rain Plug:** Single `250.0 mm` bare mill-finish `40 × 40 × 3 mm` Al 6063 box section (`MECH-HS-CORE`, `Z = 70.0–320.0 mm`) seats internally onto `MECH-PLUG-BOT` (`2× M3 × 16 mm` CSK into captive `M3` hex nuts), passes through `MECH-CAP-TOP` (`2× M3 × 12 mm` horizontal locking screws + silicone-sealed top chamfer groove), protrudes **`85.5 mm`** above the cap for direct outdoor dissipation, carries a drilled `Ø8.0 mm` hanging hole at `Z = 302.0 mm`, and is sealed at the open top by `MECH-PLUG-TOP` (`324.0 mm` overall height).

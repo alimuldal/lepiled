@@ -1,21 +1,15 @@
 {
   "process": "FDM",
-  "hs_ext_top_od": 60.0,
-  "hs_ext_top_core_dia": 24.0,
-  "hs_ext_top_height": 50.0,
-  "hs_ext_top_n_fins": 22,
-  "hs_ext_top_fin_thick": 1.4,
-  "hs_ext_top_hub_bolt_r": 8.5,
   "lid_bot_od": 92.0,
   "lid_bot_thick": 4.0,
   "lid_bot_bolt_r": 40.2,
   "pcb_boss_h": 11.5,
   "pcb_boss_od": 6.2,
-  "pcb_boss_insert_dia": 3.5,
-  "pcb_boss_insert_depth": 4.5,
-  "adapt_top_od": 76.2,
-  "adapt_top_thick": 3.0,
-  "adapt_top_bolt_r": 34.0,
+  "pcb_loc_pin_dia": 2.45,
+  "pcb_loc_pin_h": 2.0,
+  "m3_nut_af": 5.8,
+  "m3_nut_thick": 2.7,
+  "m3_clearance_dia": 3.4,
   "pcb_w": 36.0,
   "pcb_l": 46.0,
   "pcb_thick": 1.6,
@@ -79,31 +73,32 @@
   "core_w_max": 40.5,
   "core_wall": 3.0,
   "core_bore_nom": 34.0,
+  "core_length": 250.0,
   "core_pocket_w": 41.0,
   "core_wire_slot_w": 6.0,
   "core_wire_slot_d": 3.5,
-  "anchor_bot_w": 32.0,
-  "anchor_bot_h": 12.0,
-  "anchor_bot_bolt_x": 9.0,
+  "core_hang_hole_dia": 8.0,
+  "core_hang_hole_from_top": 18.0,
+  "plug_bot_w": 33.4,
+  "plug_bot_h": 12.0,
+  "plug_bot_bolt_x": 9.0,
+  "plug_bot_pin_y": 9.0,
   "cap_top_flange_thick": 14.5,
-  "cap_top_air_gap_proud": 0.5,
-  "anchor_w": 32.0,
-  "anchor_h": 14.0,
-  "anchor_top_recess": 0.5,
-  "anchor_top_pin_y": 9.0,
-  "eye_bolt_thread_dia": 6.0,
-  "eye_bolt_clearance_dia": 6.5,
-  "mcpcb_w": 20.0,
-  "mcpcb_l": 80.0,
-  "mcpcb_thick": 1.6,
-  "mcpcb_tim_thick": 0.15,
-  "mcpcb_uv_y": 18.0,
-  "mcpcb_vis_y": -18.0,
-  "mcpcb_pad_y": -24.0,
-  "mcpcb_mount_y": 32.0,
+  "cap_top_lock_z_from_top": 6.0,
+  "cap_top_seal_groove": 1.5,
+  "plug_top_w": 33.5,
+  "plug_top_insert_h": 10.0,
+  "plug_top_cap_w": 40.4,
+  "plug_top_cap_h": 4.0,
+  "star_dia": 20.0,
+  "star_thick": 1.5,
+  "star_tim_thick": 0.15,
+  "star_uv_z_offset": 18.0,
+  "star_vis_z_offset": -18.0,
+  "star_bolt_r": 9.5,
   "led_uv_max_h": 2.08,
   "led_vis_max_h": 2.39,
-  "m3_shcs_head_h": 3.0,
+  "m3_pan_plus_washer_h": 3.2,
   "derived": {
     "z_lid_bot_end": 4.0,
     "z_pcb_bot": 15.5,
@@ -117,17 +112,17 @@
     "z_glass_top": 220.0,
     "z_cap_top_bot": 208.0,
     "z_cap_top_top": 234.5,
-    "z_core_top": 235.0,
-    "core_length_mm": 165.0,
+    "z_core_top": 320.0,
+    "core_protrusion_mm": 85.5,
+    "z_hang_hole": 302.0,
+    "z_plug_top_end": 324.0,
     "exposed_glass_window_mm": 126.0,
-    "z_mcpcb_center": 145.0,
+    "z_optical_center": 145.0,
     "z_led_uv": 163.0,
     "z_led_vis": 127.0,
-    "axial_uv_to_top_mm": 72.0,
+    "axial_uv_to_top_mm": 71.5,
     "axial_uv_to_vis_mm": 36.0,
     "axial_vis_to_bot_mm": 57.0,
-    "z_adapt_top_end": 238.0,
-    "z_hs_top_end": 288.0,
     "bot_oring_roof_z_max": 6.05
   },
   "checks": {
@@ -144,6 +139,12 @@
     "th_pin_under_pcb_air_mm": {
       "value": 9.7,
       "min": 3.0,
+      "pass": true
+    },
+    "pcb_loc_pin_clearance_mm": {
+      "value": 0.25,
+      "min": 0.15,
+      "max": 0.4,
       "pass": true
     },
     "pcb_cavity_edge_headroom_mm": {
@@ -230,13 +231,18 @@
       "pass": true
     },
     "led_vis_to_glass_id_min_mm": {
-      "value": 9.11,
+      "value": 9.21,
       "min": 1.0,
       "pass": true
     },
     "m3_head_to_glass_id_min_mm": {
-      "value": 8.5,
+      "value": 8.4,
       "min": 1.0,
+      "pass": true
+    },
+    "uv_to_vis_star_gap_mm": {
+      "value": 16.0,
+      "min": 10.0,
       "pass": true
     },
     "bot_cav_to_gasket3_wall_mm": {
@@ -244,13 +250,18 @@
       "min": 2.5,
       "pass": true
     },
-    "bot_gasket3_to_insert_wall_mm": {
-      "value": 2.65,
+    "bot_gasket3_to_bolt_wall_mm": {
+      "value": 3.0,
       "min": 2.5,
       "pass": true
     },
-    "bot_insert_to_chamfer_wall_mm": {
-      "value": 2.55,
+    "bot_nut_slot_above_g3_mm": {
+      "value": 2.95,
+      "min": 2.5,
+      "pass": true
+    },
+    "bot_bolt_to_chamfer_wall_mm": {
+      "value": 3.3,
       "min": 2.5,
       "pass": true
     },
@@ -264,30 +275,20 @@
       "min": 2.5,
       "pass": true
     },
-    "top_insert_to_core_wall_mm": {
-      "value": 2.959,
+    "top_lock_above_gasket2_mm": {
+      "value": 4.15,
       "min": 2.5,
       "pass": true
     },
-    "top_insert_to_chamfer_wall_mm": {
-      "value": 4.75,
-      "min": 2.5,
+    "core_protrusion_mm": {
+      "value": 85.5,
+      "min": 60.0,
+      "max": 100.0,
       "pass": true
     },
-    "top_insert_above_gasket2_mm": {
-      "value": 3.1,
-      "min": 2.5,
-      "pass": true
-    },
-    "anchor_top_preload_recess_mm": {
-      "value": 0.5,
-      "min": 0.3,
-      "max": 1.0,
-      "pass": true
-    },
-    "anchor_stock_bar_clearance_mm": {
-      "value": 1.0,
-      "min": 0.3,
+    "hang_hole_to_top_plug_mm": {
+      "value": 4.0,
+      "min": 3.0,
       "pass": true
     },
     "glass_oring_squeeze_min_pct": {

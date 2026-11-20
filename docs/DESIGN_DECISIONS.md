@@ -66,3 +66,28 @@ Four key architectural trade-offs from the reviews plus three simplification pro
 | **Mechanical CAD & All-Pairs B-Rep** | `build123d` + `trimesh` (`mechanical_design/cad/generate_cad.py`) | **35/35 param checks PASS**, all 6 STLs watertight, **`0.00 / 0.24 / 0.01 mm²` `>46°` overhang**, `3249`-ray grommet flange check (`2.500 mm`), **`72/72` kinematic waypoints `0.000 mm³`**, **`136/136` all-pairs B-Rep `0.000 mm³`** (Nominal & `151 mm` glass WC, incl. all 24 fasteners) |
 | **Coupled 2D/3D Thermal Solver** | Python FVM (`mechanical_design/thermal/thermal_analysis.py`) | **`20/20` PASS (`22–30 °C`)**, **`5/5` PASS at `35 °C` horizontal** (`T_j,UV = 65.3 °C` nom / `90.9 °C` DS-100%, `T_pcb = 57.9 °C` nom / `72.1 °C` DS-100% `< 75 °C` PETG), **`4/4` real-WPE PASS at `40 °C`** |
 | **UK Master BOM 1:1 Parity** | `bom/verify_bom.py` | **PASS** (`75` RefDes, `61` PCBA, `3` Harness, `2` PCB fab, `27` MECH IDs) — **Amortized `£98.49` ex-VAT (`£118.19` inc-VAT)**, **1-Off `£147.09` ex-VAT (`£176.51` inc-VAT)** |
+
+
+---
+
+## 7. Rev 4.2 — Second Independent Review (LED Subsystem: Carbon + Opus 5.5) & 1-Off Hobby Cost-Down
+
+Following Rev 4.1, a second independent parallel adversarial review (**Carbon** + **Opus 5.5**) audited the LED packaging, DIY soldering, and MCPCB thermal path alongside a user-driven focus on **true single-unit (1-off) hobby checkout cost** rather than amortized batch cost.
+
+### 7.1 Reviewer Findings & Convergence
+
+| Theme | Carbon & Opus 5.5 Independent Findings | Decision in Rev 4.2 |
+|---|---|---|
+| **1. `1.0 W/m·K` MCPCB Dielectric Bottleneck & DIY Reflow Risk** | Both independently proved `15.29 K/W` (`90.3%` of `T_j,UV - T_core`) was burned across the `100 µm` `1.0 W/m·K` dielectric (`L_spread = 1.2 mm`, making `>75%` of the copper islands thermally inactive). Realistic `50%` DIY contiguous thermal-pad voiding + `64 mm` span bow pushed hot-night `T_j,UV` to `101–103.6 °C` (`> 100 °C` abs max), while unbudgeted stencil/paste/hotplate tooling added `£25–£70+` and `Pad 3` (`NC`) voiding failed silently on diode checks. Both verified `SST-10-UV` and `Cree XP-E2` have **electrically neutral thermal pads** (`100%` DTP-safe on a shared Al core with `M3` nylon screw washers). | **Eliminated custom `led_mcpcb` and bare-SMD reflow completely.** Switched to **`8×` off-the-shelf pre-mounted `20 mm` Copper DTP LED stars** (`R_sub ≈ 0.50 K/W`, cutting `T_j,UV` by `-10` to `-20 °C`, removing the second custom PCB and all reflow gear). |
+| **2. Assembly-Guide Soldering Sequence Bug (Carbon)** | `ASSEMBLY_GUIDE.md` Step 3 previously instructed bolting MCPCBs onto the aluminum core *before* soldering `22 AWG` wires, sinking `~31 W` out of the soldering iron into the core. | Fixed in Rev 4.2: **pre-wire all `8×` copper stars on a silicone/wood mat *before* applying thermal paste or bolting to `MECH-HS-CORE`**, using pre-crimped `22 AWG` JST-XH pigtails (eliminating a JST crimper too). |
+| **3. 1-Off Mechanical Cost & Separate Top Heatsink (User + Thermal Solver)** | User questioned why 1-off mechanical cost was `£90.22` ex-VAT (`67%` was multi-pack fasteners/inserts/seals, consumables, and the top heatsink/anchor/eye-bolt stack) and asked whether the `40 × 40 × 3 mm` aluminum core itself could shed the heat. Coupled thermal modeling proved an **`85.5 mm` bare protruding `40 × 40 × 3 mm` tube** (`250 mm` exact stock UK cut — zero sawing, zero paint!) paired with Copper DTP stars passes **16/16 real-WPE modes (`22–30 °C`)** and **4/4 real-WPE modes (`35 °C`)** with `T_j,UV = 53 °C` (`22 °C` UK night) / `60 °C` (`30 °C` hot night). Open side-vented chimney was evaluated and explicitly rejected as unnecessary complexity vs a sealed press-fit top rain cap. | **Removed `SK 578/50 SA`, `MECH-ADAPT-TOP` Al disc, `MECH-ANCHOR-TOP/BOT`, `MECH-EYE-1`, spray paint, shims, `M4` hardware, and all brass heat-set inserts.** Kept **1 single metal part** (`250 mm` bare `40 × 40 × 3 mm` Al tube) + drilled `Ø8 mm` hanging hole + 3D-printed `MECH-PLUG-TOP` rain cap, `MECH-PLUG-BOT`, captive `M3` hex-nut pockets, printed `Ø2.45 mm` PCB locating pins, and snap-on `MECH-DRILL-JIG`. |
+| **4. JLCPCB Economic PCBA & DigiKey `< £65` Shipping Cliff (User + Carbon)** | Moving bare LEDs and `SK 578/50 SA` off DigiKey dropped the remaining DigiKey basket far below `£65` ex-VAT (`£22` shipping surcharge). User plans to have JLCPCB assemble the SMD parts on `driver_pcb`. | Upgraded `driver_pcb_bom_pcba.csv` passives/LED to JLCPCB Basic LCSC codes (`D12=C72043`, `R9=C23153`, `R11=C4260`, `R19=C23192`) and consolidated the 5 remaining through-hole parts (`J1..J4`, `SW1`, `SW1_BOOT`) onto Farnell UK / RS UK. |
+
+### 7.2 Rev 4.2 Final Verification Metrics
+
+| Verification Gate | Result |
+|---|---|
+| **Driver PCB (KiCad 9.0.8, SOLE custom PCB)** | **0 ERC, 0 DRC, 0 unconnected, 0 parity, 0 via-in-pad, 0 `B.Cu` power slots** (JLCPCB Basic-optimized PCBA) |
+| **Mechanical CAD (`params.py` + `generate_cad.py`)** | **36/36 param checks**, **6 watertight support-free FDM STLs** (`0.000–0.387 mm²` `>46°` overhangs), `3,249`-ray flange check, `72` kinematic waypoints, **`156/156` B-Rep pairs `0.000000 mm³`** (Nom + WC) |
+| **Thermal (`thermal_analysis.py`)** | **10/10 PASS (`22 °C`)**, **16/16 Real-WPE PASS (`22–30 °C`)**, **4/4 Real-WPE PASS (`35 °C` horiz)** (`T_j,UV = 53.0 °C` @ `22 °C`, `60.3 °C` @ `30 °C`, `68.3 °C` @ `30 °C DS-RealWPE`) |
+| **UK 1-Off Hobby BOM (`bom/verify_bom.py`)** | **PASS (`75` RefDes, `61` PCBA, `2` Pigtails, `1` PCB, `14` MECH IDs):** **`£93.24` ex-VAT (`£111.89` inc-VAT)** all purchased new; **`£86.89` ex-VAT (`£104.27` inc-VAT)** using owned workshop `M3` hardware & PC thermal paste (down from `£176.51` + `£50–£80` unbudgeted reflow gear in Rev 4.1!) |

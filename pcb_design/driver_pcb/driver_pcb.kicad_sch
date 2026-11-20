@@ -5,7 +5,7 @@
   (uuid "8bb02b33-e340-5362-8974-afdded8a1864")
   (paper "A3")
   (title_block
-    (title "LepiLED DIY Maxi Switch — Rev 4.1 (USB-C PD Only + Dual AL8860 Buck)")
+    (title "LepiLED DIY Maxi Switch — Rev 4.2 (USB-C PD Only + Dual AL8860 Buck)")
     (date "2026-11-19")
     (rev "4.1")
     (company "LepiLED Open-Source DIY Hardware")
@@ -2553,7 +2553,7 @@
     (property "Value" "SST-10-UV" (at 375.34 49.46 0) (effects (font (size 1.15 1.15))))
     (property "Footprint" "" (at 370.84 48.26 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (property "Datasheet" "datasheets/Luminus_SST-10-UV_Datasheet.pdf" (at 370.84 48.26 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "MPN" "Luminus SST-10-UV-A130-G365-00" (at 370.84 48.26 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "MPN" "Luminus SST-10-UV-A130 365nm (20mm Cu DTP Star)" (at 370.84 48.26 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (pin "1" (uuid "426301dd-d253-5682-b8e2-50189d80cf53"))
     (pin "2" (uuid "1467b7a2-d700-592c-8097-e41bee2d0c83"))
     (instances
@@ -2578,7 +2578,7 @@
     (property "Value" "SST-10-UV" (at 375.34 67.24 0) (effects (font (size 1.15 1.15))))
     (property "Footprint" "" (at 370.84 66.04 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (property "Datasheet" "datasheets/Luminus_SST-10-UV_Datasheet.pdf" (at 370.84 66.04 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "MPN" "Luminus SST-10-UV-A130-G365-00" (at 370.84 66.04 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "MPN" "Luminus SST-10-UV-A130 365nm (20mm Cu DTP Star)" (at 370.84 66.04 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (pin "1" (uuid "609aec0c-482a-56e9-9071-8b300461199f"))
     (pin "2" (uuid "c9b46cfe-2a44-55ce-a928-f94a88dde281"))
     (instances
@@ -2603,7 +2603,7 @@
     (property "Value" "SST-10-UV" (at 375.34 85.02 0) (effects (font (size 1.15 1.15))))
     (property "Footprint" "" (at 370.84 83.82 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (property "Datasheet" "datasheets/Luminus_SST-10-UV_Datasheet.pdf" (at 370.84 83.82 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "MPN" "Luminus SST-10-UV-A130-G365-00" (at 370.84 83.82 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "MPN" "Luminus SST-10-UV-A130 365nm (20mm Cu DTP Star)" (at 370.84 83.82 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (pin "1" (uuid "55f2e9f8-4f58-5f53-9b1b-4356640b392c"))
     (pin "2" (uuid "98fee589-7373-5763-8985-713a1cd27201"))
     (instances
@@ -2628,7 +2628,7 @@
     (property "Value" "SST-10-UV" (at 375.34 102.80 0) (effects (font (size 1.15 1.15))))
     (property "Footprint" "" (at 370.84 101.60 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (property "Datasheet" "datasheets/Luminus_SST-10-UV_Datasheet.pdf" (at 370.84 101.60 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "MPN" "Luminus SST-10-UV-A130-G365-00" (at 370.84 101.60 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "MPN" "Luminus SST-10-UV-A130 365nm (20mm Cu DTP Star)" (at 370.84 101.60 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (pin "1" (uuid "c069bd9f-d039-534f-804a-5bc34caf025f"))
     (pin "2" (uuid "e2a98602-53a2-5aba-b1e8-4c18d718de11"))
     (instances
@@ -2974,7 +2974,7 @@
     (property "Value" "XP-E2 RB" (at 375.34 171.38 0) (effects (font (size 1.15 1.15))))
     (property "Footprint" "" (at 370.84 170.18 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (property "Datasheet" "datasheets/XLamp-XPE2.pdf" (at 370.84 170.18 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "MPN" "Cree XPEBRY-L1-0000-00S02" (at 370.84 170.18 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "MPN" "Cree XP-E2 Royal Blue 455nm (20mm Cu DTP Star)" (at 370.84 170.18 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (pin "1" (uuid "d38f26d9-9044-545d-917a-676e5e52f6d5"))
     (pin "2" (uuid "44b13d27-7a47-5254-880d-668ef8caf982"))
     (instances
@@ -2999,7 +2999,7 @@
     (property "Value" "XP-E2 RB" (at 375.34 189.16 0) (effects (font (size 1.15 1.15))))
     (property "Footprint" "" (at 370.84 187.96 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (property "Datasheet" "datasheets/XLamp-XPE2.pdf" (at 370.84 187.96 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "MPN" "Cree XPEBRY-L1-0000-00S02" (at 370.84 187.96 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "MPN" "Cree XP-E2 Royal Blue 455nm (20mm Cu DTP Star)" (at 370.84 187.96 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (pin "1" (uuid "78790ed9-35fc-554e-9df9-0e7918d7d1e0"))
     (pin "2" (uuid "2e98af8a-cf11-5e75-abd9-9fb556f48372"))
     (instances
@@ -3024,7 +3024,7 @@
     (property "Value" "XP-E2 GRN" (at 375.34 206.94 0) (effects (font (size 1.15 1.15))))
     (property "Footprint" "" (at 370.84 205.74 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (property "Datasheet" "datasheets/XLamp-XPE2.pdf" (at 370.84 205.74 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "MPN" "Cree XPEBGR-L1-0000-00K01" (at 370.84 205.74 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "MPN" "Cree XP-E2 Green 528nm (20mm Cu DTP Star)" (at 370.84 205.74 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (pin "1" (uuid "2b95d5e2-f09e-537d-af2b-b8ea0e66c4eb"))
     (pin "2" (uuid "99d5ce81-7c97-54f3-989e-f48a5573fe01"))
     (instances
@@ -3049,7 +3049,7 @@
     (property "Value" "XP-E2 CW" (at 375.34 224.72 0) (effects (font (size 1.15 1.15))))
     (property "Footprint" "" (at 370.84 223.52 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (property "Datasheet" "datasheets/XLamp-XPE2.pdf" (at 370.84 223.52 0) (effects (font (size 1.0 1.0)) (hide yes)))
-    (property "MPN" "Cree XPEBWT-L1-0000-00H51" (at 370.84 223.52 0) (effects (font (size 1.0 1.0)) (hide yes)))
+    (property "MPN" "Cree XP-E2 Cool White 6200-6500K (20mm Cu DTP Star)" (at 370.84 223.52 0) (effects (font (size 1.0 1.0)) (hide yes)))
     (pin "1" (uuid "e50f7698-6f7f-58d8-beaa-6ac9d51e45b2"))
     (pin "2" (uuid "c6b251a8-afad-5b61-9911-fc6ac4bb68a2"))
     (instances

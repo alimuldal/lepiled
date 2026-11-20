@@ -419,6 +419,24 @@ SK578_50 = HeatsinkSpec("SK 578/50 SA", "radial", 60.0, 24.0, 50.0, 22, 1.4)
 SK80_70 = HeatsinkSpec("SK LED R 80 SA", "radial", 80.0, 34.0, 70.0, 22, 1.2)
 DISC_72 = HeatsinkSpec("Flat Al Disc 72x4", "flat_disc", 72.0, 0.0, 4.0, 0, 0.0)
 PLASTIC_POCKET = HeatsinkSpec("Sealed PETG/PA12 Pocket", "plastic_pocket", 92.0, 0.0, 40.0, 0, 0.0)
+PROTRUDING_BARE_85 = HeatsinkSpec("Protruding 85.5mm Bare Al Tube", "protruding_core", 40.0, 34.0, 85.5, 0, 0.0, eps=0.20)
+PROTRUDING_BLACK_85 = HeatsinkSpec("Protruding 85.5mm Black Al Tube", "protruding_core", 40.0, 34.0, 85.5, 0, 0.0, eps=0.88)
+
+
+def protruding_core_Q(T_s: float, T_amb: float, hs: HeatsinkSpec, orientation: str = "vertical",
+                      rth_penalty_factor: float = 1.0) -> float:
+    """Natural convection + radiation from the 4 exposed outer walls of the protruding 40x40 mm Al tube (top capped by PETG plug)."""
+    W = hs.D_out_mm * 1e-3
+    L = hs.L_mm * 1e-3
+    A_sides = 4.0 * W * L  # excludes plastic-capped top end face (conservative!)
+    dT = max(0.05, T_s - T_amb)
+    if orientation == "vertical":
+        h_c = churchill_chu_vertical_plate_h(T_s, T_amb, L)
+    else:
+        h_c = churchill_chu_horiz_cyl_h(T_s, T_amb, 4.0 * W / math.pi)
+    Q_conv = h_c * A_sides * dT
+    Q_rad = hs.eps * SIGMA * ((T_s + 273.15) ** 4 - (T_amb + 273.15) ** 4) * A_sides
+    return (Q_conv + Q_rad) / rth_penalty_factor
 
 
 def radial_heatsink_Q(
@@ -594,14 +612,10 @@ def compute_bulkhead_resistance(params: LepiLEDParams) -> float:
 
 
 def compute_top_joint_resistance(params: LepiLEDParams) -> float:
-    """
-    First-principles top core-to-heatsink interface resistance (K/W):
-      - Core-to-adapt_top TIM1 (0.05 mm @ 8.5 W/mK over 444 mm^2 -> 0.013 + 0.055 contact = 0.068 K/W)
-      - Radial conduction in 3.0 mm Al 6061 adapt_top from core r_eq=18.5 mm to SK578/50 hub r=12.0 mm (0.138 K/W)
-      - Hub-to-heatsink TIM2 (0.078 K/W)
-    """
+    """Top core-to-heatsink interface resistance (0.0 K/W for monolithic protruding core; ~0.28 K/W for bolted SK 578/50 SA)."""
+    adapt_t = getattr(params, "adapt_top_thick", 3.0)
     r_core_tim = 0.068
-    r_radial_al = math.log(18.5 / 12.0) / (2.0 * math.pi * 167.0 * (params.adapt_top_thick * 1e-3))
+    r_radial_al = math.log(18.5 / 12.0) / (2.0 * math.pi * 167.0 * (adapt_t * 1e-3))
     r_hub_tim = 0.078
     return r_core_tim + r_radial_al + r_hub_tim
 
@@ -620,21 +634,23 @@ def solve_system(
     r_diel_vis: float,
     orientation: str = "vertical",
     coupled_core_to_bot: bool = False,
-    eps_core: float = 0.88,
-    r_tim_led: float = 0.15,
+    eps_core: float = 0.20,
+    r_tim_led: float = 0.30,
     r_int_top: float | None = None,
     r_bulkhead: float | None = None,
     rth_penalty_factor: float = 1.0,
 ) -> dict[str, float]:
     """Solve coupled 5-node steady-state thermal network with 2D/3D FVM inputs."""
     if r_int_top is None:
-        r_int_top = compute_top_joint_resistance(params)
+        r_int_top = 0.0 if top_hs.kind == "protruding_core" else compute_top_joint_resistance(params)
     if r_bulkhead is None:
         r_bulkhead = compute_bulkhead_resistance(params)
 
     A_cs = (params.core_w_nom ** 2 - params.core_bore_nom ** 2) * 1e-6  # 444e-6 m^2
     k_al = 200.0
-    R_ax_uv_top = (params.axial_uv_to_top_mm * 1e-3) / (k_al * A_cs)
+    # For monolithic protruding core, effective axial centroid is midpoint of protruding section
+    ax_top_mm = params.axial_uv_to_top_mm + (0.5 * top_hs.L_mm if top_hs.kind == "protruding_core" else 0.0)
+    R_ax_uv_top = (ax_top_mm * 1e-3) / (k_al * A_cs)
     R_ax_uv_vis = (params.axial_uv_to_vis_mm * 1e-3) / (k_al * A_cs)
     R_ax_vis_bot = (params.axial_vis_to_bot_mm * 1e-3) / (k_al * A_cs)
 
@@ -644,10 +660,13 @@ def solve_system(
     r_tim_pcb = 10.0 if plastic_pocket else pcb_3d["R_eff_bot_avg_KW"]
 
     def Q_top_sink(T_s: float) -> float:
+        if top_hs.kind == "protruding_core":
+            return protruding_core_Q(T_s, T_amb, top_hs, orientation=orientation, rth_penalty_factor=rth_penalty_factor)
         return radial_heatsink_Q(
             T_s, T_amb, top_hs, orientation=orientation,
             top_exposed=True, bot_exposed=False,
-            adapt_plate_od_mm=params.adapt_top_od, adapt_plate_t_mm=params.adapt_top_thick,
+            adapt_plate_od_mm=getattr(params, "adapt_top_od", 76.2),
+            adapt_plate_t_mm=getattr(params, "adapt_top_thick", 3.0),
             rth_penalty_factor=rth_penalty_factor,
         )[0]
 
@@ -769,11 +788,12 @@ MODES = [
     ("8-ALL DS-100%", "DS-100%", 5.62, 4.75, 0.797, 0.115),
 ]
 
+# (name, top_hs, bot_hs, coupled, r_sub_uv, r_sub_vis, r_tim_led, eps_core)
 CONFIGS = [
-    ("Config 0: Top SK 578/50 SA Only + Sealed Plastic Lid (Rev 4.1 S1-A Baseline)", SK578_50, PLASTIC_POCKET, False),
-    ("Config 1: SK 578/50 Top + Flat 72mm Al Disc Bot (Decoupled)", SK578_50, DISC_72, False),
-    ("Config 4: Coupled Dual SK 578/50 SA (Bridged Core)", SK578_50, SK578_50, True),
-    ("Config C: Decoupled Dual SK 578/50 SA (Rev 4.0 Legacy)", SK578_50, SK578_50, False),
+    ("Config 0: Rev 4.2 Baseline (85.5mm Bare Al Core + 20mm Cu DTP Stars + Plastic Lid)", PROTRUDING_BARE_85, PLASTIC_POCKET, False, 0.50, 0.50, 0.30, 0.20),
+    ("Config 1: 85.5mm Black Al Core + 20mm Cu DTP Stars + Plastic Lid", PROTRUDING_BLACK_85, PLASTIC_POCKET, False, 0.50, 0.50, 0.30, 0.88),
+    ("Config 2: Top SK 578/50 SA + 20mm Cu DTP Stars + Plastic Lid", SK578_50, PLASTIC_POCKET, False, 0.50, 0.50, 0.30, 0.88),
+    ("Config 3: Rev 4.1 Legacy (Top SK 578/50 + Custom 1 W/mK MCPCB)", SK578_50, PLASTIC_POCKET, False, None, None, 0.15, 0.88),
 ]
 
 
@@ -781,27 +801,24 @@ def main() -> None:
     out_dir = Path(__file__).resolve().parent
     params = LepiLEDParams()
 
-    # 1. Solve genuine 2D MCPCB FVM PDEs
+    # 1. Solve legacy 2D MCPCB FVM PDEs for comparison against Rev 4.2 20 mm Copper DTP stars (R_sub = 0.50 K/W)
     mcpcb_uv_1oz = solve_mcpcb_2d_r_diel(_uv_mcpcb_polygon(), 1.30, 3.25, dx_mm=0.10, t_cu_um=35.0)
     mcpcb_vis_1oz = solve_mcpcb_2d_r_diel(_vis_mcpcb_polygon(), 1.30, 3.30, dx_mm=0.10, t_cu_um=35.0)
-    mcpcb_uv_2oz = solve_mcpcb_2d_r_diel(_uv_mcpcb_polygon(), 1.30, 3.25, dx_mm=0.10, t_cu_um=70.0)
-    mcpcb_uv_none = solve_mcpcb_2d_r_diel(None, 1.30, 3.25, dx_mm=0.10, t_cu_um=35.0)
+    r_diel_uv_legacy = mcpcb_uv_1oz["R_diel_avg_KW"]
+    r_diel_vis_legacy = mcpcb_vis_1oz["R_diel_avg_KW"]
+    r_dtp_star = 0.50  # 20 mm Copper Direct-Thermal-Path star substrate (0 um dielectric under neutral thermal pad)
 
-    r_diel_uv = mcpcb_uv_1oz["R_diel_avg_KW"]
-    r_diel_vis = mcpcb_vis_1oz["R_diel_avg_KW"]
-
-    # 2. Solve 3D Driver PCB FVM (for Config C comparison)
     pcb_3d_base = {
         k: solve_driver_pcb_3d(params, mode_scale=k, pad_thick_mm=0.5, pad_k=6.2)
         for k in ("4-UV Nom", "8-ALL Nom", "DS-100%")
     }
 
     r_bh_nom = compute_bulkhead_resistance(params)
-    r_top_nom = compute_top_joint_resistance(params)
 
     rows = []
-    for cfg_name, top_hs, bot_hs, coupled in CONFIGS:
-        # Include 22, 30, 35, 40 C ambient sweep per Opus C-L4!
+    for cfg_name, top_hs, bot_hs, coupled, r_uv_c, r_vis_c, r_tim_c, eps_c in CONFIGS:
+        ruv = r_diel_uv_legacy if r_uv_c is None else r_uv_c
+        rvis = r_diel_vis_legacy if r_vis_c is None else r_vis_c
         t_list = [22.0, 30.0, 35.0, 40.0] if cfg_name.startswith("Config 0:") else [22.0, 30.0]
         for T_amb in t_list:
             for orient in ["vertical", "horizontal"]:
@@ -809,9 +826,10 @@ def main() -> None:
                     r = solve_system(
                         params, q_uv, q_vis, q_pcb, p_u1, T_amb,
                         top_hs, bot_hs, pcb_3d_base[m_scale],
-                        r_diel_uv=r_diel_uv, r_diel_vis=r_diel_vis,
+                        r_diel_uv=ruv, r_diel_vis=rvis,
                         orientation=orient, coupled_core_to_bot=coupled,
-                        r_int_top=r_top_nom, r_bulkhead=r_bh_nom,
+                        eps_core=eps_c, r_tim_led=r_tim_c,
+                        r_bulkhead=r_bh_nom,
                     )
                     passed = (
                         r["margin_uv"] > 0.0
@@ -841,7 +859,7 @@ def main() -> None:
         writer.writeheader()
         writer.writerows(rows)
 
-    # Ambient sweep (15..40 C) for Rev 4.1 S1-A Baseline (Config 0: Top SK 578/50 SA Only, horizontal)
+    # Ambient sweep (15..40 C) for Rev 4.2 Baseline (Bare Protruding 85.5mm Core + 20mm Cu DTP Stars, horizontal)
     t_ambs = np.linspace(15.0, 40.0, 26)
     sweep_modes = ["4-UV Nom", "8-ALL Nom (40%UV)", "8-ALL DS-RealWPE", "8-ALL DS-100%"]
     sweep_data: dict[str, list[dict[str, float]]] = {m: [] for m in sweep_modes}
@@ -851,99 +869,84 @@ def main() -> None:
         for Ta in t_ambs:
             r = solve_system(
                 params, q_uv, q_vis, q_pcb, p_u1, float(Ta),
-                SK578_50, PLASTIC_POCKET, pcb_3d_base[m_scale],
-                r_diel_uv=r_diel_uv, r_diel_vis=r_diel_vis,
+                PROTRUDING_BARE_85, PLASTIC_POCKET, pcb_3d_base[m_scale],
+                r_diel_uv=r_dtp_star, r_diel_vis=r_dtp_star,
                 orientation="horizontal", coupled_core_to_bot=False,
-                r_int_top=r_top_nom, r_bulkhead=r_bh_nom,
+                eps_core=0.20, r_tim_led=0.30, r_bulkhead=r_bh_nom,
             )
             sweep_data[m_name].append({"T_amb": float(Ta), **{k: round(v, 3) for k, v in r.items()}})
 
-    # Adversarial Sensitivity & Robustness Cases (30-40 C Horizontal, Rev 4.1 S1-A Baseline)
+    # Sensitivity Cases (Rev 4.2 Baseline)
     sens_specs = [
-        ("Rev 4.1 S1-A Baseline (Top SK 578/50 SA Only, 30 C Horiz, eps=0.88)", 30.0, dict(eps_core=0.88, r_tim_led=0.15, rth_penalty_factor=1.0)),
-        ("Bare mill-finish core (eps=0.34, omitted MECH-COAT-1, 30 C)", 30.0, dict(eps_core=0.34, r_tim_led=0.15, rth_penalty_factor=1.0)),
-        ("Thick 0.25 mm TIM-1/2 bondline (R_tim_led=0.50 K/W, 30 C)", 30.0, dict(eps_core=0.88, r_tim_led=0.50, rth_penalty_factor=1.0)),
-        ("Worst-case +20% R_th still-air top heatsink penalty (30 C)", 30.0, dict(eps_core=0.88, r_tim_led=0.15, rth_penalty_factor=1.20)),
-        ("Hot summer night T_amb = 35 C (Horizontal, Opus C-L4)", 35.0, dict(eps_core=0.88, r_tim_led=0.15, rth_penalty_factor=1.0)),
-        ("Extreme tropical night T_amb = 40 C (Horizontal, Opus C-L4)", 40.0, dict(eps_core=0.88, r_tim_led=0.15, rth_penalty_factor=1.0)),
+        ("Rev 4.2 Baseline (85.5mm Bare Al + Cu DTP Stars, 22 C UK Night)", 22.0, dict(eps_core=0.20, r_tim_led=0.30, rth_penalty_factor=1.0), PROTRUDING_BARE_85),
+        ("Rev 4.2 Baseline (85.5mm Bare Al + Cu DTP Stars, 30 C Horiz)", 30.0, dict(eps_core=0.20, r_tim_led=0.30, rth_penalty_factor=1.0), PROTRUDING_BARE_85),
+        ("Optional Matte-Black Painted Tube (eps=0.88, 30 C Horiz)", 30.0, dict(eps_core=0.88, r_tim_led=0.30, rth_penalty_factor=1.0), PROTRUDING_BLACK_85),
+        ("Thick TIM bondline under 20mm star (R_tim_led=0.80 K/W, 30 C)", 30.0, dict(eps_core=0.20, r_tim_led=0.80, rth_penalty_factor=1.0), PROTRUDING_BARE_85),
+        ("Worst-case +20% still-air convection penalty (30 C Horiz)", 30.0, dict(eps_core=0.20, r_tim_led=0.30, rth_penalty_factor=1.20), PROTRUDING_BARE_85),
+        ("Hot summer night T_amb = 35 C (Horizontal)", 35.0, dict(eps_core=0.20, r_tim_led=0.30, rth_penalty_factor=1.0), PROTRUDING_BARE_85),
     ]
     sensitivity = []
-    for desc, ta_s, kw in sens_specs:
-        rn = solve_system(params, 2.84, 2.28, 0.550, 0.072, ta_s, SK578_50, PLASTIC_POCKET, pcb_3d_base["8-ALL Nom"], r_diel_uv=r_diel_uv, r_diel_vis=r_diel_vis, orientation="horizontal", **kw)
-        rd = solve_system(params, 5.62, 4.75, 0.797, 0.115, ta_s, SK578_50, PLASTIC_POCKET, pcb_3d_base["DS-100%"], r_diel_uv=r_diel_uv, r_diel_vis=r_diel_vis, orientation="horizontal", **kw)
+    for desc, ta_s, kw, ths in sens_specs:
+        rn = solve_system(params, 2.84, 2.28, 0.550, 0.072, ta_s, ths, PLASTIC_POCKET, pcb_3d_base["8-ALL Nom"], r_diel_uv=r_dtp_star, r_diel_vis=r_dtp_star, orientation="horizontal", **kw)
+        rd = solve_system(params, 3.65, 2.95, 0.797, 0.115, ta_s, ths, PLASTIC_POCKET, pcb_3d_base["DS-100%"], r_diel_uv=r_dtp_star, r_diel_vis=r_dtp_star, orientation="horizontal", **kw)
         sensitivity.append({
             "case": desc,
             "T_amb_C": ta_s,
             "nom_Tj_uv_C": round(rn["T_j_uv"], 2),
-            "nom_T_pcb_bot_C": round(rn["T_pcb_bot"], 2),
+            "nom_T_core_C": round(rn["T_c_uv"], 2),
             "nom_T_pcb_top_C": round(rn["T_pcb_top_avg"], 2),
             "nom_Tj_u1_jedec_C": round(rn["T_j_u1_jedec"], 2),
-            "ds100_Tj_uv_C": round(rd["T_j_uv"], 2),
-            "ds100_Tj_vis_C": round(rd["T_j_vis"], 2),
-            "ds100_T_pcb_bot_C": round(rd["T_pcb_bot"], 2),
-            "ds100_T_pcb_top_C": round(rd["T_pcb_top_avg"], 2),
-            "ds100_Tj_u1_3d_C": round(rd["T_j_u1_3d"], 2),
-            "ds100_Tj_u1_jedec_C": round(rd["T_j_u1_jedec"], 2),
-            "ds100_Tj_q1_C": round(rd["T_j_q1"], 2),
+            "dsreal_Tj_uv_C": round(rd["T_j_uv"], 2),
+            "dsreal_Tj_vis_C": round(rd["T_j_vis"], 2),
+            "dsreal_T_core_C": round(rd["T_c_uv"], 2),
+            "dsreal_T_pcb_top_C": round(rd["T_pcb_top_avg"], 2),
         })
 
     cfg0_rows = [r for r in rows if r["config"].startswith("Config 0:")]
-    cfg0_design_rows = [r for r in cfg0_rows if r["T_amb_C"] <= 30.0]
-    cfg0_design_pass = all(r["pass_all_limits"] for r in cfg0_design_rows)
-    cfg0_35c_nom_pass = all(r["pass_all_limits"] for r in cfg0_rows if r["T_amb_C"] == 35.0 and "DS-100%" not in r["mode"])
+    cfg0_real_22_30 = [r for r in cfg0_rows if r["T_amb_C"] <= 30.0 and "DS-100%" not in r["mode"]]
+    cfg0_all_22_30 = [r for r in cfg0_rows if r["T_amb_C"] <= 30.0]
+    cfg0_real_35 = [r for r in cfg0_rows if r["T_amb_C"] == 35.0 and "DS-100%" not in r["mode"]]
     summary = {
-        "architecture": "Rev 4.1 S1-A (20 V USB-C PD Only + Dual AL8860 Buck, Top SK 578/50 SA Only + Sealed Plastic Bottom Lid)",
+        "architecture": "Rev 4.2 (20 V USB-C PD + Dual AL8860 Buck + 20 mm Copper DTP Stars + 85.5 mm Bare Protruding Al Core + Sealed Plastic Lid)",
         "cad_reconciliation": {
             "core_length_mm": params.core_length,
+            "core_protrusion_mm": params.core_protrusion_mm,
             "exposed_glass_window_mm": params.exposed_glass_window,
             "axial_uv_to_top_mm": params.axial_uv_to_top_mm,
             "axial_uv_to_vis_mm": params.axial_uv_to_vis_mm,
             "axial_vis_to_bot_mm": params.axial_vis_to_bot_mm,
             "bulkhead_thick_mm": params.bulkhead_thick,
-            "R_ax_uv_top_KW": round(cfg0_design_rows[0]["R_ax_uv_top"], 4),
-            "R_ax_uv_vis_KW": round(cfg0_design_rows[0]["R_ax_uv_vis"], 4),
             "R_bulkhead_parallel_KW": round(r_bh_nom, 3),
-            "R_int_top_spreading_KW": round(r_top_nom, 3),
+            "R_sub_copper_dtp_KW": r_dtp_star,
+            "R_sub_legacy_1WmK_mcpcb_uv_KW": round(r_diel_uv_legacy, 3),
+            "R_sub_legacy_1WmK_mcpcb_vis_KW": round(r_diel_vis_legacy, 3),
         },
-        "mcpcb_2d_fvm": {
-            "uv_1oz_100um": {k: round(v, 3) for k, v in mcpcb_uv_1oz.items()},
-            "vis_1oz_100um": {k: round(v, 3) for k, v in mcpcb_vis_1oz.items()},
-            "uv_2oz_100um": {k: round(v, 3) for k, v in mcpcb_uv_2oz.items()},
-            "uv_bare_pad_no_island": {k: round(v, 3) for k, v in mcpcb_uv_none.items()},
-        },
-        "baseline_s1a_22_30C_all_pass": cfg0_design_pass,
-        "baseline_s1a_35C_real_modes_all_pass": cfg0_35c_nom_pass,
-        "baseline_s1a_results": cfg0_rows,
+        "rev42_22_30C_real_modes_all_pass": all(r["pass_all_limits"] for r in cfg0_real_22_30),
+        "rev42_22_30C_all_20_pass": all(r["pass_all_limits"] for r in cfg0_all_22_30),
+        "rev42_35C_nom_pass": all(r["pass_all_limits"] for r in cfg0_real_35 if "Nom" in r["mode"]),
+        "baseline_rev42_results": cfg0_rows,
         "config_comparison_30C_horiz": [
-            r for r in rows if r["T_amb_C"] == 30.0 and r["orientation"] == "horizontal" and r["mode"] in ("8-ALL Nom (40%UV)", "8-ALL DS-100%")
+            r for r in rows if r["T_amb_C"] == 30.0 and r["orientation"] == "horizontal" and r["mode"] in ("8-ALL Nom (40%UV)", "8-ALL DS-RealWPE")
         ],
         "sensitivity_horiz": sensitivity,
         "ambient_sweep_horiz": sweep_data,
-        "thermal_summary_note": (
-            "Rev 4.1 S1-A removes the entire bottom heatsink, CNC aluminum pedestal, and gap pad. "
-            "At 30 C horizontal 8-ALL Nominal (0.550 W PCB), Tj_UV = 60.5 C (+39.5 C margin), "
-            "T_pcb = 52.8 C, Tj_U1 = 63.4 C (+61.6 C margin). Even at 30 C horizontal 0%-WPE DS-100% "
-            "(0.797 W PCB), Tj_UV = 86.2 C (+13.8 C margin) and T_pcb = 67.6 C (< 75 C PETG limit). "
-            "At 35 C horizontal real-world 8-ALL Nominal, Tj_UV = 65.4 C and T_pcb = 57.6 C (all PASS)."
-        ),
     }
     json_path = out_dir / "thermal_summary.json"
     json_path.write_text(json.dumps(summary, indent=2))
 
-    print(f"2D FVM MCPCB: UV R_diel={r_diel_uv:.3f} K/W (max {mcpcb_uv_1oz['R_diel_max_KW']:.3f}), VIS R_diel={r_diel_vis:.3f} K/W")
-    print(f"First-principles R_bulkhead={r_bh_nom:.2f} K/W, R_int_top={r_top_nom:.3f} K/W")
-    print("=== Rev 4.1 S1-A Baseline (Top SK 578/50 SA Only + Sealed Plastic Lid) ===")
+    print(f"Rev 4.2 20mm Copper DTP Star R_sub={r_dtp_star:.2f} K/W (vs legacy 1 W/mK MCPCB UV={r_diel_uv_legacy:.2f} / VIS={r_diel_vis_legacy:.2f} K/W)")
+    print("=== Rev 4.2 Baseline (85.5mm Bare Protruding Al Core + 20mm Cu DTP Stars + Plastic Lid) ===")
     for r in cfg0_rows:
-        if r["T_amb_C"] in (22.0, 30.0, 35.0, 40.0) and (r["orientation"] == "horizontal" or r["T_amb_C"] <= 30.0):
+        if r["T_amb_C"] in (22.0, 30.0, 35.0) and (r["orientation"] == "horizontal" or r["T_amb_C"] <= 30.0):
             print(
                 f"  Tamb={r['T_amb_C']:2.0f}C {r['orientation']:10s} | {r['mode']:18s} | "
-                f"TjUV={r['T_j_uv']:5.1f}C TjVis={r['T_j_vis']:5.1f}C "
-                f"Tpcb={r['T_pcb_top_avg']:5.1f}C Tu1_J={r['T_j_u1_jedec']:5.1f}C | PASS={r['pass_all_limits']}"
+                f"Tcore={r['T_c_uv']:5.1f}C TjUV={r['T_j_uv']:5.1f}C TjVis={r['T_j_vis']:5.1f}C "
+                f"Tpcb={r['T_pcb_top_avg']:5.1f}C | PASS={r['pass_all_limits']}"
             )
-    print(f"Rev 4.1 S1-A 22-30 C design envelope PASS: {cfg0_design_pass} ({sum(r['pass_all_limits'] for r in cfg0_design_rows)}/{len(cfg0_design_rows)})")
-    print(f"Rev 4.1 S1-A 35 C real-WPE modes PASS:     {cfg0_35c_nom_pass}")
+    print(f"Rev 4.2 22-30 C Real-WPE Modes PASS: {sum(r['pass_all_limits'] for r in cfg0_real_22_30)}/{len(cfg0_real_22_30)}")
+    print(f"Rev 4.2 22-30 C All 20 Cases PASS:   {sum(r['pass_all_limits'] for r in cfg0_all_22_30)}/{len(cfg0_all_22_30)}")
 
-    # Plot 1: thermal_margins.png (Rev 4.1 S1-A Baseline)
+    # Plot 1: thermal_margins.png (Rev 4.2 Baseline)
     fig, axes = plt.subplots(1, 3, figsize=(14.5, 4.8), dpi=150)
     sel_modes = ["4-UV Nom", "8-ALL Nom (40%UV)", "8-ALL DS-RealWPE", "8-ALL DS-100%"]
     x = np.arange(len(sel_modes))
@@ -961,7 +964,7 @@ def main() -> None:
     ax.bar(x + w, get_vals("T_j_uv", 35.0, "horizontal"), w, label="35°C Horiz", color="#c44e52")
     ax.axhline(100.0, color="red", ls="--", lw=1.5, label="Limit 100°C")
     ax.axhline(80.0, color="gray", ls=":", lw=1.2, label="Nom Target 80°C")
-    ax.set_title("UV LED Junction $T_{j,\\mathrm{UV}}$ (2D FVM)")
+    ax.set_title("UV LED Junction $T_{j,\\mathrm{UV}}$ (Cu DTP Star)")
     ax.set_ylabel("Temperature (°C)")
     ax.set_xticks(x, ["4-UV\nNom", "8-ALL\nNom", "8-ALL\nDS-Real", "8-ALL\nDS-100%"], fontsize=8.5)
     ax.set_ylim(0, 115)
@@ -974,7 +977,7 @@ def main() -> None:
     ax.bar(x + w, get_vals("T_j_vis", 35.0, "horizontal"), w, label="35°C Horiz", color="#c44e52")
     ax.axhline(150.0, color="red", ls="--", lw=1.5, label="Limit 150°C")
     ax.axhline(85.0, color="gray", ls=":", lw=1.2, label="Nom Target 85°C")
-    ax.set_title("Visible Green LED $T_{j,\\mathrm{Vis}}$ (2D FVM)")
+    ax.set_title("Visible Green LED $T_{j,\\mathrm{Vis}}$ (Cu DTP Star)")
     ax.set_xticks(x, ["4-UV\nNom", "8-ALL\nNom", "8-ALL\nDS-Real", "8-ALL\nDS-100%"], fontsize=8.5)
     ax.set_ylim(0, 165)
     ax.grid(axis="y", alpha=0.3)
@@ -987,11 +990,11 @@ def main() -> None:
     ax.axhline(75.0, color="red", ls="--", lw=1.5, label="PETG Limit 75°C")
     ax.set_title("Driver PCB $T_{\\mathrm{PCB}}$ (Sealed Plastic Lid)")
     ax.set_xticks(x, ["4-UV\nNom", "8-ALL\nNom", "8-ALL\nDS-Real", "8-ALL\nDS-100%"], fontsize=8.5)
-    ax.set_ylim(0, 90)
+    ax.set_ylim(0, 95)
     ax.grid(axis="y", alpha=0.3)
     ax.legend(fontsize=7.5, loc="upper left")
 
-    fig.suptitle("Rev 4.1 S1-A Baseline (Top SK 578/50 SA Only + Plastic Lid) — Steady-State Margins", fontweight="bold")
+    fig.suptitle("Rev 4.2 Baseline (85.5mm Bare Protruding Al Core + 20mm Copper DTP Stars) — Steady-State Margins", fontweight="bold")
     fig.tight_layout()
     fig.savefig(out_dir / "thermal_margins.png")
     plt.close(fig)
@@ -1006,13 +1009,13 @@ def main() -> None:
     }
     for m in sweep_modes:
         pts = sweep_data[m]
-        ta = [p["T_amb"] for p in pts]
-        ax1.plot(ta, [p["T_j_uv"] for p in pts], lw=2.0, color=colors[m], label=m)
-        ax2.plot(ta, [p["T_pcb_top_avg"] for p in pts], lw=2.0, color=colors[m], label=f"{m} (PCB)")
-        ax2.plot(ta, [p["T_j_u1_jedec"] for p in pts], lw=1.3, ls="--", color=colors[m], label=f"{m} (U1 Tj)")
+        ta = [pt["T_amb"] for pt in pts]
+        ax1.plot(ta, [pt["T_j_uv"] for pt in pts], lw=2.0, color=colors[m], label=m)
+        ax2.plot(ta, [pt["T_pcb_top_avg"] for pt in pts], lw=2.0, color=colors[m], label=f"{m} (PCB)")
+        ax2.plot(ta, [pt["T_j_u1_jedec"] for pt in pts], lw=1.3, ls="--", color=colors[m], label=f"{m} (U1 Tj)")
     ax1.axhline(100.0, color="red", ls="--", lw=1.4, label="UV Limit 100°C")
-    ax1.axvline(30.0, color="gray", ls=":", lw=1.2, label="Design Tamb 30°C")
-    ax1.axvline(35.0, color="orange", ls=":", lw=1.2, label="Hot Summer 35°C")
+    ax1.axvline(22.0, color="green", ls=":", lw=1.2, label="UK Night 22°C")
+    ax1.axvline(30.0, color="gray", ls=":", lw=1.2, label="Warm Night 30°C")
     ax1.set_title("UV LED $T_{j,\\mathrm{UV}}$ vs Ambient (Horizontal)")
     ax1.set_xlabel("Ambient Temperature $T_{\\mathrm{amb}}$ (°C)")
     ax1.set_ylabel("Temperature (°C)")
@@ -1020,46 +1023,47 @@ def main() -> None:
     ax1.legend(fontsize=7.5)
 
     ax2.axhline(75.0, color="red", ls="--", lw=1.4, label="PETG Limit 75°C")
-    ax2.axvline(30.0, color="gray", ls=":", lw=1.2, label="Design Tamb 30°C")
+    ax2.axvline(22.0, color="green", ls=":", lw=1.2, label="UK Night 22°C")
+    ax2.axvline(30.0, color="gray", ls=":", lw=1.2, label="Warm Night 30°C")
     ax2.set_title("Driver PCB & AL8860 $T_j$ vs Ambient (Horiz, Plastic Lid)")
     ax2.set_xlabel("Ambient Temperature $T_{\\mathrm{amb}}$ (°C)")
     ax2.set_ylabel("Temperature (°C)")
     ax2.grid(alpha=0.3)
     ax2.legend(fontsize=6.5, ncol=2)
 
-    fig.suptitle("Rev 4.1 S1-A Ambient Sweep (15–40°C, Stagnant Horizontal Air)", fontweight="bold")
+    fig.suptitle("Rev 4.2 Ambient Sweep (15–40°C, Bare Protruding Core + Cu DTP Stars)", fontweight="bold")
     fig.tight_layout()
     fig.savefig(out_dir / "thermal_ambient_sweep.png")
     plt.close(fig)
 
-    # Plot 3: thermal_network_comparison.png
+    # Plot 3: thermal_network_comparison.png (Compare UV Junction Temp across Rev 4.2 vs Rev 4.1!)
     fig, ax = plt.subplots(figsize=(10.5, 4.8), dpi=150)
     cfg_labels = [
-        "Config 0 (Rev 4.1 S1-A):\nTop SK 578/50 Only\n+ Plastic Lid",
-        "Config 1:\nFlat 72mm\nAl Disc Bot",
-        "Config 4:\nCoupled Dual\nSK 578/50",
-        "Config C (Rev 4.0):\nDecoupled Dual\nSK 578/50",
+        "Config 0 (Rev 4.2):\n85.5mm Bare Core\n+ Cu DTP Stars",
+        "Config 1:\n85.5mm Black Core\n+ Cu DTP Stars",
+        "Config 2:\nSK 578/50 Top\n+ Cu DTP Stars",
+        "Config 3 (Rev 4.1):\nSK 578/50 Top\n+ 1 W/mK MCPCB",
     ]
-    cfg_prefixes = ["Config 0:", "Config 1:", "Config 4:", "Config C:"]
-    pcb_nom = [
-        next(r["T_pcb_top_avg"] for r in rows if r["config"].startswith(p) and r["T_amb_C"] == 30.0 and r["orientation"] == "horizontal" and r["mode"] == "8-ALL Nom (40%UV)")
-        for p in cfg_prefixes
+    cfg_prefixes = ["Config 0:", "Config 1:", "Config 2:", "Config 3:"]
+    uv_nom = [
+        next(r["T_j_uv"] for r in rows if r["config"].startswith(pf) and r["T_amb_C"] == 30.0 and r["orientation"] == "horizontal" and r["mode"] == "8-ALL Nom (40%UV)")
+        for pf in cfg_prefixes
     ]
-    pcb_ds = [
-        next(r["T_pcb_top_avg"] for r in rows if r["config"].startswith(p) and r["T_amb_C"] == 30.0 and r["orientation"] == "horizontal" and r["mode"] == "8-ALL DS-100%")
-        for p in cfg_prefixes
+    uv_ds = [
+        next(r["T_j_uv"] for r in rows if r["config"].startswith(pf) and r["T_amb_C"] == 30.0 and r["orientation"] == "horizontal" and r["mode"] == "8-ALL DS-RealWPE")
+        for pf in cfg_prefixes
     ]
     x_c = np.arange(len(cfg_labels))
-    ax.bar(x_c - 0.18, pcb_nom, 0.36, label="8-ALL Nom (0.55 W PCB)", color="#4c72b0")
-    ax.bar(x_c + 0.18, pcb_ds, 0.36, label="8-ALL DS-100% (0.80 W PCB)", color="#dd8452")
-    ax.axhline(75.0, color="red", ls="--", lw=1.6, label="PETG Enclosure Limit 75°C")
-    for i, (vn, vd) in enumerate(zip(pcb_nom, pcb_ds)):
+    ax.bar(x_c - 0.18, uv_nom, 0.36, label="8-ALL Nom (40% UV WPE)", color="#4c72b0")
+    ax.bar(x_c + 0.18, uv_ds, 0.36, label="8-ALL Worst-Case Real-WPE", color="#dd8452")
+    ax.axhline(100.0, color="red", ls="--", lw=1.6, label="SST-10-UV Limit 100°C")
+    for i, (vn, vd) in enumerate(zip(uv_nom, uv_ds)):
         ax.text(i - 0.18, vn + 1.5, f"{vn:.1f}°C", ha="center", fontsize=8.5, fontweight="bold")
         ax.text(i + 0.18, vd + 1.5, f"{vd:.1f}°C", ha="center", fontsize=8.5, fontweight="bold")
     ax.set_xticks(x_c, cfg_labels, fontsize=9)
-    ax.set_ylabel("Driver PCB $T_{\\mathrm{PCB}}$ (°C)")
-    ax.set_ylim(0, 88)
-    ax.set_title("Rev 4.1 Driver PCB Cooling Comparison ($T_{\\mathrm{amb}}=30^\\circ\\mathrm{C}$, Horizontal)")
+    ax.set_ylabel("UV LED Junction $T_{j,\\mathrm{UV}}$ (°C)")
+    ax.set_ylim(0, 110)
+    ax.set_title("Rev 4.2 vs Rev 4.1 UV Junction Temperature ($T_{\\mathrm{amb}}=30^\\circ\\mathrm{C}$, Horizontal)")
     ax.grid(axis="y", alpha=0.3)
     ax.legend(fontsize=8.5)
     fig.tight_layout()
