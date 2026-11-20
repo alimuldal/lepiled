@@ -1,6 +1,6 @@
 * ==============================================================================
-* LepiLED Rev 4.1 — Verified Semiconductor & Protection SPICE Models
-* Grounded in local PDFs in datasheets/ (LM4040 BV calibrated to exact 2.500 V)
+* LepiLED Rev 4.7 — Verified Semiconductor & Protection SPICE Models
+* Grounded in official manufacturer datasheets (TL431 BV calibrated to 2.500 V)
 * ==============================================================================
 
 * --- Luminus SST-10-UV-A130-G365-00 (365 nm UV-A) ---
@@ -15,57 +15,56 @@
 * Cool White (6200 K, 00H51): Vf = 2.92 V @ 333 mA (25 C), Rdyn = 0.45 Ohm
 .model D_XPE2_CW  D(IS=3.5e-16 N=3.20 RS=0.45 CJO=90p BV=1.0 IBV=100u)
 
-* --- Diodes Inc. B340A-13-F (40 V 3 A SMA Schottky) ---
-* Vf ~ 0.34 V @ 0.33 A, 0.38 V @ 1.0 A
-.model D_B340A D(IS=1.5e-5 N=1.18 RS=0.045 CJO=250p VJ=0.35 M=0.45 BV=40 IBV=500u)
+* --- MDD SS34 (40 V 3.0 A SMA Schottky, Basic C8678) ---
+* Vf ~ 0.35 V @ 0.33 A, 0.42 V @ 1.0 A
+.model D_SS34 D(IS=1.2e-5 N=1.18 RS=0.055 CJO=220p VJ=0.35 M=0.45 BV=40 IBV=500u)
 
-* --- Green 0603 Indicator LED (LTST-C190GKT, Vf ~ 2.1 V @ 3 mA) ---
-.model D_LED_GRN_IND D(IS=1e-18 N=2.2 RS=5.0 CJO=15p BV=5.0)
+* --- KENTO KT-0603R Red Indicator LED (Basic C2286, Vf ~ 1.95 V @ 1.6 mA) ---
+.model D_LED_RED_IND D(IS=2e-17 N=2.1 RS=6.0 CJO=12p BV=5.0)
 
 * --- Vishay SMBJ22A Unidirectional 22 V TVS (Vbr = 24.4-26.9 V, Vc = 35.5 V @ 16.9 A) ---
-* Pin order: anode (GND), cathode (VBUS_FUSED) -> clamps negative spikes at -1 V!
+* Pin order: anode (GND), cathode (VIN_20V) -> clamps negative spikes at -1 V!
 .subckt TVS_SMBJ22A anode cathode
 Dclamp anode cathode D_TVS22U
 Ctvs anode cathode 950p
 .model D_TVS22U D(IS=1e-12 N=1.2 RS=0.55 BV=24.8 IBV=1m)
 .ends TVS_SMBJ22A
 
-* --- Bourns CDSOD323-T24 (24 V Unidirectional 3 pF ESD Diode) ---
-.subckt ESD_T24 anode cathode
-Desd anode cathode D_ESD24
-Cesd anode cathode 3p
+* --- Leiditech ESD24V32D-C (24 V Bidirectional 25 pF ESD Diode, Optional DNP) ---
+.subckt ESD_T24 p1 p2
+Desd1 p1 mid D_ESD24
+Desd2 p2 mid D_ESD24
+Cesd p1 p2 25p
 .model D_ESD24 D(IS=1e-13 N=1.2 RS=1.5 BV=26.7 IBV=1m)
 .ends ESD_T24
 
-* --- Bourns CDSOD323-T05 (5.0 V Unidirectional 3 pF ESD Diode) ---
-.subckt ESD_T05 anode cathode
-Desd anode cathode D_ESD05
-Cesd anode cathode 3p
-.model D_ESD05 D(IS=1e-13 N=1.2 RS=0.8 BV=6.0 IBV=1m)
-.ends ESD_T05
+* --- Nexperia BAV99 Dual Series ESD Clamp Diode (SOT-23, Basic C2500, <1.5 pF) ---
+* Pin 1 = A1 (GND), Pin 2 = K2 (V_REF), Pin 3 = IO (K1/A2)
+.subckt ESD_BAV99 a1 k2 io
+D_lo a1 io D_BAV99_M
+D_hi io k2 D_BAV99_M
+.model D_BAV99_M D(IS=5e-9 N=1.8 RS=1.2 CJO=1.2p BV=75 IBV=100u)
+.ends ESD_BAV99
 
-* --- Diodes Inc. DMN4035L-7 (40 V N-MOSFET, Vth=1.5 V, Rds<=52 mOhm @ 4.5 V / 42 mOhm @ 10 V) ---
-.model DMN4035L NMOS(LEVEL=1 VTO=1.45 KP=20.0 RD=0.018 RS=0.018 CBD=110p CBS=140p CGSO=170p CGDO=55p LAMBDA=0.01)
+* --- Changjing 2N7002 (60 V N-MOSFET, Basic C8545, Vth=1.0-2.5 V, Rds<=5 Ohm @ 4.5 V) ---
+.model NMOS_2N7002 NMOS(LEVEL=1 VTO=1.80 KP=0.18 RD=1.5 RS=1.5 CBD=15p CBS=20p CGSO=25p CGDO=8p LAMBDA=0.01)
 
-* --- onsemi BSS138 (50 V N-MOSFET, Vth=1.1 V, Rds<=6 Ohm @ 4.5 V) ---
-.model BSS138_MOD NMOS(LEVEL=1 VTO=1.15 KP=0.25 RD=0.8 RS=0.8 CBD=15p CBS=20p CGSO=25p CGDO=8p LAMBDA=0.01)
-
-* --- TI LM4040BIM3-2.5/NOPB (2.500 V +/-0.2% Shunt Voltage Reference, Ir_min=65 uA) ---
-* Calibrated BV=2.421 yields exact V(K,A) = 2.500 V at I_R = 1.75 mA (fixes +3.36% Rev 4.0 offset!)
-.subckt LM4040_2V5 K A
-Dref A K D_LM4040
+* --- Hottech TL431 (2.500 V +/-1% Shunt Voltage Reference, SOT-23 Basic C181103) ---
+* Calibrated BV=2.421 yields exact V(K,A) = 2.500 V at I_K = 1.75 mA (Zka ~ 0.2 Ohm)
+.subckt TL431_2V5 K A
+Dref A K D_TL431
 Rleak K A 10Meg
 Cref K A 10p
-.model D_LM4040 D(IS=1e-14 N=1.0 RS=0.50 BV=2.421 IBV=60u)
-.ends LM4040_2V5
+.model D_TL431 D(IS=1e-14 N=1.0 RS=0.25 BV=2.421 IBV=60u)
+.ends TL431_2V5
 
-* --- TI LM393BIDR Open-Collector Comparator Channel ---
-* Pulls OUT to GND (< 20 mV @ 100 uA) when IN+ < IN-; high-Z when IN+ > IN-
-.subckt LM393B_CH INP INM OUT VCC GND
+* --- onsemi LM393DR2G Open-Collector Comparator Channel (SOIC-8 Basic C7955) ---
+* Pulls OUT to GND (< 50 mV @ 0.4 mA) when IN+ < IN-; high-Z when IN+ > IN-
+.subckt LM393_CH INP INM OUT VCC GND
 Rin INP INM 2Meg
 Rq VCC GND 65k
 B_drv drv GND V = { (V(VCC,GND) > 1.8) ? (0.5*(1 - tanh((V(INP,INM))/0.002))) : 0 }
 S_oc OUT GND drv GND SW_LM393
 R_leak OUT GND 100Meg
 .model SW_LM393 SW(VT=0.5 VH=0.05 RON=25 ROFF=100Meg)
-.ends LM393B_CH
+.ends LM393_CH

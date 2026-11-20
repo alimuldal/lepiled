@@ -136,7 +136,7 @@ class LepiLEDParams:
     sw1_boot_protrude_z: float = 15.0   # Boot downward to Z = 4.0 mm (4.0 mm clear above flat ground!)
     sw1_boot_od: float = 13.3
 
-    # Recessed IP68 ePTFE breather vent + side-visible 45-deg beveled D12 green PD-status lightpipe on MECH-LID-BOT
+    # Recessed IP68 ePTFE breather vent + side-visible 45-deg beveled D12 red PD-status lightpipe on MECH-LID-BOT
     vent_x: float = -20.0
     vent_y: float = 0.0
     vent_hole_dia: float = 2.5

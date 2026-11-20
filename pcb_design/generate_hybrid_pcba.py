@@ -3,12 +3,12 @@
 
 Rev 4.7 (CH224A + 2-Extended-Reel Budget PCBA):
   Single source of truth:
-    - pcb_design/driver_pcb_bom_pcba.csv (53 populated On-PCB parts: 49 SMD + 4 THT)
-    - pcb_design/driver_pcb_cpl.csv      (49 SMD placements)
+    - pcb_design/driver_pcb_bom_pcba.csv (52 populated On-PCB parts: 48 SMD + 4 THT)
+    - pcb_design/driver_pcb_cpl.csv      (48 SMD placements)
 
   Derived outputs (never hand-edit; verified 1:1 by bom/verify_bom.py):
-    - pcb_design/driver_pcb_bom_pcba_hybrid.csv  (41 SMD parts assembled by JLCPCB; ONLY 2 Extended reels: U1/U2 + U3!)
-    - pcb_design/driver_pcb_cpl_hybrid.csv       (41 SMD placements matching the hybrid BOM 1:1)
+    - pcb_design/driver_pcb_bom_pcba_hybrid.csv  (40 SMD parts assembled by JLCPCB; ONLY 2 Extended reels: U1/U2 + U3!)
+    - pcb_design/driver_pcb_cpl_hybrid.csv       (40 SMD placements matching the hybrid BOM 1:1)
     - pcb_design/driver_pcb_diy_hand_solder.csv  (10 bench hand-solder parts: 4 THT + 6 chunky 2-pad SMDs; plus 2 optional DNP notes)
 
 Usage:

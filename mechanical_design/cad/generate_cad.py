@@ -33,7 +33,7 @@ import trimesh
 from params import LepiLEDParams
 
 
-# Accurate SMD package 3D bounding boxes (length_x, width_y, height_z) in mm for ALL 49 SMDs in driver_pcb_cpl.csv (Rev 4.7 CH224A)
+# Accurate SMD package 3D bounding boxes (length_x, width_y, height_z) in mm for ALL 48 SMDs in driver_pcb_cpl.csv (Rev 4.7 CH224A)
 SMD_PACKAGE_DIMS: dict[str, tuple[float, float, float]] = {
     "U1": (3.0, 2.8, 1.0), "U2": (3.0, 2.8, 1.0),
     "U3": (6.9, 4.9, 1.75),
@@ -50,8 +50,8 @@ SMD_PACKAGE_DIMS: dict[str, tuple[float, float, float]] = {
     "R3": (3.3, 1.7, 0.70), "R4": (3.3, 1.7, 0.70),
     "R7": (2.1, 1.3, 0.65), "R10": (2.1, 1.3, 0.65), "R13": (2.1, 1.3, 0.65),
     "R14": (2.1, 1.3, 0.65), "R22": (2.1, 1.3, 0.65), "R23": (2.1, 1.3, 0.65),
-    "C1": (2.1, 1.3, 1.40), "C11": (2.1, 1.3, 1.40),
-    "C2": (3.3, 1.7, 1.80), "C3": (3.3, 1.7, 1.80), "C10": (3.3, 1.7, 1.80),
+    "C2": (2.1, 1.3, 1.40), "C3": (2.1, 1.3, 1.40), "C11": (2.1, 1.3, 1.40),
+    "C10": (3.3, 1.7, 1.80),
 }
 
 
@@ -607,7 +607,7 @@ def _load_all_57_smd_solids(p: LepiLEDParams) -> list[bd.Shape]:
                 lx, wy = wy, lx
             box = bd.Box(lx, wy, hz, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((bx, p.pcb_y_center + by, p.pcb_z_fcu))
             solids.append(box)
-    assert len(solids) == 49, f"Expected 49 SMDs from driver_pcb_cpl.csv, got {len(solids)}"
+    assert len(solids) == 48, f"Expected 48 SMDs from driver_pcb_cpl.csv, got {len(solids)}"
     return solids
 
 

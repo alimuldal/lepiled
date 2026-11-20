@@ -1,9 +1,9 @@
 * ==============================================================================
-* LepiLED Rev 4.1 — Fault 4: True 85 C Hot-Plug & Slew-Controlled Q1 Turn-On Inrush
-* Fixes all 3 Opus A-M1/A-M5 issues:
-*   1. Genuine .temp 85 analysis
-*   2. PWR_EN referenced to GND (0 V during hot-plug -> VBUS+4.5 V at t=150 us)
-*   3. Clean V_isense inrush measurement proving C13-to-GND limits inrush < 0.8 A!
+* LepiLED Rev 4.7 — Fault 4: True 85 C Worst-Case 21 V Bounce / Hot-Plug Surge
+* Verifies ALL 3 Rev 4.7 P1-2 / P2-2 limits simultaneously at .temp 85 C:
+*   1. V(VIN_20V)_pk < 28.0 V (<< 32.0 V WCH CH224A VHV/VBUS/PG abs max!)
+*   2. I(F1)_pk < 40.0 A (Bourns MF-MSMF110/33X I_max rating, fixed via cSnk=8.0 uF!)
+*   3. V(UVLO_FAULT)_pk < 18.0 V (2N7002 +/-20 V V_GS,max during C15 filter delay!)
 * ==============================================================================
 .include models.lib
 .temp 85
@@ -13,39 +13,43 @@ V_hp src 0 PULSE(0 21.0 10u 50n 50n 5m 10m)
 V_isense src n0 0
 R_cab n0 n1 0.10
 L_cab n1 vbus 1.0u
-RF1 vbus vbus_f 0.050
-XD11 0 vbus_f TVS_SMBJ22A
+RF1 vbus vin_20v 0.060
+XD11 0 vin_20v TVS_SMBJ22A
 
-* DC-bias derated upstream capacitors at 21 V (~65% of nominal 50V X7R)
-C1 vbus_f 0 0.65u
-R7 vbus_f vbus_d 1.0
+* DC-bias derated Rev 4.7 capacitors at 21 V (~65% of nominal 50V X7R):
+* Undamped = C2(1.0) + C3(1.0) + C11(1.0) + C8/C9/C14(0.3) = 3.3 uF nom -> 2.15 uF eff
+* Damper   = C10(4.7 uF nom -> 3.1 uF eff) + R7(1.0 Ohm) -> N = 1.44!
+C_undamp vin_20v 0 2.15u
+R7 vin_20v vbus_d 1.0
 C10 vbus_d 0 3.1u
-R8 vbus_f vbus_s 0.005
-C11 vbus_s 0 0.65u
 
-* Single 40 V Q1 (DMN4035L) OFF during hot-plug (t<150 us), then PWR_EN ramps ON!
-B_pwren pwr_en 0 V = { (TIME > 150u) ? (V(vbus_s) + 4.5) : 0.0 }
-R11 pwr_en q1_gate 6.2k
-C13 q1_gate 0 47n
-R21 q1_gate 0 1.0Meg
-MQ1 vbus_s q1_gate vin_20v vin_20v DMN4035L
-V_iq1 vin_20v vin_20v_bus 0
-* Downstream decoupling: 2x 4.7 uF + 3x 100 nF derated (~6.5 uF eff at 21 V) + 0.50 A load
-C23 vin_20v_bus 0 6.5u
-Rload vin_20v_bus 0 40.0
+* Real UVLO divider + C15=100n filter + LM393 + R20(56k)/R21(100k) to capture exact V_GS transient!
+R14 vin_20v v_ref 10.0k
+XU5 v_ref 0 TL431_2V5
+R15 vin_20v uvlo_sense 30.0k
+R16 uvlo_sense 0 5.1k
+C15 uvlo_sense 0 100n
+XU4A uvlo_sense v_ref uvlo_ok vin_20v 0 LM393_CH
+R17 vin_20v uvlo_ok 100k
+R18 uvlo_ok 0 100k
+R19 uvlo_ok uvlo_sense 270k
+XU4B v_ref uvlo_ok uvlo_fault vin_20v 0 LM393_CH
+R20 vin_20v uvlo_fault 56.0k
+R21 uvlo_fault 0 100k
+C_q23 uvlo_fault 0 50p
 
 .options method=gear reltol=1e-3 abstol=1e-10
-.tran 200n 2.5m 0 200n uic
+.tran 100n 1.5m 0 100n uic
 
 .control
 set filetype=ascii
 run
-wrdata ../outputs/fault_hotplug_85c.txt v(vbus_f) v(vin_20v_bus) v(q1_gate) i(v_iq1)
-meas tran vbus_85c_peak  MAX v(vbus_f)      FROM=0 TO=2.5m
-meas tran vin20_off_max  MAX v(vin_20v_bus) FROM=0 TO=140u
-meas tran vin20_85c_peak MAX v(vin_20v_bus) FROM=140u TO=2.5m
-meas tran q1_inrush_pk   MAX i(v_iq1)       FROM=150u TO=2.5m
-meas tran vin20_settle   AVG v(vin_20v_bus) FROM=2.1m TO=2.5m
+wrdata ../outputs/fault_hotplug_85c.txt v(vin_20v) v(uvlo_fault) i(v_isense) v(uvlo_sense)
+meas tran vin_85c_peak    MAX v(vin_20v)    FROM=0 TO=1.5m
+meas tran f1_85c_surge_pk MAX i(v_isense)   FROM=0 TO=1.5m
+meas tran vgs_85c_peak    MAX v(uvlo_fault) FROM=0 TO=1.5m
+meas tran vin_85c_settle  AVG v(vin_20v)    FROM=1.2m TO=1.5m
+meas tran vgs_85c_settle  AVG v(uvlo_fault) FROM=1.2m TO=1.5m
 quit
 .endc
 .end

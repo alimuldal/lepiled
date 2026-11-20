@@ -6,7 +6,7 @@
 	(property "Reference" "H"
 		(at 0 3.4 0)
 		(layer "F.Fab")
-		(uuid "51472f68-672d-4952-83c7-d4e66af2973f")
+		(uuid "ab7cd7f4-7bf4-4afc-ab66-4bccbd92b992")
 		(effects
 			(font
 				(size 0.8 0.8)
@@ -17,7 +17,7 @@
 	(property "Value" "MountingHole_2.7mm_M2.5_NPTH"
 		(at 0 -3.4 0)
 		(layer "F.Fab")
-		(uuid "a6b35272-b56c-4101-90f8-7ce49ad53d6b")
+		(uuid "31cae558-88a3-423a-b4bd-7c19a50be58e")
 		(effects
 			(font
 				(size 0.5 0.5)
@@ -29,7 +29,7 @@
 		(at 0 0 0)
 		(layer "F.Fab")
 		(hide yes)
-		(uuid "e509d901-90f9-40cc-a0bd-eabb3156539b")
+		(uuid "c3a222f2-4848-4c55-bae1-6e89c5dc353c")
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -41,7 +41,7 @@
 		(at 0 0 0)
 		(layer "F.Fab")
 		(hide yes)
-		(uuid "edc7cca0-b70a-4f3f-9489-2699e3b65fb5")
+		(uuid "624cd5d3-1ed0-4d29-aec7-72ac6eb8041f")
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -59,7 +59,7 @@
 		)
 		(fill no)
 		(layer "F.CrtYd")
-		(uuid "0949c9ca-2b85-41ac-8f1c-ab0e90139a6b")
+		(uuid "c1120521-d904-49df-af61-f7990c8bf146")
 	)
 	(pad "" np_thru_hole circle
 		(at 0 0)
@@ -67,7 +67,7 @@
 		(drill 2.7)
 		(layers "*.Mask")
 		(solder_mask_margin 1.25)
-		(uuid "fbb47822-b326-4463-9474-c194c6eeef0d")
+		(uuid "1b64501a-d7df-4d12-a9a6-f88a724139b0")
 	)
 	(embedded_fonts no)
 )

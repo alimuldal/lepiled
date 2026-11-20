@@ -385,7 +385,7 @@
       "/U2_CTRL": [
         "Signal"
       ],
-      "/U3_VBUS": [
+      "/U3_CFG1": [
         "Signal"
       ],
       "/UVLO_FAULT": [

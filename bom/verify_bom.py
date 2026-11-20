@@ -92,13 +92,13 @@ def main() -> int:
         if row["Include_In_Total"] not in {"Yes", "No"}:
             fail(f"{bid}: invalid Include_In_Total {row['Include_In_Total']!r}")
 
-    # 1. Electrical 67-RefDes 1:1 parity (Rev 4.7 CH224A + 2-Reel Hybrid PCBA)
+    # 1. Electrical 66-RefDes 1:1 parity (Rev 4.7 CH224A + 2-Reel Hybrid PCBA)
     comp_by_ref = {r["RefDes"].strip(): r for r in comp_rows}
     drv_by_ref = {r["Designator"].strip(): r for r in drv_rows}
     pcba_refs = {r["Designator"].strip() for r in pcba_rows}
 
-    if len(comp_rows) != 67:
-        fail(f"COMPONENT_IDS.csv expected 67 rows, got {len(comp_rows)}")
+    if len(comp_rows) != 66:
+        fail(f"COMPONENT_IDS.csv expected 66 rows, got {len(comp_rows)}")
     if set(comp_by_ref) != set(drv_by_ref):
         fail("COMPONENT_IDS.csv vs driver_pcb_bom.csv RefDes mismatch")
 
@@ -130,8 +130,8 @@ def main() -> int:
     off_board_expected = {"D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "SW1", "SW1_BOOT"}
     pcb_features = {"H1", "H2", "H3", "H4"}
     on_pcb_from_comp = {r["RefDes"].strip() for r in comp_rows if r["Mounting"].strip() == "On-PCB"}
-    if (on_pcb_from_comp - pcb_features) != pcba_refs or len(pcba_refs) != 53:
-        fail(f"Populated On-PCB 53-RefDes subset mismatch (got {len(pcba_refs)})")
+    if (on_pcb_from_comp - pcb_features) != pcba_refs or len(pcba_refs) != 52:
+        fail(f"Populated On-PCB 52-RefDes subset mismatch (got {len(pcba_refs)})")
     if set(comp_by_ref) - on_pcb_from_comp != off_board_expected:
         fail("Off-board RefDes subset mismatch")
 
@@ -157,7 +157,7 @@ def main() -> int:
         if (hyb_refs & diy_refs) or ((hyb_refs | diy_refs) != pcba_refs):
             fail(
                 f"Hybrid PCBA ({len(hyb_refs)}) + DIY/DNP ({len(diy_refs)}) "
-                f"must partition canonical 53 PCBA RefDes cleanly"
+                f"must partition canonical 52 PCBA RefDes cleanly"
             )
 
     # 2. Single custom PCB (driver_pcb ONLY — led_mcpcb eliminated in Rev 4.2!)
@@ -273,12 +273,12 @@ def main() -> int:
     )
     net_o = tot_o - owned_ex
 
-    print("PASS: bom/bom.csv verified 1:1 across Rev 4.7 (67 RefDes, 53 Full PCBA = 41 Hybrid SMD [2 Ext reels] + 10 DIY + 2 DNP, 4 Harness, 1 PCB, 22 MECH-*)")
-    print(f"  Electrical (67 RefDes incl. 8x Cu DTP stars): 1-Off = £{elec_o:.2f} ex VAT (£{round2(elec_o * VAT_RATE):.2f} inc VAT) | Amort = £{elec_a:.2f} ex VAT")
+    print("PASS: bom/bom.csv verified 1:1 across Rev 4.7 (66 RefDes, 52 Full PCBA = 40 Hybrid SMD [2 Ext reels] + 10 DIY + 2 DNP, 4 Harness, 1 PCB, 22 MECH-*)")
+    print(f"  Electrical (66 RefDes incl. 8x Cu DTP stars): 1-Off = £{elec_o:.2f} ex VAT (£{round2(elec_o * VAT_RATE):.2f} inc VAT) | Amort = £{elec_a:.2f} ex VAT")
     print(f"  Harness (JST-XH + UV silicone + 90° USB-C):   1-Off = £{harn_o:.2f} ex VAT (£{round2(harn_o * VAT_RATE):.2f} inc VAT) | Amort = £{harn_a:.2f} ex VAT")
     print(f"  PCB Fab + Economic PCBA (driver_pcb ONLY):    1-Off = £{pcb_o:.2f} ex VAT (£{round2(pcb_o * VAT_RATE):.2f} inc VAT) | Amort = £{pcb_a:.2f} ex VAT")
     print(f"  Mechanical (XT PMMA + Black Core, 22 IDs):    1-Off = £{mech_o:.2f} ex VAT (£{round2(mech_o * VAT_RATE):.2f} inc VAT) | Amort = £{mech_a:.2f} ex VAT")
-    print(f"  TOTAL Rev 4.6 1-Off Build (All Purchased):    1-Off = £{tot_o:.2f} ex VAT (£{round2(tot_o * VAT_RATE):.2f} inc VAT) | Amort = £{tot_a:.2f} ex VAT (£{round2(tot_a * VAT_RATE):.2f} inc VAT)")
+    print(f"  TOTAL Rev 4.7 1-Off Build (All Purchased):    1-Off = £{tot_o:.2f} ex VAT (£{round2(tot_o * VAT_RATE):.2f} inc VAT) | Amort = £{tot_a:.2f} ex VAT (£{round2(tot_a * VAT_RATE):.2f} inc VAT)")
     print(f"  NET 1-Off Spend (Owned HW/Paste/Spray Paint): 1-Off = £{net_o:.2f} ex VAT (£{round2(net_o * VAT_RATE):.2f} inc VAT)")
     return 0
 

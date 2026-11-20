@@ -1,38 +1,41 @@
 * ==============================================================================
-* LepiLED Rev 4.1 — Fault 3: USB-C Input Protection Suite (USB-C Only, S2-A)
+* LepiLED Rev 4.7 — Fault 3: USB-C Input Protection & 5 V Attach Compliance Suite
 *   Case A: Negative -15 V transient on VBUS -> Unidirectional SMBJ22A clamps >= -1.5 V
-*   Case B: Inductive USB-C 21 V Hot-Plug (L=0.5 uH, R=0.15 Ohm) -> Overdamped
-*           C1+C10/R7 + SMBJ22A keeps V_VBUS_FUSED << 31 V AP33771C / 40 V Q1
-*   Case C: Q1 OFF-state bleed (R21=1M) holds VIN_20V near 0 V with PWR_EN=0
+*   Case B: Inductive USB-C 21 V Hot-Plug (L=0.5 uH, R=0.15 Ohm) on cSnk=8.0 uF
+*           (3.3 uF undamped + 4.7 uF/1.0R damper N=1.42) -> V_pk << 32 V CH224A max
+*   Case C: Cold 5.0 V USB-C Attach (cSnk = 8.0 uF <= 10 uF spec) + Q2/Q3 gate Vgs
 * ==============================================================================
 .include models.lib
 
 * --- CASE A: Negative -15 V Transient on VBUS (Unidirectional SMBJ22A Clamp) ---
 V_neg a_src 0 PULSE(0 -15.0 10u 100n 100n 40u 1m)
 Ra_src a_src a_vbus 5.0
-RF1_a a_vbus a_vbus_f 0.080
-XD11_a 0 a_vbus_f TVS_SMBJ22A
-C1_a a_vbus_f 0 1.0u
+RF1_a a_vbus a_vin 0.080
+XD11_a 0 a_vin TVS_SMBJ22A
+C_undamp_a a_vin 0 3.3u
 
-* --- CASE B: Inductive USB-C 21 V Hot-Plug (L=0.5 uH, R=0.15 Ohm) ---
+* --- CASE B: Inductive USB-C 21 V Hot-Plug (L=0.5 uH, R=0.15 Ohm, cSnk=8.0 uF) ---
 V_hp b_src 0 PULSE(0 21.0 10u 100n 100n 2m 10m)
-Rb_hp b_src b_n1 0.15
+V_isense_b b_src b_n0 0
+Rb_hp b_n0 b_n1 0.15
 Lb_hp b_n1 b_vbus 0.5u
-RF1_b b_vbus b_vbus_f 0.080
-XD11_b 0 b_vbus_f TVS_SMBJ22A
-C1_b b_vbus_f 0 1.0u
-R7_b b_vbus_f b_damp 1.0
+RF1_b b_vbus b_vin 0.080
+XD11_b 0 b_vin TVS_SMBJ22A
+C_undamp_b b_vin 0 3.3u
+R7_b b_vin b_damp 1.0
 C10_b b_damp 0 4.7u
-R8_b b_vbus_f b_vbus_s 0.005
-C11_b b_vbus_s 0 1.0u
 
-* --- CASE C: Q1 OFF-State Leakage & R21 Gate Bleed (VBUS=20 V, PWR_EN=0 V) ---
-V_off c_vbus_s 0 20.0
-R11_c 0 c_q1_gate 6.2k
-C13_c c_q1_gate 0 47n
-R21_c c_q1_gate 0 1.0Meg
-MQ1_c c_vbus_s c_q1_gate c_vin20 c_vin20 DMN4035L
-Rload_c c_vin20 0 100k
+* --- CASE C: Cold 5.0 V USB-C Attach (cSnk = 8.0 uF <= 10 uF) + UVLO 5 V Clamp ---
+V_5v c_src 0 PULSE(0 5.0 10u 1u 1u 2m 10m)
+V_isense_c c_src c_n0 0
+Rc_cab c_n0 c_n1 0.15
+Lc_cab c_n1 c_vbus 0.5u
+RF1_c c_vbus c_vin 0.080
+C_undamp_c c_vin 0 3.3u
+R7_c c_vin c_damp 1.0
+C10_c c_damp 0 4.7u
+R20_c c_vin c_vgs 56.0k
+R21_c c_vgs 0 100k
 
 .options method=gear reltol=1e-3 abstol=1e-10
 .tran 50n 200u 0 50n uic
@@ -40,11 +43,13 @@ Rload_c c_vin20 0 100k
 .control
 set filetype=ascii
 run
-wrdata ../outputs/fault_input_prot.txt v(a_vbus_f) v(b_vbus_f) v(b_vbus_s) v(c_vin20)
-meas tran neg_vbus_min   MIN v(a_vbus_f) FROM=0 TO=200u
-meas tran hp_vbus_peak   MAX v(b_vbus_f) FROM=0 TO=200u
-meas tran hp_vbus_final  AVG v(b_vbus_f) FROM=150u TO=200u
-meas tran q1_off_leak_v  MAX v(c_vin20)  FROM=50u TO=200u
+wrdata ../outputs/fault_input_prot.txt v(a_vin) v(b_vin) i(v_isense_b) v(c_vgs)
+meas tran neg_vbus_min   MIN v(a_vin)       FROM=0 TO=200u
+meas tran hp_vbus_peak   MAX v(b_vin)       FROM=0 TO=200u
+meas tran hp_f1_peak     MAX i(v_isense_b)  FROM=0 TO=200u
+meas tran hp_vbus_final  AVG v(b_vin)       FROM=150u TO=200u
+meas tran attach_5v_pk   MAX i(v_isense_c)  FROM=0 TO=200u
+meas tran vgs_5v_settle  AVG v(c_vgs)       FROM=150u TO=200u
 quit
 .endc
 .end

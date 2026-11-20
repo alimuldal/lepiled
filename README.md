@@ -6,12 +6,12 @@
 
 *4× 365 nm UV-A · 2× 455 nm Royal Blue · 1× 528 nm Green · 1× 6200 K Cool White*
 
-![Revision](https://img.shields.io/badge/Revision-4.6%20Field%20Lantern-blue?style=flat-square)
+![Revision](https://img.shields.io/badge/Revision-4.7%20CH224A%20Field%20Lantern-blue?style=flat-square)
 ![Input](https://img.shields.io/badge/Power-20V%20USB--C%20PD-blueviolet?style=flat-square)
 ![Weight](https://img.shields.io/badge/Weight-~521g%20ASA-teal?style=flat-square)
 ![Shroud](https://img.shields.io/badge/Shroud-Extruded%20XT%20PMMA-informational?style=flat-square)
 ![KiCad](https://img.shields.io/badge/KiCad%209-0%20ERC%20%7C%200%20DRC-success?style=flat-square)
-![BOM](https://img.shields.io/badge/1--Off%20UK%20BOM-%C2%A3114.99%20ex--VAT-orange?style=flat-square)
+![BOM](https://img.shields.io/badge/1--Off%20UK%20BOM-%C2%A3105.28%20ex--VAT-orange?style=flat-square)
 
 [Lamp Assembly](#whole-lamp-assembly) · [Driver PCB](#driver-pcb) · [Circuit Schematic](#circuit-schematic) · [Differences from Brehm (2017)](#differences-from-brehm-2017) · [Verification](#verification-summary) · [Build & BOM](#build--repository-map)
 
@@ -70,7 +70,7 @@ An open-source DIY implementation of Gunnar Brehm's *LepiLED* moth lamp ([Brehm,
     <img src="circuit_design/schematic.png" alt="LepiLED Rev 4.6 Complete Circuit Schematic" width="100%" />
   </a>
   <br />
-  <sub>Click the schematic to open the full vector <a href="circuit_design/schematic.pdf">schematic.pdf</a> (KiCad 9.0.8, 0 ERC violations, 75 unique RefDes).</sub>
+  <sub>Click the schematic to open the full vector <a href="circuit_design/schematic.pdf">schematic.pdf</a> (KiCad 9.0.8, 0 ERC violations, 66 unique RefDes).</sub>
 </p>
 
 ## Differences from Brehm (2017)
@@ -80,19 +80,19 @@ Reference paper: **Brehm, G. (2017).** *A new LED lamp for the collection of noc
 This DIY build retains the paper's 8-LED insect-tuned spectrum (`4× UV-A`, `2× Royal Blue`, `1× Green`, `1× Cool White` at two vertical levels) and UV-transmitting acrylic (`PMMA`) cylinder while making four practical departures from the 2017 prototype:
 
 - **Fanless matte-black monolithic cooling & lofted rain roof:** Replaces the internal axial fan and gauze vents with a sealed clear extruded `XT PMMA` cylinder (`Ø60 × 54 × 3.0 × 115 mm`) on ovality-tolerant `60 × 3.5 mm` VMQ50/60 radial bore O-rings, a single stock `200 mm` `30 × 30 × 3 mm` Al core sprayed matte black (star pads masked, protruding `63.0 mm` with a Signal-Orange bushed `Ø8 mm` hanging hole and finial rain cap), an unbroken `Ø84 mm` square-to-round lofted `27°` rain roof, and an interior-mounted IP68 ePTFE breather vent preventing rain-quench fogging.
-- **`20 V` USB-C PD + dual buck drivers + coaxial split cable clamp:** Replaces the `5–12 V` boost source with a `20 V` USB-C PD sink (`AP33771C`) and two `AL8860WT-7` constant-current buck drivers (`333 mA` per channel, `93.8%` efficiency), fed by a permanently captured `90°` USB-C PD cable sealed through a 3D-printed 2-piece split cable clamp (`MECH-CABLE-CLAMP`) that passes the intact `90°` plug effortlessly.
-- **Recessed bottom-mounted dual-mode switch (`OFF / 4-UV / 8-ALL`):** Splits the 8 LEDs into independent 4S UV-A and 4S Visible strings controlled by a booted gold-contact `DPDT` toggle (`C&K 7211SYZBE`) recessed inside the compact `5.1°` tapered base skirt alongside tactile `0 / 1 / 2` midnight switch index ribs and a `28.3 mm` side-visible `D12` PD-status lightpipe.
-- **Zero bare-SMD soldering & 8 support-free Black ASA prints:** Uses off-the-shelf pre-mounted `20 mm` Copper DTP LED stars (`R_sub ≈ 0.5 K/W`, bolted with `M3` screws + nylon washers), JLCPCB-assemblable `driver_pcb`, pre-crimped `22 AWG` JST-XH pigtails (passing straight through `9.0 × 7.5 mm` wire channels without de-pinning), `24 AWG` UV-stable silicone inter-star wire, brass `M2.5`/`M3` heat-set inserts, and 8 watertight support-free Black ASA prints.
+- **`20 V` USB-C PD + dual buck drivers + coaxial split cable clamp:** Replaces the `5–12 V` boost source with a `20 V` USB-C PD sink (`WCH CH224A` `ESSOP-10`, `CFG1 = 120 kΩ` single-resistor mode, USB-C `cSnk = 8.0 µF <= 10 µF`) and two `AL8860WT-7` constant-current buck drivers (`333 mA` per channel, `94.2%` efficiency), fed by a permanently captured `90°` USB-C PD cable sealed through a 3D-printed 2-piece split cable clamp (`MECH-CABLE-CLAMP`) that passes the intact `90°` plug effortlessly.
+- **Recessed bottom-mounted dual-mode switch (`OFF / 4-UV / 8-ALL`):** Splits the 8 LEDs into independent 4S UV-A and 4S Visible strings controlled by a booted gold-contact `DPDT` toggle (`C&K 7211SYZBE`) recessed inside the compact `5.1°` tapered base skirt alongside tactile `0 / 1 / 2` midnight switch index ribs and a `28.3 mm` side-visible red `D12` PD-status lightpipe.
+- **Zero bare-SMD soldering & 8 support-free Black ASA prints:** Uses off-the-shelf pre-mounted `20 mm` Copper DTP LED stars (`R_sub ≈ 0.5 K/W`, bolted with `M3` screws + nylon washers), JLCPCB 2-Extended-reel Hybrid PCBA `driver_pcb`, pre-crimped `22 AWG` JST-XH pigtails (passing straight through `9.0 × 7.5 mm` wire channels without de-pinning), `24 AWG` UV-stable silicone inter-star wire, brass `M2.5`/`M3` heat-set inserts, and 8 watertight support-free Black ASA prints.
 
 ## Verification Summary
 
 | Domain | Verification Suite | Result | Report / Source |
 |---|---|---|---|
-| **Circuit & SPICE** | 6 `ngspice` benches + `2,565` datasheet corners + `2,000`-trial Monte Carlo | **15/15 PASS** (`0` corner fails, `100.0%` MC yield, `0` UVLO chatter) | [sim_summary.json](circuit_design/sim/outputs/sim_summary.json) |
-| **Driver PCB** | KiCad 9.0.8 real-pin ERC + DRC (`--schematic-parity --severity-all`) + copper audits | **0 ERC, 0 DRC, 0 parity, 0 via-in-pad, 0 `B.Cu` power slots** | [driver_pcb.kicad_pcb](pcb_design/driver_pcb/driver_pcb.kicad_pcb) |
+| **Circuit & SPICE (Rev 4.7)** | 6 `ngspice` benches + `2,565` datasheet corners + `2,000`-trial Monte Carlo | **15/15 PASS** (`0` corner fails, `100.0%` MC yield, `0` UVLO chatter, `F1 < 29 A`, `V_GS < 16 V`) | [sim_summary.json](circuit_design/sim/outputs/sim_summary.json) |
+| **Driver PCB (Rev 4.7)** | KiCad 9.0.8 real-pin ERC + DRC (`--schematic-parity --severity-all`) + copper audits | **0 ERC, 0 DRC, 0 parity, 0 via-in-pad, 0 `B.Cu` power slots, `52/52` `F.SilkS` RefDes** | [driver_pcb.kicad_pcb](pcb_design/driver_pcb/driver_pcb.kicad_pcb) |
 | **Thermal (Rev 4.6)** | Coupled network: XT PMMA (`Ø60×54`) + matte-black `30×30×3` core (`63 mm` chimney) + Cu DTP stars | **`16/16` Real-WPE PASS (`22–30 °C`) & `4/4` PASS at `35 °C` horiz!** (`22 °C` `T_j,UV = 55.8 °C`; `30 °C` horiz `T_j,UV = 63.0 / 71.6 °C`, `T_pcb = 60.3 / 70.4 °C`) | [thermal_summary.json](mechanical_design/thermal/thermal_summary.json) |
-| **Mechanical CAD** | `38` param checks + `8` watertight STLs + `4` positive fastener-seat/hub gates + `84` kinematic sweeps + `210` B-Rep pairs (incl. `57` SMDs & `7 mm` USB-C strain relief) | **ALL PASS** (`0/210` collisions Nom/WC `60.6 mm` oval & `+2 mm`, `0.000 mm²` unsupported overhangs, **`~521 g` ASA**, **`266.5 mm` tall**) | [cad_verification.json](mechanical_design/cad/cad_verification.json) |
-| **UK 1-Off BOM** | 1:1 RefDes (`75`) / PCBA (`61`) / Harness (`4`) / PCB (`1`) / Mech (`22`) parity | **PASS** (`£114.99` ex-VAT / `£137.99` inc-VAT all new incl. spray paint & brass inserts; **`£103.14` ex-VAT / `£123.77` inc-VAT** w/ owned screws, paste & spray) | [bom.csv](bom/bom.csv) |
+| **Mechanical CAD** | `38` param checks + `8` watertight STLs + `4` positive fastener-seat/hub gates + `84` kinematic sweeps + B-Rep collision checks (incl. all `48` Rev 4.7 SMDs & `7 mm` USB-C strain relief) | **ALL PASS** (`0` collisions Nom/WC `60.6 mm` oval & `+2 mm`, `0.000 mm²` unsupported overhangs, **`~521 g` ASA**, **`266.5 mm` tall**) | [cad_verification.json](mechanical_design/cad/cad_verification.json) |
+| **UK 1-Off BOM (Rev 4.7)** | 1:1 RefDes (`66`) / PCBA (`52` = `40` Hybrid SMD [`2` Ext reels] + `10` DIY + `2` DNP) / Harness (`4`) / PCB (`1`) / Mech (`22`) parity | **PASS** (`£105.28` ex-VAT / `£126.34` inc-VAT all new incl. spray paint & brass inserts; **`£93.43` ex-VAT / `£112.12` inc-VAT** w/ owned screws, paste & spray) | [bom.csv](bom/bom.csv) |
 
 <details>
 <summary><b>More Visuals — Thermal Emissivity Comparison, SPICE Waveforms &amp; 3D-Printed Parts</b></summary>

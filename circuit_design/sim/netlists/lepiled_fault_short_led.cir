@@ -1,5 +1,5 @@
 * ==============================================================================
-* LepiLED Rev 4.1 — Fault 2: Shorted LED String (Ch1 UV_POS shorted to UV_NEG at t=2.5 ms)
+* LepiLED Rev 4.7 — Fault 2: Shorted LED String (Ch1 UV_POS shorted to UV_NEG at t=2.5 ms)
 * ==============================================================================
 .include models.lib
 .include al8860.lib
@@ -9,11 +9,11 @@ Vin VIN_20V 0 20.0
 R3 VIN_20V UV_POS 0.30
 C6 U1_CTRL 0 0.5n
 XU1 SW1_NODE 0 U1_CTRL UV_POS VIN_20V AL8860_WT
-D9 SW1_NODE VIN_20V D_B340A
+D9 SW1_NODE VIN_20V D_SS34
 L1 UV_NEG_L SW1_NODE 68u
 RL1 UV_NEG UV_NEG_L 0.29
 C4 UV_POS UV_C4_DAMP 100n
-R22 UV_C4_DAMP UV_NEG 6.8
+R22 UV_C4_DAMP UV_NEG 10.0
 V_iuv UV_POS UV_A1 0
 D1 UV_A1 UV_N1 D_SST10_UV
 D2 UV_N1 UV_N2 D_SST10_UV

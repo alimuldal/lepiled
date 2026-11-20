@@ -1,89 +1,84 @@
 * ==============================================================================
-* LepiLED DIY Maxi Switch (Rev 4.1 — USB-C PD Only + Dual AL8860 Buck + S3 DPDT)
+* LepiLED DIY Maxi Switch (Rev 4.7 — WCH CH224A + 2-Reel Hybrid PCBA)
 * Canonical Top-Level SPICE Structural Netlist (1:1 Parity with COMPONENT_IDS.csv)
 * ==============================================================================
-* Topology:
-*   Block 1: USB-C PD 20 V / 1.0 A Sink ONLY (J1, F1 MF-MSMF110/33X, D11 SMBJ22A
-*            uni-dir TVS, D13/D14 CC ESD, C1/C10/R7 damper, R8 5mOhm shunt,
-*            U3 AP33771C, single 40 V Q1 DMN4035L-7 with R11/C13-to-GND slew limit
-*            & R21 1M bleed, R1/R2, R9-R13, C11-C12, D12 status LED).
-*   Block 2: Hysteretic Hardware UVLO (17.54 V ON / 16.64 V OFF; 0.90 V hyst)
-*            (U5 LM4040-2.5, R14..R20, C14/C15, U4A+U4B LM393B, Q2/Q3 BSS138)
-*            + Direct Gold DPDT On-On-On Mode Switch (J4/SW1, R5/R6 1k, D15/D16 ESD).
+* Topology (66 RefDes: 52 On-PCB = 40 Hybrid SMD + 10 DIY + 2 DNP; 4 NPTH; 10 Off-Board):
+*   Block 1: USB-C PD 20 V Sink ONLY (J1, F1 MF-MSMF110/33X, D11 SMBJ22A uni-dir
+*            TVS, optional D13/D14 CC ESD, R7/C10 1.0R/4.7uF damper, C11 1.0uF,
+*            U3 WCH CH224A ESSOP-10 with VBUS shorted to VHV/VIN_20V and CFG1=R9
+*            120 kOhm single-resistor 20 V mode, R13/R10 10k/10k + D12 Red PG LED).
+*            Total cSnk = 8.0 uF nom / 8.8 uF max <= 10.0 uF USB-C spec.
+*   Block 2: Hysteretic Hardware UVLO (17.48 V ON / 16.66 V OFF; 0.83 V hyst)
+*            (U5 Hottech TL431 2.500 V, R14 10k, R15 30k, R16 5.1k, C14/C15 100n,
+*            U4A+U4B onsemi LM393DR2G, R17/R18 100k, R19 270k, R20 56k / R21 100k,
+*            Q2/Q3 Changjing 2N7002) + Direct Gold DPDT Mode Switch (J4/SW1,
+*            R5/R6 1.0k, D15/D16 Nexperia BAV99 dual series ESD clamps to GND/V_REF).
 *   Block 3: Ch1 4S UV-A 365 nm Constant-Current Buck Driver (U1 AL8860WT-7,
-*            R3 0.30 Ohm -> 333 mA, L1 68 uH, D9 B340A, C2 4.7uF, C8 100nF,
-*            C4 100nF + R22 6.8 Ohm damped shunt, C6 1nF, J2, D1..D4).
+*            R3 0.30 Ohm -> 333 mA, L1 68 uH, D9 MDD SS34, C2 1.0uF 0805, C8 100nF,
+*            C4 100nF + R22 10.0 Ohm damped shunt, C6 1.0nF, J2, D1..D4).
 *   Block 4: Ch2 4S Visible Constant-Current Buck Driver (U2 AL8860WT-7,
-*            R4 0.30 Ohm -> 333 mA, L2 68 uH, D10 B340A, C3 4.7uF, C9 100nF,
-*            C5 100nF + R23 6.8 Ohm damped shunt, C7 4.7nF, J3, D5..D8).
+*            R4 0.30 Ohm -> 333 mA, L2 68 uH, D10 MDD SS34, C3 1.0uF 0805, C9 100nF,
+*            C5 100nF + R23 10.0 Ohm damped shunt, C7 4.7nF, J3, D5..D8).
 * ==============================================================================
 
 .include sim/netlists/models.lib
 .include sim/netlists/al8860.lib
 
-* --- BLOCK 1: USB-C PD 20V SINK (USB-C ONLY — NO AUX BACK-FEED PATH) ---
-* J1: GCT USB4085-GF-A (pins VBUS, CC1, CC2, 0)
-R1 CC1 0 5.1k
-R2 CC2 0 5.1k
+* --- BLOCK 1: USB-C PD 20V SINK (WCH CH224A, DIRECT FUSED VIN_20V) ---
+* J1: GCT USB4085-GF-A (pins VBUS, CC1, CC2, 0; CH224A has internal 5.1k CC Rd)
 XD13 0 CC1 ESD_T24
 XD14 0 CC2 ESD_T24
-RF1 VBUS VBUS_FUSED 0.080
+RF1 VBUS VIN_20V 0.080
 * D11: SMBJ22A unidirectional 22V TVS (clamps positive surges & -1V negative)
-XD11 0 VBUS_FUSED TVS_SMBJ22A
-* Upstream VBUS bulk + overdamped RC damper (total 6.7 uF <= 10 uF USB-C spec)
-C1 VBUS_FUSED 0 1.0u
-R7 VBUS_FUSED VBUS_DAMP 1.0
+XD11 0 VIN_20V TVS_SMBJ22A
+* Overdamped RC damper (R7=1.0R, C10=4.7uF) + C11=1.0uF VHV bypass (total cSnk=8.0uF <= 10uF)
+R7 VIN_20V VBUS_DAMP 1.0
 C10 VBUS_DAMP 0 4.7u
-* U3 AP33771C 5 mOhm current sense & decoupling
-R8 VBUS_FUSED VBUS_SENSE 0.005
-C11 VBUS_SENSE 0 1.0u
-C12 U3_V5V 0 1.0u
-R9 U3_VSEL 0 39.0k
-R10 U3_ISEL 0 82.0k
-R12 VIN_20V U3_VOUT 200
-R13 U3_LED PD_LED_A 1.0k
-D12 PD_LED_A 0 D_LED_GRN_IND
-* Single 40 V Q1 DMN4035L-7 load switch with gate-to-GND slew limit (R11/C13) & bleed (R21)
-R11 U3_PWR_EN Q1_GATE 6.2k
-C13 Q1_GATE 0 47n
-R21 Q1_GATE 0 1.0Meg
-MQ1 VBUS_SENSE Q1_GATE VIN_20V VIN_20V DMN4035L
+C11 VIN_20V 0 1.0u
+* U3 WCH CH224A (VHV=Pin1 & VBUS=Pin8 shorted directly to VIN_20V; CFG1=Pin9 via R9=120k -> 20 V)
+I_u3 VIN_20V 0 1.8m
+R9 U3_CFG1 0 120k
+* CH224A PG (Pin 10) Red Status LED D12 with R13/R10 10k/10k divider (~1.6 mA @ 20 V)
+R13 VIN_20V PD_LED_A 10.0k
+R10 PD_LED_A 0 10.0k
+D12 PD_LED_A 0 D_LED_RED_IND
 
-* --- BLOCK 2: 0.90 V-HYSTERESIS UVLO & DIRECT DPDT ON-ON-ON MAXI-SWITCH ---
+* --- BLOCK 2: 0.83 V-HYSTERESIS UVLO & DIRECT DPDT ON-ON-ON MAXI-SWITCH ---
 R14 VIN_20V V_REF 10.0k
-XU5 V_REF 0 LM4040_2V5
-R15 VIN_20V UVLO_SENSE 59.0k
-R16 UVLO_SENSE 0 10.0k
+XU5 V_REF 0 TL431_2V5
+R15 VIN_20V UVLO_SENSE 30.0k
+R16 UVLO_SENSE 0 5.1k
 C15 UVLO_SENSE 0 100n
 C14 VIN_20V 0 100n
-* U4A: Master UVLO comparator with 0.90 V positive-feedback hysteresis (17.54 V ON / 16.64 V OFF)
-XU4A UVLO_SENSE V_REF UVLO_OK VIN_20V 0 LM393B_CH
+* U4A: Master UVLO comparator with 0.83 V positive-feedback hysteresis (17.48 V ON / 16.66 V OFF)
+XU4A UVLO_SENSE V_REF UVLO_OK VIN_20V 0 LM393_CH
 R17 VIN_20V UVLO_OK 100k
 R18 UVLO_OK 0 100k
-R19 UVLO_OK UVLO_SENSE 510k
-* U4B: Inverts UVLO_OK (0/10 V) against V_REF (2.50 V) -> drives Q2/Q3 UVLO pull-downs
-XU4B V_REF UVLO_OK UVLO_FAULT VIN_20V 0 LM393B_CH
-R20 V_REF UVLO_FAULT 47.0k
-MQ2 U1_CTRL UVLO_FAULT 0 0 BSS138_MOD
-MQ3 U2_CTRL UVLO_FAULT 0 0 BSS138_MOD
+R19 UVLO_OK UVLO_SENSE 270k
+* U4B: Inverts UVLO_OK (0/10 V) against V_REF (2.500 V) -> drives Q2/Q3 2N7002 via 56k/100k divider
+XU4B V_REF UVLO_OK UVLO_FAULT VIN_20V 0 LM393_CH
+R20 VIN_20V UVLO_FAULT 56.0k
+R21 UVLO_FAULT 0 100k
+MQ2 U1_CTRL UVLO_FAULT 0 0 NMOS_2N7002
+MQ3 U2_CTRL UVLO_FAULT 0 0 NMOS_2N7002
 
 * Direct Gold DPDT On-On-On Mode Switch via J4 (1:SW_UV_IN, 2:GND, 3:SW_VIS_IN)
-XD15 0 SW_UV_IN ESD_T05
-XD16 0 SW_VIS_IN ESD_T05
+XD15 0 V_REF SW_UV_IN ESD_BAV99
+XD16 0 V_REF SW_VIS_IN ESD_BAV99
 R5 SW_UV_IN U1_CTRL 1.0k
 R6 SW_VIS_IN U2_CTRL 1.0k
 
 * --- BLOCK 3: CHANNEL 1 — 4S UV-A 365 nm BUCK DRIVER (333 mA) ---
-C2 VIN_20V 0 4.7u
+C2 VIN_20V 0 1.0u
 C8 VIN_20V 0 100n
 R3 VIN_20V UV_POS 0.30
 C6 U1_CTRL 0 1.0n
 XU1 SW1_NODE 0 U1_CTRL UV_POS VIN_20V AL8860_WT
-D9 SW1_NODE VIN_20V D_B340A
+D9 SW1_NODE VIN_20V D_SS34
 L1 UV_NEG SW1_NODE 68u
 RL1_DCR UV_NEG UV_NEG_INT 0.29
 C4 UV_POS UV_C4_DAMP 100n
-R22 UV_C4_DAMP UV_NEG_INT 6.8
+R22 UV_C4_DAMP UV_NEG_INT 10.0
 * Off-board via J2 (1: UV_POS, 2: UV_NEG)
 D1 UV_POS UV_N1 D_SST10_UV
 D2 UV_N1 UV_N2 D_SST10_UV
@@ -91,16 +86,16 @@ D3 UV_N2 UV_N3 D_SST10_UV
 D4 UV_N3 UV_NEG_INT D_SST10_UV
 
 * --- BLOCK 4: CHANNEL 2 — 4S VISIBLE BUCK DRIVER (333 mA) ---
-C3 VIN_20V 0 4.7u
+C3 VIN_20V 0 1.0u
 C9 VIN_20V 0 100n
 R4 VIN_20V VIS_POS 0.30
 C7 U2_CTRL 0 4.7n
 XU2 SW2_NODE 0 U2_CTRL VIS_POS VIN_20V AL8860_WT
-D10 SW2_NODE VIN_20V D_B340A
+D10 SW2_NODE VIN_20V D_SS34
 L2 VIS_NEG SW2_NODE 68u
 RL2_DCR VIS_NEG VIS_NEG_INT 0.29
 C5 VIS_POS VIS_C5_DAMP 100n
-R23 VIS_C5_DAMP VIS_NEG_INT 6.8
+R23 VIS_C5_DAMP VIS_NEG_INT 10.0
 * Off-board via J3 (1: VIS_POS, 2: VIS_NEG)
 D5 VIS_POS VIS_N1 D_XPE2_RB
 D6 VIS_N1 VIS_N2 D_XPE2_RB
