@@ -430,8 +430,8 @@ def run_monte_carlo(n: int = 2000, seed: int = 20261120) -> dict:
     r16 = rng.normal(5.1e3, 5.1e3 * 0.01 / 3.0, n).clip(5.049e3, 5.151e3)
     r17 = rng.normal(100.0e3, 100.0e3 * 0.01 / 3.0, n).clip(99.0e3, 101.0e3)
     r18 = rng.normal(100.0e3, 100.0e3 * 0.01 / 3.0, n).clip(99.0e3, 101.0e3)
-    r19 = rng.normal(270.0e3, 270.0e3 * 0.01 / 3.0, n).clip(267.3e3, 272.7e3)
-    v_ref = rng.normal(2.500, 2.500 * 0.015 / 3.0, n).clip(2.4625, 2.5375)
+    r19 = rng.normal(220.0e3, 220.0e3 * 0.01 / 3.0, n).clip(217.8e3, 222.2e3)
+    v_ref = rng.normal(2.500, 2.500 * 0.010 / 3.0, n).clip(2.4750, 2.5250)  # CJ431 +/-0.5% @ 25 C, +/-1.0% over-temp
     v_io = rng.normal(0.0, 0.005 / 3.0, n).clip(-0.005, 0.005)
     v_on, v_off = uvlo_thresholds(r15, r16, r17, r18, r19, v_ref, v_io)
     v_hyst = v_on - v_off
@@ -555,10 +555,10 @@ def plot_results(mc_res: dict):
     tu = du[:, 0] * 1e3
     fig, axes = plt.subplots(2, 1, figsize=(10, 5.5), sharex=True)
     axes[0].plot(tu, du[:, 1], label="VIN_20V (through 0.30 Ohm source Z)", color="#c0392b", lw=1.5)
-    axes[0].axhline(17.48, color="#27ae60", ls="--", lw=0.9, label="V_ON = 17.48 V")
-    axes[0].axhline(16.66, color="#2980b9", ls=":", lw=0.9, label="V_OFF = 16.66 V (0.83 V Hyst)")
+    axes[0].axhline(17.55, color="#27ae60", ls="--", lw=0.9, label="V_ON = 17.55 V")
+    axes[0].axhline(16.53, color="#2980b9", ls=":", lw=0.9, label="V_OFF = 16.53 V (1.01 V Hyst)")
     axes[0].set_ylabel("Supply Voltage (V)")
-    axes[0].set_title("Hysteretic Hardware UVLO (LM393DR2G + TL431 + R24/C16) — Zero Chatter on Slow Ramp")
+    axes[0].set_title("Hysteretic Hardware UVLO (LM393DR2G + CJ431 + R19=220k + R24/C16) — Zero Chatter")
     axes[0].legend(loc="upper right", fontsize=8)
     axes[0].grid(True, alpha=0.3)
 

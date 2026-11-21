@@ -380,7 +380,7 @@ def solve_system(
     # - AL8860WT-7: Tj_max = 125 C derated (150 C abs)
     # - PLEXIGLAS XT 0A070 continuous service: <= 75 C (Vicat softening ~105 C)
     # - PETG housing HDT limit: 75.0 C (ASA HDT = 95.0 C)
-    # - Commercial IC ambient (U4 LM393DR2G / U5 Hottech TL431): 0..+70 C rated T_bay_air
+    # - Commercial IC ambient (U4 LM393DR2G 0..+70 C; U5 CJ431 -25..+85 C): 0..+70 C rated T_bay_air
     return dict(
         T_c_uv=T_c_uv,
         T_c_vis=T_c_vis,

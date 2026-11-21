@@ -36,7 +36,7 @@ C15 uvlo_sense 0 100n
 XU4A uvlo_sense v_ref uvlo_ok vin_20v 0 LM393_CH
 R17 vin_20v uvlo_ok 100k
 R18 uvlo_ok 0 100k
-R19 uvlo_ok uvlo_sense 270k
+R19 uvlo_ok uvlo_sense 220k
 XU4B v_ref uvlo_ok uvlo_fault vin_20v 0 LM393_CH
 R20 vin_20v uvlo_fault 56.0k
 R21 uvlo_fault 0 100k

@@ -3,8 +3,8 @@
   "architecture": "Rev 4.9 Field Lantern (Extruded XT PMMA \u00d860x54x115 + Unpainted Bare Mill 58.5mm Al Core + Convoy Cu DTP Stars + Unified M3 CSK)",
   "input_hashes": {
     "cad_params.json": "9e1faeac7d4320a0",
-    "sim_summary.json": "e34013129a1036cb",
-    "thermal_analysis.py": "24ddd0da9c9b7b7f"
+    "sim_summary.json": "61dfbf126aef6de0",
+    "thermal_analysis.py": "e5572a315ddc72d6"
   },
   "ssot_inputs": {
     "core_section_mm": "30x30x3.0",

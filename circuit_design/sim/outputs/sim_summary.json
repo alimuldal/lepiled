@@ -4,14 +4,14 @@
   "backend": "libngspice.so.0 (ctypes)",
   "all_passed": true,
   "input_hashes": {
-    "COMPONENT_IDS.csv": "5353dc20a5ce764c",
+    "COMPONENT_IDS.csv": "faafaf0a44649132",
     "models.lib": "b35a073eb204e367",
-    "lepiled_nominal.cir": "f58fec7f2eebee41",
-    "lepiled_fault_uvlo_sweep.cir": "d85d1e414b176324",
+    "lepiled_nominal.cir": "be50f5a2dcb6b8ce",
+    "lepiled_fault_uvlo_sweep.cir": "fdfc46d1b52099ff",
     "lepiled_fault_open_led.cir": "a15eefec36403c0d",
     "lepiled_fault_short_led.cir": "08f224b94c8c8e87",
     "lepiled_fault_input_prot.cir": "112c5ad7ec432f99",
-    "lepiled_fault_hotplug_85c.cir": "2a2ca37312e79e11"
+    "lepiled_fault_hotplug_85c.cir": "8f5167fd7b874b9b"
   },
   "thermal_export": {
     "p_pcb_nom_W": 0.508,
@@ -53,19 +53,19 @@
   "ngspice_nominal": {
     "i_uv_off": 0.0,
     "i_vis_off": 0.0,
-    "i_uv_4uv": 0.331375,
+    "i_uv_4uv": 0.331388,
     "i_vis_4uv": 0.0,
-    "i_in_4uv": -0.268592,
-    "i_uv_8all": 0.330395,
-    "i_vis_8all": 0.335699,
-    "i_in_8all": -0.474102,
+    "i_in_4uv": -0.268561,
+    "i_uv_8all": 0.330412,
+    "i_vis_8all": 0.335787,
+    "i_in_8all": -0.474189,
     "il1_pk": 0.40367,
     "il2_pk": 0.407456,
     "i_uv_pp": 0.111795,
     "i_vis_pp": 0.12333,
     "vin_8all": 19.9291,
     "vin_pp": 0.124129,
-    "vref_nom": 2.50864,
+    "vref_nom": 2.50863,
     "vsw1_max": 20.5851,
     "vsw2_max": 20.6175
   },
@@ -75,15 +75,15 @@
     "vctrl_1575v": 2.2e-05,
     "i_uv_1575v": 0.0,
     "i_vis_1575v": 0.0,
-    "i_uv_19v": 0.330643,
-    "i_vis_19v": 0.336349,
-    "t_uvlo_on": 0.007358,
-    "v_uvlo_on": 17.6481,
-    "t_uvlo_off": 0.02232,
-    "v_uvlo_off": 16.5579,
-    "v_ok_min_post": 8.06898,
-    "i_uv_end_off": 6e-06,
-    "v_uvlo_hyst": 1.0902
+    "i_uv_19v": 0.330787,
+    "i_vis_19v": 0.336694,
+    "t_uvlo_on": 0.007567,
+    "v_uvlo_on": 17.7108,
+    "t_uvlo_off": 0.022597,
+    "v_uvlo_off": 16.4574,
+    "v_ok_min_post": 7.89215,
+    "i_uv_end_off": 7e-06,
+    "v_uvlo_hyst": 1.2534
   },
   "ngspice_open_led": {
     "vsw1_pk_open": 0.091138,
@@ -242,28 +242,28 @@
       "max": 71.803
     },
     "v_uvlo_on_V": {
-      "mean": 17.483,
-      "std": 0.113,
-      "min": 17.145,
-      "p01": 17.233,
-      "p99": 17.746,
-      "max": 17.879
+      "mean": 17.546,
+      "std": 0.092,
+      "min": 17.247,
+      "p01": 17.337,
+      "p99": 17.763,
+      "max": 17.888
     },
     "v_uvlo_off_V": {
-      "mean": 16.659,
-      "std": 0.107,
-      "min": 16.338,
-      "p01": 16.422,
-      "p99": 16.906,
-      "max": 17.032
+      "mean": 16.563,
+      "std": 0.085,
+      "min": 16.291,
+      "p01": 16.37,
+      "p99": 16.765,
+      "max": 16.882
     },
     "v_uvlo_hyst_V": {
-      "mean": 0.824,
-      "std": 0.007,
-      "min": 0.799,
-      "p01": 0.808,
-      "p99": 0.842,
-      "max": 0.849
+      "mean": 0.983,
+      "std": 0.008,
+      "min": 0.956,
+      "p01": 0.965,
+      "p99": 1.002,
+      "max": 1.01
     }
   }
 }

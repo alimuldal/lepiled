@@ -35,10 +35,19 @@ def run_step(cmd: list[str], label: str) -> None:
 def audit_gerbers() -> list[str]:
     errs: list[str] = []
     gerb_dir = REPO_ROOT / "pcb_design" / "gerbers" / "driver_pcb"
-    # H1..H4 in global board coords (100+x, 100-y) -> KiCad Gerber coords (x+100, y-100) where Y is inverted
-    # Match exact centers audited by build_driver_pcb.py: (86,-81), (114,-81), (86,-119), (114,-119)
-    npth_holes = [(86.0, -81.0), (114.0, -81.0), (86.0, -119.0), (114.0, -119.0)]
-    dnp_pads = [(88.50, -116.40), (90.70, -116.40), (94.30, -116.40), (96.50, -116.40)]
+    # Read exact H1..H4 NPTH hole coordinates directly from exported Excellon NPTH drill file (board-center origin)
+    npth_path = gerb_dir / "driver_pcb-NPTH.drl"
+    npth_holes: list[tuple[float, float]] = []
+    if not npth_path.is_file():
+        errs.append(f"Missing NPTH drill file: {npth_path}")
+    else:
+        for line in npth_path.read_text(encoding="utf-8").splitlines():
+            m = re.match(r"^X([+-]?\d+(?:\.\d+)?)Y([+-]?\d+(?:\.\d+)?)$", line.strip())
+            if m:
+                npth_holes.append((float(m.group(1)), float(m.group(2))))
+        if len(npth_holes) != 4:
+            errs.append(f"Expected 4 NPTH holes in driver_pcb-NPTH.drl, found {len(npth_holes)}")
+    dnp_centers = [(6.90, -20.55), (9.20, -20.55)]
 
     def parse_gerber_pts(path: Path) -> list[tuple[float, float]]:
         scale = 1e-6
@@ -75,8 +84,8 @@ def audit_gerbers() -> list[str]:
     else:
         pts = parse_gerber_pts(p_paste)
         for px, py in pts:
-            for dx, dy in dnp_pads:
-                if math.hypot(px - dx, py - dy) < 0.60:
+            for dx, dy in dnp_centers:
+                if abs(px - dx) < 1.2 and abs(py - dy) < 1.8:
                     errs.append(f"Gerber F_Paste: solder paste found on DNP footprint D13/D14 at ({px:.2f},{py:.2f})!")
                     break
     return errs
@@ -207,6 +216,8 @@ def check_all() -> int:
         "28.3 mm",
         "lightpipe",
         "M2.5",
+        "C181103",
+        "C22965",
     ]
     for doc_p in active_docs:
         txt = doc_p.read_text(encoding="utf-8")

@@ -2,7 +2,7 @@
   "revision": "Rev 4.8 (Field Lantern: Serviceable Lid-Mounted PCB, Sealed Lofted Collar, Staggered Anchor, Blind Conical Clamp & PETG/ASA Tolerance)",
   "input_hashes": {
     "params.py": "81373326a4842953",
-    "driver_pcb.kicad_pcb": "5c350cbaf180aae0"
+    "driver_pcb.kicad_pcb": "a7f1cd15daf95a27"
   },
   "params": {
     "process": "FDM",

@@ -9,7 +9,7 @@ The lamp runs exclusively from a **20 V USB-C PD** power source (laptop charger 
 | **Power Input** | 20 V USB-C PD (`0.453 A` / `9.06 W` nominal in `8-ALL`; `0.573 A` worst-case corner) |
 | **LED Drive Current** | `333 mA` nominal constant-current per 4S string (`AL8860WT-7` hysteretic buck) |
 | **Driver PCB Loss & Efficiency** | **`0.508 W`** nominal PCB dissipation (`0.842 W` worst-case corner), **`94.1%`** system efficiency |
-| **Hardware UVLO** | `17.48 V` ON / `16.66 V` OFF (`0.83 V` hysteresis; SPICE `17.65 / 16.56 V`, zero chatter across `0.30 Ω` source Z) |
+| **Hardware UVLO** | `17.55 V` ON / `16.56 V` OFF (`0.98 V` nominal hysteresis; SPICE `17.71 / 16.46 V`, zero chatter across `0.30 Ω` source Z) |
 | **Mode Switching** | Direct gold-contact `DPDT On-On-On` toggle (`OFF` / `4-UV` / `8-ALL`) |
 | **Component Count** | `72` RefDes (`54` PCBA = `41` JLCPCB SMD + `11` DIY [`4` THT `J1..J4` + `7` chunky SMDs] + `2` DNP `D13/D14`; `4` isolated `M3` NPTH `H1..H4`; `4` bare HASL test pads `TP1..TP4`; `10` off-board) |
 
@@ -35,9 +35,9 @@ For the history of earlier revisions and Rev 4.9 value engineering, see [DESIGN_
 ### Block 2 — Hysteretic Hardware UVLO, Damped `V_REF` ESD Sink & Mode Switch
 - **Hysteretic UVLO (`U4`, `U5`, `R14–R21`, `R24`, `C14–C16`, `Q2`, `Q3`):**
   - Keeps both LED drivers off whenever a charger falls back to `5 / 9 / 12 / 15 V`.
-  - `U5` (`Hottech TL431`, `2.500 V ±1%`, `0..+70 °C` commercial rating, biased via `R14 = 10 kΩ`) provides `V_REF`.
-  - **Damped ESD Bypass (`R24 = 10.0 Ω` `0805` Basic `C17415` + `C16 = 100 nF` `0603` Basic `C14663`):** Absorbs positive ESD pulses shunted by `D15`/`D16` right at `V_REF` while keeping `Q <= 1` critical damping (guaranteed unconditional `TL431` loop stability outside Curve A's oscillation region) AND keeping `τ_VREF = 1.0 ms < 3.0 ms = τ_UVLO_SENSE` (zero startup false-trigger!).
-  - `U4A` (`onsemi LM393DR2G`, `SOIC-8` Basic, `0..+70 °C`; drop-in industrial alt `LM2903DR2G` `C57474`) compares `VIN_20V` via `R15 = 30.0 kΩ`, `R16 = 5.1 kΩ`, `C15 = 100 nF`, `R17/R18 = 100 kΩ/100 kΩ`, and `R19 = 270 kΩ` (`V_ON = 17.48 V`, `V_OFF = 16.66 V`, `0.83 V` hysteresis).
+  - `U5` (`Changjing CJ431`, live-verified JLCPCB Basic `C3113`, `2.500 V ±0.5%`, `-25..+85 °C`, `1=REF, 2=K, 3=A`, biased via `R14 = 10 kΩ`) provides `V_REF`.
+  - **Damped ESD Bypass (`R24 = 10.0 Ω` `0805` Basic `C17415` + `C16 = 100 nF` `0603` Basic `C14663`):** Absorbs positive ESD pulses shunted by `D15`/`D16` right at `V_REF` while keeping `Q <= 1` critical damping (guaranteed unconditional `431` loop stability outside Curve A's oscillation region) AND keeping `τ_VREF = 1.0 ms < 3.0 ms = τ_UVLO_SENSE` (zero startup false-trigger!).
+  - `U4A` (`onsemi LM393DR2G`, `SOIC-8` Basic `C7955`, `0..+70 °C`; drop-in industrial alt `LM2903DR2G` `C57474`) compares `VIN_20V` via `R15 = 30.0 kΩ`, `R16 = 5.1 kΩ`, `C15 = 100 nF`, `R17/R18 = 100 kΩ/100 kΩ`, and `R19 = 220 kΩ` (live-verified Basic `C22961`) (`V_ON = 17.55 V`, `V_OFF = 16.56 V`, `0.98 V` nominal hysteresis).
   - `U4B` inverts `UVLO_OK` to `UVLO_FAULT` (`R20 = 56.0 kΩ` / `R21 = 100 kΩ` divider: `3.21 V` at `5 V`, `<= 15.39 V` during `85 °C` hot-plug) driving `Q2`/`Q3` (`2N7002`) to clamp `U1_CTRL`/`U2_CTRL` below `0.1 mV` under UVLO.
 - **Direct Gold Dry-Circuit Mode Switch (`SW1`, `SW1_BOOT`, `J4`, `R5`, `R6`, `D15`, `D16`):**
   - `SW1` (`C&K 7211SYZBE` gold `DPDT On-On-On` + `759D02000` silicone boot) wires directly to `J4` (`1:SW_UV_IN`, `2:GND`, `3:SW_VIS_IN`), protected by `D15`/`D16` (`BAV99`) and `R5`/`R6` (`1.0 kΩ`).
@@ -51,6 +51,6 @@ For the history of earlier revisions and Rev 4.9 value engineering, see [DESIGN_
 
 ## 3. Verification Summary ([sim_summary.json](../circuit_design/sim/outputs/sim_summary.json))
 
-- **6 `ngspice` Benches (`libngspice.so.0`):** **16/16 checks PASS** — nominal `I_UV = 330.4 mA`, `I_VIS = 335.7 mA`, `VIN_pp = 124.1 mV`, `V_REF = 2.509 V`; zero UVLO chatter across a `0.30 Ω` ramp (`17.65 V / 16.56 V`, `V_OK_min_post = 8.07 V`); `85 °C` `21 V` hot-plug (with real TVS `TBV1`) `V_pk = 26.67 V`, `F1_pk = 29.02 A (< 50 A)`, `I²t = 0.00270 A²s (107× margin)`, `R7_pk = 208.2 W (< 600 W 2512)`, `V_GS_pk = 15.39 V`; cold `21 V` hot-plug `40.43 A (< 50 A)`; `5 V` attach `9.45 A`; negative transient `-2.27 V`; open-LED live-reconnect `0.418 A / 0.709 A`; shorted-LED `339.4 mA`.
+- **6 `ngspice` Benches (`libngspice.so.0`):** **16/16 checks PASS** — nominal `I_UV = 330.4 mA`, `I_VIS = 335.7 mA`, `VIN_pp = 124.1 mV`, `V_REF = 2.509 V`; zero UVLO chatter across a `0.30 Ω` ramp (`17.71 V / 16.46 V`, `1.25 V` hyst, `V_OK_min_post = 7.89 V`); `85 °C` `21 V` hot-plug (with real TVS `TBV1`) `V_pk = 26.67 V`, `F1_pk = 29.02 A (< 50 A)`, `I²t = 0.00270 A²s (107× margin)`, `R7_pk = 208.2 W (< 600 W 2512)`, `V_GS_pk = 15.39 V`; cold `21 V` hot-plug `40.43 A (< 50 A)`; `5 V` attach `9.45 A`; negative transient `-2.27 V`; open-LED live-reconnect `0.418 A / 0.709 A`; shorted-LED `339.4 mA`.
 - **Datasheet Corner Sweep (`18.5–21.5 V`, `-10..+55 °C`, `T_bay = T_amb + 15 °C`, `Bourns SRN6045-680M` & `OSRAM CSLNM1` tolerances):** **`2,565 / 2,565 PASS`** (`P_PCB_max = 0.842 W`, `I_in_max = 0.573 A`, `T_j,max = 84.8 °C`).
-- **Full-Parameter Monte Carlo (`N = 2,000`):** **`2,000 / 2,000 (100.0%) PASS`** (`I_UV = 329.9 ± 4.5 mA`, `I_VIS = 332.0 ± 4.6 mA`, `P_PCB = 0.531 W` mean, `94.1%` mean efficiency, `V_ON ∈ [17.15, 17.88] V`, `V_OFF ∈ [16.34, 17.03] V`).
+- **Full-Parameter Monte Carlo (`N = 2,000`):** **`2,000 / 2,000 (100.0%) PASS`** (`I_UV = 329.9 ± 4.5 mA`, `I_VIS = 332.0 ± 4.6 mA`, `P_PCB = 0.531 W` mean, `94.1%` mean efficiency, `V_ON ∈ [17.25, 17.89] V`, `V_OFF ∈ [16.29, 16.88] V`).

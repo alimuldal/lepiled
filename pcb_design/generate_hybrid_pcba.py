@@ -54,7 +54,7 @@ HYBRID_DNP_EXCLUDE: dict[str, str] = {
 # 3. Basic swaps map (empty in Rev 4.9; all 20 Basic + 2 Extended LCSC codes are canonical).
 HYBRID_BASIC_SWAPS: dict[str, dict[str, str]] = {}
 
-HYBRID_BOM_COLS = ["Comment", "Designator", "Footprint", "LCSC Part #", "MPN", "Hybrid_Note"]
+HYBRID_BOM_COLS = ["Comment", "Designator", "Footprint", "JLCPCB Part #", "MPN", "Hybrid_Note"]
 DIY_BOM_COLS = ["Comment", "Designator", "Footprint", "MPN", "Assembly_Method", "DIY_Reason"]
 
 

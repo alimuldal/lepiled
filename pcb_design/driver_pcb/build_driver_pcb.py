@@ -1001,7 +1001,7 @@ def write_kicad_sch(syms, comp_rows):
     }
 
     short_val = {
-        "U1": "AL8860WT-7", "U2": "AL8860WT-7", "U3": "CH224A", "U4": "LM393DR2G", "U5": "TL431",
+        "U1": "AL8860WT-7", "U2": "AL8860WT-7", "U3": "CH224A", "U4": "LM393DR2G", "U5": "CJ431",
         "Q2": "2N7002", "Q3": "2N7002",
         "F1": "1.5A/63V",
         "D1": "SST-10-UV", "D2": "SST-10-UV", "D3": "SST-10-UV", "D4": "SST-10-UV",
@@ -1013,7 +1013,7 @@ def write_kicad_sch(syms, comp_rows):
         "R5": "1.0k", "R6": "1.0k", "R7": "1.0R 1W",
         "R9": "120k", "R10": "10.0k",
         "R13": "10.0k", "R14": "10.0k", "R15": "30.0k", "R16": "5.1k",
-        "R17": "100k", "R18": "100k", "R19": "270k", "R20": "56.0k",
+        "R17": "100k", "R18": "100k", "R19": "220k", "R20": "56.0k",
         "R21": "100k", "R22": "10.0R", "R23": "10.0R", "R24": "10.0R",
         "C2": "1uF/50V", "C3": "1uF/50V", "C4": "100nF", "C5": "100nF",
         "C6": "1.0nF", "C7": "4.7nF", "C8": "100nF", "C9": "100nF", "C10": "4.7uF/50V",
@@ -2736,15 +2736,15 @@ def build_board(fp_map, short_val, comp_rows):
 
 # Verified JLCPCB/EasyEDA rotation offsets (degrees added CCW to raw KiCad angle) per custom footprint:
 #   - Diodes_TSOT25_AL8860 (C125330): our 0° = Pin 1 TL; EasyEDA SOT-23-5_...-BR = Pin 1 BR -> +180°
-#   - WCH_ESSOP-10_CH224A (C42459160): our 0° = Pin 1 TL; EasyEDA ESSOP-10_...-TL-EP = Pin 1 TL -> 0°
+#   - WCH_ESSOP-10_CH224A (C42459160): our 0° = Pin 1 TL (vertical); live JLCPCB 3D preview uses horiz BL -> +270°
 #   - TI_SOIC-8_LM393B (C7955): our 0° = Pin 1 TL (vertical); EasyEDA SOIC-8_...-BL (horiz) -> +270° (-90°)
-#   - SOT-23-3 (C181103/C8545/C2500): our 0° = 1=BL, 2=BR, 3=TC (= KiCad SOT-23 +90°);
+#   - SOT-23-3 (C3113/C8545/C2500): our 0° = 1=BL, 2=BR, 3=TC (= KiCad SOT-23 +90°);
 #     EasyEDA SOT-23-3_...-BR (= KiCad +180°) rotated +270° (-90°) -> 1=BL, 2=BR, 3=TC -> +270°
 #   - 2-pin diodes (C8678 SMA-RD, C2286 LED-0603-RD, SMB, SOD-323): our 0° = Cathode Left (-X),
 #     matching EasyEDA -RD (Reverse Direction = Cathode Left) natively -> 0°
 JLCPCB_ROT_OFFSET = {
     "Diodes_TSOT25_AL8860": 180.0,
-    "WCH_ESSOP-10_CH224A": 0.0,
+    "WCH_ESSOP-10_CH224A": 270.0,
     "TI_SOIC-8_LM393B": 270.0,
     "SOT-23-3": 270.0,
     "D_SMA_DO-214AC": 0.0,
@@ -2753,17 +2753,17 @@ JLCPCB_ROT_OFFSET = {
     "LED_0603": 0.0,
 }
 
-# 100% live-verified JLCPCB in-stock LCSC Part #s (Rev 4.8 Low-Hassle Full-SMD ENIG PCBA: 20 Basic + 7 Extended!)
+# 100% live-verified JLCPCB in-stock LCSC Part #s (Rev 4.9 2-Reel Hybrid HASL PCBA: 20 Basic + ONLY 2 Extended!)
 LCSC_MAP = {
-    "Diodes AL8860WT-7": "C125330",         # Verified In-Stock Extended: AL8860WT-7 TSOT-25
-    "WCH CH224A": "C42459160",              # Verified In-Stock Extended: CH224A ESSOP-10 (1.0 mm leaded)
+    "Diodes AL8860WT-7": "C125330",         # Verified In-Stock Extended 1/2: AL8860WT-7 TSOT-25
+    "WCH CH224A": "C42459160",              # Verified In-Stock Extended 2/2: CH224A ESSOP-10 (1.0 mm leaded)
     "Littelfuse 046801.5NRHF": "C151143",   # Offloaded DIY 1206 Slo-Blo fuse (Farnell UK; LCSC ref retained)
     "Bourns SRN6045-680M": "",              # Offloaded DIY 6045 inductor (Farnell UK)
     "Littelfuse SMBJ22A": "",               # Offloaded DIY SMB TVS (Farnell UK)
     "Bourns CRL1206-FW-R300ELF": "",        # Offloaded DIY 1206 0.30R shunt (Farnell UK)
     "Vishay CRCW25121R00FKEG": "",          # Offloaded DIY 2512 1W pulse resistor (Farnell UK)
     "onsemi LM393DR2G": "C7955",            # Verified In-Stock Basic: LM393DR2G SOIC-8
-    "Hottech TL431": "C181103",             # Verified In-Stock Basic: TL431 SOT-23 (1=REF, 2=K, 3=A)
+    "Changjing CJ431": "C3113",             # Live-Verified In-Stock Basic: CJ431 SOT-23 +/-0.5% -25..+85 C (1=REF, 2=K, 3=A)
     "Changjing 2N7002": "C8545",            # Verified In-Stock Basic: 2N7002 SOT-23
     "MDD SS34": "C8678",                    # Verified In-Stock Basic: SS34 3A/40V SMA
     "KENTO KT-0603R": "C2286",              # Verified In-Stock Basic: Red 0603 LED
@@ -2780,7 +2780,7 @@ LCSC_MAP = {
     "UNI-ROYAL 0603WAF3002T5E": "C22984",   # Verified In-Stock Basic: 30.0k 0603 1%
     "UNI-ROYAL 0603WAF5101T5E": "C23186",   # Verified In-Stock Basic: 5.1k 0603 1%
     "UNI-ROYAL 0603WAF1003T5E": "C25803",   # Verified In-Stock Basic: 100k 0603 1%
-    "UNI-ROYAL 0603WAF2703T5E": "C22965",   # Verified In-Stock Basic: 270k 0603 1%
+    "UNI-ROYAL 0603WAF2203T5E": "C22961",   # Live-Verified In-Stock Basic: 220k 0603 1% (1.01 V UVLO hyst)
     "UNI-ROYAL 0603WAF5602T5E": "C23206",   # Verified In-Stock Basic: 56.0k 0603 1%
     "UNI-ROYAL 0805W8F100JT5E": "C17415",   # Verified In-Stock Basic: 10.0R 0805 1%
 }
@@ -3050,34 +3050,18 @@ def verify_and_export(comp_rows, fp_map, short_val):
 
     subprocess.run(
         [KCLI, "pcb", "export", "svg", "-o", str(RENDER_DIR / "assembly_map.svg"),
-         "-l", "F.Fab,F.CrtYd,Edge.Cuts", "--mode-single", "--black-and-white",
-         "--sketch-pads-on-fab-layers", "--page-size-mode", "2", "--exclude-drawing-sheet", str(pcb_path)],
+         "-l", "F.Fab,F.SilkS,Edge.Cuts", "--mode-single", "--black-and-white",
+         "--sketch-pads-on-fab-layers", "--crossout-DNP-footprints-on-fab-layers",
+         "--page-size-mode", "2", "--exclude-drawing-sheet", str(pcb_path)],
         check=True,
     )
-    if shutil.which("rsvg-convert"):
-        subprocess.run(
-            ["rsvg-convert", "-f", "pdf", "-z", "5.0",
-             "-o", str(RENDER_DIR / "assembly_map.pdf"), str(RENDER_DIR / "assembly_map.svg")],
-            check=True,
-        )
-    else:
-        b_plot = pcbnew.LoadBoard(str(pcb_path))
-        pc = pcbnew.PLOT_CONTROLLER(b_plot)
-        po = pc.GetPlotOptions()
-        po.SetOutputDirectory(str(RENDER_DIR))
-        po.SetPlotFrameRef(False)
-        po.SetAutoScale(True)
-        po.SetPlotValue(False)
-        po.SetPlotReference(True)
-        po.SetBlackAndWhite(True)
-        pc.OpenPlotfile("assembly_map", pcbnew.PLOT_FORMAT_PDF, "Assembly Map")
-        for lyr_id in (pcbnew.F_Fab, pcbnew.F_CrtYd, pcbnew.Edge_Cuts):
-            pc.SetLayer(lyr_id)
-            pc.PlotLayer()
-        pc.ClosePlot()
-        gen_pdf = RENDER_DIR / "driver_pcb-assembly_map.pdf"
-        if gen_pdf.exists():
-            gen_pdf.replace(RENDER_DIR / "assembly_map.pdf")
+    subprocess.run(
+        [KCLI, "pcb", "export", "pdf", "-o", str(RENDER_DIR / "assembly_map.pdf"),
+         "-l", "F.Fab,F.SilkS,Edge.Cuts", "--mode-single", "--black-and-white",
+         "--exclude-value", "--sketch-pads-on-fab-layers", "--crossout-DNP-footprints-on-fab-layers",
+         "--scale", "0", "--bg-color", "#ffffff", str(pcb_path)],
+        check=True,
+    )
     subprocess.run(
         [KCLI, "pcb", "export", "svg", "-o", str(RENDER_DIR / "board.svg"),
          "-l", "F.Cu,B.Cu,F.SilkS,B.SilkS,Edge.Cuts", "--mode-single",
