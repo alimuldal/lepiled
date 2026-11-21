@@ -145,7 +145,11 @@ def render_section_annotated(
         if plane == "XZ" and k == "usbc_cable":
             continue
         st = PART_STYLES[k]
-        clipped = mesh.clip_box(bounds=bounds, invert=False)
+        # Keep external USB-C drip loop & upward cable visible in YZ section (centered at X = +2.5 in C-clip)
+        if plane == "YZ" and k == "usbc_cable":
+            clipped = mesh.clip_box(bounds=(-100, 10, bounds[2], bounds[3], bounds[4], bounds[5]), invert=False)
+        else:
+            clipped = mesh.clip_box(bounds=bounds, invert=False)
         if clipped.n_cells > 0:
             op = 0.34 if k == "glass_tube" else 1.0
             pl.add_mesh(clipped, color=st["color"], opacity=op, smooth_shading=False, show_edges=False)
@@ -183,12 +187,12 @@ def render_section_annotated(
         _draw_vdim(ax, 82.0, 0.0, p.z_cap_bot_top, f"{p.z_cap_bot_top:.1f} mm\nnosecone", x_ref0=r_tip, x_ref1=r_col, text_dx=3.5, ha="left", fontsize=8.4)
         _draw_hdim(ax, p.z_cap_top_top + 7.5, -r_eaves, r_eaves, f"Ø{p.cap_top_eaves_od:.0f} mm rain eaves", z_ref0=p.z_cap_top_eaves_top, z_ref1=p.z_cap_top_eaves_top, text_dz=3.0, va="bottom", fontsize=8.3)
 
-        _draw_callout(ax, (-15.0, p.z_core_top + 8.0), (-64.0, p.z_plug_top_end + 4.0), "Ventilated rain finial\n(4 exhaust ports + mesh)", ha="right")
+        _draw_callout(ax, (-15.0, p.z_core_top + 8.0), (-64.0, p.z_plug_top_end + 4.0), "Ventilated rain finial\n(4 open exhaust ports)", ha="right")
         _draw_callout(ax, (20.0, p.z_hang_hole), (66.0, p.z_hang_hole - 2.0), "M4 × 50 mm hanging bolt\n+ 2× spools & wire bail")
         _draw_callout(ax, (26.0, p.pcb_z_center + 4.0), (68.0, 232.0), "Driver PCB (36 × 46 mm)\n+X face, captive 15×15 mm pad/shims")
         _draw_callout(ax, (-52.0, p.sw1_z), (-68.0, 214.0), "SW1 toggle + silicone boot\n(-X draining cove + visor)", ha="right")
         _draw_callout(ax, (18.0, p.z_led_uv), (66.0, 128.0), "8× 20 mm Cu DTP stars\n(2-part thermal epoxy)")
-        _draw_callout(ax, (20.0, p.z_bot_bolt), (66.0, 52.0), "M4 × 50 mm nosecone bolt\n+ bottom stainless mesh")
+        _draw_callout(ax, (20.0, p.z_bot_bolt), (66.0, 52.0), "M4 × 50 mm nosecone bolt\n+ open chimney inlet")
     else:
         _draw_hdim(ax, p.z_plug_top_end + 44.0, -r_core, r_core, f"{p.core_w_nom:.0f} × {p.core_wall:.0f} mm Al core", z_ref0=p.z_core_top, z_ref1=p.z_core_top, text_dz=3.0, va="bottom")
         _draw_vdim(ax, -82.0, 0.0, p.z_cap_bot_top, f"{p.z_cap_bot_top:.1f} mm\nnosecone", x_ref0=-r_tip, x_ref1=-r_col, text_dx=-3.0, ha="right", fontsize=8.3)
@@ -201,7 +205,7 @@ def render_section_annotated(
         _draw_callout(ax, (60.5, 176.0), (76.0, 190.0), "+Y flexible eaves C-clip\n+ zip-tie slot")
         _draw_callout(ax, (66.5, 137.0), (76.0, 146.0), "20 mm drip loop\n+ compressing clamp")
         _draw_callout(ax, (-36.0, 142.0), (-60.0, 224.0), "-Y downward breather vent\n(flat bay-floor patch)", ha="right")
-        _draw_callout(ax, (-19.0, 130.0), (-60.0, 190.0), "±Y 9.0 × 7.5 mm wire slots\n(uncrossed to J2/J3)", ha="right")
+        _draw_callout(ax, (-19.0, 130.0), (-60.0, 190.0), "±Y 9.0 × 6.5 mm wire slots\n(uncrossed to J2/J3)", ha="right")
         _draw_callout(ax, (-28.0, 16.0), (-58.0, 52.0), "45° tapered nosecone\n(open chimney inlet)", ha="right")
 
     mass_text = (
@@ -225,8 +229,9 @@ def render_section_annotated(
     plt.close(fig)
 
 
-def render_part_detail(stl_path: Path, title: str, z_mid: float, out_path: Path, color: str = "#f3f6f9") -> None:
+def render_part_detail(stl_path: Path, title: str, out_path: Path, color: str = "#f3f6f9") -> None:
     mesh = pv.read(str(stl_path))
+    z_mid = 0.5 * (mesh.bounds[4] + mesh.bounds[5])
     pl = pv.Plotter(off_screen=True, shape=(1, 2), window_size=(1600, 800))
     pl.set_background(BG_COLOR)
 
@@ -268,9 +273,9 @@ def main() -> None:
         plane="YZ",
         out_path=cad_dir / "assembly_section_yz.png",
     )
-    render_part_detail(cad_dir / "mech_cap_bot.stl", "MECH-CAP-BOT — Open-Chimney Bottom Nosecone", 17.0, cad_dir / "cap_bot_detail.png")
-    render_part_detail(cad_dir / "mech_top_base.stl", "MECH-TOP-BASE — Top Electronics Chassis", 170.0, cad_dir / "top_base_detail.png")
-    render_part_detail(cad_dir / "mech_cap_top.stl", "MECH-CAP-TOP — Top Weatherproof Rain Bell", 214.0, cad_dir / "cap_top_detail.png")
+    render_part_detail(cad_dir / "mech_cap_bot.stl", "MECH-CAP-BOT — Open-Chimney Bottom Nosecone", cad_dir / "cap_bot_detail.png")
+    render_part_detail(cad_dir / "mech_top_base.stl", "MECH-TOP-BASE — Top Electronics Chassis", cad_dir / "top_base_detail.png")
+    render_part_detail(cad_dir / "mech_cap_top.stl", "MECH-CAP-TOP — Top Weatherproof Rain Bell", cad_dir / "cap_top_detail.png")
     print("Rendered all 6 CAD PNGs cleanly.")
 
 

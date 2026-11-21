@@ -178,10 +178,10 @@ def main() -> int:
     if len(bom_harn_rows) != 4:
         fail(f"Expected 4 Harness rows, got {len(bom_harn_rows)}")
 
-    # 4. Mechanical 21-Part 1:1 Parity (6 printed + 15 purchased/owned)
+    # 4. Mechanical 20-Part 1:1 Parity (6 printed + 14 purchased/owned)
     mech_by_id = {r["Part_ID"].strip(): r for r in mech_rows}
-    if len(mech_by_id) != 21:
-        fail(f"MECH_PARTS.csv expected 21 rows, got {len(mech_by_id)}")
+    if len(mech_by_id) != 20:
+        fail(f"MECH_PARTS.csv expected 20 rows, got {len(mech_by_id)}")
 
     bom_mech_primary = [r for r in bom_rows if r["Domain"] == "Mechanical"]
     printed_ids = {
@@ -278,11 +278,11 @@ def main() -> int:
     )
     net_o = tot_o - owned_ex
 
-    print("PASS: bom/bom.csv verified 1:1 across Rev 6.0 (72 RefDes, 54 PCBA = 41 JLCPCB SMD + 11 DIY + 2 DNP, 4 Harness, 1 HASL PCB, 21 MECH-*, all Datasheet_Ref verified)")
+    print("PASS: bom/bom.csv verified 1:1 across Rev 6.0 (72 RefDes, 54 PCBA = 41 JLCPCB SMD + 11 DIY + 2 DNP, 4 Harness, 1 HASL PCB, 20 MECH-*, all Datasheet_Ref verified)")
     print(f"  Electrical (72 RefDes incl. 8x Convoy Cu DTP):  1-Off = £{elec_o:.2f} ex VAT (£{round2(elec_o * VAT_RATE):.2f} inc VAT) | Amort = £{elec_a:.2f} ex VAT")
     print(f"  Harness (JST-XH + 2m UV silicone + 2m USB-C):   1-Off = £{harn_o:.2f} ex VAT (£{round2(harn_o * VAT_RATE):.2f} inc VAT) | Amort = £{harn_a:.2f} ex VAT")
     print(f"  PCB Fab (HASL) + 2-Reel Hybrid PCBA (2-pc min): 1-Off = £{pcb_o:.2f} ex VAT (£{round2(pcb_o * VAT_RATE):.2f} inc VAT) | Amort = £{pcb_a:.2f} ex VAT")
-    print(f"  Mechanical (XT PMMA + Epoxy + Anod. Al, 21):    1-Off = £{mech_o:.2f} ex VAT (£{round2(mech_o * VAT_RATE):.2f} inc VAT) | Amort = £{mech_a:.2f} ex VAT")
+    print(f"  Mechanical (XT PMMA + Epoxy + Anod. Al, 20):    1-Off = £{mech_o:.2f} ex VAT (£{round2(mech_o * VAT_RATE):.2f} inc VAT) | Amort = £{mech_a:.2f} ex VAT")
     print(f"  TOTAL Rev 6.0 Parts-Only (All Purchased New):   1-Off = £{tot_o:.2f} ex VAT (£{round2(tot_o * VAT_RATE):.2f} inc VAT) | Amort = £{tot_a:.2f} ex VAT (£{round2(tot_a * VAT_RATE):.2f} inc VAT)")
     print(f"  NET Parts-Only (Owned M3 HW + Pad/Shims):       1-Off = £{net_o:.2f} ex VAT (£{round2(net_o * VAT_RATE):.2f} inc VAT)")
     return 0

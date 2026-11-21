@@ -113,10 +113,10 @@ def _radial_bore_oring_cut(r_bore: float, r_groove: float, z_flat: float, flat_w
 
 def build_cap_bot(p: LepiLEDParams) -> bd.Part:
     """
-    MECH-CAP-BOT — Compact Tapered Funnel Nosecone with Open Screened Chimney Inlet (Z = 0.0 .. 34.0 mm):
-      - 45-deg cone Ø40.0 -> Ø71.0 mm (Z = 0.0 .. 15.5) + Ø71.0 collar (15.5 .. 31.7) + 45-deg water-shedding top bevel (31.7 .. 34.0)
-      - Open 22 x 22 mm (R3) screened chimney inlet at tip + 28.4 x 28.4 x 0.8 mm stainless mesh seat beneath Al core
-      - Single M4 x 50 mm A2 stainless cross-bolt along ±X at Z = 12.5 mm inside recessed 45-deg-roofed flat spotfaces
+    MECH-CAP-BOT — Compact Tapered Funnel Nosecone with Open Chimney Inlet (Z = 0.0 .. 34.0 mm):
+      - 44.4-deg cone Ø40.0 -> Ø71.0 mm (Z = 0.0 .. 15.8) + Ø71.0 collar (15.8 .. 31.7) + 45-deg watershed top bevel (31.7 .. 34.0)
+      - Open unobstructed 22 x 22 mm (R3) chimney inlet beneath Z = 5.0 mm Al core seat
+      - Single DIN 912 M4 x 50 mm A2 stainless SHCS along ±X at Z = 11.5 mm (Ø7.0 mm head pocket on +X; captive 7.36 mm AF hex-nut pocket on -X)
     """
     r_tip = p.cap_bot_tip_od / 2.0      # 20.0
     r_col = p.cap_bot_collar_od / 2.0   # 35.5
@@ -129,10 +129,12 @@ def build_cap_bot(p: LepiLEDParams) -> bd.Part:
     top_bevel = bd.Cone(r_col, r_col - bevel_h, bevel_h, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_top - bevel_h))
     part = lower_cone.fuse(mid_cyl).fuse(top_bevel)
 
-    # Annular shroud bore (Ø61.6 x Ø49.0 mm, Z = 18.3 .. 34.0 mm) + MECH-GASKET-1 (60 x 3.5 mm VMQ50)
+    # Annular shroud bore (Ø61.6 x Ø49.0 mm, Z = 19.4 .. 34.0 mm) + MECH-GASKET-1 (60 x 3.5 mm VMQ50)
+    # PMMA seats on Z = 19.5 floor (+2.0 mm tube-length tolerance absorbed in floating MECH-TOP-BASE socket),
+    # leaving >= 2.20 mm (11 solid FDM layers) waterproof bulkhead above the ±X M4 spotface gables!
     r_bore = p.glass_bore_id / 2.0      # 30.8
     r_hub = p.core_hub_od / 2.0         # 24.5
-    z_bore_bot = p.z_glass_bot - 1.2    # 18.3
+    z_bore_bot = p.z_glass_bot - 0.1    # 19.4 (2.20 mm waterproof bulkhead above z_sf_apex = 17.2!)
     shroud_annulus = (
         bd.Cylinder(r_bore, z_top - z_bore_bot + 0.5, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
         - bd.Cylinder(r_hub, z_top - z_bore_bot + 1.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, -0.2))
@@ -144,11 +146,10 @@ def build_cap_bot(p: LepiLEDParams) -> bd.Part:
     ).translate((0, 0, z_top + 0.1))
     part = part - shroud_annulus - g1 - mouth_lead
 
-    # 31.1 x 31.1 mm core socket (Z = 6.0 .. 34.0 mm) + 0.8 mm mesh pocket (Z = 5.2 .. 6.0 mm) + 22 x 22 mm R3 open chimney inlet
+    # 31.1 x 31.1 mm core socket (Z = 5.0 .. 34.0 mm) + 22 x 22 mm R3 open chimney inlet (solid 5.0 mm core seat ledge!)
     # + backed 1.8 x 2.5 mm rounded-square neutral-sealant V-groove at Z = 31.5 .. 34.0 mm sealing core socket from optical chamber!
     core_sock = bd.Box(p.core_pocket_w, p.core_pocket_w, z_top - p.z_core_bot + 1.0,
                        align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, p.z_core_bot))
-    mesh_pkt = bd.Box(28.4, 28.4, 1.2, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, p.z_core_bot - 0.8))
     with bd.BuildSketch(bd.Plane.XY.offset(-1.0)) as sk_in:
         bd.RectangleRounded(p.cap_bot_inlet_w, p.cap_bot_inlet_w, radius=3.0)
     inlet_cut = bd.extrude(sk_in.sketch, p.z_core_bot + 2.0)
@@ -158,19 +159,24 @@ def build_cap_bot(p: LepiLEDParams) -> bd.Part:
     with bd.BuildSketch(bd.Plane.XY.offset(z_top + 0.05)) as sk_bg1:
         bd.RectangleRounded(w_bg, w_bg, radius=5.5)
     bot_seal_cut = bd.loft([sk_bg0.sketch, sk_bg1.sketch])
-    part = part - core_sock - mesh_pkt - inlet_cut - bot_seal_cut
+    part = part - core_sock - inlet_cut - bot_seal_cut
 
-    # Single M4 x 50 mm A2 stainless cross-bolt along ±X at Z = 12.5 mm + 45-deg-roofed flat bearing spotfaces at |X| = 21.0 mm
+    # Single DIN 912 M4 x 50 mm A2 stainless SHCS along ±X at Z = 11.5 mm:
+    #   +X: 45-deg gable pocket (9.0 mm wide, Ø8.06 mm inscribed) cleanly clears Ø7.0 mm DIN 912 head + 3 mm hex key
+    #   -X: Captive 7.36 mm AF anti-rotation hex-nut pocket locking 7.00 mm AF DIN 985 M4 nyloc nut (zero wrench needed!)
     td_m4 = _teardrop_profile_wire(p.core_bolt_hole_dia / 2.0, 42.0)
     m4_bore = bd.extrude(td_m4, 76.0).rotate(bd.Axis.X, 90.0).rotate(bd.Axis.Z, 90.0).translate((-38.0, 0.0, p.z_bot_bolt))
     part = part - m4_bore
 
-    for sx in (-1.0, 1.0):
-        # 45-deg gable pocket on ±X from |X| = 21.0 outward (Z = 7.8 .. 18.0 mm -> stays strictly below z_bore_bot = 18.3!)
-        pl_sf = bd.Plane(origin=(sx * 21.0, 0.0, 0.0), x_dir=(0.0, sx, 0.0), z_dir=(sx, 0.0, 0.0))
-        sk_sf = _pentagon_gable_sketch(pl_sf, 4.6, p.z_bot_bolt - 4.7, p.z_bot_bolt + 5.6)
-        sf_cut = bd.extrude(sk_sf, 18.0)
-        part = part - sf_cut
+    # +X bolt-head gable pocket (|X| >= 21.0, Z = 7.0 .. 17.2 mm -> 2.25 mm solid bulkhead below Z = 19.4!)
+    pl_sf_pos = bd.Plane(origin=(21.0, 0.0, 0.0), x_dir=(0.0, 1.0, 0.0), z_dir=(1.0, 0.0, 0.0))
+    sk_sf_pos = _pentagon_gable_sketch(pl_sf_pos, 4.5, p.z_bot_bolt - 4.5, p.z_bot_bolt + 5.7)
+    part = part - bd.extrude(sk_sf_pos, 18.0)
+
+    # -X captive M4 nyloc hex-nut pocket (7.36 mm AF vertical flats -> ±3.68 mm; 45-deg gable Z = 7.2 .. 17.3 mm -> 2.15 mm bulkhead!)
+    pl_sf_neg = bd.Plane(origin=(-21.0, 0.0, 0.0), x_dir=(0.0, -1.0, 0.0), z_dir=(-1.0, 0.0, 0.0))
+    sk_sf_neg = _pentagon_gable_sketch(pl_sf_neg, 3.68, p.z_bot_bolt - 4.3, p.z_bot_bolt + 5.8)
+    part = part - bd.extrude(sk_sf_neg, 18.0)
 
     return part
 
@@ -198,12 +204,13 @@ def build_top_base(p: LepiLEDParams) -> bd.Part:
     r_port_in = p.top_base_port_id / 2.0  # 39.0
     r_deck = p.top_base_deck_od / 2.0   # 49.0
 
-    # 1. Outer body: lower collar + 45-deg flare + side-port ring + 2.0 mm 45-deg top deck lip
+    # 1. Outer body: lower collar + 45-deg flare + side-port ring + lowered 45-deg deck lip (2.0 mm vertical G3 outer rim!)
     c_col = bd.Cylinder(r_col, z_fl_bot - z_bot, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_bot))
     c_flare = bd.Cone(r_col, r_port, z_port_bot - z_fl_bot, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_fl_bot))
-    c_ring = bd.Cylinder(r_port, (z_deck - 2.0) - z_port_bot, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_port_bot))
-    c_deck_lip = bd.Cone(r_port, r_deck, 2.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_deck - 2.0))
-    part = c_col.fuse(c_flare).fuse(c_ring).fuse(c_deck_lip)
+    c_ring = bd.Cylinder(r_port, (z_deck - 4.2) - z_port_bot, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_port_bot))
+    c_deck_lip = bd.Cone(r_port, r_deck, 2.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_deck - 4.2))
+    c_deck_rim = bd.Cylinder(r_deck, 2.2, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_deck - 2.2))
+    part = c_col.fuse(c_flare).fuse(c_ring).fuse(c_deck_lip).fuse(c_deck_rim)
 
     # 2. +Y flat vertical clamp boss (X = ±18.5 mm, Y = 47.0 mm, Z = 145.0 .. 168.5 mm) w/ <=42.2-deg ramp tucked inside c_col
     with bd.BuildSketch(bd.Plane.XY.offset(z_port_bot - 21.0)) as sk_py0:
@@ -214,17 +221,18 @@ def build_top_base(p: LepiLEDParams) -> bd.Part:
     py_pad = bd.Box(37.0, 12.0, (z_deck - 2.5) - z_port_bot, align=(bd.Align.CENTER, bd.Align.MAX, bd.Align.MIN)).translate((0.0, r_port, z_port_bot))
     part = part.fuse(py_ramp).fuse(py_pad)
 
-    # 3. 4x diagonal 43-deg-gusseted M3 CSK bolt ears at 45/135/225/315 deg (R = 51.0 mm, Z = 163.0 .. 171.0 mm)
+    # 3. 4x diagonal 41-deg-gusseted M3 CSK bolt ears at 45/135/225/315 deg (R = 51.0 mm, Z = 163.0 .. 171.0 mm)
+    #    Gusset reaches full R=56.5 at Z=161.0 (2.0 mm vertical skirt below Z=163.0) so open radial U-slot gable arch has >=2.2 mm walls!
     r_eb = p.top_base_ear_boss_r  # 5.5
     z_ear_bot = z_deck - p.top_base_ear_h  # 163.0
     for deg in (45.0, 135.0, 225.0, 315.0):
         # Capsule spanning Y = 40.5 .. 56.5 (center Y = 48.5, length = 16.0, width = 11.0 -> circle centered at 51.0!)
-        with bd.BuildSketch(bd.Plane.XY.offset(z_ear_bot)) as sk_ear_top:
+        with bd.BuildSketch(bd.Plane.XY.offset(z_ear_bot - 2.0)) as sk_ear_top:
             bd.SlotOverall(16.0, 2.0 * r_eb, rotation=90.0)
-        ear_top = bd.extrude(sk_ear_top.sketch.translate((0.0, 48.5, 0.0)), p.top_base_ear_h).rotate(bd.Axis.Z, deg - 90.0)
-        with bd.BuildSketch(bd.Plane.XY.offset(z_ear_bot - 11.8)) as sk_ear_bot:
+        ear_top = bd.extrude(sk_ear_top.sketch.translate((0.0, 48.5, 0.0)), p.top_base_ear_h + 2.0).rotate(bd.Axis.Z, deg - 90.0)
+        with bd.BuildSketch(bd.Plane.XY.offset(z_ear_bot - 13.8)) as sk_ear_bot:
             bd.Circle(r_eb)
-        with bd.BuildSketch(bd.Plane.XY.offset(z_ear_bot)) as sk_ear_mid:
+        with bd.BuildSketch(bd.Plane.XY.offset(z_ear_bot - 2.0)) as sk_ear_mid:
             bd.SlotOverall(16.0, 2.0 * r_eb, rotation=90.0)
         ear_gusset = bd.loft([
             sk_ear_bot.sketch.translate((0.0, r_port - r_eb - 0.8, 0.0)),
@@ -243,30 +251,56 @@ def build_top_base(p: LepiLEDParams) -> bd.Part:
         pilot = bd.chamfer(outer_p, length=0.6)
     part = part.fuse(pilot)
 
-    # 5. Cut open interior dry bay inside side-port ring (Z = 145.0 .. 172.0 mm, R = 39.0 mm)
+    # 5. Cut open interior dry bay (Ø84.0 mm slimmed 5.0 mm side wall Z = 146.5..166.0 + 45-deg corbel back to Ø78.0 under G3 deck)
+    r_bay_wide = r_port - 5.0  # 42.0 mm (cuts ~12 cm^3 ASA & adds +3 mm wire room while preserving full bosses!)
     bay_cav = bd.Cylinder(r_port_in, z_deck - z_port_bot + 3.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_port_bot))
-    part = part - bay_cav
+    bay_wide_lo = bd.Cylinder(r_bay_wide, 166.0 - (z_port_bot + 1.5), align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_port_bot + 1.5))
+    bay_wide_corbel = bd.Cone(r_bay_wide, r_port_in, r_bay_wide - r_port_in, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, 166.0))
+    part = part - bay_cav - bay_wide_lo - bay_wide_corbel
 
-    # 5b. Internal -X reinforced switch-pocket boss backing the 5.5 mm recessed cove (X = -39.0 .. -33.5, Z = 145.0 .. 171.0)
+    # 5a. Internal +Y solid clamp backing pad preserving 3.00 mm true dry-bay wall behind 7.0 mm blind M3x5 clamp inserts
+    #     Intersected with full-height R=47 cylinder up to Z_deck=171.0 (eliminates Z=166.8..168.5 undercut notch!)
+    c_ring_full = bd.Cylinder(r_port, z_deck - z_port_bot, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_port_bot))
+    py_inner_back = bd.Box(34.0, 10.0, z_deck - z_port_bot, align=(bd.Align.CENTER, bd.Align.MIN, bd.Align.MIN)).translate((0.0, 37.0, z_port_bot)) & c_ring_full
+    part = part.fuse(py_inner_back)
+
+    # 5b. Internal -X reinforced switch-pocket boss widened to 34.0 mm (|Y| <= 17.0) backing entire 32 mm cove (>= 3.0 mm wall!)
     x_sw_face = -(r_port - p.sw1_recess_x)  # -41.5
-    sw_inner_boss = bd.Box(7.0, 21.0, z_deck - z_port_bot, align=(bd.Align.MIN, bd.Align.CENTER, bd.Align.MIN)).translate((x_sw_face + p.sw1_wall_thick - 1.0, 0.0, z_port_bot))
+    sw_inner_boss = bd.Box(9.0, 34.0, z_deck - z_port_bot, align=(bd.Align.MIN, bd.Align.CENTER, bd.Align.MIN)).translate((x_sw_face - 1.0, 0.0, z_port_bot)) & c_ring_full
     part = part.fuse(sw_inner_boss)
 
-    # 5c. Internal +Y zip-tie cable strain-relief bridge (X = +10.5, Y = 34.5, Z = 145.0..154.0) with 45-deg gable slot
-    zt_post = bd.Box(5.0, 6.0, 9.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((10.5, 34.5, z_port_bot))
-    pl_zt = bd.Plane(origin=(7.5, 34.5, 0.0), x_dir=(0.0, 1.0, 0.0), z_dir=(1.0, 0.0, 0.0))
+    # 5c. Internal +Y zip-tie cable strain-relief bridge fused cleanly into +Y backing pad (2.2 mm front leg, zero micro-gap!)
+    zt_post = bd.Box(5.0, 9.0, 9.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((10.5, 35.5, z_port_bot))
+    pl_zt = bd.Plane(origin=(7.5, 35.2, 0.0), x_dir=(0.0, 1.0, 0.0), z_dir=(1.0, 0.0, 0.0))
     sk_zt = _pentagon_gable_sketch(pl_zt, 2.0, z_port_bot + 1.5, z_port_bot + 6.5)
     zt_slot = bd.extrude(sk_zt, 6.0)
     part = part.fuse(zt_post) - zt_slot
 
     # 6. Solid 1.5 mm insulating barrier behind J1/J4 + captive 15.6 x 15.6 mm thermal-bridge chute behind U1/U2
-    #    + 2x vertical PCB stanchions at Y = ±14.0 mm with side-entry captive M3 hex nut pockets (5.5 mm B.Cu->Al gap)
+    #    + twin 3.0 mm 45-deg side buttresses bracing the +X PCB cradle (>30x stiffer, zero X1E high-Z wobble!)
+    #    + 2x vertical PCB stanchions at Y = ±14.0 mm with side-entry captive M3 hex nut pockets (5.9 mm B.Cu->Al gap)
     x_core_wall = p.core_pocket_w / 2.0   # 15.55
     x_baf_out = x_core_wall + p.core_sleeve_wall  # 17.05
-    z_cradle_top = p.z_pcb_top + 2.3      # 222.8 (11.1 mm below internal bell ceiling cone; houses 45-deg roofs)
+    z_cradle_top = p.z_pcb_top + 4.3      # 224.8 (8.8 mm below bell ceiling -> 2.60 mm = 13 layers solid roof above chute!)
     baffle = bd.Box(p.core_sleeve_wall + 1.0, 2.0 * (p.pcb_hole_y + 4.5), z_cradle_top - z_port_bot,
                     align=(bd.Align.MIN, bd.Align.CENTER, bd.Align.MIN)).translate((x_core_wall - 1.0, 0.0, z_port_bot))
     part = part.fuse(baffle)
+
+    # Twin 3.0 mm-thick side buttress webs at |Y| = 15.6 .. 18.6 mm (X = 5.5..15.55 mm; clears 31.1 core, ±Y slots, cable & nut entry!)
+    for sy in (-1.0, 1.0):
+        with bd.BuildSketch(bd.Plane.XZ) as sk_but:
+            with bd.BuildLine():
+                bd.Polyline([
+                    (5.5, z_port_bot),
+                    (x_core_wall + 0.5, z_port_bot),
+                    (x_core_wall + 0.5, 212.5),
+                    (x_core_wall, 212.5),
+                    (5.5, 202.0),  # 45-deg top taper -> 0 overhang, leaves M3 nut entry (X>=16.55) 100% open!
+                    (5.5, z_port_bot),
+                ])
+            bd.make_face()
+        y_but_c = sy * 17.1  # spans |Y| = 15.6 .. 18.6 mm
+        part = part.fuse(bd.extrude(sk_but.sketch, 1.5, both=True).translate((0.0, y_but_c, 0.0)))
 
     # Captive 15.6 x 15.6 mm thermal-bridge guide chute (X = 15.55 .. 19.50 -> 1.0 mm clearance behind B.Cu for silicone pad!)
     x_chute_out = p.pcb_x_bcu - 1.0       # 19.50
@@ -299,18 +333,18 @@ def build_top_base(p: LepiLEDParams) -> bd.Part:
 
     for sy in (-1.0, 1.0):
         hy = sy * p.pcb_hole_y  # ±14.0
-        # 9.0 mm-wide stanchion body (X = 15.55 .. 19.90) + stepped 6.0 mm-wide front land (X = 19.90 .. 20.50)
-        st_body = bd.Box((p.pcb_x_bcu - 0.6) - x_core_wall, p.pcb_standoff_body_od, z_cradle_top - z_port_bot,
+        # 9.0 mm-wide stanchion body (X = 15.55 .. 20.55 -> 1.30 mm outer nut front lip!) + stepped 6.0 mm front land (X = 20.55 .. 20.90)
+        st_body = bd.Box((p.pcb_x_bcu - 0.35) - x_core_wall, p.pcb_standoff_body_od, z_cradle_top - z_port_bot,
                          align=(bd.Align.MIN, bd.Align.CENTER, bd.Align.MIN)).translate((x_core_wall, hy, z_port_bot))
-        st_tip = bd.Box(1.0, p.pcb_standoff_tip_od, z_cradle_top - (p.z_pcb_bot - 1.5),
+        st_tip = bd.Box(0.8, p.pcb_standoff_tip_od, z_cradle_top - (p.z_pcb_bot - 1.5),
                         align=(bd.Align.MAX, bd.Align.CENTER, bd.Align.MIN)).translate((p.pcb_x_bcu, hy, p.z_pcb_bot - 1.5))
         with bd.BuildSketch(bd.Plane.XY.offset(p.z_pcb_bot - 2.5)) as sk_t0:
-            bd.Rectangle(0.6, p.pcb_standoff_tip_od)
+            bd.Rectangle(0.4, p.pcb_standoff_tip_od)
         with bd.BuildSketch(bd.Plane.XY.offset(p.z_pcb_bot - 1.5)) as sk_t1:
-            bd.Rectangle(1.4, p.pcb_standoff_tip_od)
+            bd.Rectangle(1.0, p.pcb_standoff_tip_od)
         st_tip_ramp = bd.loft([
-            sk_t0.sketch.translate((p.pcb_x_bcu - 1.1, hy, 0.0)),
-            sk_t1.sketch.translate((p.pcb_x_bcu - 0.7, hy, 0.0)),
+            sk_t0.sketch.translate((p.pcb_x_bcu - 0.85, hy, 0.0)),
+            sk_t1.sketch.translate((p.pcb_x_bcu - 0.50, hy, 0.0)),
         ])
         part = part.fuse(st_body).fuse(st_tip).fuse(st_tip_ramp)
 
@@ -328,37 +362,43 @@ def build_top_base(p: LepiLEDParams) -> bd.Part:
     ).translate((0.0, 0.0, z_deck + 0.2))
     part = part - g3_cut
 
-    # 8. Cut 4x side-entry captive M3 hex nut pockets (X = 16.55..19.15, 45-deg roof -> 0 overhang!) + Ø3.4 mm teardrop M3 bores
+    # 8. Cut 4x side-entry captive M3 hex nut pockets (X = 16.55..19.25 -> 1.00 mm back wall, 1.65/1.30 mm front lip!)
+    #    + Ø3.70 mm teardrop M3 bores stopping flush at X = 16.55 mm (preserves full 1.00 mm back wall & absorbs ASA/FR4 pitch!)
     td_ins = _teardrop_profile_wire(p.m3_insert_pilot_dia / 2.0, 42.0)  # Reused for +Y blind clamp inserts below
-    td_m3 = _teardrop_profile_wire(p.m3_clearance_dia / 2.0, 42.0)
-    x_nut_c = x_core_wall + 1.0 + 1.30  # 17.85 (slot X = 16.55 .. 19.15 -> 1.00 mm back wall, 1.35 mm front lip)
+    td_m3_pcb = _teardrop_profile_wire(3.70 / 2.0, 42.0)
+    x_nut_c = x_core_wall + 1.0 + 1.35  # 17.90 (slot X = 16.55 .. 19.25 -> 2.70 x 5.95 mm ASA-tolerant pocket!)
     for sy in (-1.0, 1.0):
         for sz in (-1.0, 1.0):
             hy = sy * p.pcb_hole_y
             hz = p.pcb_z_center + sz * p.pcb_hole_z
             # Side-entry nut slot from outer face |Y| = 18.6 inward to |Y| = 10.6 (8.0 mm deep, leaves 1.1 mm inner wall)
             pl_nut = bd.Plane(origin=(x_nut_c, sy * 18.6, 0.0), x_dir=(sy, 0.0, 0.0), z_dir=(0.0, -sy, 0.0))
-            sk_nut = _pentagon_gable_sketch(pl_nut, 1.30, hz - 2.90, hz + 2.90 + 1.30)
+            sk_nut = _pentagon_gable_sketch(pl_nut, 1.35, hz - 2.975, hz + 2.975 + 1.35)
             part = part - bd.extrude(sk_nut, 8.0)
-            # Horizontal Ø3.4 mm M3 clearance bore from X = 20.7 inward to X = 16.05 (stops 0.50 mm before core wall!)
-            m3_bore = bd.extrude(td_m3, p.pcb_x_bcu - 16.05 + 0.2).rotate(bd.Axis.X, 90.0).rotate(bd.Axis.Z, -90.0).translate((p.pcb_x_bcu + 0.2, hy, hz))
+            # Horizontal Ø3.70 mm M3 clearance bore from X = 21.1 inward to X = 16.55 (preserves full 1.00 mm insulating back wall!)
+            m3_bore = bd.extrude(td_m3_pcb, p.pcb_x_bcu - 16.55 + 0.2).rotate(bd.Axis.X, 90.0).rotate(bd.Axis.Z, -90.0).translate((p.pcb_x_bcu + 0.2, hy, hz))
             part = part - m3_bore
 
-    # 9. Cut 4x flush 90-deg M3x12 CSK bores through diagonal bolt ears (Z = 163.0 .. 171.0)
+    # 9. Cut 4x flush 90-deg M3x12 CSK bores + open radial U-channel access tunnels (45-deg gable arch -> 0 razor feathers, >=2.2 mm flanks!)
     for deg in (45.0, 135.0, 225.0, 315.0):
         rad = math.radians(deg)
         ex, ey = p.top_base_ear_r * math.cos(rad), p.top_base_ear_r * math.sin(rad)
+        c_access = bd.Cylinder(3.30, (z_ear_bot - 0.05) - 146.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((ex, ey, 146.0))
+        # Open outward U-slot with 45-deg gable arch (Z_side = 159.65 .. Z_apex = 162.95 -> 0 overhang, eliminates thin breakout horns!)
+        pl_us = bd.Plane(origin=(0.0, p.top_base_ear_r, 0.0), x_dir=(-1.0, 0.0, 0.0), z_dir=(0.0, 1.0, 0.0))
+        sk_us = _pentagon_gable_sketch(pl_us, 3.30, 146.0, z_ear_bot - 0.05)
+        u_slot = bd.extrude(sk_us, 12.0).rotate(bd.Axis.Z, deg - 90.0)
         c_thru = bd.Cylinder(p.m3_clearance_dia / 2.0, p.top_base_ear_h + 2.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((ex, ey, z_ear_bot - 1.0))
-        c_csk = bd.Cone(3.25, p.m3_clearance_dia / 2.0, 3.25 - p.m3_clearance_dia / 2.0,
+        c_csk = bd.Cone(3.30, p.m3_clearance_dia / 2.0, 3.30 - p.m3_clearance_dia / 2.0,
                         align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((ex, ey, z_ear_bot - 0.05))
-        part = part - c_thru - c_csk
+        part = part - c_access - u_slot - c_thru - c_csk
 
-    # 10. Cut +Y horizontal 45-deg gable USB-C cable port + 45-deg wedge seat + 2x blind M3x5.0 inserts
+    # 10. Cut +Y horizontal 45-deg gable USB-C cable port (Z = 148..166 -> 1.86 mm clamp cheek!) + 45-deg wedge seat + 2x blind M3x5.0 inserts
     z_pbot = 148.0
-    z_papex = 165.0
-    pl_in = bd.Plane(origin=(0.0, 37.5, 0.0), x_dir=(-1.0, 0.0, 0.0), z_dir=(0.0, 1.0, 0.0))
+    z_papex = z_pbot + p.clamp_port_h  # 166.0 mm (3.0 mm solid roof beneath G3 at Z = 169.0!)
+    pl_in = bd.Plane(origin=(0.0, 37.0, 0.0), x_dir=(-1.0, 0.0, 0.0), z_dir=(0.0, 1.0, 0.0))
     sk_p_str = _pentagon_gable_sketch(pl_in, 0.5 * p.clamp_port_w, z_pbot, z_papex)
-    port_straight = bd.extrude(sk_p_str, 7.6)  # Y = 37.5 .. 45.1
+    port_straight = bd.extrude(sk_p_str, 8.1)  # Y = 37.0 .. 45.1
     pl_w0 = bd.Plane(origin=(0.0, 45.0, 0.0), x_dir=(-1.0, 0.0, 0.0), z_dir=(0.0, 1.0, 0.0))
     pl_w1 = bd.Plane(origin=(0.0, r_port + 0.1, 0.0), x_dir=(-1.0, 0.0, 0.0), z_dir=(0.0, 1.0, 0.0))
     sk_w0 = _pentagon_gable_sketch(pl_w0, 0.5 * p.clamp_port_w, z_pbot, z_papex)
@@ -368,22 +408,26 @@ def build_top_base(p: LepiLEDParams) -> bd.Part:
 
     for sx in (-1.0, 1.0):
         cb_bore = bd.extrude(td_ins, p.m3_insert_blind_depth + 0.2).rotate(bd.Axis.X, 90.0).translate((sx * p.clamp_bolt_dx, r_port + 0.2, p.clamp_z))
-        part = part - cb_bore
+        # 0.5 x 45-deg volcano-relief entry chamfer on +Y blind clamp insert bore
+        cb_chf = bd.Cone(p.m3_insert_pilot_dia / 2.0 + 0.55, p.m3_insert_pilot_dia / 2.0, 0.55,
+                         align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).rotate(bd.Axis.X, 90.0).translate((sx * p.clamp_bolt_dx, r_port + 0.05, p.clamp_z))
+        part = part - cb_bore - cb_chf
 
     # 11. Cut -X widened 32 mm, 18-deg outward-draining finger cove + true round Ø6.50 mm SW1 bore + keyed pocket!
+    #     sw1_z = 154.5, z_cove_fl_in = 146.2, z_cove_ceil = 162.5 -> +1.35 mm top & +1.65 mm bottom boot flange margin!
     cove_w = p.sw1_cove_w  # 32.0 along ±Y
-    z_cove_ceil = 162.5
-    z_cove_fl_in = 147.2
-    z_cove_fl_out = 144.8  # ~18-deg outward-downward drain slope across 7.5 mm!
+    z_cove_ceil = p.sw1_cove_ceil_z    # 162.5
+    z_cove_fl_in = p.sw1_cove_fl_in_z  # 146.2
+    z_cove_fl_out = z_cove_fl_in - 2.4 # 143.8 (~18-deg outward-downward drain slope across 7.5 mm!)
     # Cut cove prism in XZ plane (X_local -> global X, Y_local -> global Z), extruded symmetrically along Y = [-16, +16]
+    # Continuous 45-deg sloped ceiling exits past R = 49.0 deck rim with zero horizontal overhang step!
     with bd.BuildSketch(bd.Plane.XZ) as sk_cove:
         with bd.BuildLine():
             bd.Polyline([
                 (x_sw_face, z_cove_fl_in),
                 (x_sw_face - 12.0, z_cove_fl_out - 1.5),
-                (x_sw_face - 12.0, 169.5),
-                (-r_port - 1.0, 169.5),
-                (x_sw_face, z_cove_ceil),  # 42.8-deg sloped ceiling staying cleanly below Z = 171.0 deck!
+                (x_sw_face - 12.0, z_cove_ceil + 12.0),
+                (x_sw_face, z_cove_ceil),  # Continuous 45-deg sloped ceiling clearing c_deck_rim cleanly (0 overhang!)
                 (x_sw_face, z_cove_fl_in),
             ])
         bd.make_face()
@@ -399,9 +443,10 @@ def build_top_base(p: LepiLEDParams) -> bd.Part:
     sw_z_apex = p.sw1_z + 0.5 * (p.sw1_body_h_z + 0.8) + sw_hw  # 168.365 < 171.0
     sk_sw_rec = _pentagon_gable_sketch(pl_sw, sw_hw, sw_z_bot, sw_z_apex)
     sw_recess = bd.extrude(sk_sw_rec, 8.0)
-    pl_key = bd.Plane(origin=(x_sw_face - 0.5, 0.0, 0.0), x_dir=(0.0, 1.0, 0.0), z_dir=(1.0, 0.0, 0.0))
+    # Internal blind keyway slot stopping 0.8 mm shy of outer boot sealing face (X = -41.5 remains 100% unbroken 360-deg!)
+    pl_key = bd.Plane(origin=(x_sw_face + 0.8, 0.0, 0.0), x_dir=(0.0, 1.0, 0.0), z_dir=(1.0, 0.0, 0.0))
     sk_key = _pentagon_gable_sketch(pl_key, 0.8, p.sw1_z - 1.0, p.sw1_z + 1.6)
-    sw_key = bd.extrude(sk_key, 3.5).translate((0.0, p.sw1_hole_dia / 2.0 + 0.2, 0.0))
+    sw_key = bd.extrude(sk_key, 2.2).translate((0.0, p.sw1_hole_dia / 2.0 + 0.2, 0.0))
     part = part - cove_cut - sw_bore - sw_recess - sw_key
 
     # 12. Cut -Y downward-draining 35-deg ePTFE breather bore from flat dry-bay floor pocket out 45-deg flare underside!
@@ -416,20 +461,21 @@ def build_top_base(p: LepiLEDParams) -> bd.Part:
     )
     part = part - vent_pkt - vent_bore
 
-    # 13. Cut lower annular shroud bore (Ø61.6 x Ø49.0 mm, Z = 120.0 .. 135.7) + 45-deg ceiling cone + MECH-GASKET-2
+    # 13. Cut lower annular shroud bore (Ø61.6 x Ø49.0 mm, Z = 120.0 .. 136.7) + 45-deg ceiling cone + MECH-GASKET-2
+    #     z_bore_top = 136.7 absorbs full +2.0 mm PMMA cut tolerance above Z = 134.5 while retaining 2.0 mm (10-layer) bulkhead!
     r_bore = p.glass_bore_id / 2.0  # 30.8
     r_hub = p.core_hub_od / 2.0     # 24.5
-    z_bore_top = p.z_glass_top + 1.2  # 135.7
+    z_bore_top = p.z_glass_top + 2.2  # 136.7 (cone ends at 143.0 -> 2.0 mm solid 10-layer bulkhead below Z = 145.0 floor)
     shroud_annulus = (
         bd.Cylinder(r_bore, z_bore_top - z_bot + 0.5, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
         - bd.Cylinder(r_hub, z_bore_top - z_bot + 1.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, -0.2))
     ).translate((0, 0, z_bot - 0.5))
-    cone_h = r_bore - r_hub  # 6.3 mm -> ends at Z = 142.0 mm (3.0 mm solid bulkhead below Z = 145.0 bay floor)
+    cone_h = r_bore - r_hub  # 6.3 mm -> ends at Z = 143.0 mm (2.0 mm solid bulkhead below Z = 145.0 bay floor)
     shroud_stop = (
         bd.Cone(r_bore, r_hub, cone_h, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
         - bd.Cylinder(r_hub, cone_h + 0.4, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, -0.2))
     ).translate((0, 0, z_bore_top))
-    # G2 groove with small 0.6 mm retention flat above ramp so PMMA insertion never wedges O-ring!
+    # Support-free 45-deg-ramped radial bore O-ring groove (use light silicone grease + 1 mm PMMA bevel on install)
     g2 = _radial_bore_oring_cut(r_bore, p.glass_oring_groove_od / 2.0, z_bot + 3.0, p.glass_oring_flat_w, ramp_dir=+1.0)
     mouth_lead = (
         bd.Cone(r_bore + 0.7, r_bore, 1.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
@@ -437,11 +483,16 @@ def build_top_base(p: LepiLEDParams) -> bd.Part:
     ).translate((0, 0, z_bot - 0.1))
     part = part - shroud_annulus - shroud_stop - g2 - mouth_lead
 
-    # 14. Cut central 31.1 x 31.1 mm core bore + 2x uncrossed ±Y 9.0 x 7.5 mm JST-XH wire slots!
+    # 14. Cut central 31.1 x 31.1 mm core bore + 0.4 mm bed-side elephant-foot chamfer + 2x uncrossed ±Y 9.0 x 6.5 mm JST-XH slots!
     core_thru = bd.Box(p.core_pocket_w, p.core_pocket_w, z_cradle_top - z_bot + 4.0,
                        align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_bot - 1.0))
-    part = part - core_thru
-    y_slot_c = p.core_pocket_w / 2.0 + p.core_wire_slot_d / 2.0 - 0.1  # 19.20 mm
+    with bd.BuildSketch(bd.Plane.XY.offset(z_bot - 0.05)) as sk_cef0:
+        bd.Rectangle(p.core_pocket_w + 0.9, p.core_pocket_w + 0.9)
+    with bd.BuildSketch(bd.Plane.XY.offset(z_bot + 0.45)) as sk_cef1:
+        bd.Rectangle(p.core_pocket_w, p.core_pocket_w)
+    core_ef = bd.loft([sk_cef0.sketch, sk_cef1.sketch])
+    part = part - core_thru - core_ef
+    y_slot_c = p.core_pocket_w / 2.0 + p.core_wire_slot_d / 2.0 - 0.1  # 18.70 mm (>= 2.0 mm hub corner wall!)
     for sy in (-1.0, 1.0):
         wslot = bd.Box(p.core_wire_slot_w, p.core_wire_slot_d + 0.2, (z_port_bot + 2.0) - (z_bot - 1.0),
                        align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0.0, sy * y_slot_c, z_bot - 1.0))
@@ -480,31 +531,37 @@ def build_cap_top(p: LepiLEDParams) -> bd.Part:
         bd.RectangleRounded(p.cap_top_collar_w, p.cap_top_collar_w, radius=p.cap_top_collar_r)
     c_roof = bd.loft([sk_roof_bot.sketch, sk_roof_top.sketch])
 
-    # Vertical collar with 1.8 mm 30-deg outward watershed chamfer on top perimeter
-    col_str_h = p.cap_top_collar_h - 1.5
+    # Vertical collar with 0.8 mm outward watershed chamfer (38.8 x 38.8 R3.0 top -> 1.35 mm flat dam all 360-deg!)
+    col_str_h = p.cap_top_collar_h - 0.8
     with bd.BuildSketch(bd.Plane.XY.offset(z_col_bot)) as sk_col:
         bd.RectangleRounded(p.cap_top_collar_w, p.cap_top_collar_w, radius=p.cap_top_collar_r)
     c_collar = bd.extrude(sk_col.sketch, col_str_h)
     with bd.BuildSketch(bd.Plane.XY.offset(z_col_bot + col_str_h)) as sk_ct0:
         bd.RectangleRounded(p.cap_top_collar_w, p.cap_top_collar_w, radius=p.cap_top_collar_r)
     with bd.BuildSketch(bd.Plane.XY.offset(z_top)) as sk_ct1:
-        bd.RectangleRounded(p.cap_top_collar_w - 3.0, p.cap_top_collar_w - 3.0, radius=2.8)
+        bd.RectangleRounded(p.cap_top_collar_w - 1.6, p.cap_top_collar_w - 1.6, radius=3.0)
     c_col_bev = bd.loft([sk_ct0.sketch, sk_ct1.sketch])
 
     part = c_eaves.fuse(c_taper).fuse(c_bell).fuse(c_roof).fuse(c_collar).fuse(c_col_bev)
 
-    # +Y Compliant Flexible Snap-In Cable C-Clip (2.0 mm flexible jaw wall, 4.0 mm chamfered entry, tucked near eaves)
-    y_clip = 60.5  # Protrudes only 5.5 mm past R = 59 eaves to Y = 64.5 mm
-    with bd.BuildSketch(bd.Plane.XY.offset(z_bot)) as sk_clip:
-        bd.RectangleRounded(18.0, 9.0, radius=4.2)
-    clip_tab = bd.extrude(sk_clip.sketch, p.cap_top_eaves_h).translate((0.0, y_clip, 0.0))
-    part = part.fuse(clip_tab)
-    # Ø5.0 mm cable pocket + 4.0 mm lead-in slot on +X + flexing relief cutout creating a 2.0 mm spring jaw!
-    clip_bore = bd.Cylinder(2.5, p.cap_top_eaves_h + 2.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((1.5, y_clip, z_bot - 1.0))
-    clip_entry = bd.Box(9.0, 4.0, p.cap_top_eaves_h + 2.0, align=(bd.Align.MIN, bd.Align.CENTER, bd.Align.MIN)).translate((1.5, y_clip, z_bot - 1.0))
-    # 2.0 x 3.8 mm zip-tie slot on -X side with 3.0 mm solid outer wall
-    zip_slot = bd.Box(2.0, 3.8, p.cap_top_eaves_h + 2.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((-5.0, y_clip, z_bot - 1.0))
-    part = part - clip_bore - clip_entry - zip_slot
+    # +Y Elastic ASA-Safe Snap-In Cable C-Clip (t = 1.70 mm = 4 unbroken walls, true 3.63 mm snap throat retaining Ø3.8-4.5 mm cables!)
+    y_clip = 61.6
+    x_clip = 2.5
+    with bd.BuildSketch(bd.Plane.XY.offset(z_bot)) as sk_croot:
+        bd.RectangleRounded(11.0, 10.0, radius=2.5)
+    clip_root = bd.extrude(sk_croot.sketch, p.cap_top_eaves_h).translate((-6.0, 61.0, 0.0))
+    # Outer elastic cantilever arm (X = -3.5 .. +6.5, Y = 64.0 .. 65.7 -> full 1.70 mm thick, rounded R0.85 tip at X = +6.5!)
+    with bd.BuildSketch(bd.Plane.XY.offset(z_bot)) as sk_carm:
+        bd.SlotOverall(11.7, 1.70, rotation=0.0)
+    clip_arm = bd.extrude(sk_carm.sketch, p.cap_top_eaves_h).translate((1.5, 64.85, 0.0))
+    # Gentle rounded retention nub on inner face of arm tip at (X = +5.2, Y = 63.25) -> 3.63 mm true throat to eaves wall (Y = 58.77)!
+    clip_nub = bd.Cylinder(0.85, p.cap_top_eaves_h, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((5.2, 63.25, z_bot))
+    part = part.fuse(clip_root).fuse(clip_arm).fuse(clip_nub)
+    # Clean Ø4.8 mm cable pocket at (X = +2.5, Y = 61.6 -> Y_max=64.0 preserves full 1.70 mm arm!) + inner relief slot
+    clip_bore = bd.Cylinder(2.4, p.cap_top_eaves_h + 2.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((x_clip, y_clip, z_bot - 1.0))
+    clip_relief = bd.Box(7.0, 4.6, p.cap_top_eaves_h + 2.0, align=(bd.Align.MIN, bd.Align.CENTER, bd.Align.MIN)).translate((-3.5, 61.7, z_bot - 1.0))
+    zip_slot = bd.Box(2.0, 3.8, p.cap_top_eaves_h + 2.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((-7.5, 62.0, z_bot - 1.0))
+    part = part - clip_bore - clip_relief - zip_slot
 
     # -X Matching Contoured Rain-Hood Visor Brow (X = -63.5 mm, +4.5 mm past R = 59.0 eaves -> shelters SW1 boot)
     #    44.0 mm wide w/ R4.0 corners -> 36.0 x 10.0 mm flat vertical exterior face for debossed "OFF  UV  ALL" + tactile ribs!
@@ -524,13 +581,13 @@ def build_cap_top(p: LepiLEDParams) -> bd.Part:
     part = part.fuse(visor_base).fuse(visor_taper)
 
     # -X Debossed Switch Position Legend ("OFF   UV   ALL", reading left-to-right when facing -X: +Y=Left -> -Y=Right)
-    #    0.6 mm deep bold sans-serif text (1.5 nozzle widths -> support-free FDM; easy to paint-fill for dark contrast)
+    #    0.50 mm deep bold sans-serif text (crisp FDM overhangs, easy to paint-fill for dark contrast)
     pl_txt = bd.Plane(origin=(-x_vis - 0.05, 0.0, z_bot + 6.6), x_dir=(0.0, -1.0, 0.0), z_dir=(-1.0, 0.0, 0.0))
     for x_loc, label in ((-11.8, "OFF"), (0.0, "UV"), (11.8, "ALL")):
         with bd.BuildSketch(pl_txt) as sk_lbl:
             with bd.Locations((x_loc, 0.0)):
                 bd.Text(label, font_size=4.6, font="DejaVu Sans", font_style=bd.FontStyle.BOLD)
-        part = part - bd.extrude(sk_lbl.sketch, -0.65)
+        part = part - bd.extrude(sk_lbl.sketch, -0.55)
 
     # -X Tactile 0 / 1 / 2 switch index ribs along lower visor lip directly beneath OFF / UV / ALL:
     #   +Y (Left) = OFF (0 ribs), Y = 0 (Center) = UV (1 rib), -Y (Right) = ALL (2 ribs at Y = -10.0 & -13.6 mm)
@@ -548,16 +605,20 @@ def build_cap_top(p: LepiLEDParams) -> bd.Part:
             bd.make_face()
         part = part.fuse(bd.extrude(sk_rib.sketch, 0.7, both=True).translate((0.0, y_rib, 0.0)))
 
-    # Support-free 45-deg 1.4 x 1.4 mm underside drip kerf around eaves perimeter (R = 56.8 .. 58.2 mm)
-    r_k0, r_k1 = 56.8, 58.2
+    # Support-free 45-deg 1.4 x 0.7 mm underside drip kerf at R = 55.0 .. 56.4 mm (1.40 mm Layer-1 web to insert volcano chamfer, 2.6 mm outer rim!)
+    # and interrupted across -X visor & +Y C-clip so Layer 1 prints as ONE monolithic ASA sheet (zero detached thin rings!)
+    r_k0, r_k1 = 55.0, 56.4
     r_km = 0.5 * (r_k0 + r_k1)
     k_h = 0.7  # exact 45-deg V-groove (0 overhang!)
-    # Revolve triangular V-groove in XZ plane around Z axis
     with bd.BuildSketch(bd.Plane.XZ) as sk_kerf:
         with bd.BuildLine():
             bd.Polyline([(r_k0, z_bot - 0.1), (r_k1, z_bot - 0.1), (r_km, z_bot + k_h), (r_k0, z_bot - 0.1)])
         bd.make_face()
     kerf_cut = bd.revolve(sk_kerf.sketch, axis=bd.Axis.Z, revolution_arc=360.0)
+    # Keep Layer-1 bridges intact at -X visor and +Y C-clip root
+    kerf_keep_vis = bd.Box(20.0, 44.0, 4.0, align=(bd.Align.MAX, bd.Align.CENTER, bd.Align.MIN)).translate((-50.0, 0.0, z_bot - 1.0))
+    kerf_keep_clip = bd.Box(26.0, 20.0, 4.0, align=(bd.Align.CENTER, bd.Align.MIN, bd.Align.MIN)).translate((-2.0, 50.0, z_bot - 1.0))
+    kerf_cut = kerf_cut - kerf_keep_vis - kerf_keep_clip
     part = part - kerf_cut
 
     # Straight Ø85.0 mm bore + 0.4 mm bed-side elephant-foot chamfer + <=44-deg Circle->Square internal ceiling loft
@@ -571,30 +632,39 @@ def build_cap_top(p: LepiLEDParams) -> bd.Part:
     ceil_loft = bd.loft([sk_cb.sketch, sk_ct.sketch])
     part = part - bore_main - ef_chamfer - ceil_loft
 
-    # Translucent 0.60 mm internal dimple opposite D12 (red 20 V PD LED at Y = +16.0, Z = 190.9 mm -> angle 22.1 deg!)
-    # Stops at R = r_bell - d12_skin_thick = 45.0 mm -> 0.60 mm unbroken white outer skin (zero waterproof breach!)
+    # Translucent 0.90 mm (2 continuous Arachne walls!) internal dimple opposite D12 (Y = +16.0, Z = 190.9 mm -> 22.1 deg!)
+    # Clipped against a 0.90 mm normal-inward offset of c_eaves + c_taper + c_bell so the skin directly opposite D12 on the
+    # 45-deg eaves taper is uniformly 0.90 mm (not 4.10 mm opaque!) AND never drops below 0.90 mm on the vertical bell!
     ang_d12 = math.degrees(math.atan2(p.d12_local_bx, math.sqrt(r_bore ** 2 - p.d12_local_bx ** 2)))
     td_d12 = _teardrop_profile_wire(3.0, 42.0)
-    r_d12_stop = r_bell - p.d12_skin_thick  # 45.0 mm
-    d12_dimple = bd.extrude(td_d12, r_d12_stop - (r_bore - 2.0)).rotate(bd.Axis.X, 90.0).rotate(bd.Axis.Z, 90.0).translate((r_bore - 2.0, 0.0, p.z_d12)).rotate(bd.Axis.Z, ang_d12)
+    d12_raw = bd.extrude(td_d12, 16.0).rotate(bd.Axis.X, 90.0).rotate(bd.Axis.Z, 90.0).translate((r_bore - 2.0, 0.0, p.z_d12)).rotate(bd.Axis.Z, ang_d12)
+    t_sk = p.d12_skin_thick  # 0.90 mm normal wall
+    dr_cone = t_sk * math.sqrt(2.0)  # 1.273 mm radial offset on 45-deg cone = exact 0.90 mm normal wall!
+    sh_off = (
+        bd.Cylinder(r_eaves - t_sk, z_eaves_top - z_bot, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_bot))
+        .fuse(bd.Cone(r_eaves - dr_cone, r_bell - dr_cone, z_tap_top - z_eaves_top, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_eaves_top)))
+        .fuse(bd.Cylinder(r_bell - t_sk, z_roof_bot - z_tap_top + 5.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_tap_top - 0.5)))
+    )
+    d12_dimple = d12_raw & sh_off
     part = part - d12_dimple
 
-    # 4x blind M3x5.0 brass heat-set insert bores in eaves underside at R = 51.0 mm (45-deg cone tip -> 0 overhang)
+    # 4x blind M3x5.0 brass heat-set insert bores in eaves underside at R = 51.0 mm (full 6.5 mm straight depth + 0.6 mm volcano chamfer!)
     r_pil = p.m3_insert_pilot_dia / 2.0
     for deg in (45.0, 135.0, 225.0, 315.0):
         rad = math.radians(deg)
         ix, iy = p.top_base_ear_r * math.cos(rad), p.top_base_ear_r * math.sin(rad)
-        ib_str = bd.Cylinder(r_pil, 5.8, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((ix, iy, z_bot - 0.2))
-        ib_tip = bd.Cone(r_pil, 0.02, r_pil - 0.02, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((ix, iy, z_bot + 5.6))
-        part = part - ib_str - ib_tip
+        ib_str = bd.Cylinder(r_pil, p.m3_insert_depth + 0.2, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((ix, iy, z_bot - 0.2))
+        ib_tip = bd.Cone(r_pil, 0.02, r_pil - 0.02, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((ix, iy, z_bot + p.m3_insert_depth))
+        ib_chf = bd.Cone(r_pil + 0.6, r_pil, 0.6, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((ix, iy, z_bot - 0.05))
+        part = part - ib_str - ib_tip - ib_chf
 
-    # 31.1 x 31.1 mm core aperture + backed 2.5 x 3.0 mm top neutral-sealant V-groove (ZERO side lock holes!)
+    # 31.1 x 31.1 mm core aperture + backed 2.5 x 3.0 mm R3.0 rounded neutral-sealant V-groove (>= 1.35 mm top corner dam!)
     core_thru = bd.Box(p.core_pocket_w, p.core_pocket_w, (z_top - p.cap_top_ceil_cone_z) + 4.0,
                        align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, p.cap_top_ceil_cone_z - 1.0))
     part = part - core_thru
-    w_g = p.core_pocket_w + 2.0 * p.cap_top_seal_groove  # 36.1 mm (inside 37.4 mm beveled top lip)
+    w_g = p.core_pocket_w + 2.0 * p.cap_top_seal_groove  # 36.1 mm w/ R3.0 corners (inside 38.0 mm R3.0 top lip!)
     with bd.BuildSketch(bd.Plane.XY.offset(z_top + 0.05)) as sk_top:
-        bd.Rectangle(w_g, w_g)
+        bd.RectangleRounded(w_g, w_g, radius=3.0)
     with bd.BuildSketch(bd.Plane.XY.offset(z_top - p.cap_top_seal_depth)) as sk_bot:
         bd.Rectangle(p.core_pocket_w, p.core_pocket_w)
     part = part - bd.loft([sk_bot.sketch, sk_top.sketch])
@@ -614,11 +684,11 @@ def build_cable_clamp_half(p: LepiLEDParams, side: float = 1.0) -> bd.Part:
     y_face = r_port + p.clamp_standoff_y  # 48.2 (1.2 mm real axial travel!)
     z_c = p.clamp_z                    # 156.5
     z_pbot = 148.0 + 0.35              # 148.35
-    z_papex = 165.0 - 0.50             # 164.50
+    z_papex = 148.0 + p.clamp_port_h - 0.50  # 165.50 (1.86 mm normal cheek wall around Ø9.0 chamber!)
 
-    # Outer flange (35.0(X) x 20.0(Z) x 6.0(Y), Z = 146.5 .. 166.5 mm -> 4.5 mm below eaves!)
+    # Outer flange (37.0(X) x 20.0(Z) x 6.0(Y) -> 2.75 mm solid outer bolt-slot rim matching +Y boss, 4.5 mm below eaves!)
     with bd.BuildSketch(bd.Plane(origin=(0.0, y_face, z_c), x_dir=(-1.0, 0.0, 0.0), z_dir=(0.0, 1.0, 0.0))) as sk_fl:
-        bd.RectangleRounded(35.0, 20.0, radius=4.0)
+        bd.RectangleRounded(37.0, 20.0, radius=4.0)
     flange = bd.extrude(sk_fl.sketch, p.clamp_flange_t)  # Y = 48.2 .. 54.2
 
     # 45-deg compressing wedges (Y = 45.2 .. 48.2 mm; contacts port wedge at Y=47.0 with 0.20 mm start -> 1.0 mm drive!)
@@ -630,20 +700,20 @@ def build_cable_clamp_half(p: LepiLEDParams, side: float = 1.0) -> bd.Part:
     sk_w1 = _pentagon_gable_sketch(pl_w1, hw_out, z_pbot, z_papex)
     wedge = bd.loft([sk_w0, sk_w1])
 
-    # Inner straight sleeve barrel (Y = 41.5 .. 45.2 mm) enclosing full 10.5 mm grommet chamber!
-    pl_key = bd.Plane(origin=(0.0, 41.5, 0.0), x_dir=(-1.0, 0.0, 0.0), z_dir=(0.0, 1.0, 0.0))
+    # Inner straight sleeve barrel (Y = 40.0 .. 45.2 mm) enclosing full 10.2 x Ø9.0 mm grommet chamber (77.5% silicone fill!)
+    pl_key = bd.Plane(origin=(0.0, 40.0, 0.0), x_dir=(-1.0, 0.0, 0.0), z_dir=(0.0, 1.0, 0.0))
     sk_key = _pentagon_gable_sketch(pl_key, hw_in, z_pbot, z_papex)
-    key = bd.extrude(sk_key, 45.2 - 41.5)
+    key = bd.extrude(sk_key, 45.2 - 40.0)
     full = flange.fuse(wedge).fuse(key)
 
-    # Central horizontal Ø4.6 mm cable bore + FULL 10.5 mm-long Ø7.4 mm cylindrical grommet chamber (Y = 42.5 .. 53.0 mm!)
+    # Central horizontal Ø4.6 mm cable bore + 10.2 mm-long Ø9.0 mm cylindrical grommet chamber (Y = 42.0 .. 52.2 mm -> 77.5% fill!)
     r_cab = p.clamp_cable_dia / 2.0 + 0.05  # 2.30
-    r_grom = p.clamp_grommet_id / 2.0       # 3.70 (compresses Ø8.0 mm sleeve onto Ø4.0-4.5 mm cable!)
-    dr = r_grom - r_cab                     # 1.40
+    r_grom = p.clamp_grommet_id / 2.0       # 4.50 (77.5% incompressible silicone fill around Ø4.5 mm cable!)
+    dr = r_grom - r_cab                     # 2.20
     # Build along local +Z (z=0 corresponds to global y_face=48.2), then rotate -90 around X so +Z -> +Y!
-    c_cable = bd.Cylinder(r_cab, 20.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.CENTER))
-    # Grommet cylinder spans local z ∈ [-5.7, +4.8] (10.5 mm!) -> global Y ∈ [42.5, 53.0], leaving 1.2 mm exit retaining lip!
-    z_g_start = -5.7
+    c_cable = bd.Cylinder(r_cab, 24.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.CENTER))
+    # Grommet cylinder spans local z ∈ [-6.2, +4.0] (10.2 mm!) -> global Y ∈ [42.0, 52.2], leaving 2.0 mm exit taper to Y=54.2!
+    z_g_start = -6.2
     c_g2 = bd.Cylinder(r_grom, p.clamp_grommet_len, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_g_start))
     # 45-deg chamfered transitions into cable bore (zero overhang when printed face-down on Y = 54.2!)
     c_g_in = bd.Cone(r_cab, r_grom, dr, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((0, 0, z_g_start))
@@ -668,19 +738,19 @@ def build_cable_clamp_half(p: LepiLEDParams, side: float = 1.0) -> bd.Part:
 
 def build_plug_top(p: LepiLEDParams) -> bd.Part:
     """
-    MECH-PLUG-TOP — Open-Chimney Ventilated Rain Finial (Z = 285.0 .. 324.0 mm, prints inverted):
-      - 4 corner legs slipping 21 mm inside 26 x 26 mm Al bore, cross-pinned by top M4 x 50 mm stainless hanging bolt
-      - Perimeter mesh-clamping rim resting on top end of Al core at Z = 306.0 mm (holds 28 x 28 mm stainless mesh)
-      - 4 generous 14.4 x 9.0 mm exhaust windows (5.18 cm^2 open area) under overhanging 38 x 38 mm 45-deg rain hood
+    MECH-PLUG-TOP — Open-Chimney Ventilated Rain Finial (Z = 281.5 .. 323.0 mm, exported pre-flipped onto Z = 0):
+      - 4 chamfered (C1.2) corner legs slipping 23.5 mm inside 26 x 26 mm Al bore, cross-pinned by top M4 x 50 mm bolt
+      - Perimeter seating rim resting on top end of Al core at Z = 305.0 mm (unobstructed open chimney)
+      - 4 generous 14.4 x 9.0 mm open exhaust windows (5.18 cm^2 open area) under overhanging 38 x 38 mm 45-deg rain hood
     """
-    z_top_core = p.z_core_top            # 306.0
-    z_legs_bot = z_top_core - p.plug_top_insert_h  # 285.0
-    z_vent_top = z_top_core + p.plug_top_vent_h    # 315.0
-    z_end = p.z_plug_top_end             # 324.0
+    z_top_core = p.z_core_top            # 305.0
+    z_legs_bot = z_top_core - p.plug_top_insert_h  # 281.5
+    z_vent_top = z_top_core + p.plug_top_vent_h    # 314.0
+    z_end = p.z_plug_top_end             # 323.0
     w_leg = p.plug_top_leg_w             # 25.4
     post_w = 5.5                         # 4 corner posts -> 14.4 mm clear exhaust opening on every side!
 
-    # 1. Overhanging 38 x 38 mm rain hood (Z = 315.0 .. 324.0 mm: 3.0 mm skirt + 6.0 mm 45-deg pitched roof)
+    # 1. Overhanging 38 x 38 mm rain hood (Z = 314.0 .. 323.0 mm: 3.0 mm skirt + 6.0 mm 45-deg pitched roof)
     skirt_h = 3.0
     bevel_h = p.plug_top_hood_h - skirt_h  # 6.0 mm -> 38 -> 26 mm top flat
     with bd.BuildSketch(bd.Plane.XY.offset(z_vent_top)) as sk_hs:
@@ -693,37 +763,76 @@ def build_plug_top(p: LepiLEDParams) -> bd.Part:
     hood_roof = bd.loft([sk_hb.sketch, sk_ht.sketch])
     part = hood_skirt.fuse(hood_roof)
 
-    # 2. 4 continuous corner posts running from Z = 285.0 .. 315.5 mm (0 overhang when printed inverted!)
+    # 2. 4 continuous corner posts: C1.2 outer vertical chamfers inside Al bore (Z = z_legs_bot .. z_top_core - 1.2)
+    #    transitioning smoothly at 45 deg into unchamfered upper posts (Z = z_top_core .. z_vent_top + 0.5) & 1.5 mm hood-root gussets!
     off = 0.5 * (w_leg - post_w)  # 9.95 mm
+    c_leg = 1.2                   # 1.2 x 45-deg outer corner chamfer clearing extruded Al inner fillets (R0.5-1.0)
+    h_in = 0.5 * w_leg - post_w   # 7.20 mm
+    h_out = 0.5 * w_leg           # 12.70 mm
     for sx in (-1.0, 1.0):
         for sy in (-1.0, 1.0):
-            post = bd.Box(post_w, post_w, (z_vent_top + 0.5) - z_legs_bot,
-                          align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((sx * off, sy * off, z_legs_bot))
-            part = part.fuse(post)
+            with bd.BuildSketch(bd.Plane.XY.offset(z_legs_bot)) as sk_post_lo:
+                with bd.BuildLine():
+                    bd.Polyline([
+                        (sx * h_in, sy * h_in),
+                        (sx * h_out, sy * h_in),
+                        (sx * h_out, sy * (h_out - c_leg)),
+                        (sx * (h_out - c_leg), sy * h_out),
+                        (sx * h_in, sy * h_out),
+                        (sx * h_in, sy * h_in),
+                    ])
+                bd.make_face()
+            post_lo = bd.extrude(sk_post_lo.sketch, (z_top_core - c_leg) - z_legs_bot)
+            with bd.BuildSketch(bd.Plane.XY.offset(z_top_core - c_leg)) as sk_tr0:
+                with bd.BuildLine():
+                    bd.Polyline([
+                        (sx * h_in, sy * h_in),
+                        (sx * h_out, sy * h_in),
+                        (sx * h_out, sy * (h_out - c_leg)),
+                        (sx * (h_out - c_leg), sy * h_out),
+                        (sx * h_in, sy * h_out),
+                        (sx * h_in, sy * h_in),
+                    ])
+                bd.make_face()
+            with bd.BuildSketch(bd.Plane.XY.offset(z_top_core)) as sk_tr1:
+                bd.Rectangle(post_w, post_w)
+            post_tr = bd.loft([sk_tr0.sketch, sk_tr1.sketch.translate((sx * off, sy * off, 0.0))])
+            post_hi = bd.Box(post_w, post_w, (z_vent_top + 0.5) - z_top_core,
+                             align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((sx * off, sy * off, z_top_core))
+            with bd.BuildSketch(bd.Plane.XY.offset(z_vent_top - 1.5)) as sk_pg0:
+                bd.Rectangle(post_w, post_w)
+            with bd.BuildSketch(bd.Plane.XY.offset(z_vent_top + 0.05)) as sk_pg1:
+                bd.Rectangle(post_w + 3.0, post_w + 3.0)
+            post_gus = bd.loft([
+                sk_pg0.sketch.translate((sx * off, sy * off, 0.0)),
+                sk_pg1.sketch.translate((sx * off, sy * off, 0.0)),
+            ])
+            part = part.fuse(post_lo).fuse(post_tr).fuse(post_hi).fuse(post_gus)
 
-    # 3. ±X internal pin webs (Z = 285.0 .. 296.0 mm) with 45-deg upper bevel (Z = 296.0 .. 303.2 mm -> 0 overhang inverted!)
+    # 3. ±X internal pin webs (Z = z_legs_bot .. z_hang_hole + 6.0) with 45-deg upper bevel (0 overhang inverted!)
+    z_web_sh = p.z_hang_hole + 6.0
+    z_web_top = z_web_sh + 7.2
     for sx in (-1.0, 1.0):
         xc = sx * (0.5 * w_leg - 1.4)
         pl_web = bd.Plane(origin=(xc - 1.4, 0.0, 0.0), x_dir=(0.0, 1.0, 0.0), z_dir=(1.0, 0.0, 0.0))
-        # Pentagon in YZ plane: full width at Z = 285..296, tapering at 45-deg outward to corner posts from Z = 296..303.5!
-        half_span = 0.5 * w_leg - 0.5
+        half_span = 0.5 * w_leg - c_leg  # 11.5 mm (stays flush inside C1.2 corner chamfer -> 0.000 mm^2 overhang!)
         inner_y = off - 0.5 * post_w  # 7.2 mm (inner edge of corner posts)
         with bd.BuildSketch(pl_web) as sk_w:
             with bd.BuildLine():
                 bd.Polyline([
                     (-half_span, z_legs_bot),
                     (half_span, z_legs_bot),
-                    (half_span, 303.2),
-                    (inner_y, 303.2),
-                    (0.0, 296.0),
-                    (-inner_y, 303.2),
-                    (-half_span, 303.2),
+                    (half_span, z_web_top),
+                    (inner_y, z_web_top),
+                    (0.0, z_web_sh),
+                    (-inner_y, z_web_top),
+                    (-half_span, z_web_top),
                     (-half_span, z_legs_bot),
                 ])
             bd.make_face()
         part = part.fuse(bd.extrude(sk_w.sketch, 2.8))
 
-    # 4. Top-of-core mesh-clamping step on 4 corners (Z = 306.0 .. 308.4 mm) -> traps 28 x 28 mm mesh with 0 overhang!
+    # 4. Top-of-core seating rim on 4 corners (Z = z_top_core .. z_top_core + 2.4 mm) -> seats finial flush on Al rim (0 overhang!)
     for sx in (-1.0, 1.0):
         for sy in (-1.0, 1.0):
             with bd.BuildSketch(bd.Plane.XY.offset(z_top_core)) as sk_m0:
@@ -746,22 +855,22 @@ def build_plug_top(p: LepiLEDParams) -> bd.Part:
 
 def build_cord_spool(p: LepiLEDParams) -> bd.Part:
     """
-    Symmetric 6.0 mm flanged M4 bail spool (2x printed flat alongside MECH-PLUG-TOP):
+    Symmetric 6.0 mm flanged M4 bail spool (2x printed flat alongside MECH-PLUG-TOP via breakaway bed tabs):
       - Ø4.4 mm slip bore over top M4 x 50 mm stainless cross-bolt outside ±X walls of 30 mm Al core
-      - Ø7.2 mm smooth barrel (1.4 mm wall) spacing bent coat-hanger wire bail clear of anodized Al tube & 38 mm rain hood
-      - Exact stack on M4 x 50 bolt: 30.0 Al + 2x6.0 spools + 2x0.8 M4 washers + 5.0 nyloc = 48.6 mm (0.000 mm^2 overhang)
+      - 1.00 mm (5-layer) outer flanges + 44.0-deg cheeks + Ø7.2 mm barrel (1.4 mm wall, 0.000 mm^2 overhang)
+      - Exact stack on M4 x 50 bolt: 30.0 Al + 2x6.0 spools + 2x0.8 M4 washers + 5.0 nyloc = 48.6 mm
     """
     with bd.BuildSketch(bd.Plane.XZ) as sk_sp:
         with bd.BuildLine():
             bd.Polyline([
                 (2.20, 0.0),
-                (5.10, 0.0),
-                (5.10, 0.6),
-                (3.60, 2.2),   # 43.15-deg taper -> 0.000 mm^2 >46 deg overhang upright or inverted
-                (3.60, 3.8),   # 1.6 mm barrel groove floor for Ø2.0-2.5 mm wire bail eye (or 3 mm cord)
-                (5.10, 5.4),   # 43.15-deg flare
-                (5.10, 6.0),
-                (2.20, 6.0),
+                (5.00, 0.0),
+                (5.00, 1.00),  # 1.00 mm (5 exact 0.20 mm layers) durable ASA flange
+                (3.60, 2.45),  # 44.0-deg taper -> 0.000 mm^2 >46 deg overhang upright or inverted
+                (3.60, 3.55),  # 1.10 mm barrel groove floor for Ø2.0-2.5 mm wire bail eye (or 3 mm cord)
+                (5.00, 5.00),  # 44.0-deg flare
+                (5.00, 6.00),
+                (2.20, 6.00),
                 (2.20, 0.0),
             ])
         bd.make_face()
@@ -771,11 +880,11 @@ def build_cord_spool(p: LepiLEDParams) -> bd.Part:
 def build_drill_jig(p: LepiLEDParams) -> bd.Part:
     """
     MECH-DRILL-JIG — Compact 35 mm Dual-Datum Snap-On Center-Punch End-Cap Guide:
-      - Tight 30.3 mm U-channel fits onto either end of 30 x 30 mm Al tube
-      - Two Ø2.0 mm center-punch guide cones at 6.5 mm (bottom M4 bolt) & 16.0 mm (top M4 hanging bolt) from end stop
+      - ASA-tolerant 30.7 mm U-channel w/ 45-deg diamond corner reliefs & narrow 0.35 mm triangular crush ridges (30.00 mm span!)
+      - Two Ø2.2 mm (prints ~Ø2.0 mm in ASA) center-punch guide cones at 6.5 mm & 16.0 mm from end stop
     """
     wall = 3.2
-    inner_w = p.core_w_nom + 0.30  # Tight 30.3 mm fit
+    inner_w = p.core_w_max + 0.30  # 30.70 mm clears worst-case 30.4 mm Al tube + ASA shrinkage
     outer_w = inner_w + 2.0 * wall
     jig_len = 32.0
     leg_h = 14.0
@@ -785,6 +894,47 @@ def build_drill_jig(p: LepiLEDParams) -> bd.Part:
     leg_neg = bd.Box(leg_h, wall, jig_len, align=(bd.Align.MIN, bd.Align.MIN, bd.Align.MIN)).translate((0, -outer_w / 2.0, 0))
     end_stop = bd.Box(10.0, outer_w, wall, align=(bd.Align.MIN, bd.Align.CENTER, bd.Align.MAX))
     jig = base.fuse(leg_pos).fuse(leg_neg).fuse(end_stop)
+
+    # Support-free 45-deg diamond corner reliefs along internal U-channel corners (0 overhang after Y,-90 print rotation!)
+    for sy in (-1.0, 1.0):
+        yc = sy * (inner_w / 2.0)
+        with bd.BuildSketch(bd.Plane.XY.offset(-1.0)) as sk_dg:
+            with bd.BuildLine():
+                bd.Polyline([
+                    (wall - 0.7, yc),
+                    (wall, yc + 0.7),
+                    (wall + 0.7, yc),
+                    (wall, yc - 0.7),
+                    (wall - 0.7, yc),
+                ])
+            bd.make_face()
+        jig = jig - bd.extrude(sk_dg.sketch, jig_len + 2.0)
+
+    # Narrow 0.35 mm-proud triangular crush ridges (30.00 mm tip-to-tip) starting cleanly ABOVE the X=3.90 diamond relief
+    # with 45-deg bottom corbels (X = 4.10 .. 4.55 -> 0 floating slivers, 0 overhang, zero play on 30.0 mm Al & crushable on 30.4 mm!)
+    for sy in (-1.0, 1.0):
+        for z_rib in (12.0, 22.0):
+            with bd.BuildSketch(bd.Plane.YZ.offset(wall + 0.90)) as sk_r0:
+                with bd.BuildLine():
+                    bd.Polyline([
+                        (sy * (inner_w / 2.0 + 0.15), z_rib - 0.50),
+                        (sy * (inner_w / 2.0 - 0.02), z_rib),
+                        (sy * (inner_w / 2.0 + 0.15), z_rib + 0.50),
+                        (sy * (inner_w / 2.0 + 0.15), z_rib - 0.50),
+                    ])
+                bd.make_face()
+            with bd.BuildSketch(bd.Plane.YZ.offset(wall + 1.35)) as sk_r1:
+                with bd.BuildLine():
+                    bd.Polyline([
+                        (sy * (inner_w / 2.0 + 0.15), z_rib - 0.50),
+                        (sy * (inner_w / 2.0 - 0.35), z_rib),
+                        (sy * (inner_w / 2.0 + 0.15), z_rib + 0.50),
+                        (sy * (inner_w / 2.0 + 0.15), z_rib - 0.50),
+                    ])
+                bd.make_face()
+            rib_corbel = bd.loft([sk_r0.sketch, sk_r1.sketch])
+            rib_stem = bd.extrude(sk_r1.sketch, leg_h - (wall + 1.35) - 0.4)
+            jig = jig.fuse(rib_corbel).fuse(rib_stem)
 
     dg = p.drill_guide_from_core_bot_mm
     for z_rel in (dg["bottom_m4_bolt_from_bot_mm"], dg["top_m4_hang_bolt_from_top_mm"]):
@@ -805,9 +955,9 @@ def build_usbc_cable(p: LepiLEDParams) -> bd.Part:
     r_cab = 2.2
     z_c = p.clamp_z  # 156.5
 
-    # 1. Internal horizontal S-curve in Z = clamp_z plane from plug strain-relief tip (27.48, 13.6) -> clamp (0.0, 42.5)
-    x0, y0 = p.x_j1_center, 0.5 * p.usbc_plug_90_w_y + p.usbc_strain_relief_h + 0.1  # (27.48, 13.7)
-    x1, y1 = 0.0, 42.5
+    # 1. Internal horizontal S-curve in Z = clamp_z plane from plug strain-relief tip -> clamp inner mouth (0.0, 40.0)
+    x0, y0 = p.x_j1_center, 0.5 * p.usbc_plug_90_w_y + p.usbc_strain_relief_h + 0.1
+    x1, y1 = 0.0, 40.0
     dx, dy = x0 - x1, y1 - y0
     r_int = (dx ** 2 + dy ** 2) / (4.0 * dx)
     th_i = math.acos(1.0 - (0.5 * dx) / r_int)
@@ -835,8 +985,8 @@ def build_usbc_cable(p: LepiLEDParams) -> bd.Part:
     p2_mid = (y_ex0 + r1 + r2, z_loop - r2)
     p3 = (y_ex0 + r1 + 2.0 * r2, z_loop)  # (72.4, 142.5)
 
-    # Smooth S-curve up into +Y eaves C-clip (X = 1.5, Y = 60.5, Z = 171 .. 181 mm) -> build in YZ at X = 0 then route cleanly
-    y_clip = 60.5
+    # Smooth S-curve up into elastic +Y eaves C-clip (X = 2.5, Y = 61.6, Z = 171 .. 181 mm)
+    y_clip = 61.6
     z_clip_bot = p.z_cap_top_bot        # 171.0
     z_clip_top = p.z_cap_top_eaves_top  # 181.0
     dy_s = p3[0] - y_clip
@@ -871,10 +1021,10 @@ def build_usbc_cable(p: LepiLEDParams) -> bd.Part:
     prof_pl = bd.Plane(origin=(y_ex0, z_c, 0.0), x_dir=(0.0, 1.0, 0.0), z_dir=(1.0, 0.0, 0.0))
     with bd.BuildSketch(prof_pl) as sk_ext:
         bd.Circle(r_cab)
-    cab_ext = bd.sweep(sk_ext.sketch, path=l_ext.wire()).rotate(bd.Axis.X, 90.0).rotate(bd.Axis.Z, 90.0).translate((1.5, 0.0, 0.0))
+    cab_ext = bd.sweep(sk_ext.sketch, path=l_ext.wire()).rotate(bd.Axis.X, 90.0).rotate(bd.Axis.Z, 90.0).translate((2.5, 0.0, 0.0))
 
-    # Straight section inside clamp bore (Y = 42.5 .. 54.4)
-    cab_mid = bd.Cylinder(r_cab, y_ex0 - 42.5, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).rotate(bd.Axis.X, -90.0).translate((0.0, 42.5, z_c))
+    # Straight section inside clamp bore (Y = 40.0 .. 54.4)
+    cab_mid = bd.Cylinder(r_cab, y_ex0 - 40.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).rotate(bd.Axis.X, -90.0).translate((0.0, 40.0, z_c))
     return bd.Compound([cab_int, cab_mid, cab_ext])
 
 
@@ -992,33 +1142,35 @@ def build_assembly_parts(p: LepiLEDParams, core_w_override: float | None = None,
         lb_head = bd.Cone(2.95, 1.48, 1.47, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((ex, ey, z_ear_bot + 0.05))
         lb_shank = bd.Cylinder(1.48, 10.5, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((ex, ey, z_ear_bot + 1.52))
         fasteners_list.append(lb_head.fuse(lb_shank))
-    # 2. 2x M3x14 pan-head + flat washer +Y cable clamp bolts
+    # 2. 2x M3x12 pan-head + 0.5 mm DIN 125 steel washer +Y cable clamp bolts (exact 12.0 mm shank -> clears blind floor by +1.50 mm even closed!)
     y_cl_out = r_port + p.clamp_standoff_y + p.clamp_flange_t  # 54.2
     for sx in (-1.0, 1.0):
         cx = sx * p.clamp_bolt_dx
-        ch = bd.Cylinder(3.4, 2.2, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
-        cs = bd.Cylinder(1.48, 12.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX))
+        ch = bd.Cylinder(3.4, 2.5, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))  # 0.5 mm washer + 2.0 mm pan head
+        cs = bd.Cylinder(1.48, 11.5, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX))  # 12.0 - 0.5 washer = 11.5 mm below washer
         cbolt = ch.fuse(cs).rotate(bd.Axis.X, -90.0).translate((cx, y_cl_out + 0.05, p.clamp_z))
         fasteners_list.append(cbolt)
-    # 3. 4x M3x8 pan-head + steel + 2x Ø7.0x0.8 nylon washers + captive DIN 934 M3 hex nuts securing vertical driver_pcb on +X
-    x_nut_c = p.core_pocket_w / 2.0 + 1.0 + 1.30  # 17.85
+    # 3. 4x M3x8 pan-head + steel + 3x Ø7.0x0.8 nylon washers (2.9 mm stack) + captive DIN 934 M3 hex nuts securing vertical driver_pcb on +X
+    x_nut_c = p.core_pocket_w / 2.0 + 1.0 + 1.35  # 17.90 (centered in 2.70 mm pocket at X = 16.55..19.25)
     for sy in (-1.0, 1.0):
         for sz in (-1.0, 1.0):
             hy = sy * p.pcb_hole_y
             hz = p.pcb_z_center + sz * p.pcb_hole_z
-            # Washer stack (2x0.8 nylon + 0.5 steel = 2.1 mm) + pan head (2.0 mm); shank extends 4.3 mm behind B.Cu (stops X=16.2!)
-            pw = bd.Cylinder(3.50, 3.6, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
-            ps = bd.Cylinder(1.48, 5.85, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX))
+            # Exact 2.9 mm washer stack (3x0.8 nylon + 0.5 steel) + 2.0 mm pan head; exact 8.0 mm shank stops at X=17.45 (+0.90 mm clear of blind wall!)
+            pw = bd.Cylinder(3.50, 4.9, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
+            ps = bd.Cylinder(1.48, 5.10, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX))  # 8.0 - 2.9 washer stack = 5.10 mm past F.Cu
             pbolt = pw.fuse(ps).rotate(bd.Axis.Y, 90.0).translate((p.pcb_x_fcu + 0.05, hy, hz))
-            # Captive DIN 934 M3 hex nut (5.50 mm AF vertical along Z, 6.35 mm AC along Y, 2.40 mm thick at X=17.85)
+            # Captive DIN 934 M3 hex nut (5.50 mm AF vertical along Z, 6.35 mm AC along Y, 2.40 mm thick at X=17.90)
             with bd.BuildSketch(bd.Plane.YZ.offset(x_nut_c - 1.20)) as sk_hn:
                 bd.RegularPolygon(radius=p.pcb_nut_af / (2.0 * math.cos(math.radians(30.0))), side_count=6, rotation=0.0)
             hex_nut = bd.extrude(sk_hn.sketch, p.pcb_nut_thick).translate((0.0, hy, hz))
             fasteners_list.append(pbolt.fuse(hex_nut))
-    # 4. Bottom M4 x 50 mm A2 stainless cross-bolt + nyloc nut at Z = 12.5 mm inside MECH-CAP-BOT spotfaces (|X| = 21.0)
-    b_sh = bd.Cylinder(1.98, 48.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.CENTER)).rotate(bd.Axis.Y, 90.0).translate((0.0, 0.0, p.z_bot_bolt))
-    b_hd = bd.Cylinder(3.4, 3.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).rotate(bd.Axis.Y, 90.0).translate((21.05, 0.0, p.z_bot_bolt))
-    b_nt = bd.Cylinder(3.4, 3.8, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).rotate(bd.Axis.Y, 90.0).translate((-21.05, 0.0, p.z_bot_bolt))
+    # 4. Bottom DIN 912 M4 x 50 mm A2 stainless SHCS (Ø7.0x4.0 head on +X) + captive DIN 985 M4 nyloc nut (7.0 mm AF vertical flats on -X) at Z = 11.5 mm
+    b_sh = bd.Cylinder(1.98, 49.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.CENTER)).rotate(bd.Axis.Y, 90.0).translate((-3.5, 0.0, p.z_bot_bolt))
+    b_hd = bd.Cylinder(3.50, 4.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).rotate(bd.Axis.Y, 90.0).translate((21.05, 0.0, p.z_bot_bolt))
+    with bd.BuildSketch(bd.Plane.YZ.offset(-26.05)) as sk_m4n:
+        bd.RegularPolygon(radius=7.0 / (2.0 * math.cos(math.radians(30.0))), side_count=6, rotation=30.0)  # Vertical parallel flats at Y = ±3.50 mm!
+    b_nt = bd.extrude(sk_m4n.sketch, 5.0).translate((0.0, 0.0, p.z_bot_bolt))
     fasteners_list.append(b_sh.fuse(b_hd).fuse(b_nt))
     # 5. Top M4 x 50 mm A2 stainless hanging cross-bolt + 2x M4 DIN 125 washers + nyloc nut clamping 2x 6.0 mm cord spools
     x_w_in = x_sp_in + 6.05  # 21.10 mm nom / 21.30 mm WC (0.05 mm clear of spool outer face)
@@ -1030,8 +1182,8 @@ def build_assembly_parts(p: LepiLEDParams, core_w_override: float | None = None,
     fasteners_list.append(t_sh.fuse(t_w_pos).fuse(t_hd).fuse(t_w_neg).fuse(t_nt))
     fasteners_m3 = bd.Compound(fasteners_list)
 
-    # Clear Extruded XT PMMA Shroud (Ø60 x 54 x 3.0 x 115 mm)
-    z_g_start = p.z_glass_bot - 0.5 * (g_len - p.glass_length)
+    # Clear Extruded XT PMMA Shroud (Ø60 x 54 x 3.0 x 115 mm; seats on MECH-CAP-BOT Z = 19.5 floor, +2 mm tolerance into top_base!)
+    z_g_start = p.z_glass_bot
     g_outer = bd.Cylinder(g_od / 2.0, g_len, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
     g_inner = bd.Cylinder(g_id / 2.0, g_len + 2.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, -1.0))
     glass_tube = (g_outer - g_inner).translate((0, 0, z_g_start))
@@ -1153,11 +1305,12 @@ def _raycast_mesh_numpy(mesh: trimesh.Trimesh, origins: np.ndarray, dirs: np.nda
 
 
 def check_shell_raycast_breaches(out_dir: Path, p: LepiLEDParams) -> dict[str, dict | bool]:
-    """Exterior-to-interior ray-cast breach checks on sealed umbrella bell roof, side wall (incl. D12 dimple), and blind clamp inserts."""
+    """Exterior-to-interior ray-cast breach & bulkhead checks on assembly-coordinate meshes in parts_stl/."""
+    comp_dir = out_dir / "parts_stl"
     results: dict[str, dict | bool] = {}
 
     # 1. MECH-CAP-TOP lofted rain roof & collar (zero top breaches)
-    m_top = trimesh.load(str(out_dir / "mech_cap_top.stl"), force="mesh")
+    m_top = trimesh.load(str(comp_dir / "cap_top.stl"), force="mesh")
     origins, dirs = [], []
     for rad in np.linspace(20.6, 44.0, 12):
         for ang in np.linspace(0.0, 2.0 * math.pi, 36, endpoint=False):
@@ -1175,7 +1328,7 @@ def check_shell_raycast_breaches(out_dir: Path, p: LepiLEDParams) -> dict[str, d
     }
 
     # 2. MECH-TOP-BASE +Y blind clamp insert walls at (±13.0, Z = clamp_z)
-    m_tb = trimesh.load(str(out_dir / "mech_top_base.stl"), force="mesh")
+    m_tb = trimesh.load(str(comp_dir / "top_base.stl"), force="mesh")
     tb_orig = [[sx * p.clamp_bolt_dx, 30.0, p.clamp_z] for sx in (-1.0, 1.0)]
     tb_dirs = [[0.0, 1.0, 0.0], [0.0, 1.0, 0.0]]
     l_locs, l_idx = _raycast_mesh_numpy(m_tb, np.array(tb_orig), np.array(tb_dirs))
@@ -1191,7 +1344,7 @@ def check_shell_raycast_breaches(out_dir: Path, p: LepiLEDParams) -> dict[str, d
 
     # 3. MECH-CAP-TOP outer vertical bell wall (incl. Z = 190.9 mm D12 translucent dimple -> MUST remain watertight!)
     b_orig, b_dir = [], []
-    z_samples = list(np.linspace(185.0, 228.0, 8)) + [p.z_d12]
+    z_samples = list(np.linspace(185.0, p.cap_top_roof_bot_z - 0.5, 8)) + [p.z_d12]
     for zv in z_samples:
         for ang in np.linspace(0.0, 2.0 * math.pi, 36, endpoint=False):
             b_orig.append([60.0 * math.cos(ang), 60.0 * math.sin(ang), float(zv)])
@@ -1234,6 +1387,40 @@ def check_shell_raycast_breaches(out_dir: Path, p: LepiLEDParams) -> dict[str, d
         "pass": len(v_locs) == 0,
     }
 
+    # 6. Verify MECH-CAP-BOT waterproof bulkhead thickness above ±X M4 spotface apex (must be >= 1.80 mm!)
+    #    Offset Y = 0.05 mm off the exact gable ridge seam so triangles aren't double-hit; deduplicate hits within 1e-3 mm.
+    m_bot = trimesh.load(str(comp_dir / "cap_bot.stl"), force="mesh")
+    bh_orig = np.array([[sx * 27.5, 0.05, 12.0] for sx in (-1.0, 1.0)])
+    bh_dirs = np.array([[0.0, 0.0, 1.0], [0.0, 0.0, 1.0]])
+    bh_locs, bh_idx = _raycast_mesh_numpy(m_bot, bh_orig, bh_dirs)
+    bh_walls = []
+    for i in range(2):
+        raw_zs = sorted(float(pt[2]) for pt, r_i in zip(bh_locs, bh_idx) if int(r_i) == i)
+        zs: list[float] = []
+        for zv in raw_zs:
+            if not zs or abs(zv - zs[-1]) > 1e-3:
+                zs.append(zv)
+        bh_walls.append(round(zs[1] - zs[0], 3) if len(zs) >= 2 else 0.0)
+    results["cap_bot_spotface_bulkhead_mm"] = {
+        "min_bulkhead_mm": min(bh_walls),
+        "min_required_mm": 1.80,
+        "pass": min(bh_walls) >= 1.80,
+    }
+
+    # 7. Verify MECH-CAP-TOP D12 translucent dimple skin directly opposite D12 (Z = 190.9 mm -> 0.80..1.10 mm normal!)
+    ang_rad = math.atan2(p.d12_local_bx, math.sqrt((0.5 * p.cap_top_bore_id) ** 2 - p.d12_local_bx ** 2))
+    d12_dir = np.array([[math.cos(ang_rad), math.sin(ang_rad), 0.0]])
+    d12_orig = np.array([[40.0 * math.cos(ang_rad), 40.0 * math.sin(ang_rad), p.z_d12]])
+    d12_locs, _ = _raycast_mesh_numpy(m_top, d12_orig, d12_dir)
+    d12_rs = sorted(math.hypot(float(pt[0]), float(pt[1])) for pt in d12_locs)
+    d12_rad_wall = (d12_rs[-1] - d12_rs[0]) if len(d12_rs) >= 2 else 99.0
+    d12_norm_wall = round(d12_rad_wall / math.sqrt(2.0), 3)  # Normal to 45-deg eaves taper at Z = 190.9 mm
+    results["cap_top_d12_dimple_normal_wall_mm"] = {
+        "normal_wall_mm": d12_norm_wall,
+        "target_range_mm": [0.80, 1.15],
+        "pass": 0.80 <= d12_norm_wall <= 1.15,
+    }
+
     results["all_pass"] = all(v["pass"] for k, v in results.items() if isinstance(v, dict))
     return results
 
@@ -1241,12 +1428,12 @@ def check_shell_raycast_breaches(out_dir: Path, p: LepiLEDParams) -> dict[str, d
 def check_fastener_seat_bearing(cap_bot: bd.Part, top_base: bd.Part, cap_top: bd.Part, p: LepiLEDParams) -> dict[str, dict | bool]:
     results: dict[str, dict | bool] = {}
 
-    # 1. cap_bot M4 x 50 cross-bolt bearing faces at |X| = 21.0 mm (Z = 12.5 mm)
-    ideal_m4 = math.pi * (4.0 ** 2 - 2.30 ** 2) * 2.0
+    # 1. cap_bot DIN 912 M4 x 50 cross-bolt bearing faces at |X| = 21.0 mm (Z = 11.5 mm; Ø7.0 head on +X, captive 7.0 AF nyloc on -X)
+    ideal_m4 = math.pi * (3.5 ** 2 - 2.30 ** 2) * 2.0
     bot_ratios = []
     for sx in (-1.0, 1.0):
         ring = (
-            bd.Cylinder(4.0, 2.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX))
+            bd.Cylinder(3.5, 2.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX))
             - bd.Cylinder(2.30, 2.2, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((0, 0, 0.1))
         ).rotate(bd.Axis.Y, 90.0 if sx > 0 else -90.0).translate((sx * 21.0, 0.0, p.z_bot_bolt))
         inter = cap_bot & ring
@@ -1448,13 +1635,31 @@ def check_kinematic_insertion(assy: dict[str, bd.Shape], p: LepiLEDParams) -> di
         inter = top_base & plug_real.translate((0.0, 0.0, float(dz_p)))
         j1_mate_vol = max(j1_mate_vol, float(inter.volume) if inter is not None else 0.0)
 
+    # 6. Upward insertion sweep of all 4x M3x12 CSK screws from below through diagonal gusseted ears!
+    z_ear_bot = p.z_top_base_deck_top - p.top_base_ear_h
+    m3_csk_tool = (
+        bd.Cone(2.95, 1.48, 1.47, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
+        .fuse(bd.Cylinder(1.48, 10.5, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, 1.47)))
+    )
+    ear_ins_vol = 0.0
+    for deg in (45.0, 135.0, 225.0, 315.0):
+        rad = math.radians(deg)
+        ex, ey = p.top_base_ear_r * math.cos(rad), p.top_base_ear_r * math.sin(rad)
+        for zb in np.linspace(148.0, z_ear_bot + 0.05, 8):
+            inter = top_base & m3_csk_tool.translate((ex, ey, float(zb)))
+            ear_ins_vol = max(ear_ins_vol, float(inter.volume) if inter is not None else 0.0)
+
     return {
         "sw1_side_ring_insertion": {"waypoints_tested": 15, "max_intersection_vol_mm3": round(sw_max_vol, 6), "pass": sw_max_vol < 1e-4},
         "cap_top_bell_straight_down_closure": {"waypoints_tested": 20, "max_intersection_vol_mm3": round(bell_max_vol, 6), "pass": bell_max_vol < 1e-4},
         "jst_xh_plug_wire_slot_sweep": {"waypoints_tested": 30, "max_intersection_vol_mm3": round(jst_max_vol, 6), "pass": jst_max_vol < 1e-4},
         "usbc_straight_plug_outward_port_pass": {"waypoints_tested": 15, "max_intersection_vol_mm3": round(port_max_vol, 6), "pass": port_max_vol < 1e-4},
         "usbc_18mm_90_plug_j1_mating_sweep": {"waypoints_tested": 12, "max_intersection_vol_mm3": round(j1_mate_vol, 6), "pass": j1_mate_vol < 1e-4},
-        "all_zero": (sw_max_vol < 1e-4) and (bell_max_vol < 1e-4) and (jst_max_vol < 1e-4) and (port_max_vol < 1e-4) and (j1_mate_vol < 1e-4),
+        "top_base_ear_m3_csk_upward_insertion": {"waypoints_tested": 32, "max_intersection_vol_mm3": round(ear_ins_vol, 6), "pass": ear_ins_vol < 1e-4},
+        "all_zero": (
+            (sw_max_vol < 1e-4) and (bell_max_vol < 1e-4) and (jst_max_vol < 1e-4)
+            and (port_max_vol < 1e-4) and (j1_mate_vol < 1e-4) and (ear_ins_vol < 1e-4)
+        ),
     }
 
 
@@ -1506,19 +1711,30 @@ def main() -> None:
     cl_neg_p = cl_neg.translate((-bb_n.max.X - 3.0, -0.5 * (bb_n.min.Y + bb_n.max.Y), -bb_n.min.Z))
     clamp_pair_print = bd.Compound([cl_pos_p, cl_neg_p])
 
-    # Export ventilated finial + 2x 6.0 mm flanged M4 cord spools together flush on inverted print bed (Z = 324.0 mm)
-    plug_finial_only = build_plug_top(p_fdm)
+    # Export ventilated finial + 2x 6.0 mm flanged M4 bail spools PRE-FLIPPED 180-deg onto Z = 0 (+Z UP ready to print!),
+    # linked by two 0.40 mm (2-layer) breakaway runner tabs so the small spools cannot detach on PEI!
+    plug_finial_inv = build_plug_top(p_fdm).rotate(bd.Axis.X, 180.0)
+    bb_pf = plug_finial_inv.bounding_box()
+    plug_finial_inv = plug_finial_inv.translate((0.0, 0.0, -bb_pf.min.Z))
     spool_bed = build_cord_spool(p_fdm)
-    plug_top_print = bd.Compound([
-        plug_finial_only,
-        spool_bed.translate((29.0, 0.0, p_fdm.z_plug_top_end - 6.0)),
-        spool_bed.translate((-29.0, 0.0, p_fdm.z_plug_top_end - 6.0)),
-    ])
+    tab_pos = bd.Box(14.0, 2.4, 0.40, align=(bd.Align.MIN, bd.Align.CENTER, bd.Align.MIN)).translate((11.5, 0.0, 0.0))
+    tab_neg = bd.Box(14.0, 2.4, 0.40, align=(bd.Align.MAX, bd.Align.CENTER, bd.Align.MIN)).translate((-11.5, 0.0, 0.0))
+    plug_top_print = (
+        plug_finial_inv
+        .fuse(spool_bed.translate((29.0, 0.0, 0.0)))
+        .fuse(spool_bed.translate((-29.0, 0.0, 0.0)))
+        .fuse(tab_pos)
+        .fuse(tab_neg)
+    )
+
+    # Zero ALL print-ready STEP/STL exports onto Z = 0.0 (+Z UP -> drop directly onto Bambu Studio build plate!)
+    top_base_print = assy_nom["top_base"].translate((0.0, 0.0, -p_fdm.z_top_base_bot))
+    cap_top_print = assy_nom["cap_top"].translate((0.0, 0.0, -p_fdm.z_cap_top_bot))
 
     mesh_checks = {
         "mech_cap_bot": export_and_verify_stl(assy_nom["cap_bot"], out_dir / "mech_cap_bot.step", out_dir / "mech_cap_bot.stl"),
-        "mech_top_base": export_and_verify_stl(assy_nom["top_base"], out_dir / "mech_top_base.step", out_dir / "mech_top_base.stl"),
-        "mech_cap_top": export_and_verify_stl(assy_nom["cap_top"], out_dir / "mech_cap_top.step", out_dir / "mech_cap_top.stl"),
+        "mech_top_base": export_and_verify_stl(top_base_print, out_dir / "mech_top_base.step", out_dir / "mech_top_base.stl"),
+        "mech_cap_top": export_and_verify_stl(cap_top_print, out_dir / "mech_cap_top.step", out_dir / "mech_cap_top.stl"),
         "mech_plug_top": export_and_verify_stl(plug_top_print, out_dir / "mech_plug_top.step", out_dir / "mech_plug_top.stl"),
         "mech_cable_clamp": export_and_verify_stl(clamp_pair_print, out_dir / "mech_cable_clamp.step", out_dir / "mech_cable_clamp.stl"),
         "mech_drill_jig": export_and_verify_stl(drill_jig, out_dir / "mech_drill_jig.step", out_dir / "mech_drill_jig.stl"),
@@ -1534,17 +1750,17 @@ def main() -> None:
     assy_compound = bd.Compound(list(assy_nom.values()))
     bd.export_step(assy_compound, str(out_dir / "lepiled_assembly.step"))
 
-    # Note: top_base allows strictly the intentional 2.5 mm-deep round Ø6.50 mm SW1 boot-seal bore (12.48 mm^2);
-    #       cap_top allows strictly the 0.6 mm-deep debossed "OFF UV ALL" legend on the -X visor face;
-    #       everywhere else on all 6 parts must be <= 1.0 mm^2!
+    # All 6 exported print STLs sit flat on Z = 0 with +Z UP (0 manual slicer rotation required!).
+    # Only the intentional round Ø6.50 mm SW1 bore & 0.50 mm debossed visor legend are allowed >46 deg; everywhere else <= 1.0 mm^2!
     x_sw0 = -(0.5 * p_fdm.top_base_port_od - p_fdm.sw1_recess_x)
+    sw1_z_p = p_fdm.sw1_z - p_fdm.z_top_base_bot
     sw1_bore_box = (
-        (x_sw0 - 0.2, -p_fdm.sw1_hole_dia / 2.0 - 0.2, p_fdm.sw1_z),
-        (x_sw0 + p_fdm.sw1_wall_thick + 0.2, p_fdm.sw1_hole_dia / 2.0 + 0.2, p_fdm.sw1_z + p_fdm.sw1_hole_dia / 2.0 + 0.3),
+        (x_sw0 - 0.2, -p_fdm.sw1_hole_dia / 2.0 - 0.2, sw1_z_p),
+        (x_sw0 + p_fdm.sw1_wall_thick + 0.2, p_fdm.sw1_hole_dia / 2.0 + 0.2, sw1_z_p + p_fdm.sw1_hole_dia / 2.0 + 0.3),
     )
     visor_text_box = (
-        (-p_fdm.cap_top_sw_visor_x - 0.2, -18.5, p_fdm.z_cap_top_bot + 3.5),
-        (-p_fdm.cap_top_sw_visor_x + 1.0, 18.5, p_fdm.z_cap_top_eaves_top),
+        (-p_fdm.cap_top_sw_visor_x - 0.2, -18.5, 3.5),
+        (-p_fdm.cap_top_sw_visor_x + 1.0, 18.5, p_fdm.cap_top_eaves_h),
     )
     overhang_checks = {
         "mech_cap_bot": audit_stl_overhangs(out_dir / "mech_cap_bot.stl", (0.0, 0.0, 1.0)),
@@ -1556,10 +1772,12 @@ def main() -> None:
             out_dir / "mech_cap_top.stl", (0.0, 0.0, 1.0),
             max_area_mm2=1.0, allowed_box=visor_text_box, allowed_box_max_area_mm2=25.0,
         ),
-        "mech_plug_top": audit_stl_overhangs(out_dir / "mech_plug_top.stl", (0.0, 0.0, -1.0)),
+        "mech_plug_top": audit_stl_overhangs(out_dir / "mech_plug_top.stl", (0.0, 0.0, 1.0)),
         "mech_cable_clamp": audit_stl_overhangs(out_dir / "mech_cable_clamp.stl", (0.0, 0.0, 1.0)),
         "mech_drill_jig": audit_stl_overhangs(out_dir / "mech_drill_jig.stl", (0.0, 0.0, 1.0)),
     }
+    for stl_k, oh_v in overhang_checks.items():
+        assert abs(oh_v["bed_z_proj_mm"]) < 0.05, f"{stl_k}.stl not seated on Z=0 (bed_z={oh_v['bed_z_proj_mm']})"
 
     breach_checks = check_shell_raycast_breaches(out_dir, p_fdm)
     seat_checks = check_fastener_seat_bearing(assy_nom["cap_bot"], assy_nom["top_base"], assy_nom["cap_top"], p_fdm)

@@ -464,9 +464,9 @@ def main() -> None:
     )
 
     configs = [
-        ChimneyConfig("Config 0: Open Chimney + Anodized Al (eps=0.82) + PCB Thermal Bridge", True, 0.82, 0.82, k_minor_mesh=8.0, pcb_bridge_rth_KW=8.5),
-        ChimneyConfig("Config 1: Open Chimney + Anodized Al (eps=0.82), No PCB Bridge", True, 0.82, 0.82, k_minor_mesh=8.0, pcb_bridge_rth_KW=None),
-        ChimneyConfig("Config 2: Open Chimney + Bare Mill Al (eps=0.10), No PCB Bridge", True, 0.10, 0.10, k_minor_mesh=8.0, pcb_bridge_rth_KW=None),
+        ChimneyConfig("Config 0: Open Chimney + Anodized Al (eps=0.82) + PCB Thermal Bridge", True, 0.82, 0.82, k_minor_mesh=3.0, pcb_bridge_rth_KW=8.5),
+        ChimneyConfig("Config 1: Open Chimney + Anodized Al (eps=0.82), No PCB Bridge", True, 0.82, 0.82, k_minor_mesh=3.0, pcb_bridge_rth_KW=None),
+        ChimneyConfig("Config 2: Open Chimney + Bare Mill Al (eps=0.10), No PCB Bridge", True, 0.10, 0.10, k_minor_mesh=3.0, pcb_bridge_rth_KW=None),
         ChimneyConfig("Config 3: Closed Bore + Bare Mill Al (eps=0.10), No PCB Bridge", False, 0.10, 0.10, pcb_bridge_rth_KW=None),
     ]
 
@@ -536,7 +536,7 @@ def main() -> None:
 
     summary = {
         "revision": "6.0",
-        "architecture": "Open-Chimney Funnel Lantern (30x30x2.0x300 mm Clear-Anodized Al Core eps=0.82, Screened 26 mm Chimney, Epoxy Cu DTP Stars, +X Vertical PCB w/ 15x15 mm Silicone-Pad/Brass-Shim Bridge)",
+        "architecture": "Open-Chimney Funnel Lantern (30x30x2.0x300 mm Clear-Anodized Al Core eps=0.82, Open 26 mm Chimney, Epoxy Cu DTP Stars, +X Vertical PCB w/ 15x15 mm Silicone-Pad/Brass-Shim Bridge)",
         "input_hashes": {
             "cad_params.json": _sha256_file(CAD_PARAMS_JSON),
             "sim_summary.json": _sha256_file(SIM_SUMMARY_JSON),
@@ -551,7 +551,7 @@ def main() -> None:
             "exposed_shroud_window_mm": cad["derived"]["exposed_glass_window_mm"],
             "anodized_al_emissivity": 0.82,
             "pcb_thermal_bridge_rth_KW": 8.5,
-            "mesh_minor_loss_K": 8.0,
+            "chimney_minor_loss_K": 3.0,
             "p_pcb_4uv_nom_W": p_pcb_4uv_nom,
             "p_pcb_8all_nom_W": p_pcb_8all_nom,
             "p_pcb_wc_W": p_pcb_wc,

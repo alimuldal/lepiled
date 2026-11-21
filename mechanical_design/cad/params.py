@@ -22,10 +22,10 @@ class LepiLEDParams:
     # 1. Bottom Tapered Funnel Nosecone (MECH-CAP-BOT: Z = 0.0 .. 34.0 mm, open screened chimney inlet)
     cap_bot_tip_od: float = 40.0         # Bottom nosecone tip OD (4.01 mm corner wall at Z = 6.0 mm)
     cap_bot_collar_od: float = 71.0      # Upper shroud collar OD (2.80 mm solid wall behind 60x3.5 O-ring)
-    cap_bot_cone_h: float = 15.5         # Exact 45.0-deg self-supporting frustum Z = 0.0 .. 15.5 mm
-    cap_bot_core_bot_z: float = 6.0      # Core seat ledge around 22 x 22 mm screened chimney air inlet
+    cap_bot_cone_h: float = 15.8         # Clean 44.4-deg self-supporting frustum Z = 0.0 .. 15.8 mm (0 tessellation >46 deg)
+    cap_bot_core_bot_z: float = 5.0      # Core seat ledge around 22 x 22 mm screened chimney air inlet (3.01 mm corner wall)
     cap_bot_inlet_w: float = 22.0        # Open rounded-square chimney inlet at nosecone tip (R = 3 mm)
-    cap_bot_bolt_z: float = 12.5         # Single M4 x 50 mm A2 stainless cross-bolt (6.5 mm from core bottom)
+    cap_bot_bolt_z: float = 11.5         # Single M4 x 50 mm A2 stainless cross-bolt (6.5 mm from core bottom; 2.2 mm bulkhead to bore)
     cap_bot_glass_bot_z: float = 19.5    # Bottom shroud seat (14.5 mm socket -> exposed window starts at Z = 34.0 mm)
     cap_bot_seal_groove: float = 1.8     # Rounded-square top hub V-groove (2.35 mm to 30 mm Al flats; 2.24 mm corner wall)
     cap_bot_seal_depth: float = 2.5      # Z = 31.5 .. 34.0 mm neutral-sealant bead sealing core socket before PMMA install
@@ -54,8 +54,8 @@ class LepiLEDParams:
     core_bore_nom: float = 26.0
     core_length: float = 300.0           # Standard UK 300 mm stock cut (zero sawing)
     core_pocket_w: float = 31.1          # +0.35 mm/side slip clearance over 30.4 mm max Al tube
-    core_wire_slot_w: float = 9.0        # 9.0 x 7.5 mm channels at +/-Y passing pre-crimped JST-XH plugs
-    core_wire_slot_d: float = 7.5
+    core_wire_slot_w: float = 9.0        # 9.0 x 6.5 mm channels at +/-Y passing pre-crimped JST-XH plugs (>= 2.0 mm hub corner wall)
+    core_wire_slot_d: float = 6.5
     core_bolt_hole_dia: float = 4.5      # 4x plain Ø4.5 mm clearance holes (2x bottom Z_rel=6.5, 2x top Z_rel=284.0)
     core_hang_hole_from_top: float = 16.0
 
@@ -73,31 +73,31 @@ class LepiLEDParams:
     # Axial face O-ring groove on Z = 171.0 mm deck (MECH-GASKET-3: 88 x 2.5 mm soft VMQ50)
     top_oring_id: float = 88.0           # Standard 88 x 2.5 mm VMQ50 (mean dia 90.5 mm vs groove mean 90.6 mm)
     top_oring_cs: float = 2.5
-    top_oring_groove_r_in: float = 43.6  # Groove R = 43.6 .. 47.0 mm (width = 3.4 mm)
+    top_oring_groove_r_in: float = 43.6  # Groove R = 43.6 .. 47.0 mm (width = 3.4 mm; 2.0 mm vertical outer lip wall)
     top_oring_groove_w: float = 3.4
-    top_oring_groove_depth: float = 1.88 # 24.8% axial squeeze, 76.8% gland fill
+    top_oring_groove_depth: float = 2.00 # Exact 10 x 0.20 mm FDM layers -> 20.0% axial squeeze, 72.2% gland fill
 
     # 5. Committed Ordered Driver PCB (36.0 x 46.0 x 1.6 mm) Mounted Vertically on +X Core Face
     #    Board local (bx, by, bz_from_fcu) -> Global (X = pcb_x_fcu + bz, Y = bx, Z = pcb_z_center + by)
-    #    Captive M3 hex nuts in ±Y stanchions set a 5.5 mm B.Cu->Al core gap (5.3 mm WC) with a
+    #    Captive M3 hex nuts in braced ±Y stanchions set a 5.9 mm B.Cu->Al core gap (5.7 mm WC) with a
     #    15.6 x 15.6 mm captive thermal-bridge chute behind U1/U2 (1.0 mm silicone pads + 15x15x0.5 mm brass shims)!
     pcb_w: float = 36.0                  # Along global Y (-18.0 .. +18.0 mm)
     pcb_l: float = 46.0                  # Along global Z (Z = 174.5 .. 220.5 mm, center = 197.5 mm)
     pcb_thick: float = 1.6
     pcb_corner_r: float = 2.0
-    pcb_x_bcu: float = 20.5              # B.Cu face (5.50 mm nom / 5.30 mm WC from anodized Al core)
+    pcb_x_bcu: float = 20.9              # B.Cu face (5.90 mm nom / 5.70 mm WC from anodized Al core; 1.65/1.30 mm nut front lip)
     pcb_z_center: float = 197.5          # Bottom edge Z = 174.5 (above deck 171.0 -> open-air J1 mating), top Z = 220.5
     pcb_smd_max_h: float = 4.5           # L1/L2 SRN6045 outward along +X
-    pcb_jst_mated_h: float = 9.8         # J2..J4 JST-XH mated outward along +X (X = 22.1 .. 31.9 mm)
-    pcb_jst_pin_protrude: float = 1.8    # TH pins inward along -X behind B.Cu (X = 18.7 .. 20.5 -> 1.65 mm clear of baffle)
+    pcb_jst_mated_h: float = 9.8         # J2..J4 JST-XH mated outward along +X (X = 22.5 .. 32.3 mm)
+    pcb_jst_pin_protrude: float = 1.8    # TH pins inward along -X behind B.Cu (X = 19.1 .. 20.9 -> 2.05 mm clear of baffle)
     pcb_hole_y: float = 14.0             # H1..H4 at Y = ±14.0 mm, Z = pcb_z_center ± 19.0 mm (178.5 & 216.5 mm)
     pcb_hole_z: float = 19.0
     pcb_hole_drill: float = 3.2          # M3 NPTH clearance drill on ordered board
     pcb_hole_keepout: float = 6.2
-    pcb_standoff_tip_od: float = 6.0     # 0.6 mm stepped landing pad inside Ø6.2 mm B.Cu keepout
+    pcb_standoff_tip_od: float = 6.0     # 0.35 mm stepped landing pad inside Ø6.2 mm B.Cu keepout
     pcb_standoff_body_od: float = 9.0    # Stanchion width along Y housing side-entry captive M3 hex nut pockets
-    pcb_nut_af: float = 5.5              # Standard DIN 934 M3 hex nut across flats (pocket height 5.80 mm)
-    pcb_nut_thick: float = 2.4           # Standard DIN 934 M3 hex nut thickness (pocket width 2.60 mm at X = 16.55..19.15)
+    pcb_nut_af: float = 5.5              # Standard DIN 934 M3 hex nut across flats (pocket height 5.95 mm for ASA clearance)
+    pcb_nut_thick: float = 2.4           # Standard DIN 934 M3 hex nut thickness (pocket width 2.70 mm at X = 16.55..19.25)
     pcb_thermal_win_w: float = 15.6      # Captive chute width along ±Y for 15 x 15 x 0.5 mm brass shims + 1 mm silicone pads
     pcb_thermal_win_z_bot: float = 199.0 # Captive chute bottom shelf (3.0 mm above J4 pins, centered under U1/U2 at Z=207.4)
     pcb_thermal_win_h: float = 15.4      # Straight chute side walls Z = 199.0 .. 214.4 mm + 45-deg roof to Z = 222.2 mm
@@ -105,7 +105,7 @@ class LepiLEDParams:
 
     # 6. Standard Left/Right 90-deg USB-C Plug & Fixed Compressing Split Cable Clamp (+Y port)
     usbc_j1_overhang_mm: float = 3.18    # GCT USB4085 mouth below bottom PCB edge (Z_mouth = 171.32 mm)
-    usbc_x_offset_from_fcu: float = 1.88 # J1 center X = 25.6 + 1.88 = +27.48 mm
+    usbc_x_offset_from_fcu: float = 1.88 # J1 center X = 22.5 + 1.88 = +24.38 mm
     usbc_mating_depth_mm: float = 4.55
     usbc_exposed_tongue_mm: float = 2.10 # Real GCT USB4085 exposed plug tongue below J1 mouth
     usbc_plug_90_len: float = 18.0       # Realistic 18.0 mm commercial left/right 90-deg plug below J1 mouth
@@ -114,19 +114,21 @@ class LepiLEDParams:
     usbc_strain_relief_h: float = 7.0    # Molded boot extending along +Y
     clamp_z: float = 156.5               # Aligned with 90-deg plug cable exit inside Z = 145.0 .. 171.0 ring
     clamp_port_w: float = 16.0           # Along X: passes intact straight charger-end USB-C plug outward cleanly
-    clamp_port_h: float = 17.0           # 45-deg pitched gable roof Z = 148.0 .. 165.0 mm
-    clamp_bolt_dx: float = 13.0          # 2x M3 x 14 pan-head screws in X-slotted flange into blind M3x5 inserts
+    clamp_port_h: float = 18.0           # 45-deg pitched gable roof Z = 148.0 .. 166.0 mm (1.86 mm clamp cheek wall, 3.0 mm under G3)
+    clamp_bolt_dx: float = 13.0          # 2x M3 x 12 pan-head screws in X-slotted flange into blind M3x5 inserts
     clamp_standoff_y: float = 1.2        # 1.2 mm axial standoff so 45-deg wedges actually drive radial compression
     clamp_flange_t: float = 6.0          # Outer face at Y = 47.0 + 1.2 + 6.0 = 54.2 mm (4.8 mm inside R = 59 eaves)
-    clamp_grommet_len: float = 10.5      # Full cylindrical chamber fitting 10.0 mm slit Ø8 x Ø4 silicone sleeve
-    clamp_grommet_id: float = 7.4        # Compresses Ø8.0 mm silicone sleeve radially onto Ø4.0-4.5 mm cable
+    clamp_grommet_len: float = 10.2      # Full cylindrical chamber fitting 10.0 mm slit Ø8 x Ø4 silicone sleeve
+    clamp_grommet_id: float = 9.0        # 77.5% incompressible silicone fill around Ø4.5 mm cable (closes cleanly under wedge!)
     clamp_cable_dia: float = 4.5
 
     # 7. Side-Mounted Recessed SW1 Toggle Switch (-X draining cove, sheltered inside -X visor brow)
-    sw1_z: float = 155.5                 # Centered in widened 32 mm, 18-deg outward-draining -X cove
+    sw1_z: float = 154.2                 # 1.20 mm top & 1.55 mm bottom boot margin while thickening G3 corner wall to 1.45 mm!
     sw1_recess_x: float = 5.5            # Recessed 5.5 mm inward from R = 47.0 ring -> face at X = -41.5 mm
     sw1_cove_w: float = 32.0             # Gloved-finger access width along ±Y
     sw1_cove_slope_deg: float = 18.0     # Outward-downward cove floor slope preventing water pooling
+    sw1_cove_ceil_z: float = 162.05      # Flat cove face top Z (1.45 mm X/Z & 1.03 mm normal wall beneath G3 outer corner!)
+    sw1_cove_fl_in_z: float = 146.0      # Flat cove face bottom Z (1.55 mm clear below Ø13.3 mm 759D02000 boot flange)
     sw1_hole_dia: float = 6.50           # True round Ø6.50 mm bore (360-deg flat sealing land for 759D02000 boot)
     sw1_wall_thick: float = 2.5          # Solid wall X = -41.5 .. -39.0 mm + keyed internal anti-rotation pocket
     sw1_body_w_y: float = 12.70          # Along Y = 3-terminal toggle throw axis
@@ -150,28 +152,28 @@ class LepiLEDParams:
     cap_top_eaves_h: float = 10.0        # Z = 171.0 .. 181.0 mm (4x M3x5 inserts, 1.4 mm drip kerf, +Y C-clip)
     cap_top_eaves_taper_h: float = 13.4  # Exact 45.0-deg top slope R = 59.0 -> 45.6 mm (Z = 181.0 .. 194.4 mm)
     cap_top_ceil_cone_z: float = 219.0   # Internal <=44-deg self-supporting Circle->Square ceiling loft
-    cap_top_roof_bot_z: float = 232.0    # Outer rain roof start (Ø91.2 mm)
-    cap_top_roof_h: float = 15.0         # Loft height Ø91.2 -> 40.4 x 40.4 R4 collar (Z = 232.0 .. 247.0, 30.6 deg)
+    cap_top_roof_bot_z: float = 221.6    # Parallel 45.0-deg outer rain roof start (cuts ~28 cm^3 dead bulk & ASA warp)
+    cap_top_roof_h: float = 25.4         # Loft height Ø91.2 -> 40.4 x 40.4 R4 collar (Z = 221.6 .. 247.0, 45.0 deg)
     cap_top_collar_h: float = 10.0       # Vertical 40.4 x 40.4 R4 chimney collar (Z = 247.0 .. 257.0, zero side holes)
     cap_top_collar_w: float = 40.4       # 4.65 mm uniform flat wall around 31.1 x 31.1 mm core socket
     cap_top_collar_r: float = 4.0
-    cap_top_seal_groove: float = 2.5     # Backed 2.5 x 3.0 mm top neutral-sealant V-groove (chamfered top lip)
+    cap_top_seal_groove: float = 2.5     # Backed 2.5 x 3.0 mm top neutral-sealant V-groove (R3.0 rounded corners, >=1.35 mm dam)
     cap_top_seal_depth: float = 3.0
-    d12_local_bx: float = 16.0           # Exact KiCad D12 position on driver_pcb for translucent 0.6 mm internal dimple
+    d12_local_bx: float = 16.0           # Exact KiCad D12 position on driver_pcb for translucent 0.9 mm internal dimple
     d12_local_by: float = -6.6
-    d12_skin_thick: float = 0.60         # Unbroken outer white skin thickness opposite D12 (red 20 V PD glow)
+    d12_skin_thick: float = 0.90         # 2 continuous Arachne walls (normal to 45-deg eaves taper at Z=190.9 mm)
     min_wall: float = 2.5
 
-    # 10. M3 Brass Inserts & Fasteners (10x identical M3 x 5.0 inserts, 10x M3 screws, 2x M4 x 50 SS bolts)
+    # 10. M3 Brass Inserts & Fasteners (6x identical M3 x 5.0 inserts, 10x M3 screws, 4x captive M3 nuts, 2x M4 x 50 SS bolts)
     m3_clearance_dia: float = 3.4
     m3_insert_pilot_dia: float = 4.0
     m3_insert_depth: float = 6.5         # 5.0 mm insert + 1.5 mm ooze pocket
-    m3_insert_blind_depth: float = 6.2   # In 8.0 mm +Y port wall (>= 4.0 mm solid dry-bay wall at X = ±13)
-    m4_bolt_len: float = 50.0            # 2x identical M4 x 50 mm A2 stainless bolts + nyloc nuts (bottom & top)
+    m3_insert_blind_depth: float = 7.0   # In +Y backing pad (Y=37.0..47.0 -> 3.00 mm true dry-bay wall & +1.50 mm M3x12 closed clr!)
+    m4_bolt_len: float = 50.0            # 2x identical DIN 912 M4 x 50 mm A2 stainless SHCS + nyloc nuts (bottom & top)
 
-    # 11. Open-Chimney Ventilated Rain Finial (MECH-PLUG-TOP: Z = 285.0 .. 324.0 mm, prints inverted)
+    # 11. Open-Chimney Ventilated Rain Finial (MECH-PLUG-TOP: Z = 281.5 .. 323.0 mm, exported pre-flipped onto Z = 0)
     plug_top_leg_w: float = 25.4         # 4 corner legs slipping inside 26.0 x 26.0 mm Al bore (0.30 mm/side clearance)
-    plug_top_insert_h: float = 21.0      # Z = 285.0 .. 306.0 mm, cross-pinned at Z = 290.0 mm by top M4 x 50 bolt
+    plug_top_insert_h: float = 23.5      # Z = 281.5 .. 305.0 mm, cross-pinned at Z = 289.0 mm (4.0 mm wall above M4 apex)
     plug_top_vent_h: float = 9.0         # 4x open side exhaust windows Z = 306.0 .. 315.0 mm (5.18 cm^2 open area)
     plug_top_hood_w: float = 38.0        # Overhanging 38 x 38 mm rain hood (6.0 mm overhang over 26 mm bore)
     plug_top_hood_h: float = 9.0         # Z = 315.0 .. 324.0 mm (45-deg pitched roof 38 -> 26 mm)
@@ -192,11 +194,11 @@ class LepiLEDParams:
     # Derived Global Z & Coordinate Datums
     @property
     def z_core_bot(self) -> float:
-        return self.cap_bot_core_bot_z  # 6.0
+        return self.cap_bot_core_bot_z  # 5.0
 
     @property
     def z_bot_bolt(self) -> float:
-        return self.cap_bot_bolt_z  # 12.5 (Z_rel = 6.5 mm from core bottom)
+        return self.cap_bot_bolt_z  # 11.5 (Z_rel = 6.5 mm from core bottom)
 
     @property
     def z_glass_bot(self) -> float:
@@ -228,7 +230,7 @@ class LepiLEDParams:
 
     @property
     def pcb_x_fcu(self) -> float:
-        return round(self.pcb_x_bcu + self.pcb_thick, 3)  # 25.6
+        return round(self.pcb_x_bcu + self.pcb_thick, 3)  # 22.5
 
     @property
     def z_pcb_bot(self) -> float:
@@ -244,7 +246,7 @@ class LepiLEDParams:
 
     @property
     def x_j1_center(self) -> float:
-        return round(self.pcb_x_fcu + self.usbc_x_offset_from_fcu, 3)  # 27.48
+        return round(self.pcb_x_fcu + self.usbc_x_offset_from_fcu, 3)  # 24.38
 
     @property
     def z_d12(self) -> float:
@@ -268,23 +270,23 @@ class LepiLEDParams:
 
     @property
     def z_core_top(self) -> float:
-        return self.z_core_bot + self.core_length  # 306.0
+        return self.z_core_bot + self.core_length  # 305.0
 
     @property
     def core_protrusion_mm(self) -> float:
-        return self.z_core_top - self.z_cap_top_top  # 49.0
+        return self.z_core_top - self.z_cap_top_top  # 48.0
 
     @property
     def z_hang_hole(self) -> float:
-        return self.z_core_top - self.core_hang_hole_from_top  # 290.0
+        return self.z_core_top - self.core_hang_hole_from_top  # 289.0
 
     @property
     def z_plug_top_end(self) -> float:
-        return self.z_core_top + self.plug_top_vent_h + self.plug_top_hood_h  # 324.0
+        return self.z_core_top + self.plug_top_vent_h + self.plug_top_hood_h  # 323.0
 
     @property
     def total_height_mm(self) -> float:
-        return self.z_plug_top_end  # 324.0
+        return self.z_plug_top_end  # 323.0
 
     @property
     def exposed_glass_window(self) -> float:
@@ -316,8 +318,8 @@ class LepiLEDParams:
         zb = self.z_core_bot
         return {
             "bottom_m4_bolt_from_bot_mm": round(self.z_bot_bolt - zb, 2),             # 6.5
-            "vis_star_center_from_bot_mm": round(self.z_led_vis - zb, 2),             # 54.0 (epoxy alignment mark)
-            "uv_star_center_from_bot_mm": round(self.z_led_uv - zb, 2),               # 88.0 (epoxy alignment mark)
+            "vis_star_center_from_bot_mm": round(self.z_led_vis - zb, 2),             # 55.0 (epoxy alignment mark)
+            "uv_star_center_from_bot_mm": round(self.z_led_uv - zb, 2),               # 89.0 (epoxy alignment mark)
             "top_m4_hang_bolt_from_bot_mm": round(self.z_hang_hole - zb, 2),          # 284.0
             "top_m4_hang_bolt_from_top_mm": round(self.core_hang_hole_from_top, 2),   # 16.0
         }
@@ -355,8 +357,8 @@ class LepiLEDParams:
         th_pin_x = self.pcb_x_bcu - self.pcb_jst_pin_protrude            # 18.70
         pcb_air_gap_to_core = th_pin_x - core_sleeve_x                   # 1.65 mm to plastic barrier (3.50 mm to WC Al)
         pcb_nut_back_wall = 1.00                                         # X = 15.55 .. 16.55 mm behind captive M3 nut
-        pcb_nut_front_wall = self.pcb_x_bcu - (0.5 * self.core_pocket_w + pcb_nut_back_wall + 2.60)  # 1.35 mm front wall
-        pcb_thermal_gap_wc = self.pcb_x_bcu - 0.5 * self.core_w_max      # 5.30 mm WC (5.50 mm nom)
+        pcb_nut_front_wall = self.pcb_x_bcu - (0.5 * self.core_pocket_w + pcb_nut_back_wall + 2.70)  # 1.65 mm land / 1.30 outer
+        pcb_thermal_gap_wc = self.pcb_x_bcu - 0.5 * self.core_w_max      # 5.70 mm WC (5.90 mm nom)
         usbc_plug_to_baffle = (self.x_j1_center - 0.5 * self.usbc_plug_90_thick_x) - core_sleeve_x   # 2.68 mm
         j23_top_z = self.pcb_z_center + 19.2 + 2.9                       # 219.6 mm
         cone_z_at_jst = self.cap_top_ceil_cone_z + (r_bell - jst_corner_r)
@@ -366,8 +368,10 @@ class LepiLEDParams:
         checks["pcb_l12_radial_clr_mm"] = {"value": round(r_bell - l12_r, 3), "min": 6.0, "pass": (r_bell - l12_r) >= 6.0}
         checks["pcb_jst_wire_bend_clr_mm"] = {"value": round(r_bell - jst_wire_r, 3), "min": 6.5, "pass": (r_bell - jst_wire_r) >= 6.5}
         checks["pcb_th_pins_air_gap_to_baffle_mm"] = {"value": round(pcb_air_gap_to_core, 3), "min": 1.2, "pass": pcb_air_gap_to_core >= 1.2}
+        pcb_screw_back_clr = (self.pcb_x_fcu + 2.90 - 8.00) - (0.5 * self.core_pocket_w + pcb_nut_back_wall)  # 0.85 mm w/ 3x nylon + steel
         checks["pcb_nut_back_wall_mm"] = {"value": round(pcb_nut_back_wall, 3), "min": 0.8, "pass": pcb_nut_back_wall >= 0.8}
         checks["pcb_nut_front_wall_mm"] = {"value": round(pcb_nut_front_wall, 3), "min": 1.2, "pass": pcb_nut_front_wall >= 1.2}
+        checks["pcb_screw_back_wall_clr_mm"] = {"value": round(pcb_screw_back_clr, 3), "min": 0.5, "pass": pcb_screw_back_clr >= 0.5}
         checks["pcb_thermal_bridge_gap_wc_mm"] = {"value": round(pcb_thermal_gap_wc, 3), "min": 4.5, "max": 6.0, "pass": 4.5 <= pcb_thermal_gap_wc <= 6.0}
         checks["usbc_plug_to_baffle_clr_mm"] = {"value": round(usbc_plug_to_baffle, 3), "min": 1.5, "pass": usbc_plug_to_baffle >= 1.5}
         checks["jst_below_ceil_cone_mm"] = {"value": round(cone_z_at_jst - j23_top_z, 3), "min": 4.0, "pass": (cone_z_at_jst - j23_top_z) >= 4.0}
@@ -378,7 +382,8 @@ class LepiLEDParams:
         port_floor_z = self.z_top_base_port_bot
         r_port_out = 0.5 * self.top_base_port_od  # 47.0
         r_port_in = 0.5 * self.top_base_port_id   # 39.0
-        clamp_blind_wall = (r_port_out - self.m3_insert_blind_depth) - math.sqrt(r_port_in ** 2 - self.clamp_bolt_dx ** 2)
+        clamp_blind_wall = (r_port_out - self.m3_insert_blind_depth) - 37.0       # 3.00 mm true dry-bay wall to py_inner_back (Y=37.0)
+        clamp_screw_closed_clr = (r_port_out + self.clamp_flange_t + 0.5 - 12.0) - (r_port_out - self.m3_insert_blind_depth)  # 1.50 mm w/ M3x12 at 0 standoff!
         clamp_outer_y = r_port_out + self.clamp_standoff_y + self.clamp_flange_t  # 54.2 mm
         eaves_overhang_clamp = 0.5 * self.cap_top_eaves_od - clamp_outer_y        # 4.8 mm
         clamp_top_to_eaves = self.z_top_base_deck_top - (self.clamp_z + 10.0)     # 4.5 mm
@@ -387,20 +392,27 @@ class LepiLEDParams:
         sw1_clr_to_core = abs(sw1_lugs_x) - 0.5 * self.core_w_max                 # 8.33 mm
         sw1_boot_tip_x = abs(sw1_face_x) + self.sw1_boot_protrude_x               # 60.1 mm WC (58.2 nom)
         sw1_visor_shelter = self.cap_top_sw_visor_x - sw1_boot_tip_x              # 3.4 mm WC (5.3 nom)
+        sw1_cove_top_clr = self.sw1_cove_ceil_z - (self.sw1_z + 0.5 * self.sw1_boot_od)  # 1.20 mm above Ø13.3 mm boot
         sw1_z_margin = min(self.sw1_z - port_floor_z, self.z_top_base_deck_top - self.sw1_z) - 0.5 * self.sw1_body_h_z
         g3_r_out = self.top_oring_groove_r_in + self.top_oring_groove_w           # 47.0 mm
         eave_ins_to_g3 = (self.top_base_ear_r - 0.5 * self.m3_insert_pilot_dia) - g3_r_out  # 2.0 mm
         eave_ins_outer = 0.5 * self.cap_top_eaves_od - (self.top_base_ear_r + 0.5 * self.m3_insert_pilot_dia)  # 6.0 mm
         ear_csk_rim = self.top_base_ear_boss_r - 3.25                             # 2.25 mm
 
+        clamp_sil_vol = math.pi * (4.0 ** 2 - 2.0 ** 2) * 10.0  # 10.0 mm of Ø8 x Ø4 mm silicone tubing = 377.0 mm^3
+        clamp_annular_vol = math.pi * ((0.5 * self.clamp_grommet_id) ** 2 - (0.5 * self.clamp_cable_dia) ** 2) * self.clamp_grommet_len
+        clamp_grommet_fill = clamp_sil_vol / clamp_annular_vol
         checks["usbc_plug_18mm_above_floor_mm"] = {"value": round(plug_bot_z - port_floor_z, 3), "min": 6.0, "pass": (plug_bot_z - port_floor_z) >= 6.0}
         checks["clamp_insert_blind_wall_mm"] = {"value": round(clamp_blind_wall, 3), "min": 2.5, "pass": clamp_blind_wall >= 2.5}
+        checks["clamp_screw_closed_bottom_clr_mm"] = {"value": round(clamp_screw_closed_clr, 3), "min": 0.8, "pass": clamp_screw_closed_clr >= 0.8}
         checks["clamp_standoff_travel_mm"] = {"value": round(self.clamp_standoff_y, 3), "min": 1.0, "pass": self.clamp_standoff_y >= 1.0}
         checks["clamp_grommet_len_ge_10mm"] = {"value": round(self.clamp_grommet_len, 2), "min": 10.0, "pass": self.clamp_grommet_len >= 10.0}
+        checks["clamp_grommet_silicone_fill_max"] = {"value": round(clamp_grommet_fill, 4), "max": 0.85, "pass": clamp_grommet_fill <= 0.85}
         checks["clamp_sheltered_inside_eaves_mm"] = {"value": round(eaves_overhang_clamp, 3), "min": 3.5, "pass": eaves_overhang_clamp >= 3.5}
         checks["clamp_top_below_eaves_mm"] = {"value": round(clamp_top_to_eaves, 3), "min": 4.0, "pass": clamp_top_to_eaves >= 4.0}
         checks["sw1_lugs_clr_to_core_mm"] = {"value": round(sw1_clr_to_core, 3), "min": 7.0, "pass": sw1_clr_to_core >= 7.0}
         checks["sw1_boot_inside_visor_mm"] = {"value": round(sw1_visor_shelter, 3), "min": 2.5, "pass": sw1_visor_shelter >= 2.5}
+        checks["sw1_cove_boot_top_clr_mm"] = {"value": round(sw1_cove_top_clr, 3), "min": 1.0, "pass": sw1_cove_top_clr >= 1.0}
         checks["sw1_port_ring_z_wall_mm"] = {"value": round(sw1_z_margin, 3), "min": 3.0, "pass": sw1_z_margin >= 3.0}
         checks["eave_insert_to_g3_wall_mm"] = {"value": round(eave_ins_to_g3, 3), "min": 1.8, "pass": eave_ins_to_g3 >= 1.8}
         checks["eave_insert_outer_wall_mm"] = {"value": round(eave_ins_outer, 3), "min": 4.0, "pass": eave_ins_outer >= 4.0}
