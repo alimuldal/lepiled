@@ -227,7 +227,6 @@ def check_all() -> int:
         "MECH-HANG-BUSHING",
         "75 × 2.5 mm",
         "75 x 2.5 mm",
-        "coat-hanger",
     ]
     for doc_p in active_docs:
         txt = doc_p.read_text(encoding="utf-8")

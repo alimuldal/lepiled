@@ -507,13 +507,14 @@ def build_cap_top(p: LepiLEDParams) -> bd.Part:
     part = part - clip_bore - clip_entry - zip_slot
 
     # -X Matching Contoured Rain-Hood Visor Brow (X = -63.5 mm, +4.5 mm past R = 59.0 eaves -> shelters SW1 boot)
+    #    44.0 mm wide w/ R4.0 corners -> 36.0 x 10.0 mm flat vertical exterior face for debossed "OFF  UV  ALL" + tactile ribs!
     x_vis = p.cap_top_sw_visor_x  # 63.5
-    vis_w = 38.0
+    vis_w = 44.0
     with bd.BuildSketch(bd.Plane.XY.offset(z_bot)) as sk_vis:
-        bd.RectangleRounded(16.0, vis_w, radius=7.5)
+        bd.RectangleRounded(16.0, vis_w, radius=4.0)
     visor_base = bd.extrude(sk_vis.sketch, p.cap_top_eaves_h).translate((-(x_vis - 8.0), 0.0, 0.0))
     with bd.BuildSketch(bd.Plane.XY.offset(z_eaves_top)) as sk_vt0:
-        bd.RectangleRounded(16.0, vis_w, radius=7.5)
+        bd.RectangleRounded(16.0, vis_w, radius=4.0)
     with bd.BuildSketch(bd.Plane.XY.offset(z_eaves_top + 6.5)) as sk_vt1:
         bd.RectangleRounded(6.0, vis_w - 13.0, radius=2.5)
     visor_taper = bd.loft([
@@ -522,21 +523,30 @@ def build_cap_top(p: LepiLEDParams) -> bd.Part:
     ])
     part = part.fuse(visor_base).fuse(visor_taper)
 
-    # -X Tactile 0 / 1 / 2 switch index ribs on outer face of visor directly above SW1 (toggle throws along ±Y!)
-    #   Y = -6.0 -> OFF (0 ribs), Y = 0.0 -> 4-UV (1 rib), Y = +5.5 & +9.0 -> 8-ALL (2 ribs, 3.5 mm pitch)
-    for y_rib in (0.0, 5.5, 9.0):
+    # -X Debossed Switch Position Legend ("OFF   UV   ALL", reading left-to-right when facing -X: +Y=Left -> -Y=Right)
+    #    0.6 mm deep bold sans-serif text (1.5 nozzle widths -> support-free FDM; easy to paint-fill for dark contrast)
+    pl_txt = bd.Plane(origin=(-x_vis - 0.05, 0.0, z_bot + 6.6), x_dir=(0.0, -1.0, 0.0), z_dir=(-1.0, 0.0, 0.0))
+    for x_loc, label in ((-11.8, "OFF"), (0.0, "UV"), (11.8, "ALL")):
+        with bd.BuildSketch(pl_txt) as sk_lbl:
+            with bd.Locations((x_loc, 0.0)):
+                bd.Text(label, font_size=4.6, font="DejaVu Sans", font_style=bd.FontStyle.BOLD)
+        part = part - bd.extrude(sk_lbl.sketch, -0.65)
+
+    # -X Tactile 0 / 1 / 2 switch index ribs along lower visor lip directly beneath OFF / UV / ALL:
+    #   +Y (Left) = OFF (0 ribs), Y = 0 (Center) = UV (1 rib), -Y (Right) = ALL (2 ribs at Y = -10.0 & -13.6 mm)
+    for y_rib in (0.0, -10.0, -13.6):
         x_outer = -x_vis
-        with bd.BuildSketch(bd.Plane.XZ.offset(y_rib - 0.7)) as sk_rib:
+        with bd.BuildSketch(bd.Plane.XZ) as sk_rib:
             with bd.BuildLine():
                 bd.Polyline([
                     (x_outer + 2.0, z_bot),
                     (x_outer - 1.0, z_bot),
-                    (x_outer - 1.0, z_bot + 6.5),
-                    (x_outer + 2.0, z_bot + 9.5),  # 45-deg top bevel -> 0 overhang
+                    (x_outer - 1.0, z_bot + 2.2),
+                    (x_outer + 2.0, z_bot + 5.2),  # 45-deg top bevel -> 0 overhang, clears debossed text above
                     (x_outer + 2.0, z_bot),
                 ])
             bd.make_face()
-        part = part.fuse(bd.extrude(sk_rib.sketch, 1.4))
+        part = part.fuse(bd.extrude(sk_rib.sketch, 0.7, both=True).translate((0.0, y_rib, 0.0)))
 
     # Support-free 45-deg 1.4 x 1.4 mm underside drip kerf around eaves perimeter (R = 56.8 .. 58.2 mm)
     r_k0, r_k1 = 56.8, 58.2
@@ -734,6 +744,30 @@ def build_plug_top(p: LepiLEDParams) -> bd.Part:
     return part
 
 
+def build_cord_spool(p: LepiLEDParams) -> bd.Part:
+    """
+    Symmetric 6.0 mm flanged M4 bail spool (2x printed flat alongside MECH-PLUG-TOP):
+      - Ø4.4 mm slip bore over top M4 x 50 mm stainless cross-bolt outside ±X walls of 30 mm Al core
+      - Ø7.2 mm smooth barrel (1.4 mm wall) spacing bent coat-hanger wire bail clear of anodized Al tube & 38 mm rain hood
+      - Exact stack on M4 x 50 bolt: 30.0 Al + 2x6.0 spools + 2x0.8 M4 washers + 5.0 nyloc = 48.6 mm (0.000 mm^2 overhang)
+    """
+    with bd.BuildSketch(bd.Plane.XZ) as sk_sp:
+        with bd.BuildLine():
+            bd.Polyline([
+                (2.20, 0.0),
+                (5.10, 0.0),
+                (5.10, 0.6),
+                (3.60, 2.2),   # 43.15-deg taper -> 0.000 mm^2 >46 deg overhang upright or inverted
+                (3.60, 3.8),   # 1.6 mm barrel groove floor for Ø2.0-2.5 mm wire bail eye (or 3 mm cord)
+                (5.10, 5.4),   # 43.15-deg flare
+                (5.10, 6.0),
+                (2.20, 6.0),
+                (2.20, 0.0),
+            ])
+        bd.make_face()
+    return bd.revolve(sk_sp.sketch, axis=bd.Axis.Z, revolution_arc=360.0)
+
+
 def build_drill_jig(p: LepiLEDParams) -> bd.Part:
     """
     MECH-DRILL-JIG — Compact 35 mm Dual-Datum Snap-On Center-Punch End-Cap Guide:
@@ -888,7 +922,12 @@ def build_assembly_parts(p: LepiLEDParams, core_w_override: float | None = None,
     cap_bot = build_cap_bot(p)
     top_base = build_top_base(p)
     cap_top = build_cap_top(p)
-    plug_top = build_plug_top(p)
+    plug_top_finial = build_plug_top(p)
+    spool_unit = build_cord_spool(p)
+    x_sp_in = 0.5 * core_w + 0.05
+    spool_pos = spool_unit.rotate(bd.Axis.Y, 90.0).translate((x_sp_in, 0.0, p.z_hang_hole))
+    spool_neg = spool_unit.rotate(bd.Axis.Y, -90.0).translate((-x_sp_in, 0.0, p.z_hang_hole))
+    plug_top = bd.Compound([plug_top_finial, spool_pos, spool_neg])
     clamp_pos = build_cable_clamp_half(p, side=+1.0)
     clamp_neg = build_cable_clamp_half(p, side=-1.0)
     cable_clamp = bd.Compound([clamp_pos, clamp_neg])
@@ -981,11 +1020,14 @@ def build_assembly_parts(p: LepiLEDParams, core_w_override: float | None = None,
     b_hd = bd.Cylinder(3.4, 3.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).rotate(bd.Axis.Y, 90.0).translate((21.05, 0.0, p.z_bot_bolt))
     b_nt = bd.Cylinder(3.4, 3.8, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).rotate(bd.Axis.Y, 90.0).translate((-21.05, 0.0, p.z_bot_bolt))
     fasteners_list.append(b_sh.fuse(b_hd).fuse(b_nt))
-    # 5. Top M4 x 50 mm A2 stainless hanging cross-bolt + washers + nyloc nut at Z = 290.0 mm
-    t_sh = bd.Cylinder(1.98, 50.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.CENTER)).rotate(bd.Axis.Y, 90.0).translate((0.0, 0.0, p.z_hang_hole))
-    t_hd = bd.Cylinder(3.6, 3.2, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).rotate(bd.Axis.Y, 90.0).translate((22.0, 0.0, p.z_hang_hole))
-    t_nt = bd.Cylinder(3.8, 4.2, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).rotate(bd.Axis.Y, 90.0).translate((-22.0, 0.0, p.z_hang_hole))
-    fasteners_list.append(t_sh.fuse(t_hd).fuse(t_nt))
+    # 5. Top M4 x 50 mm A2 stainless hanging cross-bolt + 2x M4 DIN 125 washers + nyloc nut clamping 2x 6.0 mm cord spools
+    x_w_in = x_sp_in + 6.05  # 21.10 mm nom / 21.30 mm WC (0.05 mm clear of spool outer face)
+    t_sh = bd.Cylinder(1.98, 50.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).rotate(bd.Axis.Y, 90.0).translate((x_w_in + 0.80, 0.0, p.z_hang_hole))
+    t_w_pos = bd.Cylinder(4.50, 0.80, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).rotate(bd.Axis.Y, 90.0).translate((x_w_in, 0.0, p.z_hang_hole))
+    t_hd = bd.Cylinder(3.60, 3.00, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).rotate(bd.Axis.Y, 90.0).translate((x_w_in + 0.80, 0.0, p.z_hang_hole))
+    t_w_neg = bd.Cylinder(4.50, 0.80, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).rotate(bd.Axis.Y, 90.0).translate((-x_w_in, 0.0, p.z_hang_hole))
+    t_nt = bd.Cylinder(3.80, 5.00, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).rotate(bd.Axis.Y, 90.0).translate((-(x_w_in + 0.80), 0.0, p.z_hang_hole))
+    fasteners_list.append(t_sh.fuse(t_w_pos).fuse(t_hd).fuse(t_w_neg).fuse(t_nt))
     fasteners_m3 = bd.Compound(fasteners_list)
 
     # Clear Extruded XT PMMA Shroud (Ø60 x 54 x 3.0 x 115 mm)
@@ -1027,16 +1069,23 @@ def build_assembly_parts(p: LepiLEDParams, core_w_override: float | None = None,
                           align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).rotate(bd.Axis.X, -90.0).translate((p.x_j1_center, 0.5 * p.usbc_plug_90_w_y, p.clamp_z))
     usbc_plug_assy = plug_barrel.fuse(plug_body).fuse(plug_strain)
 
-    # Top paracord hanging loop visual (built in Plane.XY then rotated X,+90 -> exact global XZ plane, clearing bolt/hood!)
-    z_l0 = p.z_hang_hole + 3.8  # Starts right above top M4 bolt shank at |X| = 19.2 mm
+    # Top bent steel coat-hanger wire bail (Ø2.3 mm wire, ~Ø8 mm closed eyes riding on both ±X flanged spools on M4 bolt)
+    x_sp_c = x_sp_in + 3.0  # Spool groove center: 18.05 mm nom / 18.25 mm WC
+    r_eye = 4.90
+    r_wire = 1.15  # Ø2.3 mm steel coat-hanger wire (0.15 mm clear of Ø7.2 mm barrel, 0.35 mm clear of 43-deg cheeks)
+    z_eye_top = p.z_hang_hole + r_eye  # 294.90 mm (meets top of 360-deg bent wire eyes seamlessly)
+    eye_pos = bd.Torus(major_radius=r_eye, minor_radius=r_wire).rotate(bd.Axis.Y, 90.0).translate((x_sp_c, 0.0, p.z_hang_hole))
+    eye_neg = bd.Torus(major_radius=r_eye, minor_radius=r_wire).rotate(bd.Axis.Y, 90.0).translate((-x_sp_c, 0.0, p.z_hang_hole))
     with bd.BuildLine(bd.Plane.XY) as l_cord:
-        bd.ThreePointArc((-19.2, z_l0), (-22.0, p.z_plug_top_end + 4.0), (-11.0, p.z_plug_top_end + 28.0))
-        bd.ThreePointArc((-11.0, p.z_plug_top_end + 28.0), (0.0, p.z_plug_top_end + 35.0), (11.0, p.z_plug_top_end + 28.0))
-        bd.ThreePointArc((11.0, p.z_plug_top_end + 28.0), (22.0, p.z_plug_top_end + 4.0), (19.2, z_l0))
-    pl_cord = bd.Plane(origin=(-19.2, z_l0, 0.0), x_dir=(1.0, 0.0, 0.0), z_dir=(0.0, 1.0, 0.0))
+        bd.ThreePointArc((-x_sp_c, z_eye_top), (-22.8, p.z_plug_top_end + 3.0), (-12.0, p.z_plug_top_end + 28.0))
+        bd.ThreePointArc((-12.0, p.z_plug_top_end + 28.0), (0.0, p.z_plug_top_end + 35.0), (12.0, p.z_plug_top_end + 28.0))
+        bd.ThreePointArc((12.0, p.z_plug_top_end + 28.0), (22.8, p.z_plug_top_end + 3.0), (x_sp_c, z_eye_top))
+    cord_wire = l_cord.wire()
+    pl_cord = bd.Plane(origin=cord_wire.position_at(0.0), z_dir=cord_wire.tangent_at(0.0))
     with bd.BuildSketch(pl_cord) as sk_cord:
-        bd.Circle(1.5)
-    hang_loop = bd.sweep(sk_cord.sketch, path=l_cord.wire()).rotate(bd.Axis.X, 90.0)
+        bd.Circle(r_wire)
+    cord_arch = bd.sweep(sk_cord.sketch, path=cord_wire).rotate(bd.Axis.X, 90.0)
+    hang_loop = cord_arch.fuse(eye_pos).fuse(eye_neg)
 
     # Captive 15 x 15 mm PCB->Al-core thermal bridge (2x 1.0 mm silicone pads + 15x15x0.5 mm brass shims in chute)
     x_tb_min = 0.5 * core_w + 0.05
@@ -1457,11 +1506,20 @@ def main() -> None:
     cl_neg_p = cl_neg.translate((-bb_n.max.X - 3.0, -0.5 * (bb_n.min.Y + bb_n.max.Y), -bb_n.min.Z))
     clamp_pair_print = bd.Compound([cl_pos_p, cl_neg_p])
 
+    # Export ventilated finial + 2x 6.0 mm flanged M4 cord spools together flush on inverted print bed (Z = 324.0 mm)
+    plug_finial_only = build_plug_top(p_fdm)
+    spool_bed = build_cord_spool(p_fdm)
+    plug_top_print = bd.Compound([
+        plug_finial_only,
+        spool_bed.translate((29.0, 0.0, p_fdm.z_plug_top_end - 6.0)),
+        spool_bed.translate((-29.0, 0.0, p_fdm.z_plug_top_end - 6.0)),
+    ])
+
     mesh_checks = {
         "mech_cap_bot": export_and_verify_stl(assy_nom["cap_bot"], out_dir / "mech_cap_bot.step", out_dir / "mech_cap_bot.stl"),
         "mech_top_base": export_and_verify_stl(assy_nom["top_base"], out_dir / "mech_top_base.step", out_dir / "mech_top_base.stl"),
         "mech_cap_top": export_and_verify_stl(assy_nom["cap_top"], out_dir / "mech_cap_top.step", out_dir / "mech_cap_top.stl"),
-        "mech_plug_top": export_and_verify_stl(assy_nom["plug_top"], out_dir / "mech_plug_top.step", out_dir / "mech_plug_top.stl"),
+        "mech_plug_top": export_and_verify_stl(plug_top_print, out_dir / "mech_plug_top.step", out_dir / "mech_plug_top.stl"),
         "mech_cable_clamp": export_and_verify_stl(clamp_pair_print, out_dir / "mech_cable_clamp.step", out_dir / "mech_cable_clamp.stl"),
         "mech_drill_jig": export_and_verify_stl(drill_jig, out_dir / "mech_drill_jig.step", out_dir / "mech_drill_jig.stl"),
     }
@@ -1476,12 +1534,17 @@ def main() -> None:
     assy_compound = bd.Compound(list(assy_nom.values()))
     bd.export_step(assy_compound, str(out_dir / "lepiled_assembly.step"))
 
-    # Note: top_base allows strictly the intentional 2.5 mm-deep round Ø6.50 mm SW1 boot-seal bore
-    #       (exact theoretical >46-deg cylinder cap area = 12.48 mm^2); everywhere else must be <= 1.0 mm^2!
+    # Note: top_base allows strictly the intentional 2.5 mm-deep round Ø6.50 mm SW1 boot-seal bore (12.48 mm^2);
+    #       cap_top allows strictly the 0.6 mm-deep debossed "OFF UV ALL" legend on the -X visor face;
+    #       everywhere else on all 6 parts must be <= 1.0 mm^2!
     x_sw0 = -(0.5 * p_fdm.top_base_port_od - p_fdm.sw1_recess_x)
     sw1_bore_box = (
         (x_sw0 - 0.2, -p_fdm.sw1_hole_dia / 2.0 - 0.2, p_fdm.sw1_z),
         (x_sw0 + p_fdm.sw1_wall_thick + 0.2, p_fdm.sw1_hole_dia / 2.0 + 0.2, p_fdm.sw1_z + p_fdm.sw1_hole_dia / 2.0 + 0.3),
+    )
+    visor_text_box = (
+        (-p_fdm.cap_top_sw_visor_x - 0.2, -18.5, p_fdm.z_cap_top_bot + 3.5),
+        (-p_fdm.cap_top_sw_visor_x + 1.0, 18.5, p_fdm.z_cap_top_eaves_top),
     )
     overhang_checks = {
         "mech_cap_bot": audit_stl_overhangs(out_dir / "mech_cap_bot.stl", (0.0, 0.0, 1.0)),
@@ -1489,7 +1552,10 @@ def main() -> None:
             out_dir / "mech_top_base.stl", (0.0, 0.0, 1.0),
             max_area_mm2=1.0, allowed_box=sw1_bore_box, allowed_box_max_area_mm2=13.0,
         ),
-        "mech_cap_top": audit_stl_overhangs(out_dir / "mech_cap_top.stl", (0.0, 0.0, 1.0)),
+        "mech_cap_top": audit_stl_overhangs(
+            out_dir / "mech_cap_top.stl", (0.0, 0.0, 1.0),
+            max_area_mm2=1.0, allowed_box=visor_text_box, allowed_box_max_area_mm2=25.0,
+        ),
         "mech_plug_top": audit_stl_overhangs(out_dir / "mech_plug_top.stl", (0.0, 0.0, -1.0)),
         "mech_cable_clamp": audit_stl_overhangs(out_dir / "mech_cable_clamp.stl", (0.0, 0.0, 1.0)),
         "mech_drill_jig": audit_stl_overhangs(out_dir / "mech_drill_jig.stl", (0.0, 0.0, 1.0)),

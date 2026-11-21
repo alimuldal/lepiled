@@ -23,7 +23,7 @@ PART_STYLES = {
     "cap_top":        dict(color="#f7f9fb", opacity=1.0),
     "plug_top":       dict(color="#ebeef2", opacity=1.0),
     "cable_clamp":    dict(color="#d6dee6", opacity=1.0),
-    "hang_loop":      dict(color="#d96b27", opacity=1.0),
+    "hang_loop":      dict(color="#566370", opacity=1.0),
     "pcb_assy":       dict(color="#1d703b", opacity=1.0),
     "thermal_bridge": dict(color="#5498c9", opacity=1.0),
     "hs_core":        dict(color="#aeb7c2", opacity=1.0),
@@ -184,7 +184,7 @@ def render_section_annotated(
         _draw_hdim(ax, p.z_cap_top_top + 7.5, -r_eaves, r_eaves, f"Ø{p.cap_top_eaves_od:.0f} mm rain eaves", z_ref0=p.z_cap_top_eaves_top, z_ref1=p.z_cap_top_eaves_top, text_dz=3.0, va="bottom", fontsize=8.3)
 
         _draw_callout(ax, (-15.0, p.z_core_top + 8.0), (-64.0, p.z_plug_top_end + 4.0), "Ventilated rain finial\n(4 exhaust ports + mesh)", ha="right")
-        _draw_callout(ax, (20.0, p.z_hang_hole), (66.0, p.z_hang_hole - 2.0), "M4 × 50 mm stainless\nhanging cross-bolt")
+        _draw_callout(ax, (20.0, p.z_hang_hole), (66.0, p.z_hang_hole - 2.0), "M4 × 50 mm hanging bolt\n+ 2× spools & wire bail")
         _draw_callout(ax, (26.0, p.pcb_z_center + 4.0), (68.0, 232.0), "Driver PCB (36 × 46 mm)\n+X face, captive 15×15 mm pad/shims")
         _draw_callout(ax, (-52.0, p.sw1_z), (-68.0, 214.0), "SW1 toggle + silicone boot\n(-X draining cove + visor)", ha="right")
         _draw_callout(ax, (18.0, p.z_led_uv), (66.0, 128.0), "8× 20 mm Cu DTP stars\n(2-part thermal epoxy)")
