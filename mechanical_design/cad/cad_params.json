@@ -1,79 +1,13 @@
 {
   "process": "FDM",
-  "cap_bot_base_od": 94.4,
-  "cap_bot_taper_start_z": 36.0,
-  "cap_bot_collar_od": 74.0,
-  "cap_bot_skirt_h": 22.0,
-  "cap_bot_skirt_id": 88.2,
-  "cap_bot_portal_w": 16.0,
-  "cap_bot_portal_rect_h": 3.0,
-  "cap_bot_cavity_dia": 71.6,
-  "cap_bot_spigot_bore_dia": 71.6,
-  "cap_bot_ceiling_z": 63.5,
-  "cap_bot_core_bot_z": 69.0,
-  "cap_bot_glass_bot_z": 75.0,
+  "cap_bot_tip_od": 40.0,
+  "cap_bot_collar_od": 71.0,
+  "cap_bot_cone_h": 15.5,
+  "cap_bot_core_bot_z": 6.0,
+  "cap_bot_inlet_w": 22.0,
+  "cap_bot_bolt_z": 12.5,
+  "cap_bot_glass_bot_z": 19.5,
   "core_hub_od": 49.0,
-  "lid_bot_od": 87.6,
-  "lid_bot_thick": 8.5,
-  "lid_bot_bolt_r": 40.0,
-  "lid_spigot_od": 70.8,
-  "lid_spigot_id": 62.8,
-  "lid_spigot_h": 7.0,
-  "bot_oring_groove_od": 67.3,
-  "bot_oring_cs": 2.5,
-  "bot_oring_flat_w": 2.8,
-  "m3_clearance_dia": 3.4,
-  "m3_insert_pilot_dia": 4.0,
-  "m3_insert_depth": 6.0,
-  "m3_insert_blind_depth": 7.0,
-  "anchor_w": 23.4,
-  "anchor_h_in_core": 19.0,
-  "anchor_bolt_y": 6.5,
-  "anchor_pin_z_rel": 13.0,
-  "pcb_w": 36.0,
-  "pcb_l": 46.0,
-  "pcb_thick": 1.6,
-  "pcb_corner_r": 2.0,
-  "pcb_y_center": 7.3,
-  "pcb_z_bcu": 46.5,
-  "pcb_smd_max_h": 4.5,
-  "pcb_jst_mated_h": 9.8,
-  "pcb_jst_pin_protrude": 1.8,
-  "pcb_hole_x": 14.0,
-  "pcb_hole_y": 19.0,
-  "pcb_hole_drill": 3.2,
-  "pcb_hole_keepout": 6.2,
-  "pcb_standoff_tip_od": 6.0,
-  "pcb_standoff_body_od": 7.0,
-  "usbc_j1_overhang_mm": 3.18,
-  "usbc_z_offset_from_fcu": 1.88,
-  "usbc_mating_depth_mm": 4.55,
-  "usbc_plug_90_len": 15.0,
-  "usbc_plug_90_w": 13.2,
-  "usbc_plug_90_h": 11.5,
-  "usbc_strain_relief_h": 7.0,
-  "clamp_x": 0.0,
-  "clamp_y": -20.5,
-  "clamp_port_w": 16.5,
-  "clamp_port_l": 14.5,
-  "clamp_bolt_dx": 13.0,
-  "clamp_outer_h": 9.0,
-  "clamp_cable_dia": 4.5,
-  "sw1_x": 0.0,
-  "sw1_y": 15.0,
-  "sw1_hole_dia": 6.35,
-  "sw1_wall_thick": 2.5,
-  "sw1_body_w_x": 12.7,
-  "sw1_body_w_y": 11.43,
-  "sw1_body_h_z": 10.67,
-  "sw1_lugs_h_z": 4.8,
-  "sw1_boot_protrude_z": 18.6,
-  "sw1_boot_od": 13.3,
-  "vent_x": -21.5,
-  "vent_y": 0.0,
-  "vent_hole_dia": 2.5,
-  "vent_pocket_dia": 9.5,
-  "vent_pocket_depth": 0.8,
   "glass_od_nom": 60.0,
   "glass_id_nom": 54.0,
   "glass_od_max": 60.6,
@@ -88,259 +22,347 @@
   "glass_oring_flat_w": 4.6,
   "core_w_nom": 30.0,
   "core_w_max": 30.4,
-  "core_wall": 3.0,
-  "core_bore_nom": 24.0,
-  "core_length": 200.0,
+  "core_wall": 2.0,
+  "core_bore_nom": 26.0,
+  "core_length": 300.0,
   "core_pocket_w": 31.1,
   "core_wire_slot_w": 9.0,
   "core_wire_slot_d": 7.5,
-  "core_hang_hole_dia": 8.0,
+  "core_bolt_hole_dia": 4.5,
   "core_hang_hole_from_top": 16.0,
-  "cap_top_skirt_od": 74.0,
-  "cap_top_brim_od": 84.0,
-  "cap_top_skirt_h": 8.0,
-  "cap_top_rim_h": 2.5,
-  "cap_top_roof_h": 10.0,
-  "cap_top_collar_h": 9.5,
+  "top_base_collar_od": 71.0,
+  "top_base_flare_bot_z": 133.5,
+  "top_base_port_od": 94.0,
+  "top_base_port_h": 26.0,
+  "top_base_port_id": 78.0,
+  "top_base_deck_od": 98.0,
+  "top_base_ear_r": 51.0,
+  "top_base_ear_boss_r": 5.5,
+  "top_base_ear_h": 8.0,
+  "top_oring_id": 88.0,
+  "top_oring_cs": 2.5,
+  "top_oring_groove_r_in": 43.6,
+  "top_oring_groove_w": 3.4,
+  "top_oring_groove_depth": 1.88,
+  "pcb_w": 36.0,
+  "pcb_l": 46.0,
+  "pcb_thick": 1.6,
+  "pcb_corner_r": 2.0,
+  "pcb_x_bcu": 20.5,
+  "pcb_z_center": 197.5,
+  "pcb_smd_max_h": 4.5,
+  "pcb_jst_mated_h": 9.8,
+  "pcb_jst_pin_protrude": 1.8,
+  "pcb_hole_y": 14.0,
+  "pcb_hole_z": 19.0,
+  "pcb_hole_drill": 3.2,
+  "pcb_hole_keepout": 6.2,
+  "pcb_standoff_tip_od": 6.0,
+  "pcb_standoff_body_od": 9.0,
+  "pcb_nut_af": 5.5,
+  "pcb_nut_thick": 2.4,
+  "pcb_thermal_win_w": 15.6,
+  "pcb_thermal_win_z_bot": 199.0,
+  "pcb_thermal_win_h": 15.4,
+  "core_sleeve_wall": 1.5,
+  "usbc_j1_overhang_mm": 3.18,
+  "usbc_x_offset_from_fcu": 1.88,
+  "usbc_mating_depth_mm": 4.55,
+  "usbc_exposed_tongue_mm": 2.1,
+  "usbc_plug_90_len": 18.0,
+  "usbc_plug_90_thick_x": 8.5,
+  "usbc_plug_90_w_y": 13.2,
+  "usbc_strain_relief_h": 7.0,
+  "clamp_z": 156.5,
+  "clamp_port_w": 16.0,
+  "clamp_port_h": 17.0,
+  "clamp_bolt_dx": 13.0,
+  "clamp_standoff_y": 1.2,
+  "clamp_flange_t": 6.0,
+  "clamp_grommet_len": 10.5,
+  "clamp_grommet_id": 7.4,
+  "clamp_cable_dia": 4.5,
+  "sw1_z": 155.5,
+  "sw1_recess_x": 5.5,
+  "sw1_cove_w": 32.0,
+  "sw1_cove_slope_deg": 18.0,
+  "sw1_hole_dia": 6.5,
+  "sw1_wall_thick": 2.5,
+  "sw1_body_w_y": 12.7,
+  "sw1_body_h_z": 11.43,
+  "sw1_body_d_x": 10.67,
+  "sw1_lugs_d_x": 4.8,
+  "sw1_boot_protrude_x": 18.6,
+  "sw1_boot_od": 13.3,
+  "cap_top_sw_visor_x": 63.5,
+  "vent_floor_y": -33.8,
+  "vent_hole_dia": 3.5,
+  "vent_pocket_dia": 9.5,
+  "vent_pocket_depth": 0.8,
+  "cap_top_bore_id": 85.0,
+  "cap_top_bell_od": 91.2,
+  "cap_top_eaves_od": 118.0,
+  "cap_top_eaves_h": 10.0,
+  "cap_top_eaves_taper_h": 13.4,
+  "cap_top_ceil_cone_z": 219.0,
+  "cap_top_roof_bot_z": 232.0,
+  "cap_top_roof_h": 15.0,
+  "cap_top_collar_h": 10.0,
   "cap_top_collar_w": 40.4,
   "cap_top_collar_r": 4.0,
-  "cap_top_lock_z_rel": 28.8,
-  "cap_top_seal_groove": 2.0,
-  "cap_top_seal_depth": 2.5,
-  "cap_chamfer": 0.8,
+  "cap_top_seal_groove": 2.5,
+  "cap_top_seal_depth": 3.0,
+  "d12_local_bx": 16.0,
+  "d12_local_by": -6.6,
+  "d12_skin_thick": 0.6,
   "min_wall": 2.5,
-  "plug_top_w": 23.5,
-  "plug_top_insert_h": 10.0,
-  "plug_top_cap_w": 30.2,
-  "plug_top_cap_h": 8.0,
-  "hang_bush_id": 4.0,
-  "hang_bush_flange_od": 12.0,
-  "hang_bush_flange_t": 1.6,
-  "bail_wire_dia": 2.6,
-  "bail_half_w": 22.0,
-  "bail_pin_tip_x": 8.0,
-  "bail_leg_h": 30.0,
-  "bail_crown_half_w": 7.5,
-  "bail_top_z_above_pivot": 64.0,
+  "m3_clearance_dia": 3.4,
+  "m3_insert_pilot_dia": 4.0,
+  "m3_insert_depth": 6.5,
+  "m3_insert_blind_depth": 6.2,
+  "m4_bolt_len": 50.0,
+  "plug_top_leg_w": 25.4,
+  "plug_top_insert_h": 21.0,
+  "plug_top_vent_h": 9.0,
+  "plug_top_hood_w": 38.0,
+  "plug_top_hood_h": 9.0,
   "star_dia": 20.0,
   "star_thick": 1.5,
-  "star_tim_thick": 0.15,
+  "star_tim_thick": 0.1,
   "star_uv_z_offset": 17.0,
   "star_vis_z_offset": -17.0,
-  "star_bolt_r": 11.7,
-  "star_washer_od": 7.0,
   "led_uv_max_h": 2.08,
   "led_vis_max_h": 0.85,
-  "m3_pan_plus_washer_h": 3.2,
   "derived": {
-    "z_lid_bot_start": 22.0,
-    "z_lid_bot_end": 30.5,
-    "z_lid_spigot_top": 37.5,
-    "z_pcb_bcu": 46.5,
-    "pcb_z_fcu": 48.1,
-    "y_j1_mouth": -18.88,
-    "z_j1_center": 49.98,
-    "z_core_bot": 69.0,
-    "z_anchor_pin": 82.0,
-    "z_glass_bot": 75.0,
-    "z_cap_bot_top": 89.5,
-    "z_glass_top": 190.0,
-    "z_cap_top_bot": 175.5,
-    "z_cap_top_collar_bot": 201.0,
-    "z_cap_top_top": 210.5,
-    "z_cap_top_lock": 204.3,
-    "z_core_top": 269.0,
-    "core_protrusion_mm": 58.5,
-    "z_hang_hole": 253.0,
-    "z_plug_top_end": 277.0,
-    "total_height_mm": 277.0,
-    "z_bail_top_center": 317.0,
-    "total_height_with_bail_mm": 318.3,
-    "bail_clearance_above_finial_mm": 38.7,
+    "z_core_bot": 6.0,
+    "z_bot_bolt": 12.5,
+    "z_glass_bot": 19.5,
+    "z_cap_bot_top": 34.0,
+    "z_glass_top": 134.5,
+    "z_top_base_bot": 120.0,
+    "top_base_flare_h": 11.5,
+    "z_top_base_port_bot": 145.0,
+    "z_top_base_deck_top": 171.0,
+    "pcb_x_bcu": 20.5,
+    "pcb_x_fcu": 22.1,
+    "z_pcb_bot": 174.5,
+    "z_pcb_top": 220.5,
+    "z_j1_mouth": 171.32,
+    "x_j1_center": 23.98,
+    "z_d12": 190.9,
+    "z_cap_top_bot": 171.0,
+    "z_cap_top_eaves_top": 181.0,
+    "z_cap_top_collar_bot": 247.0,
+    "z_cap_top_top": 257.0,
+    "z_core_top": 306.0,
+    "core_protrusion_mm": 49.0,
+    "z_hang_hole": 290.0,
+    "z_plug_top_end": 324.0,
+    "total_height_mm": 324.0,
     "exposed_glass_window_mm": 86.0,
-    "z_optical_center": 132.5,
-    "z_led_uv": 149.5,
-    "z_led_vis": 115.5,
-    "axial_uv_to_top_mm": 61.0,
+    "z_optical_center": 77.0,
+    "z_led_uv": 94.0,
+    "z_led_vis": 60.0,
+    "axial_uv_to_top_mm": 163.0,
     "axial_uv_to_vis_mm": 34.0,
-    "axial_vis_to_bot_mm": 46.5,
-    "bulkhead_thick": 5.5,
     "drill_guide_from_core_bot_mm": {
-      "anchor_cross_pin_x_faces": 13.0,
-      "vis_star_bot_bolt_all_4_faces": 34.8,
-      "vis_star_center_all_4_faces": 46.5,
-      "vis_star_top_bolt_all_4_faces": 58.2,
-      "uv_star_bot_bolt_all_4_faces": 68.8,
-      "uv_star_center_all_4_faces": 80.5,
-      "uv_star_top_bolt_all_4_faces": 92.2,
-      "cap_top_lock_x_faces": 135.3,
-      "hang_hole_8mm_x_faces": 184.0
+      "bottom_m4_bolt_from_bot_mm": 6.5,
+      "vis_star_center_from_bot_mm": 54.0,
+      "uv_star_center_from_bot_mm": 88.0,
+      "top_m4_hang_bolt_from_bot_mm": 284.0,
+      "top_m4_hang_bolt_from_top_mm": 16.0
     }
   },
   "checks": {
-    "pcb_radial_clearance_mm": {
-      "value": 1.29,
-      "min": 1.2,
+    "funnel_bot_height_le_35mm": {
+      "value": 34.0,
+      "max": 35.0,
       "pass": true
     },
-    "usbc_90_plug_radial_clr_mm": {
-      "value": 1.283,
-      "min": 0.8,
+    "funnel_bot_tip_od_le_42mm": {
+      "value": 40.0,
+      "max": 42.0,
       "pass": true
     },
-    "jst_top_below_anchor_heads_mm": {
-      "value": 5.6,
-      "min": 2.0,
+    "funnel_bot_cone_angle_le_46deg": {
+      "value": 45.0,
+      "max": 46.0,
       "pass": true
     },
-    "th_pins_above_sw1_lugs_mm": {
-      "value": 4.73,
-      "min": 3.0,
+    "nose_core_corner_wall_mm": {
+      "value": 4.009,
+      "min": 2.5,
       "pass": true
     },
-    "usbc_plug_above_spigot_top_mm": {
-      "value": 3.98,
-      "min": 3.5,
+    "shroud_collar_oring_wall_mm": {
+      "value": 2.8,
+      "min": 2.5,
       "pass": true
     },
-    "usbc_strain_above_lid_top_mm": {
-      "value": 3.98,
-      "min": 3.5,
+    "bot_m4_bolt_al_edge_mm": {
+      "value": 4.25,
+      "min": 4.0,
       "pass": true
     },
-    "usbc_strain_in_spigot_clr_mm": {
-      "value": 0.67,
-      "min": 0.5,
+    "chimney_inlet_area_cm2": {
+      "value": 4.76,
+      "min": 4.0,
       "pass": true
     },
-    "clamp_port_in_spigot_clr_mm": {
-      "value": 2.45,
-      "min": 1.5,
+    "vis_star_height_from_tip_mm": {
+      "value": 60.0,
+      "max": 65.0,
       "pass": true
     },
-    "clamp_bolt_in_spigot_clr_mm": {
-      "value": 5.126,
-      "min": 3.0,
+    "pcb_fcu_radial_clr_mm": {
+      "value": 13.997,
+      "min": 8.0,
       "pass": true
     },
-    "clamp_blind_insert_roof_mm": {
-      "value": 1.5,
-      "min": 1.5,
-      "pass": true
-    },
-    "clamp_to_sw1_gap_mm": {
-      "value": 22.535,
-      "min": 18.0,
-      "pass": true
-    },
-    "sw1_in_spigot_clr_mm": {
-      "value": 9.734,
+    "pcb_l12_radial_clr_mm": {
+      "value": 11.145,
       "min": 6.0,
       "pass": true
     },
-    "sw1_boot_above_ground_mm": {
+    "pcb_jst_wire_bend_clr_mm": {
+      "value": 10.179,
+      "min": 6.5,
+      "pass": true
+    },
+    "pcb_th_pins_air_gap_to_baffle_mm": {
+      "value": 1.65,
+      "min": 1.2,
+      "pass": true
+    },
+    "pcb_nut_back_wall_mm": {
+      "value": 1.0,
+      "min": 0.8,
+      "pass": true
+    },
+    "pcb_nut_front_wall_mm": {
+      "value": 1.35,
+      "min": 1.2,
+      "pass": true
+    },
+    "pcb_thermal_bridge_gap_wc_mm": {
+      "value": 5.3,
+      "min": 4.5,
+      "max": 6.0,
+      "pass": true
+    },
+    "usbc_plug_to_baffle_clr_mm": {
+      "value": 2.68,
+      "min": 1.5,
+      "pass": true
+    },
+    "jst_below_ceil_cone_mm": {
+      "value": 8.782,
+      "min": 4.0,
+      "pass": true
+    },
+    "pcb_top_below_ceil_cone_mm": {
+      "value": 12.497,
+      "min": 6.0,
+      "pass": true
+    },
+    "usbc_plug_18mm_above_floor_mm": {
+      "value": 8.32,
+      "min": 6.0,
+      "pass": true
+    },
+    "clamp_insert_blind_wall_mm": {
+      "value": 4.03,
+      "min": 2.5,
+      "pass": true
+    },
+    "clamp_standoff_travel_mm": {
+      "value": 1.2,
+      "min": 1.0,
+      "pass": true
+    },
+    "clamp_grommet_len_ge_10mm": {
+      "value": 10.5,
+      "min": 10.0,
+      "pass": true
+    },
+    "clamp_sheltered_inside_eaves_mm": {
+      "value": 4.8,
+      "min": 3.5,
+      "pass": true
+    },
+    "clamp_top_below_eaves_mm": {
+      "value": 4.5,
+      "min": 4.0,
+      "pass": true
+    },
+    "sw1_lugs_clr_to_core_mm": {
+      "value": 8.33,
+      "min": 7.0,
+      "pass": true
+    },
+    "sw1_boot_inside_visor_mm": {
       "value": 3.4,
       "min": 2.5,
       "pass": true
     },
-    "clamp_head_above_ground_mm": {
-      "value": 13.0,
-      "min": 5.0,
+    "sw1_port_ring_z_wall_mm": {
+      "value": 4.785,
+      "min": 3.0,
       "pass": true
     },
-    "shroud_bore_to_od_max_mm": {
-      "value": 0.5,
-      "min": 0.45,
+    "eave_insert_to_g3_wall_mm": {
+      "value": 2.0,
+      "min": 1.8,
       "pass": true
     },
-    "core_hub_to_shroud_id_min_mm": {
+    "eave_insert_outer_wall_mm": {
+      "value": 6.0,
+      "min": 4.0,
+      "pass": true
+    },
+    "ear_csk_outer_rim_mm": {
       "value": 2.25,
       "min": 2.0,
       "pass": true
     },
     "core_hub_corner_wall_mm": {
       "value": 2.509,
-      "min": 2.4,
-      "pass": true
-    },
-    "core_corner_to_shroud_id_min_mm": {
-      "value": 5.254,
-      "min": 3.0,
-      "pass": true
-    },
-    "led_vis_to_shroud_id_min_mm": {
-      "value": 9.25,
-      "min": 5.0,
-      "pass": true
-    },
-    "m3_head_to_shroud_id_min_mm": {
-      "value": 6.594,
-      "min": 5.0,
-      "pass": true
-    },
-    "star_bolt_clears_round_20mm_mm": {
-      "value": 0.2,
-      "min": 0.15,
-      "pass": true
-    },
-    "star_washer_edge_bite_mm": {
-      "value": 1.8,
-      "min": 1.5,
-      "pass": true
-    },
-    "uv_to_vis_washer_gap_mm": {
-      "value": 3.6,
-      "min": 3.0,
-      "pass": true
-    },
-    "wire_slot_inside_shroud_id_mm": {
-      "value": 3.265,
-      "min": 2.5,
-      "pass": true
-    },
-    "lid_insert_inner_wall_mm": {
-      "value": 2.2,
       "min": 2.2,
       "pass": true
     },
-    "lid_insert_outer_wall_mm": {
-      "value": 5.105,
-      "min": 3.0,
-      "pass": true
-    },
-    "skirt_wall_min_mm": {
-      "value": 3.1,
-      "min": 2.8,
-      "pass": true
-    },
-    "cap_bot_bay_wall_mm": {
-      "value": 6.157,
-      "min": 3.5,
-      "pass": true
-    },
-    "shroud_oring_outer_wall_mm": {
-      "value": 4.3,
-      "min": 3.5,
-      "pass": true
-    },
-    "lid_spigot_oring_wall_mm": {
-      "value": 2.25,
-      "min": 2.2,
-      "pass": true
-    },
-    "top_collar_flat_wall_mm": {
+    "cap_top_collar_wall_mm": {
       "value": 4.65,
       "min": 4.0,
       "pass": true
     },
-    "cap_top_lock_above_cone_mm": {
-      "value": 5.1,
-      "min": 3.0,
+    "core_corner_to_glass_id_mm": {
+      "value": 5.254,
+      "min": 5.0,
       "pass": true
     },
-    "cap_top_lock_below_seal_mm": {
-      "value": 1.159,
-      "min": 1.0,
+    "led_to_glass_id_mm": {
+      "value": 7.87,
+      "min": 7.0,
+      "pass": true
+    },
+    "wire_slot_to_glass_id_mm": {
+      "value": 3.265,
+      "min": 2.5,
+      "pass": true
+    },
+    "star_uv_vis_edge_gap_mm": {
+      "value": 14.0,
+      "min": 10.0,
+      "pass": true
+    },
+    "uv_star_below_top_rim_mm": {
+      "value": 16.0,
+      "min": 12.0,
+      "pass": true
+    },
+    "vis_star_above_bot_rim_mm": {
+      "value": 16.0,
+      "min": 12.0,
       "pass": true
     },
     "g12_radial_squeeze_min_pct": {
@@ -369,61 +391,41 @@
       "min": 2.0,
       "pass": true
     },
-    "g3_radial_squeeze_nom_pct": {
-      "value": 14.0,
-      "min": 10.0,
-      "max": 22.0,
+    "g3_axial_squeeze_pct": {
+      "value": 24.8,
+      "min": 18.0,
+      "max": 30.0,
       "pass": true
     },
-    "g3_gland_fill": {
-      "value": 0.5949,
+    "g3_axial_gland_fill": {
+      "value": 0.768,
       "max": 0.85,
       "pass": true
     },
     "core_protrusion_mm": {
-      "value": 58.5,
-      "min": 55.0,
-      "max": 85.0,
-      "pass": true
-    },
-    "hang_hole_to_top_plug_mm": {
-      "value": 2.0,
-      "min": 2.0,
-      "pass": true
-    },
-    "cap_top_brim_overhang_mm": {
-      "value": 12.0,
-      "min": 12.0,
+      "value": 49.0,
+      "min": 45.0,
+      "max": 75.0,
       "pass": true
     },
     "cap_top_roof_slope_deg": {
-      "value": 24.6,
-      "min": 20.0,
+      "value": 30.6,
+      "min": 24.0,
       "pass": true
     },
-    "bail_pin_in_bushing_clr_mm": {
-      "value": 0.7,
-      "min": 0.5,
+    "finial_exhaust_area_cm2": {
+      "value": 5.18,
+      "min": 4.5,
       "pass": true
     },
-    "bail_pin_engagement_mm": {
-      "value": 8.6,
-      "min": 7.0,
+    "finial_hood_overhang_mm": {
+      "value": 6.0,
+      "min": 5.0,
       "pass": true
     },
-    "bail_leg_to_flange_clr_mm": {
-      "value": 3.85,
-      "min": 2.5,
-      "pass": true
-    },
-    "bail_clearance_above_finial_mm": {
-      "value": 38.7,
-      "min": 30.0,
-      "pass": true
-    },
-    "lid_csk_outer_rim_clr_mm": {
-      "value": 0.55,
-      "min": 0.3,
+    "top_m4_bolt_al_edge_mm": {
+      "value": 13.75,
+      "min": 10.0,
       "pass": true
     }
   }

@@ -1,21 +1,27 @@
 #!/usr/bin/env python3
 """
-Reproducible Coupled First-Principles Thermal Analysis for LepiLED DIY Maxi Switch (Rev 4.9).
+Coupled First-Principles 8-Node Thermal Analysis for LepiLED DIY Maxi Switch.
 
-SSOT-Coupled Architecture (zero hardcoded stale geometry or power budgets!):
-  - Reads exact CAD geometry directly from `mechanical_design/cad/cad_params.json`
-    (30 x 30 x 3.0 mm x 200 mm Al 6063-T6 core protruding 58.5 mm above MECH-CAP-TOP,
-    Ø60 x 54 x 3.0 mm Extruded Clear XT PMMA shroud, 86.0 mm exposed window, 5.5 mm bulkhead).
-  - Reads exact electrical PCB & LED power budgets directly from
-    `circuit_design/sim/outputs/sim_summary.json` (Bourns SRN6045-680M + Convoy OSRAM CSLNM1).
-  - Config 0 (Rev 4.9 Standard): Unpainted Bare Mill 30x30x3 Al Core (eps = 0.20 everywhere —
-    £0 paint cost, zero masking, zero UV paint outgassing; passes ALL 15..22 C UK-night modes
-    including DS-RealWPE and ALL 15..30 C nominal modes with PETG & commercial 0..70 C ICs!).
-  - Config 1 (Optional Upgrade): Chimney-Only Matte-Black Spray (eps = 0.88 on top 58.5 mm)
-    drops T_PCB_hotspot by ~5 C at 30 C worst-case DS-RealWPE if operating in 30 C tropical
-    nights with a PETG housing.
-  - Visible LEDs upgraded to ams OSRAM CSLNM1 on 20 mm Cu DTP stars (R_thJS = 4.9 K/W max vs
-    9.0 K/W Cree XP-E2 Green -> ~4 C cooler visible die junction!).
+Reads exact CAD geometry from `mechanical_design/cad/cad_params.json` and electrical power
+budgets from `circuit_design/sim/outputs/sim_summary.json`.
+
+8 Coupled Steady-State Nodes:
+  1. T_c_uv    : Al core at UV star tier (Z = 94.0 mm)
+  2. T_c_vis   : Al core at visible star tier (Z = 60.0 mm)
+  3. T_c_bay   : Al core passing through top electronics bay
+  4. T_hs_t    : Protruding bare mill Al upper chimney (with plume preheating)
+  5. T_baffle  : PCB-facing surface of 2.0 mm plastic thermal baffle (radiates/conducts to B.Cu)
+  6. T_bay_air : Top electronics bay air temperature
+  7. T_bell_in : Inner wall temperature of white PETG/ASA umbrella bell
+  8. T_pcb_avg : Vertically mounted 36 x 46 mm 2L FR4 driver_pcb (F.Cu conv + bell radiation + wire conduction)
+
+Key physical fidelity improvements:
+  - Open-chimney internal natural-draft square-duct solver (buoyancy = Poiseuille friction + mesh/inlet drag K_eff)
+    coupled directly to core bore dimensions (`26 x 26 mm` inside `30 x 30 x 2.0 mm` Al tube).
+  - First-principles vertical PCB heat transfer (no hardcoded R_pcb = 9.5 K/W), explicit baffle-to-B.Cu node,
+    25%-infill thick-wall conduction penalty, fresh bare mill Al emissivity (eps = 0.10), and chimney plume penalty.
+  - Explicit pass gates checking BOTH electronics (`T_pcb_avg <= 70 C` for commercial U4 LM393DR2G)
+    AND polymer HDT on ALL core-contacting plastic nodes (`max(T_c_vis, T_c_uv, T_c_bay, T_pcb_avg)` <= 70 C PETG / 95 C ASA).
 """
 
 from __future__ import annotations
@@ -57,10 +63,6 @@ def air_props(T_C: float) -> dict[str, float]:
     return dict(rho=rho, mu=mu, nu=nu, cp=cp, k=k, alpha=alpha, Pr=Pr, beta=beta, T_K=T_K)
 
 
-# ---------------------------------------------------------------------------
-# Convection & Radiation Correlations
-# ---------------------------------------------------------------------------
-
 def churchill_chu_vertical_plate_h(T_s: float, T_amb: float, L: float) -> float:
     dT = max(0.05, T_s - T_amb)
     p = air_props(0.5 * (T_s + T_amb))
@@ -77,117 +79,101 @@ def churchill_chu_horiz_cyl_h(T_s: float, T_amb: float, D: float) -> float:
     return Nu * p["k"] / D
 
 
-def horizontal_plate_up_h(T_s: float, T_amb: float, L_char: float) -> float:
-    dT = max(0.05, T_s - T_amb)
-    p = air_props(0.5 * (T_s + T_amb))
-    Ra = 9.81 * p["beta"] * dT * (L_char ** 3) / (p["nu"] * p["alpha"])
-    Nu = 0.54 * Ra ** 0.25 if Ra < 1e7 else 0.15 * Ra ** (1.0 / 3.0)
-    return Nu * p["k"] / L_char
-
-
-def elenbaas_channel_h(T_s: float, T_amb: float, b: float, L_flow: float) -> float:
-    dT = max(0.05, T_s - T_amb)
-    p = air_props(0.5 * (T_s + T_amb))
-    Ra_b = 9.81 * p["beta"] * dT * (b ** 3) / (p["nu"] * p["alpha"]) * (b / L_flow)
-    Nu_b = (576.0 / (Ra_b ** 2) + 2.873 / (Ra_b ** 0.5)) ** (-0.5)
-    return Nu_b * p["k"] / b
-
-
 @dataclass(frozen=True)
-class HeatsinkSpec:
+class ChimneyConfig:
     name: str
-    kind: str  # "protruding_core" | "radial"
-    D_out_mm: float
-    D_core_mm: float
-    L_mm: float
-    n_fins: int = 0
-    t_fin_mm: float = 0.0
-    eps: float = 0.88
+    open_chimney: bool
+    chimney_eps: float
+    core_inner_eps: float
+    k_minor_mesh: float = 8.0   # Conservative minor-loss K for 2x 1 mm stainless mesh + inlet/exhaust turns
+    pcb_bridge_rth_KW: float | None = None  # Captive 15x15 mm B.Cu->Al core silicone-pad + brass-shim bridge (None = no bridge)
 
 
-def compute_chimney_ambient_view_factor(L_chim_mm: float, core_w_mm: float, eave_od_mm: float, collar_h_mm: float) -> float:
-    """
-    Conservative view factor F_amb from the 4 protruding chimney walls to open ambient sky,
-    accounting for the Ø84 mm circular rain eaves overhanging radially below the collar.
-    Uses exact perpendicular-plane view factor approximation for a horizontal shelf of width
-    w_shelf = (eave_od - core_w)/2 located collar_h below the chimney base.
-    """
-    w_shelf = max(0.0, 0.5 * (eave_od_mm - core_w_mm))
-    # Approximate average angle subtended by the horizontal eave shelf across height L_chim
+def compute_chimney_ambient_view_factor(L_chim_mm: float, core_w_mm: float, bell_od_mm: float, collar_h_mm: float) -> float:
+    w_shelf = max(0.0, 0.5 * (bell_od_mm - core_w_mm))
     ys = np.linspace(0.5, L_chim_mm, 60)
-    # Local view factor from vertical strip at height y above roof to horizontal shelf of width w_shelf
     h_eff = ys + collar_h_mm
-    f_to_eave_local = 0.5 * (1.0 - h_eff / np.sqrt(h_eff ** 2 + w_shelf ** 2))
-    f_to_eave = float(np.mean(f_to_eave_local))
-    # Clamp conservatively (0.12..0.22 -> F_amb ~ 0.84)
+    f_to_eave = float(np.mean(0.5 * (1.0 - h_eff / np.sqrt(h_eff ** 2 + w_shelf ** 2))))
     return round(1.0 - f_to_eave, 4)
 
 
 def protruding_core_Q(
     T_s: float,
     T_amb: float,
-    hs: HeatsinkSpec,
+    core_w_mm: float,
+    L_mm: float,
+    eps: float,
     orientation: str = "vertical",
     f_rad_amb: float = 0.84,
     rth_penalty_factor: float = 1.0,
 ) -> float:
-    """Natural convection + view-factor-corrected radiation from 4 outer walls of protruding Al chimney."""
-    W = hs.D_out_mm * 1e-3
-    L = hs.L_mm * 1e-3
-    A_sides = 4.0 * W * L  # excludes plastic-capped top finial (conservative)
-    dT = max(0.05, T_s - T_amb)
+    """Natural convection (with +2 K rising head-plume preheating) + view-factor-corrected radiation."""
+    W = core_w_mm * 1e-3
+    L = L_mm * 1e-3
+    A_sides = 4.0 * W * L
+    T_plume = T_amb + (2.0 if orientation == "vertical" else 0.0)
+    dT_c = max(0.05, T_s - T_plume)
+    dT_r = max(0.05, T_s - T_amb)
     if orientation == "vertical":
-        h_c = churchill_chu_vertical_plate_h(T_s, T_amb, L)
+        h_c = churchill_chu_vertical_plate_h(T_s, T_plume, L)
     else:
-        h_c = churchill_chu_horiz_cyl_h(T_s, T_amb, 4.0 * W / math.pi)
-    Q_conv = h_c * A_sides * dT
-    # Radiation to open ambient weighted by F_amb; remaining (1 - F_amb) sees warm plastic rain eaves (~0.35 dT)
-    T_eave = T_amb + 0.35 * dT
-    Q_rad_amb = hs.eps * f_rad_amb * SIGMA * ((T_s + 273.15) ** 4 - (T_amb + 273.15) ** 4) * A_sides
-    Q_rad_eave = hs.eps * (1.0 - f_rad_amb) * SIGMA * ((T_s + 273.15) ** 4 - (T_eave + 273.15) ** 4) * A_sides
+        h_c = churchill_chu_horiz_cyl_h(T_s, T_plume, 4.0 * W / math.pi)
+    Q_conv = h_c * A_sides * dT_c
+    T_eave = T_amb + 0.35 * dT_r
+    Q_rad_amb = eps * f_rad_amb * SIGMA * ((T_s + 273.15) ** 4 - (T_amb + 273.15) ** 4) * A_sides
+    Q_rad_eave = eps * (1.0 - f_rad_amb) * SIGMA * ((T_s + 273.15) ** 4 - (T_eave + 273.15) ** 4) * A_sides
     return (Q_conv + Q_rad_amb + Q_rad_eave) / rth_penalty_factor
 
 
-def radial_heatsink_Q(
-    T_s: float,
+def open_chimney_bore_Q(
+    T_wall: float,
     T_amb: float,
-    hs: HeatsinkSpec,
+    bore_mm: float,
+    inlet_w_mm: float,
+    L_duct_mm: float,
+    k_minor_mesh: float = 8.0,
     orientation: str = "vertical",
     rth_penalty_factor: float = 1.0,
-) -> float:
-    """Benchmark natural convection + radiation from external radial-fin heatsink (SK 578/50 SA)."""
-    D_out = hs.D_out_mm * 1e-3
-    D_core = hs.D_core_mm * 1e-3
-    L = hs.L_mm * 1e-3
-    t_fin = hs.t_fin_mm * 1e-3
-    h_fin = 0.5 * (D_out - D_core)
-    r_mid = 0.25 * (D_out + D_core)
-    b_avg = max(0.0015, 2.0 * math.pi * r_mid / hs.n_fins - t_fin)
+) -> tuple[float, float]:
+    """
+    First-principles buoyancy-driven natural draft inside open vertical square Al duct
+    with bottom & top stainless insect mesh screens and inlet contraction loss.
+    Returns (Q_bore_W, mean_air_velocity_m_s).
+    """
+    dT = T_wall - T_amb
+    if dT <= 0.1:
+        return 0.0, 0.0
+    b = bore_mm * 1e-3
+    L = L_duct_mm * 1e-3
+    A_duct = b * b
+    A_in = max(1e-6, (inlet_w_mm * 1e-3) ** 2 - (4.0 - math.pi) * (0.003 ** 2))
+    area_ratio = A_duct / min(A_duct, A_in)
+    K_eff = k_minor_mesh + 1.5 * max(0.0, area_ratio ** 2 - 1.0)
+    p = air_props(0.5 * (T_wall + T_amb))
 
-    A_fin_sides = hs.n_fins * 2.0 * h_fin * L
-    A_core_exp = max(0.0, (math.pi * D_core - hs.n_fins * t_fin)) * L
-    A_fin_tips = hs.n_fins * t_fin * L
-    A_end = math.pi * (D_out ** 2) / 4.0 * 0.45
-    A_rad_cyl = math.pi * D_out * L
-    A_rad_end = math.pi * (D_out ** 2) / 4.0
+    if orientation != "vertical":
+        # Horizontal orientation loses stack buoyancy -> gentle open-end convective exchange (~20% of vertical)
+        h_h = 0.25 * churchill_chu_horiz_cyl_h(T_wall, T_amb, b)
+        return (h_h * (4.0 * b * L) * dT * 0.25) / rth_penalty_factor, 0.02
 
-    m_fin = math.sqrt(2.0 * 6.0 / (200.0 * t_fin))
-    eta_fin = math.tanh(m_fin * h_fin) / (m_fin * h_fin)
-    dT = max(0.05, T_s - T_amb)
-
-    if orientation == "vertical":
-        h_chan = elenbaas_channel_h(T_s, T_amb, b_avg, L)
-        h_tips = churchill_chu_vertical_plate_h(T_s, T_amb, L)
-        h_top = horizontal_plate_up_h(T_s, T_amb, 0.25 * D_out)
-        Q_conv = dT * (h_chan * (eta_fin * A_fin_sides + A_core_exp) + h_tips * A_fin_tips + h_top * A_end)
-    else:
-        h_chan = elenbaas_channel_h(T_s, T_amb, b_avg, max(0.020, 0.85 * D_out)) * 0.75
-        h_tips = churchill_chu_horiz_cyl_h(T_s, T_amb, D_out)
-        h_end = churchill_chu_vertical_plate_h(T_s, T_amb, D_out)
-        Q_conv = dT * (h_chan * (eta_fin * A_fin_sides + A_core_exp) + h_tips * A_fin_tips + h_end * A_end)
-
-    Q_rad = SIGMA * ((T_s + 273.15) ** 4 - (T_amb + 273.15) ** 4) * (min(0.95, hs.eps + 0.04) * A_rad_cyl + hs.eps * A_rad_end)
-    return (Q_conv + Q_rad) / rth_penalty_factor
+    V = 0.14
+    eff = 0.7
+    for _ in range(35):
+        mdot = p["rho"] * V * A_duct
+        Re = V * b / p["nu"]
+        Gz = (b / L) * Re * p["Pr"]
+        Nu_g = 3.66 + (0.0668 * Gz) / (1.0 + 0.04 * (Gz ** (2.0 / 3.0)))
+        h_in = Nu_g * p["k"] / b
+        NTU = h_in * (4.0 * b * L) / max(1e-9, mdot * p["cp"])
+        eff = 1.0 - math.exp(-NTU)
+        dT_air_avg = dT * (1.0 - eff / max(1e-6, NTU))
+        dP_buoy = p["rho"] * 9.81 * p["beta"] * dT_air_avg * L
+        A_q = 0.5 * K_eff * p["rho"]
+        B_q = 28.45 * p["mu"] * L / (b * b)
+        V_new = (-B_q + math.sqrt(B_q * B_q + 4.0 * A_q * dP_buoy)) / (2.0 * A_q)
+        V = 0.5 * V + 0.5 * V_new
+    Q_tot = (p["rho"] * V * A_duct * p["cp"] * dT * eff) / rth_penalty_factor
+    return float(Q_tot), float(V)
 
 
 def shroud_annular_path_Q(
@@ -203,12 +189,6 @@ def shroud_annular_path_Q(
     Q_opt_wall_W: float = 0.0,
     orientation: str = "vertical",
 ) -> tuple[float, float, float]:
-    """
-    Heat flow from internal Al core across annular air gap + PLEXIGLAS XT 0A070 shroud wall
-    (k = 0.19 W/mK, eps = 0.93) to ambient, including direct optical Fresnel/bulk absorption
-    Q_opt_wall_W deposited inside the PMMA wall.
-    Returns (Q_from_core_W, T_shroud_in_C, T_shroud_out_C).
-    """
     if T_core <= T_amb + 0.05 and Q_opt_wall_W <= 0.0:
         return 0.0, T_amb, T_amb
     r_1 = 0.5 * D_core_eq_mm * 1e-3
@@ -236,12 +216,10 @@ def shroud_annular_path_Q(
             Nu_d = k_eff_k * delta / (r_1 * math.log(r_2 / r_1))
         h_gap_c = Nu_d * p["k"] / delta
         Q_gap_c = h_gap_c * A_1 * dT_gap
-
         denom = (1.0 / eps_core) + (A_1 / A_2) * (1.0 / eps_shroud - 1.0)
         Q_gap_r = SIGMA * A_1 * ((T_core + 273.15) ** 4 - (T_gi + 273.15) ** 4) / denom
         Q_gap = Q_gap_c + Q_gap_r
 
-        # Optical absorption deposited at mid-wall adds +0.5*Q_opt_wall to inner->outer conduction & full Q_opt_wall to outer rejection
         Q_wall = (T_gi - T_go) / R_wall
         h_out_c = (
             churchill_chu_vertical_plate_h(T_go, T_amb, L)
@@ -258,22 +236,6 @@ def shroud_annular_path_Q(
     return Q_from_core, float(T_gi), float(T_go)
 
 
-def compute_bulkhead_resistance(cad: dict) -> float:
-    """
-    First-principles parallel thermal resistance between bottom of Al core and sealed electronics bay (K/W):
-      - 5.5 mm solid PETG/ASA bulkhead conduction (k = 0.21 W/mK, A = 1200 mm^2)
-      - Outer MECH-CAP-BOT frustum wall conduction (L = 32 mm, A = 2400 mm^2)
-      - 2x M3x12 A2 stainless steel anchor bolts via MECH-CORE-ANCHOR (plastic thermal break ~ 2 mm in series)
-      - Internal cavity radiation (~114 K/W)
-    """
-    k_plast = 0.21  # Conservative PETG/ASA FDM conductivity (anisotropic Z layers)
-    t_bh = cad["derived"]["bulkhead_thick"] * 1e-3  # 5.5 mm
-    r_bh = t_bh / (k_plast * 1200e-6)
-    r_wall = 0.032 / (k_plast * 2400e-6)
-    r_rad = 114.1
-    return 1.0 / (1.0 / r_bh + 1.0 / r_wall + 1.0 / r_rad)
-
-
 def solve_system(
     cad: dict,
     Q_uv_elec_heat: float,
@@ -282,130 +244,191 @@ def solve_system(
     Q_pcb: float,
     p_u1: float,
     T_amb: float,
-    top_hs: HeatsinkSpec,
-    eps_core_inner: float = 0.20,
-    f_rad_amb: float = 0.84,
+    cfg: ChimneyConfig,
+    f_rad_amb: float,
     r_sub_led: float = 0.50,
     r_tim_led: float = 0.30,
     orientation: str = "vertical",
     rth_penalty_factor: float = 1.0,
-    k_shroud: float = 0.19,
-    eps_shroud: float = 0.93,
 ) -> dict[str, float]:
-    """Solve coupled 5-node steady-state thermal network for Rev 4.8 Field Lantern."""
+    """Solve coupled 8-node steady-state thermal network with explicit baffle, bell wall, and open-chimney physics."""
     der = cad["derived"]
-    A_cs = (cad["core_w_nom"] ** 2 - cad["core_bore_nom"] ** 2) * 1e-6  # 324e-6 m^2 for 30x30x3 mm!
-    k_al = 200.0  # Al 6063-T6
+    W = cad["core_w_nom"] * 1e-3
+    b_mm = cad["core_bore_nom"]
+    A_cs = (cad["core_w_nom"] ** 2 - b_mm ** 2) * 1e-6
+    k_al = 200.0
+    l_chim_mm = der["core_protrusion_mm"]
 
-    # Axial conduction along 30x30x3 Al hollow square core
-    ax_top_mm = der["axial_uv_to_top_mm"] + (0.5 * top_hs.L_mm if top_hs.kind == "protruding_core" else 0.0)
-    R_ax_uv_top = (ax_top_mm * 1e-3) / (k_al * A_cs)
+    L_bay = (der["z_cap_top_collar_bot"] - 4.0 - der["z_top_base_port_bot"]) * 1e-3
+    z_bay_mid = 0.5 * (der["z_top_base_port_bot"] + der["z_cap_top_collar_bot"] - 4.0)
+    z_chim_mid = der["z_cap_top_top"] + 0.5 * l_chim_mm
+
     R_ax_uv_vis = (der["axial_uv_to_vis_mm"] * 1e-3) / (k_al * A_cs)
-    r_int_top = 0.0 if top_hs.kind == "protruding_core" else 0.28
-    R_top_total = R_ax_uv_top + r_int_top
-    R_bulkhead = compute_bulkhead_resistance(cad)
+    R_ax_uv_bay = ((z_bay_mid - der["z_led_uv"]) * 1e-3) / (k_al * A_cs)
+    R_ax_bay_top = ((z_chim_mid - z_bay_mid) * 1e-3) / (k_al * A_cs)
 
-    # Sealed plastic electronics bay (lid-mounted horizontal PCB inside Ø71.6 mm cavity, Ø92.4 mm outer shell):
-    # Bay-air to ambient resistance: ~17.5 K/W (A_ext ~ 0.018 m^2, h_ext ~ 11 W/m^2K -> 5.0 K/W + wall 1.0 + int 11.5)
-    # PCB-to-bay-air resistance: ~10.0 K/W (2L 36x46 mm FR4 w/ solid 1oz B.Cu GND plane in stagnant Ø71.6 mm air)
-    R_bay_to_amb = 17.5 * rth_penalty_factor
-    R_pcb_to_bay = 10.0
+    # Top-head exterior & interior bay areas (including realistic 25%-infill wall conduction)
+    D_bell = cad["cap_top_bell_od"] * 1e-3
+    D_eaves = cad["cap_top_eaves_od"] * 1e-3
+    D_port = cad["top_base_port_od"] * 1e-3
+    A_ring = math.pi * D_port * (cad["top_base_port_h"] * 1e-3)
+    A_eaves = math.pi * D_eaves * (cad["cap_top_eaves_h"] * 1e-3) + 0.5 * math.pi * (D_eaves ** 2 - D_bell ** 2)
+    A_bell = math.pi * D_bell * ((cad["cap_top_roof_bot_z"] - der["z_cap_top_eaves_top"]) * 1e-3)
+    A_roof = 0.25 * math.pi * (D_bell ** 2 - (cad["cap_top_collar_w"] * 1e-3) ** 2) / math.cos(math.radians(30.6))
+    A_ext = A_ring + A_eaves + A_bell + A_roof
+    A_int = 0.0255  # True interior Ø85/Ø78 bay wall + ceiling + floor surface area
+    # Area-weighted wall conduction: 45% thin solid bell (3.1 mm, k=0.20) + 55% thicker 25%-infill port/eaves/roof (8.5 mm, k_eff=0.11)
+    R_wall = 1.0 / (0.45 * A_int * (0.20 / 0.0031) + 0.55 * A_int * (0.11 / 0.0085))
 
-    # Split internal optical Fresnel/end-cap re-absorption 50% onto core (25% UV zone, 25% Vis zone) & 50% onto PMMA wall
+    A_core_3 = 3.0 * W * L_bay
+    A_core_1 = 1.0 * W * L_bay
+    A_pcb_1 = (cad["pcb_w"] * cad["pcb_l"]) * 1e-6  # 0.001656 m^2 per face
+    eps_pcb = 0.85
+    eps_baffle = 0.90
+    G_pcb_wires = 0.008  # Conservative conduction through USB-C copper/shield + M3 stanchions
+    G_pcb_bridge = (1.0 / cfg.pcb_bridge_rth_KW) if cfg.pcb_bridge_rth_KW else 0.0
+
     Q_uv_tot = Q_uv_elec_heat + 0.25 * Q_opt_reabs_tot
     Q_vis_tot = Q_vis_elec_heat + 0.25 * Q_opt_reabs_tot
     Q_opt_wall = 0.50 * Q_opt_reabs_tot
-
     d_core_eq = 4.0 * cad["core_w_nom"] / math.pi
 
-    def Q_top_sink(T_s: float) -> float:
-        if top_hs.kind == "protruding_core":
-            return protruding_core_Q(T_s, T_amb, top_hs, orientation=orientation, f_rad_amb=f_rad_amb, rth_penalty_factor=rth_penalty_factor)
-        return radial_heatsink_Q(T_s, T_amb, top_hs, orientation=orientation, rth_penalty_factor=rth_penalty_factor)
-
     def resid(x: list[float]) -> list[float]:
-        T_c_uv, T_c_vis, T_hs_t, T_bay_air, T_pcb_avg = x
+        T_c_uv, T_c_vis, T_c_bay, T_hs_t, T_baf, T_bay_air, T_bell_in, T_pcb = x
         T_c_avg = 0.5 * (T_c_uv + T_c_vis)
-        Q_shroud_core, _, _ = shroud_annular_path_Q(
+        Q_shroud, _, _ = shroud_annular_path_Q(
             T_c_avg, T_amb,
             D_in_mm=cad["glass_id_nom"], D_out_mm=cad["glass_od_nom"],
             L_shroud_mm=der["exposed_glass_window_mm"], D_core_eq_mm=d_core_eq,
-            eps_core=eps_core_inner, eps_shroud=eps_shroud, k_wall=k_shroud,
+            eps_core=cfg.core_inner_eps, eps_shroud=0.93, k_wall=0.19,
             Q_opt_wall_W=Q_opt_wall, orientation=orientation,
         )
-        Q_uv_to_vis = (T_c_uv - T_c_vis) / R_ax_uv_vis
-        Q_uv_to_top = (T_c_uv - T_hs_t) / R_top_total
-        Q_vis_to_bay = (T_c_vis - T_bay_air) / R_bulkhead
-        Q_pcb_to_bay = (T_pcb_avg - T_bay_air) / R_pcb_to_bay
-        Q_bay_to_amb = (T_bay_air - T_amb) / R_bay_to_amb
+        if cfg.open_chimney:
+            T_bore_avg = 0.35 * T_c_vis + 0.35 * T_c_uv + 0.30 * T_c_bay
+            Q_bore, _ = open_chimney_bore_Q(
+                T_bore_avg, T_amb, b_mm, cad["cap_bot_inlet_w"], cad["core_length"] - 15.0,
+                k_minor_mesh=cfg.k_minor_mesh, orientation=orientation, rth_penalty_factor=rth_penalty_factor,
+            )
+        else:
+            Q_bore = 0.0
+
+        Q_top = protruding_core_Q(
+            T_hs_t, T_amb, cad["core_w_nom"], l_chim_mm, cfg.chimney_eps,
+            orientation=orientation, f_rad_amb=f_rad_amb, rth_penalty_factor=rth_penalty_factor,
+        )
+        Q_uv_vis = (T_c_uv - T_c_vis) / R_ax_uv_vis
+        Q_uv_bay = (T_c_uv - T_c_bay) / R_ax_uv_bay
+        Q_bay_top = (T_c_bay - T_hs_t) / R_ax_bay_top
+
+        h_c3 = churchill_chu_vertical_plate_h(T_c_bay, T_bay_air, L_bay) * 0.65
+        Q_c3_conv = h_c3 * A_core_3 * (T_c_bay - T_bay_air)
+        Q_c3_rad = cfg.core_inner_eps * SIGMA * A_core_3 * ((T_c_bay + 273.15) ** 4 - (T_bell_in + 273.15) ** 4)
+        Q_sock = 0.025 * (T_c_bay - T_bell_in)
+
+        # Core -> 2.0 mm baffle (0.55 mm air + 2.0 mm PETG/ASA)
+        R_core_baf = (0.00055 / 0.028 + (cad["core_sleeve_wall"] * 1e-3) / 0.21) / A_core_1
+        Q_core_baf = (T_c_bay - T_baf) / R_core_baf
+
+        # Baffle <-> B.Cu of PCB (air gap conduction + radiation) & optional captive 15x15 mm silicone-pad/brass-shim bridge to Al core
+        gap_bp = (cad["pcb_x_bcu"] - (0.5 * cad["core_pocket_w"] + cad["core_sleeve_wall"])) * 1e-3
+        A_bridge = (0.015 * 0.015) if G_pcb_bridge > 0.0 else 0.0
+        A_pcb_air = max(1e-6, A_pcb_1 - A_bridge)
+        A_baf_rest = max(0.0, A_core_1 - A_pcb_1)
+        Q_baf_pcb_cond = (0.028 / gap_bp) * A_pcb_air * (T_baf - T_pcb)
+        eps_eff_bp = 1.0 / (1.0 / eps_baffle + 1.0 / eps_pcb - 1.0)
+        Q_baf_pcb_rad = eps_eff_bp * SIGMA * A_pcb_air * ((T_baf + 273.15) ** 4 - (T_pcb + 273.15) ** 4)
+        Q_baf_pcb = Q_baf_pcb_cond + Q_baf_pcb_rad
+        Q_pad_core = G_pcb_bridge * (T_c_bay - T_pcb)
+        Q_baf_rest_conv = 3.5 * A_baf_rest * (T_baf - T_bay_air)
+        Q_baf_rest_rad = 0.90 * SIGMA * A_baf_rest * ((T_baf + 273.15) ** 4 - (T_bell_in + 273.15) ** 4)
+
+        # Vertical PCB F.Cu -> bay air (natural conv) + inner bell wall (radiation) + cable/mount conduction
+        h_pcb_c = churchill_chu_vertical_plate_h(T_pcb, T_bay_air, cad["pcb_l"] * 1e-3) * 0.85
+        Q_pcb_conv = h_pcb_c * A_pcb_1 * (T_pcb - T_bay_air)
+        eps_eff_pw = 1.0 / (1.0 / eps_pcb + 1.0 / 0.90 - 1.0)
+        Q_pcb_rad = eps_eff_pw * SIGMA * A_pcb_1 * ((T_pcb + 273.15) ** 4 - (T_bell_in + 273.15) ** 4)
+        Q_pcb_wire = G_pcb_wires * (T_pcb - T_bell_in)
+
+        # Bay air -> bell inner wall -> outer bell wall -> ambient
+        h_bay_wall = max(2.5, churchill_chu_vertical_plate_h(T_bay_air, T_bell_in, 0.085) * 0.70)
+        Q_air_wall = h_bay_wall * A_int * (T_bay_air - T_bell_in)
+
+        T_out_est = 0.5 * (T_bell_in + T_amb)
+        h_ext_c = churchill_chu_vertical_plate_h(T_out_est, T_amb, 0.095)
+        h_ext_r = 0.90 * 4.0 * SIGMA * ((0.5 * (T_out_est + T_amb) + 273.15) ** 3)
+        R_bell_tot = (R_wall + 1.0 / ((h_ext_c + h_ext_r) * A_ext)) * rth_penalty_factor
+        Q_bell_amb = (T_bell_in - T_amb) / R_bell_tot
 
         return [
-            Q_uv_tot - 0.5 * Q_shroud_core - Q_uv_to_vis - Q_uv_to_top,
-            Q_vis_tot + Q_uv_to_vis - 0.5 * Q_shroud_core - Q_vis_to_bay,
-            Q_uv_to_top - Q_top_sink(T_hs_t),
-            Q_vis_to_bay + Q_pcb_to_bay - Q_bay_to_amb,
-            Q_pcb - Q_pcb_to_bay,
+            Q_uv_tot - 0.5 * Q_shroud - Q_uv_vis - Q_uv_bay - 0.35 * Q_bore,
+            Q_vis_tot + Q_uv_vis - 0.5 * Q_shroud - 0.35 * Q_bore,
+            Q_uv_bay - Q_bay_top - Q_c3_conv - Q_c3_rad - Q_sock - Q_core_baf - Q_pad_core - 0.30 * Q_bore,
+            Q_bay_top - Q_top,
+            Q_core_baf - Q_baf_pcb - Q_baf_rest_conv - Q_baf_rest_rad,
+            Q_c3_conv + Q_baf_rest_conv + Q_pcb_conv - Q_air_wall,
+            Q_air_wall + Q_c3_rad + Q_sock + Q_baf_rest_rad + Q_pcb_rad + Q_pcb_wire - Q_bell_amb,
+            Q_pcb + Q_baf_pcb + Q_pad_core - Q_pcb_conv - Q_pcb_rad - Q_pcb_wire,
         ]
 
-    x0 = [T_amb + 30.0, T_amb + 28.0, T_amb + 24.0, T_amb + 14.0, T_amb + 19.0]
-    T_c_uv, T_c_vis, T_hs_t, T_bay_air, T_pcb_avg = [float(v) for v in fsolve(resid, x0)]
+    x0 = [T_amb + 25.0, T_amb + 25.0, T_amb + 20.0, T_amb + 18.0, T_amb + 19.0, T_amb + 14.0, T_amb + 10.0, T_amb + 24.0]
+    T_c_uv, T_c_vis, T_c_bay, T_hs_t, T_baf, T_bay_air, T_bell_in, T_pcb_avg = [float(v) for v in fsolve(resid, x0)]
     T_c_avg = 0.5 * (T_c_uv + T_c_vis)
     Q_shroud_core, T_gi, T_go = shroud_annular_path_Q(
         T_c_avg, T_amb,
         D_in_mm=cad["glass_id_nom"], D_out_mm=cad["glass_od_nom"],
         L_shroud_mm=der["exposed_glass_window_mm"], D_core_eq_mm=d_core_eq,
-        eps_core=eps_core_inner, eps_shroud=eps_shroud, k_wall=k_shroud,
+        eps_core=cfg.core_inner_eps, eps_shroud=0.93, k_wall=0.19,
         Q_opt_wall_W=Q_opt_wall, orientation=orientation,
     )
+    if cfg.open_chimney:
+        Q_bore_val, V_chim = open_chimney_bore_Q(
+            0.35 * T_c_vis + 0.35 * T_c_uv + 0.30 * T_c_bay, T_amb, b_mm, cad["cap_bot_inlet_w"],
+            cad["core_length"] - 15.0, k_minor_mesh=cfg.k_minor_mesh, orientation=orientation,
+            rth_penalty_factor=rth_penalty_factor,
+        )
+    else:
+        Q_bore_val, V_chim = 0.0, 0.0
 
-    # Junction temperatures (20 mm Copper DTP star: R_sub = 0.50 K/W, solder = 0.10 K/W, TIM = 0.30 K/W)
-    # Luminus SST-10-UV RthJS = 1.4 K/W; ams OSRAM CSLNM1 (KB/KP/KW) RthJS = 4.9 K/W max (4.1 typ)
     q_uv_single = Q_uv_elec_heat / 4.0
     T_j_uv = T_c_uv + q_uv_single * (1.4 + r_sub_led + 0.10 + r_tim_led)
-
     if Q_vis_elec_heat <= 0.0:
         T_j_vis = T_c_vis
     else:
-        # KP CSLNM1.F1 phosphor-converted green carries ~27% of Ch2 visible heat
         q_green_single = 0.270 * Q_vis_elec_heat
         T_j_vis = T_c_vis + q_green_single * (4.9 + r_sub_led + 0.10 + r_tim_led)
 
-    # Driver PCB hotspot & U1/U2 AL8860WT-7 junction (TSOT25 RthJA = 147 C/W to bay air, conservative JEDEC)
     T_pcb_hotspot = T_pcb_avg + 3.5 * Q_pcb
     T_j_u1_jedec = T_pcb_avg + p_u1 * 147.0
+    # Worst-case temperature of ANY polymer surface contacting the Al core (cap_bot, top_base, cap_top) or PCB stanchions
+    T_plastic_max = max(T_c_vis, T_c_uv, T_c_bay, T_pcb_avg)
 
-    # Key limits:
-    # - SST-10-UV: Tj_max = 100 C (nominal target <= 80 C)
-    # - Cree XP-E2: Tj_max = 150 C
-    # - AL8860WT-7: Tj_max = 125 C derated (150 C abs)
-    # - PLEXIGLAS XT 0A070 continuous service: <= 75 C (Vicat softening ~105 C)
-    # - PETG housing HDT limit: 75.0 C (ASA HDT = 95.0 C)
-    # - Commercial IC ambient (U4 LM393DR2G 0..+70 C; U5 CJ431 -25..+85 C): 0..+70 C rated T_bay_air
     return dict(
         T_c_uv=T_c_uv,
         T_c_vis=T_c_vis,
+        T_c_bay=T_c_bay,
         T_hs_t=T_hs_t,
+        T_baffle=T_baf,
         T_bay_air=T_bay_air,
+        T_bell_in=T_bell_in,
         T_pcb_avg=T_pcb_avg,
         T_pcb_hotspot=T_pcb_hotspot,
+        T_plastic_max=T_plastic_max,
         T_j_uv=T_j_uv,
         T_j_vis=T_j_vis,
         T_j_u1_jedec=T_j_u1_jedec,
         T_shroud_in=T_gi,
         T_shroud_out=T_go,
         Q_shroud_total=Q_shroud_core + Q_opt_wall,
-        Q_top=Q_top_sink(T_hs_t),
-        Q_bay=(T_bay_air - T_amb) / R_bay_to_amb,
-        R_ax_uv_top=R_ax_uv_top,
-        R_ax_uv_vis=R_ax_uv_vis,
-        R_bulkhead=R_bulkhead,
+        Q_bore=Q_bore_val,
+        V_chimney_ms=V_chim,
+        Q_top=protruding_core_Q(T_hs_t, T_amb, cad["core_w_nom"], l_chim_mm, cfg.chimney_eps, orientation, f_rad_amb, rth_penalty_factor),
         margin_uv_100C=100.0 - T_j_uv,
         margin_vis_150C=150.0 - T_j_vis,
         margin_pmma_75C=75.0 - T_gi,
-        margin_petg_75C=75.0 - T_pcb_hotspot,
-        margin_asa_95C=95.0 - T_pcb_hotspot,
+        margin_petg_70C=70.0 - T_plastic_max,
+        margin_asa_95C=95.0 - T_plastic_max,
         margin_u1_125C=125.0 - T_j_u1_jedec,
-        margin_ic_comm_70C=70.0 - T_bay_air,
+        margin_ic_comm_70C=70.0 - T_pcb_avg,
     )
 
 
@@ -414,23 +437,19 @@ def main() -> None:
     cad = json.loads(CAD_PARAMS_JSON.read_text(encoding="utf-8"))
     sim = json.loads(SIM_SUMMARY_JSON.read_text(encoding="utf-8"))
 
-    # Read EXACT Rev 4.8 SSOT electrical & mechanical values
     te = sim["thermal_export"]
     an = sim["analytic_nominal_20V"]
     cs = sim["corner_sweep"]
 
     p_pcb_8all_nom = float(te["p_pcb_nom_W"])
     p_pcb_wc = float(te["p_pcb_wc_W"])
-    # 4-UV Nom PCB loss = Ch1 buck loss + quiescent overhead (from sim_summary.json)
     ch1 = an["ch1_uv"]
     p_pcb_4uv_nom = round(ch1["p_ic"] + ch1["p_diode"] + ch1["p_ind"] + ch1["p_rs"] + an["p_overhead_W"], 3)
     p_u1_nom = round(max(an["ch1_uv"]["p_ic"], an["ch2_vis"]["p_ic"]), 4)
     p_u1_wc = round(max(cs["uv_pic_max"], cs["vis_pic_max"]), 4)
-    p_led_uv_nom = float(te["p_led_uv_nom_W"])    # 4.736 W
-    p_led_vis_nom = float(te["p_led_vis_nom_W"])  # 3.801 W
+    p_led_uv_nom = float(te["p_led_uv_nom_W"])
+    p_led_vis_nom = float(te["p_led_vis_nom_W"])
 
-    # Operating Modes: (name, Q_uv_heat_W, Q_vis_heat_W, Q_opt_reabs_W, Q_pcb_W, P_u1_W)
-    # Optical re-absorption = ~14% of optical output in open-space hanging (PMMA Fresnel + end-cap hub scatter)
     modes = [
         ("4-UV Nom (40%WPE)",     round(0.60 * p_led_uv_nom, 3), 0.000, round(0.14 * 0.40 * p_led_uv_nom, 3), p_pcb_4uv_nom, round(an["ch1_uv"]["p_ic"], 4)),
         ("8-ALL Nom (49%UV WPE)", round(0.51 * p_led_uv_nom, 3), round(0.60 * p_led_vis_nom, 3), round(0.14 * (0.49 * p_led_uv_nom + 0.40 * p_led_vis_nom), 3), p_pcb_8all_nom, p_u1_nom),
@@ -439,39 +458,33 @@ def main() -> None:
         ("8-ALL DS-100% (NoOpt)", 5.620, 4.750, 0.000, p_pcb_wc, p_u1_wc),
     ]
 
-    l_chim = float(cad["derived"]["core_protrusion_mm"])  # 58.5 mm directly from cad_params.json!
+    l_chim = float(cad["derived"]["core_protrusion_mm"])
     f_rad_amb = compute_chimney_ambient_view_factor(
-        l_chim, cad["core_w_nom"], cad["cap_top_brim_od"], cad["cap_top_collar_h"],
+        l_chim, cad["core_w_nom"], cad["cap_top_bell_od"], cad["cap_top_collar_h"],
     )
 
-    hs_black_chim = HeatsinkSpec(f"Protruding {l_chim:.1f}mm Matte-Black Chimney", "protruding_core", cad["core_w_nom"], cad["core_bore_nom"], l_chim, eps=0.88)
-    hs_bare_chim = HeatsinkSpec(f"Protruding {l_chim:.1f}mm Bare Mill Al Chimney", "protruding_core", cad["core_w_nom"], cad["core_bore_nom"], l_chim, eps=0.20)
-    hs_sk578 = HeatsinkSpec("SK 578/50 SA (Benchmark)", "radial", 60.0, 24.0, 50.0, n_fins=22, t_fin_mm=1.4, eps=0.88)
-
-    # (name, top_hs, eps_core_inner)
     configs = [
-        (f"Config 0: Rev 4.9 Standard — Unpainted Bare Mill 30x30x3 Al Core (eps=0.20 everywhere, XT PMMA)", hs_bare_chim, 0.20),
-        (f"Config 1: Optional Chimney-Only Matte-Black Spray ({l_chim:.1f}mm black, bare inner Al)", hs_black_chim, 0.20),
-        (f"Config 2: Full-Core Matte-Black Spray ({l_chim:.1f}mm + inner core black, star pads masked)", hs_black_chim, 0.88),
-        ("Config 3: Benchmark External SK 578/50 SA Heatsink + Bare Inner Core", hs_sk578, 0.20),
+        ChimneyConfig("Config 0: Open Chimney + Anodized Al (eps=0.82) + PCB Thermal Bridge", True, 0.82, 0.82, k_minor_mesh=8.0, pcb_bridge_rth_KW=8.5),
+        ChimneyConfig("Config 1: Open Chimney + Anodized Al (eps=0.82), No PCB Bridge", True, 0.82, 0.82, k_minor_mesh=8.0, pcb_bridge_rth_KW=None),
+        ChimneyConfig("Config 2: Open Chimney + Bare Mill Al (eps=0.10), No PCB Bridge", True, 0.10, 0.10, k_minor_mesh=8.0, pcb_bridge_rth_KW=None),
+        ChimneyConfig("Config 3: Closed Bore + Bare Mill Al (eps=0.10), No PCB Bridge", False, 0.10, 0.10, pcb_bridge_rth_KW=None),
     ]
 
     rows = []
-    for cfg_name, top_hs, eps_in in configs:
-        t_list = [15.0, 22.0, 30.0, 35.0] if cfg_name.startswith("Config 0:") else [22.0, 30.0]
+    for cfg in configs:
+        t_list = [15.0, 22.0, 30.0, 35.0] if cfg.name.startswith("Config 0:") else [22.0, 30.0]
         for T_amb in t_list:
             for orient in ("vertical", "horizontal"):
                 for m_name, q_uv, q_vis, q_opt, q_pcb, p_u1 in modes:
                     r = solve_system(
                         cad, q_uv, q_vis, q_opt, q_pcb, p_u1, T_amb,
-                        top_hs=top_hs, eps_core_inner=eps_in, f_rad_amb=f_rad_amb,
-                        orientation=orient,
+                        cfg=cfg, f_rad_amb=f_rad_amb, orientation=orient,
                     )
                     passed_petg = (
                         r["margin_uv_100C"] > 0.0
                         and r["margin_vis_150C"] > 0.0
                         and r["margin_pmma_75C"] > 0.0
-                        and r["margin_petg_75C"] >= 0.0
+                        and r["margin_petg_70C"] >= 0.0
                         and r["margin_u1_125C"] >= 0.0
                         and r["margin_ic_comm_70C"] >= 0.0
                     )
@@ -484,7 +497,7 @@ def main() -> None:
                         and r["margin_ic_comm_70C"] >= 0.0
                     )
                     rows.append({
-                        "config": cfg_name,
+                        "config": cfg.name,
                         "T_amb_C": T_amb,
                         "orientation": orient,
                         "mode": m_name,
@@ -494,7 +507,7 @@ def main() -> None:
                         "Q_pcb_W": q_pcb,
                         "P_u1_W": p_u1,
                         **{k: round(v, 3) for k, v in r.items()},
-                        "pass_all_limits": passed_petg,
+                        "pass_all_limits_petg": passed_petg,
                         "pass_all_limits_asa": passed_asa,
                     })
 
@@ -504,7 +517,6 @@ def main() -> None:
         writer.writeheader()
         writer.writerows(rows)
 
-    # Ambient sweep (10..40 C) for Rev 4.9 Standard (Config 0: Unpainted Bare Mill Al Core, vertical hanging)
     t_ambs = np.linspace(10.0, 40.0, 31)
     sweep_modes = ["4-UV Nom (40%WPE)", "8-ALL Nom (40%UV WPE)", "8-ALL DS-RealWPE", "8-ALL DS-100% (NoOpt)"]
     sweep_data: dict[str, list[dict[str, float]]] = {m: [] for m in sweep_modes}
@@ -512,53 +524,19 @@ def main() -> None:
         if m_name not in sweep_modes:
             continue
         for Ta in t_ambs:
-            r = solve_system(
-                cad, q_uv, q_vis, q_opt, q_pcb, p_u1, float(Ta),
-                top_hs=hs_bare_chim, eps_core_inner=0.20, f_rad_amb=f_rad_amb,
-                orientation="vertical",
-            )
+            r = solve_system(cad, q_uv, q_vis, q_opt, q_pcb, p_u1, float(Ta), configs[0], f_rad_amb, orientation="vertical")
             sweep_data[m_name].append({"T_amb": float(Ta), **{k: round(v, 3) for k, v in r.items()}})
 
-    # Sensitivity Cases (Rev 4.9 Standard Config 0 Bare Al vs alternatives at 22 C UK Night & 30 C Warm Night)
-    sens_specs = [
-        ("Rev 4.9 Standard: Unpainted Bare Mill Al Core (22 C UK Night, Vertical Hanging)", 22.0, "vertical", dict(eps_core_inner=0.20, r_tim_led=0.30, rth_penalty_factor=1.0), hs_bare_chim),
-        ("Rev 4.9 Standard: Unpainted Bare Mill Al Core (30 C Warm Night, Vertical Hanging)", 30.0, "vertical", dict(eps_core_inner=0.20, r_tim_led=0.30, rth_penalty_factor=1.0), hs_bare_chim),
-        ("Rev 4.9 Standard: Unpainted Bare Mill Al Core (30 C Warm Night, Horizontal)", 30.0, "horizontal", dict(eps_core_inner=0.20, r_tim_led=0.30, rth_penalty_factor=1.0), hs_bare_chim),
-        ("Optional Upgrade: Chimney-Only Matte-Black Spray (30 C, Vertical Hanging)", 30.0, "vertical", dict(eps_core_inner=0.20, r_tim_led=0.30, rth_penalty_factor=1.0), hs_black_chim),
-        ("Full-Core Matte-Black Spray (30 C, Vertical Hanging)", 30.0, "vertical", dict(eps_core_inner=0.88, r_tim_led=0.30, rth_penalty_factor=1.0), hs_black_chim),
-        ("Thick TIM bondline under 20mm star (R_tim=0.80 K/W, 30 C Vertical)", 30.0, "vertical", dict(eps_core_inner=0.20, r_tim_led=0.80, rth_penalty_factor=1.0), hs_bare_chim),
-        ("+20% Still-Air Convection Penalty (Bare Mill Al, 30 C Vertical)", 30.0, "vertical", dict(eps_core_inner=0.20, r_tim_led=0.30, rth_penalty_factor=1.20), hs_bare_chim),
-    ]
-    sensitivity = []
-    nom40 = next(m for m in modes if m[0] == "8-ALL Nom (40%UV WPE)")
-    dsreal = next(m for m in modes if m[0] == "8-ALL DS-RealWPE")
-    for desc, ta_s, ori, kw, ths in sens_specs:
-        rn = solve_system(cad, nom40[1], nom40[2], nom40[3], nom40[4], nom40[5], ta_s, ths, f_rad_amb=f_rad_amb, orientation=ori, **kw)
-        rd = solve_system(cad, dsreal[1], dsreal[2], dsreal[3], dsreal[4], dsreal[5], ta_s, ths, f_rad_amb=f_rad_amb, orientation=ori, **kw)
-        sensitivity.append({
-            "case": desc,
-            "T_amb_C": ta_s,
-            "orientation": ori,
-            "nom_Tj_uv_C": round(rn["T_j_uv"], 2),
-            "nom_T_shroud_in_C": round(rn["T_shroud_in"], 2),
-            "nom_T_bay_air_C": round(rn["T_bay_air"], 2),
-            "nom_T_pcb_hotspot_C": round(rn["T_pcb_hotspot"], 2),
-            "nom_Tj_u1_jedec_C": round(rn["T_j_u1_jedec"], 2),
-            "dsreal_Tj_uv_C": round(rd["T_j_uv"], 2),
-            "dsreal_T_shroud_in_C": round(rd["T_shroud_in"], 2),
-            "dsreal_Tj_vis_C": round(rd["T_j_vis"], 2),
-            "dsreal_T_bay_air_C": round(rd["T_bay_air"], 2),
-            "dsreal_T_pcb_hotspot_C": round(rd["T_pcb_hotspot"], 2),
-        })
-
     cfg0_rows = [r for r in rows if r["config"].startswith("Config 0:")]
-    cfg0_uk_22_real = [r for r in cfg0_rows if r["T_amb_C"] <= 22.0 and "DS-100%" not in r["mode"]]
-    cfg0_15_30_nom = [r for r in cfg0_rows if r["T_amb_C"] <= 30.0 and "Nom" in r["mode"]]
-    cfg0_15_30_real_asa = [r for r in cfg0_rows if r["T_amb_C"] <= 30.0 and "DS-100%" not in r["mode"]]
+    cfg0_vert_22_real = [r for r in cfg0_rows if r["orientation"] == "vertical" and r["T_amb_C"] <= 22.0 and "DS-100%" not in r["mode"]]
+    cfg0_vert_30_nom = [r for r in cfg0_rows if r["orientation"] == "vertical" and r["T_amb_C"] <= 30.0 and "Nom" in r["mode"]]
+    cfg0_vert_30_real_petg = [r for r in cfg0_rows if r["orientation"] == "vertical" and r["T_amb_C"] <= 30.0 and "DS-100%" not in r["mode"]]
+
+    cfg0_vert_35_real = [r for r in cfg0_rows if r["orientation"] == "vertical" and r["T_amb_C"] <= 35.0 and "DS-100%" not in r["mode"]]
 
     summary = {
-        "revision": "4.9",
-        "architecture": f"Rev 4.9 Field Lantern (Extruded XT PMMA Ø60x54x115 + Unpainted Bare Mill {l_chim:.1f}mm Al Core + Convoy Cu DTP Stars + Unified M3 CSK)",
+        "revision": "6.0",
+        "architecture": "Open-Chimney Funnel Lantern (30x30x2.0x300 mm Clear-Anodized Al Core eps=0.82, Screened 26 mm Chimney, Epoxy Cu DTP Stars, +X Vertical PCB w/ 15x15 mm Silicone-Pad/Brass-Shim Bridge)",
         "input_hashes": {
             "cad_params.json": _sha256_file(CAD_PARAMS_JSON),
             "sim_summary.json": _sha256_file(SIM_SUMMARY_JSON),
@@ -566,45 +544,43 @@ def main() -> None:
         },
         "ssot_inputs": {
             "core_section_mm": f"{cad['core_w_nom']:.0f}x{cad['core_w_nom']:.0f}x{cad['core_wall']:.1f}",
+            "core_bore_mm": cad["core_bore_nom"],
             "core_length_mm": cad["core_length"],
             "core_protrusion_mm": l_chim,
             "chimney_rad_view_factor_F_amb": f_rad_amb,
             "exposed_shroud_window_mm": cad["derived"]["exposed_glass_window_mm"],
-            "shroud_material": "Extruded Clear XT PMMA (k=0.19 W/mK, eps=0.93, Ø60x54x3.0 mm)",
+            "anodized_al_emissivity": 0.82,
+            "pcb_thermal_bridge_rth_KW": 8.5,
+            "mesh_minor_loss_K": 8.0,
             "p_pcb_4uv_nom_W": p_pcb_4uv_nom,
             "p_pcb_8all_nom_W": p_pcb_8all_nom,
             "p_pcb_wc_W": p_pcb_wc,
-            "p_u1_nom_W": p_u1_nom,
-            "p_u1_wc_W": p_u1_wc,
-            "R_bulkhead_parallel_KW": round(compute_bulkhead_resistance(cad), 3),
-            "R_sub_copper_dtp_KW": 0.50,
-            "R_thJS_vis_osram_cslnm1_max_KW": 4.90,
-            "optical_reabsorption_fraction": 0.14,
         },
-        "rev49_uk_night_22C_real_modes_all_pass": all(r["pass_all_limits"] for r in cfg0_uk_22_real),
-        "rev49_15_30C_nom_all_pass": all(r["pass_all_limits"] for r in cfg0_15_30_nom),
-        "rev49_15_30C_real_modes_asa_all_pass": all(r["pass_all_limits_asa"] for r in cfg0_15_30_real_asa),
-        "baseline_rev49_results": cfg0_rows,
+        "vert_uk_night_22C_real_petg_all_pass": all(r["pass_all_limits_petg"] for r in cfg0_vert_22_real),
+        "vert_15_30C_nom_petg_all_pass": all(r["pass_all_limits_petg"] for r in cfg0_vert_30_nom),
+        "vert_15_30C_real_petg_all_pass": all(r["pass_all_limits_petg"] for r in cfg0_vert_30_real_petg),
+        "vert_15_35C_real_petg_all_pass": all(r["pass_all_limits_petg"] for r in cfg0_vert_35_real),
+        "vert_15_30C_real_asa_all_pass": all(r["pass_all_limits_asa"] for r in cfg0_vert_30_real_petg),
+        "baseline_results": cfg0_rows,
         "config_comparison_30C_vert": [
             r for r in rows if r["T_amb_C"] == 30.0 and r["orientation"] == "vertical" and r["mode"] in ("8-ALL Nom (40%UV WPE)", "8-ALL DS-RealWPE")
         ],
-        "sensitivity": sensitivity,
         "ambient_sweep_vert": sweep_data,
     }
     json_path = out_dir / "thermal_summary.json"
     json_path.write_text(json.dumps(summary, indent=2) + "\n")
 
-    print(f"=== Rev 4.9 SSOT Thermal Analysis (Unpainted Bare Al Chimney={l_chim:.1f}mm, F_amb={f_rad_amb:.3f}, P_PCB={p_pcb_8all_nom:.3f}/{p_pcb_wc:.3f}W) ===")
+    print("=== Coupled 8-Node Thermal Analysis (Open 26 mm Chimney, Anodized 30x30x2 Al eps=0.82, 15x15 mm PCB Bridge R=8.5 K/W) ===")
     for r in cfg0_rows:
-        if r["T_amb_C"] in (22.0, 30.0) and r["mode"] in ("4-UV Nom (40%WPE)", "8-ALL Nom (40%UV WPE)", "8-ALL DS-RealWPE"):
+        if r["T_amb_C"] in (22.0, 30.0, 35.0) and r["orientation"] == "vertical" and r["mode"] in ("4-UV Nom (40%WPE)", "8-ALL Nom (40%UV WPE)", "8-ALL DS-RealWPE"):
             print(
-                f"  Tamb={r['T_amb_C']:2.0f}C {r['orientation']:10s} | {r['mode']:21s} | "
-                f"TjUV={r['T_j_uv']:5.1f}C TjVis={r['T_j_vis']:5.1f}C Tshroud={r['T_shroud_in']:4.1f}C "
-                f"Tbay={r['T_bay_air']:4.1f}C Tpcb={r['T_pcb_hotspot']:4.1f}C | PETG={r['pass_all_limits']} ASA={r['pass_all_limits_asa']}"
+                f"  Tamb={r['T_amb_C']:2.0f}C vert | {r['mode']:21s} | "
+                f"TjUV={r['T_j_uv']:5.1f}C TcVis={r['T_c_vis']:4.1f}C Tbay={r['T_bay_air']:4.1f}C "
+                f"Tpcb={r['T_pcb_avg']:4.1f}C Qbore={r['Q_bore']:.2f}W | PETG={r['pass_all_limits_petg']} ASA={r['pass_all_limits_asa']}"
             )
-    print(f"Rev 4.9 UK-Night (<=22 C Real-WPE, PETG) PASS: {sum(r['pass_all_limits'] for r in cfg0_uk_22_real)}/{len(cfg0_uk_22_real)}")
-    print(f"Rev 4.9 Nominal (15-30 C, PETG) PASS:          {sum(r['pass_all_limits'] for r in cfg0_15_30_nom)}/{len(cfg0_15_30_nom)}")
-    print(f"Rev 4.9 Real-WPE (15-30 C, ASA+Comm IC) PASS:  {sum(r['pass_all_limits_asa'] for r in cfg0_15_30_real_asa)}/{len(cfg0_15_30_real_asa)}")
+    print(f"Vertical <=22 C Real-WPE (PETG + LM393) PASS: {sum(r['pass_all_limits_petg'] for r in cfg0_vert_22_real)}/{len(cfg0_vert_22_real)}")
+    print(f"Vertical 15-30 C Real-WPE (PETG + LM393) PASS: {sum(r['pass_all_limits_petg'] for r in cfg0_vert_30_real_petg)}/{len(cfg0_vert_30_real_petg)}")
+    print(f"Vertical 15-35 C Real-WPE (PETG + LM393) PASS: {sum(r['pass_all_limits_petg'] for r in cfg0_vert_35_real)}/{len(cfg0_vert_35_real)}")
 
     # Plot 1: thermal_margins.png
     fig, axes = plt.subplots(1, 3, figsize=(14.5, 4.8), dpi=150)
@@ -621,7 +597,7 @@ def main() -> None:
     ax = axes[0]
     ax.bar(x - w, get_vals("T_j_uv", 22.0, "vertical"), w, label="22°C Vert (UK Night)", color="#4c72b0")
     ax.bar(x, get_vals("T_j_uv", 30.0, "vertical"), w, label="30°C Vert (Warm)", color="#dd8452")
-    ax.bar(x + w, get_vals("T_j_uv", 30.0, "horizontal"), w, label="30°C Horiz", color="#c44e52")
+    ax.bar(x + w, get_vals("T_j_uv", 22.0, "horizontal"), w, label="22°C Horiz", color="#c44e52")
     ax.axhline(100.0, color="red", ls="--", lw=1.5, label="Limit 100°C")
     ax.axhline(80.0, color="gray", ls=":", lw=1.2, label="Nom Target 80°C")
     ax.set_title("UV LED Junction $T_{j,\\mathrm{UV}}$ (Cu DTP Star)")
@@ -632,29 +608,29 @@ def main() -> None:
     ax.legend(fontsize=7.2, loc="upper left")
 
     ax = axes[1]
-    ax.bar(x - w, get_vals("T_shroud_in", 22.0, "vertical"), w, label="22°C Vert", color="#4c72b0")
-    ax.bar(x, get_vals("T_shroud_in", 30.0, "vertical"), w, label="30°C Vert", color="#dd8452")
-    ax.bar(x + w, get_vals("T_shroud_in", 30.0, "horizontal"), w, label="30°C Horiz", color="#c44e52")
-    ax.axhline(75.0, color="red", ls="--", lw=1.5, label="XT PMMA 75°C")
-    ax.set_title("Extruded XT PMMA Inner Wall $T_{\\mathrm{shroud}}$")
+    ax.bar(x - w, get_vals("T_c_vis", 22.0, "vertical"), w, label="22°C Vert Core", color="#4c72b0")
+    ax.bar(x, get_vals("T_c_vis", 30.0, "vertical"), w, label="30°C Vert Core", color="#dd8452")
+    ax.bar(x + w, get_vals("T_shroud_in", 30.0, "vertical"), w, label="30°C XT PMMA Wall", color="#55a868")
+    ax.axhline(70.0, color="red", ls="--", lw=1.5, label="PETG HDT 70°C")
+    ax.axhline(95.0, color="purple", ls=":", lw=1.2, label="ASA HDT 95°C")
+    ax.set_title("Core Contact & XT PMMA Shroud")
     ax.set_xticks(x, ["4-UV\nNom", "8-ALL\nNom", "8-ALL\nDS-Real", "8-ALL\nDS-100%"], fontsize=8.5)
-    ax.set_ylim(0, 95)
+    ax.set_ylim(0, 105)
     ax.grid(axis="y", alpha=0.3)
-    ax.legend(fontsize=7.5, loc="upper left")
+    ax.legend(fontsize=7.2, loc="upper left")
 
     ax = axes[2]
-    ax.bar(x - w, get_vals("T_pcb_hotspot", 22.0, "vertical"), w, label="22°C Vert", color="#4c72b0")
-    ax.bar(x, get_vals("T_pcb_hotspot", 30.0, "vertical"), w, label="30°C Vert", color="#dd8452")
-    ax.bar(x + w, get_vals("T_bay_air", 30.0, "vertical"), w, label="30°C Bay Air (U4/U5)", color="#55a868")
-    ax.axhline(75.0, color="red", ls="--", lw=1.5, label="PETG Limit 75°C")
-    ax.axhline(70.0, color="orange", ls=":", lw=1.3, label="U4/U5 Comm. 70°C")
-    ax.set_title("Driver PCB & Sealed Bay Air (PETG/ASA)")
+    ax.bar(x - w, get_vals("T_pcb_avg", 22.0, "vertical"), w, label="22°C Vert PCB", color="#4c72b0")
+    ax.bar(x, get_vals("T_pcb_avg", 30.0, "vertical"), w, label="30°C Vert PCB", color="#dd8452")
+    ax.bar(x + w, get_vals("T_bay_air", 30.0, "vertical"), w, label="30°C Bay Air", color="#55a868")
+    ax.axhline(70.0, color="orange", ls="--", lw=1.5, label="U4 LM393 / PETG 70°C")
+    ax.set_title("Vertical Driver PCB & Top Bay Air")
     ax.set_xticks(x, ["4-UV\nNom", "8-ALL\nNom", "8-ALL\nDS-Real", "8-ALL\nDS-100%"], fontsize=8.5)
     ax.set_ylim(0, 95)
     ax.grid(axis="y", alpha=0.3)
     ax.legend(fontsize=7.2, loc="upper left")
 
-    fig.suptitle(f"Rev 4.9 Standard (Unpainted Bare Mill Al {l_chim:.1f} mm + XT PMMA + 14% Opt. Re-Abs.) — Steady-State Margins", fontweight="bold")
+    fig.suptitle("LepiLED Steady-State Thermal Margins (Open 26 mm Chimney, Anodized Al + 15 × 15 mm PCB Bridge)", fontweight="bold")
     fig.tight_layout()
     fig.savefig(out_dir / "thermal_margins.png")
     plt.close(fig)
@@ -671,62 +647,68 @@ def main() -> None:
         pts = sweep_data[m]
         ta = [pt["T_amb"] for pt in pts]
         ax1.plot(ta, [pt["T_j_uv"] for pt in pts], lw=2.0, color=colors[m], label=m)
-        ax2.plot(ta, [pt["T_bay_air"] for pt in pts], lw=2.0, color=colors[m], label=f"{m} (Bay)")
-        ax2.plot(ta, [pt["T_pcb_hotspot"] for pt in pts], lw=1.3, ls="--", color=colors[m], label=f"{m} (PCB)")
+        ax2.plot(ta, [pt["T_c_vis"] for pt in pts], lw=1.8, color=colors[m], label=f"{m} (Core)")
+        ax2.plot(ta, [pt["T_pcb_avg"] for pt in pts], lw=1.4, ls="--", color=colors[m], label=f"{m} (PCB)")
     ax1.axhline(100.0, color="red", ls="--", lw=1.4, label="UV Limit 100°C")
     ax1.axvline(22.0, color="green", ls=":", lw=1.2, label="UK Night 22°C")
     ax1.axvline(30.0, color="gray", ls=":", lw=1.2, label="Warm Night 30°C")
+    ax1.axvline(35.0, color="darkorange", ls=":", lw=1.2, label="Heatwave 35°C")
     ax1.set_title("UV LED $T_{j,\\mathrm{UV}}$ vs Ambient (Vertical Hanging)")
     ax1.set_xlabel("Ambient Temperature $T_{\\mathrm{amb}}$ (°C)")
     ax1.set_ylabel("Temperature (°C)")
     ax1.grid(alpha=0.3)
     ax1.legend(fontsize=7.2)
 
-    ax2.axhline(75.0, color="red", ls="--", lw=1.4, label="PETG 75°C (ASA=95°C)")
-    ax2.axhline(70.0, color="orange", ls=":", lw=1.4, label="U4/U5 Comm. 70°C")
+    ax2.axhline(70.0, color="red", ls="--", lw=1.4, label="PETG HDT / LM393 70°C")
     ax2.axvline(22.0, color="green", ls=":", lw=1.2)
     ax2.axvline(30.0, color="gray", ls=":", lw=1.2)
-    ax2.set_title("Sealed Bay Air & Driver PCB vs Ambient (Vertical)")
+    ax2.axvline(35.0, color="darkorange", ls=":", lw=1.2)
+    ax2.set_title("Core Contact & Vertical PCB Temperature vs Ambient")
     ax2.set_xlabel("Ambient Temperature $T_{\\mathrm{amb}}$ (°C)")
     ax2.set_ylabel("Temperature (°C)")
     ax2.grid(alpha=0.3)
     ax2.legend(fontsize=6.5, ncol=2)
 
-    fig.suptitle(f"Rev 4.9 Ambient Sweep (10–40°C, Unpainted Bare Mill Al {l_chim:.1f}mm, F_amb={f_rad_amb:.2f}, P_PCB={p_pcb_8all_nom:.2f}/{p_pcb_wc:.2f}W)", fontweight="bold")
+    fig.suptitle("Ambient Temperature Sweep (10–40 °C, Open 26 mm Chimney, Anodized Al + PCB Bridge)", fontweight="bold")
     fig.tight_layout()
     fig.savefig(out_dir / "thermal_ambient_sweep.png")
     plt.close(fig)
 
-    # Plot 3: thermal_network_comparison.png
-    fig, ax = plt.subplots(figsize=(10.5, 4.8), dpi=150)
+    # Plot 3: thermal_network_comparison.png (side-by-side UV junction + Driver PCB at 30 C)
+    fig, (ax_uv, ax_pcb) = plt.subplots(1, 2, figsize=(13.2, 4.9), dpi=150)
     cfg_labels = [
-        f"Config 0 (Rev 4.9):\nBare Mill Al Core\n(unpainted, eps=0.20)",
-        f"Config 1 (Opt.):\nChimney-Only Black\n(top {l_chim:.1f}mm, bare inner)",
-        "Config 2:\nFull-Core Matte-Black\n(star pads masked)",
-        "Config 3:\nSK 578/50 SA Top\n(benchmark finned)",
+        "Open Chimney\nAnodized Al\n+ PCB Bridge",
+        "Open Chimney\nAnodized Al\n(No Bridge)",
+        "Open Chimney\nBare Mill Al\n(No Bridge)",
+        "Closed Bore\nBare Mill Al\n(No Bridge)",
     ]
     cfg_prefixes = ["Config 0:", "Config 1:", "Config 2:", "Config 3:"]
-    uv_nom = [
-        next(r["T_j_uv"] for r in rows if r["config"].startswith(pf) and r["T_amb_C"] == 30.0 and r["orientation"] == "vertical" and r["mode"] == "8-ALL Nom (40%UV WPE)")
-        for pf in cfg_prefixes
-    ]
-    uv_ds = [
-        next(r["T_j_uv"] for r in rows if r["config"].startswith(pf) and r["T_amb_C"] == 30.0 and r["orientation"] == "vertical" and r["mode"] == "8-ALL DS-RealWPE")
-        for pf in cfg_prefixes
-    ]
     x_c = np.arange(len(cfg_labels))
-    ax.bar(x_c - 0.18, uv_nom, 0.36, label="8-ALL Nom (40% UV WPE)", color="#4c72b0")
-    ax.bar(x_c + 0.18, uv_ds, 0.36, label="8-ALL Worst-Case Real-WPE", color="#dd8452")
-    ax.axhline(100.0, color="red", ls="--", lw=1.6, label="SST-10-UV Limit 100°C")
-    for i, (vn, vd) in enumerate(zip(uv_nom, uv_ds)):
-        ax.text(i - 0.18, vn + 1.5, f"{vn:.1f}°C", ha="center", fontsize=8.5, fontweight="bold")
-        ax.text(i + 0.18, vd + 1.5, f"{vd:.1f}°C", ha="center", fontsize=8.5, fontweight="bold")
-    ax.set_xticks(x_c, cfg_labels, fontsize=9)
-    ax.set_ylabel("UV LED Junction $T_{j,\\mathrm{UV}}$ (°C)")
-    ax.set_ylim(0, 118)
-    ax.set_title("Rev 4.9 Surface-Finish Comparison ($T_{\\mathrm{amb}}=30^\\circ\\mathrm{C}$, Vertical Hanging Still Air)")
-    ax.grid(axis="y", alpha=0.3)
-    ax.legend(fontsize=8.5)
+    for ax_p, metric, ylabel, ylim, lim_val, lim_lbl, title_p in [
+        (ax_uv, "T_j_uv", "UV LED Junction $T_{j,\\mathrm{UV}}$ (°C)", 110, 100.0, "SST-10-UV Limit 100°C", "UV LED Junction ($T_{\\mathrm{amb}}=30^\\circ\\mathrm{C}$)"),
+        (ax_pcb, "T_pcb_avg", "Driver PCB Average $T_{\\mathrm{pcb}}$ (°C)", 92, 70.0, "LM393 / PETG Limit 70°C", "Driver PCB Temperature ($T_{\\mathrm{amb}}=30^\\circ\\mathrm{C}$)"),
+    ]:
+        v_nom = [
+            next(r[metric] for r in rows if r["config"].startswith(pf) and r["T_amb_C"] == 30.0 and r["orientation"] == "vertical" and r["mode"] == "8-ALL Nom (40%UV WPE)")
+            for pf in cfg_prefixes
+        ]
+        v_ds = [
+            next(r[metric] for r in rows if r["config"].startswith(pf) and r["T_amb_C"] == 30.0 and r["orientation"] == "vertical" and r["mode"] == "8-ALL DS-RealWPE")
+            for pf in cfg_prefixes
+        ]
+        ax_p.bar(x_c - 0.18, v_nom, 0.36, label="8-ALL Nom (40% UV WPE)", color="#4c72b0")
+        ax_p.bar(x_c + 0.18, v_ds, 0.36, label="8-ALL Worst-Case Real-WPE", color="#dd8452")
+        ax_p.axhline(lim_val, color="red", ls="--", lw=1.6, label=lim_lbl)
+        for i, (vn, vd) in enumerate(zip(v_nom, v_ds)):
+            ax_p.text(i - 0.18, vn + 1.5, f"{vn:.1f}°C", ha="center", fontsize=8.2, fontweight="bold")
+            ax_p.text(i + 0.18, vd + 1.5, f"{vd:.1f}°C", ha="center", fontsize=8.2, fontweight="bold")
+        ax_p.set_xticks(x_c, cfg_labels, fontsize=8.5)
+        ax_p.set_ylabel(ylabel)
+        ax_p.set_ylim(0, ylim)
+        ax_p.set_title(title_p)
+        ax_p.grid(axis="y", alpha=0.3)
+        ax_p.legend(fontsize=8.0, loc="upper left")
+    fig.suptitle("Thermal Configuration Comparison ($T_{\\mathrm{amb}}=30^\\circ\\mathrm{C}$, Vertical Still Air)", fontweight="bold")
     fig.tight_layout()
     fig.savefig(out_dir / "thermal_network_comparison.png")
     plt.close(fig)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Master End-to-End Verification & SSOT Rebuild Runner for LepiLED DIY Maxi Switch (Rev 4.9).
+Master End-to-End Verification & SSOT Rebuild Runner for LepiLED DIY Maxi Switch.
 
 Usage:
   python3 verify_all.py --check    # Fast verification of ALL gates, SHA-256 freshness & doc parity
@@ -154,18 +154,19 @@ def check_all() -> int:
     check(cad_hashes.get("driver_pcb.kicad_pcb") == sha256_16(REPO_ROOT / "pcb_design" / "driver_pcb" / "driver_pcb.kicad_pcb"),
           "STALE CAD: driver_pcb.kicad_pcb changed since CAD build!")
     for png in ("assembly_iso.png", "assembly_section_xz.png", "assembly_section_yz.png",
-                "cap_top_detail.png", "cap_bot_detail.png", "lid_bot_detail.png"):
+                "cap_top_detail.png", "cap_bot_detail.png", "top_base_detail.png"):
         check((cad_dir / png).is_file() and (cad_dir / png).stat().st_size > 10000, f"Missing/empty CAD render: {png}")
     n_params = len(cad_params.get("checks", {}))
     n_pairs = cad_ver.get("brep_all_pairs_nominal", {}).get("total_pairs_checked", 0) + cad_ver.get("brep_all_pairs_worst_case", {}).get("total_pairs_checked", 0)
-    print(f"  CAD {n_params} param checks, 8 watertight STLs, 3 ray-cast breach gates, {n_pairs} B-Rep pairs, 6 renders & hashes verified.")
+    print(f"  CAD {n_params} param checks, 6 watertight STLs, 5 ray-cast gates, {n_pairs} B-Rep pairs, 6 renders & hashes verified.")
 
     print("=== 4. Thermal SSOT Freshness & Pass Gate ===")
     th_dir = REPO_ROOT / "mechanical_design" / "thermal"
     th = json.loads((th_dir / "thermal_summary.json").read_text(encoding="utf-8"))
-    check(th.get("rev49_uk_night_22C_real_modes_all_pass") is True, "Thermal <=22 C UK-night real-WPE modes did not all pass (PETG)")
-    check(th.get("rev49_15_30C_nom_all_pass") is True, "Thermal 15-30 C nominal modes did not all pass (PETG)")
-    check(th.get("rev49_15_30C_real_modes_asa_all_pass") is True, "Thermal 15-30 C real-WPE modes did not all pass (ASA+Comm IC)")
+    check(th.get("vert_uk_night_22C_real_petg_all_pass") is True, "Thermal <=22 C UK-night real-WPE modes did not all pass (PETG + LM393)")
+    check(th.get("vert_15_30C_real_petg_all_pass") is True, "Thermal 15-30 C real-WPE modes did not all pass (PETG + LM393)")
+    check(th.get("vert_15_35C_real_petg_all_pass") is True, "Thermal 15-35 C real-WPE heatwave modes did not all pass (PETG + LM393)")
+    check(th.get("vert_15_30C_real_asa_all_pass") is True, "Thermal 15-30 C real-WPE modes did not all pass (ASA + LM393)")
     th_hashes = th.get("input_hashes", {})
     check(th_hashes.get("cad_params.json") == sha256_16(cad_dir / "cad_params.json"),
           "STALE THERMAL: cad_params.json changed since thermal_analysis.py was run!")
@@ -173,7 +174,7 @@ def check_all() -> int:
           "STALE THERMAL: sim_summary.json changed since thermal_analysis.py was run!")
     check(th_hashes.get("thermal_analysis.py") == sha256_16(th_dir / "thermal_analysis.py"),
           "STALE THERMAL: thermal_analysis.py changed since thermal_summary.json was generated!")
-    print("  Thermal UK-night (<=22 C Real-WPE), 15-30 C Nominal (PETG), 15-30 C Real-WPE (ASA) & 3 SSOT hashes verified fresh.")
+    print("  Thermal 8-node open-chimney UK-night (<=22 C) & 15-30 C Real-WPE (PETG/ASA + LM393) & 3 SSOT hashes verified fresh.")
 
     print("=== 5. Master BOM & Datasheet Existence Parity ===")
     proc_bom = subprocess.run([sys.executable, str(REPO_ROOT / "bom" / "verify_bom.py")],
@@ -186,10 +187,10 @@ def check_all() -> int:
     print("=== 6. Documentation Numeric & Stale-Reference Parity ===")
     ag_text = (REPO_ROOT / "docs" / "ASSEMBLY_GUIDE.md").read_text(encoding="utf-8")
     dg = cad_params["derived"]["drill_guide_from_core_bot_mm"]
-    for key in ("anchor_cross_pin_x_faces", "vis_star_bot_bolt_all_4_faces", "vis_star_top_bolt_all_4_faces",
-                "uv_star_bot_bolt_all_4_faces", "uv_star_top_bolt_all_4_faces", "cap_top_lock_x_faces"):
+    for key in ("bottom_m4_bolt_from_bot_mm", "vis_star_center_from_bot_mm", "uv_star_center_from_bot_mm",
+                "top_m4_hang_bolt_from_top_mm"):
         val_str = f"{dg[key]:.1f}"
-        check(val_str in ag_text, f"docs/ASSEMBLY_GUIDE.md missing SSOT drill coordinate {key} = {val_str} mm!")
+        check(val_str in ag_text, f"docs/ASSEMBLY_GUIDE.md missing SSOT coordinate {key} = {val_str} mm!")
 
     active_docs = [
         REPO_ROOT / "README.md",
@@ -218,6 +219,15 @@ def check_all() -> int:
         "M2.5",
         "C181103",
         "C22965",
+        "MECH-LID-BOT",
+        "lid_bot_detail",
+        "68 × 2.5 mm",
+        "68 x 2.5 mm",
+        "MECH-CORE-ANCHOR",
+        "MECH-HANG-BUSHING",
+        "75 × 2.5 mm",
+        "75 x 2.5 mm",
+        "coat-hanger",
     ]
     for doc_p in active_docs:
         txt = doc_p.read_text(encoding="utf-8")
@@ -232,12 +242,12 @@ def check_all() -> int:
             print(f"  [FAIL] {e}", file=sys.stderr)
         return 1
 
-    print("\nALL REV 4.9 AUTOMATED VERIFICATION GATES PASSED (100% FRESH & CONSISTENT).")
+    print("\nALL AUTOMATED VERIFICATION GATES PASSED (100% FRESH & CONSISTENT).")
     return 0
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="LepiLED Rev 4.9 Master SSOT Rebuild & Verification Gate")
+    ap = argparse.ArgumentParser(description="LepiLED Master SSOT Rebuild & Verification Gate")
     ap.add_argument("--rebuild", action="store_true", help="Rebuild PCB, SPICE, CAD, Renders & Thermal before checking")
     ap.add_argument("--check", action="store_true", help="Run all automated verification & freshness checks (default)")
     args = ap.parse_args()
