@@ -1,7 +1,7 @@
 {
   "revision": "Rev 6.0 (Open-Chimney Funnel Lantern: Screened 30x30x2 mm Al Chimney, Thermal-Epoxy Stars, +X Vertical PCB, Axial Bell O-Ring & Compressing Cable Clamp)",
   "input_hashes": {
-    "params.py": "8e0c152e8d056f72",
+    "params.py": "12cf62fb3fd469d4",
     "driver_pcb.kicad_pcb": "a7f1cd15daf95a27"
   },
   "params": {
@@ -13,6 +13,8 @@
     "cap_bot_inlet_w": 22.0,
     "cap_bot_bolt_z": 12.5,
     "cap_bot_glass_bot_z": 19.5,
+    "cap_bot_seal_groove": 1.8,
+    "cap_bot_seal_depth": 2.5,
     "core_hub_od": 49.0,
     "glass_od_nom": 60.0,
     "glass_id_nom": 54.0,
@@ -198,6 +200,11 @@
       "nose_core_corner_wall_mm": {
         "value": 4.009,
         "min": 2.5,
+        "pass": true
+      },
+      "cap_bot_seal_corner_wall_mm": {
+        "value": 2.242,
+        "min": 2.0,
         "pass": true
       },
       "shroud_collar_oring_wall_mm": {
@@ -440,14 +447,14 @@
     "mech_cap_bot": {
       "step_file": "mech_cap_bot.step",
       "stl_file": "mech_cap_bot.stl",
-      "brep_volume_mm3": 59829.646,
-      "stl_volume_mm3": 59823.174,
+      "brep_volume_mm3": 59574.831,
+      "stl_volume_mm3": 59568.391,
       "is_watertight": true,
       "is_winding_consistent": true,
       "is_volume": true,
       "euler_number": -4,
       "genus": 3,
-      "triangles": 20570
+      "triangles": 38264
     },
     "mech_top_base": {
       "step_file": "mech_top_base.step",
@@ -653,17 +660,17 @@
     "all_zero": true
   },
   "mass_budget_g": {
-    "printed_lamp_volume_cm3": 392.8,
-    "cap_bot_volume_cm3": 59.8,
+    "printed_lamp_volume_cm3": 392.5,
+    "cap_bot_volume_cm3": 59.6,
     "top_base_volume_cm3": 133.3,
     "cap_top_volume_cm3": 179.6,
-    "asa_fdm_62pct_g": 260.6,
-    "petg_fdm_62pct_g": 309.3,
+    "asa_fdm_62pct_g": 260.4,
+    "petg_fdm_62pct_g": 309.1,
     "al_core_2mm_g": 181.1,
     "uvt_pmma_shroud_g": 72.9,
     "elec_stars_hardware_g": 94.0,
-    "total_fdm_asa_g": 608.6,
-    "total_fdm_petg_g": 657.3
+    "total_fdm_asa_g": 608.4,
+    "total_fdm_petg_g": 657.1
   },
   "summary": {
     "all_param_checks_pass": true,

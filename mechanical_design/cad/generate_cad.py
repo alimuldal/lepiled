@@ -145,13 +145,20 @@ def build_cap_bot(p: LepiLEDParams) -> bd.Part:
     part = part - shroud_annulus - g1 - mouth_lead
 
     # 31.1 x 31.1 mm core socket (Z = 6.0 .. 34.0 mm) + 0.8 mm mesh pocket (Z = 5.2 .. 6.0 mm) + 22 x 22 mm R3 open chimney inlet
+    # + backed 1.8 x 2.5 mm rounded-square neutral-sealant V-groove at Z = 31.5 .. 34.0 mm sealing core socket from optical chamber!
     core_sock = bd.Box(p.core_pocket_w, p.core_pocket_w, z_top - p.z_core_bot + 1.0,
                        align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, p.z_core_bot))
     mesh_pkt = bd.Box(28.4, 28.4, 1.2, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, p.z_core_bot - 0.8))
     with bd.BuildSketch(bd.Plane.XY.offset(-1.0)) as sk_in:
         bd.RectangleRounded(p.cap_bot_inlet_w, p.cap_bot_inlet_w, radius=3.0)
     inlet_cut = bd.extrude(sk_in.sketch, p.z_core_bot + 2.0)
-    part = part - core_sock - mesh_pkt - inlet_cut
+    w_bg = p.core_pocket_w + 2.0 * p.cap_bot_seal_groove  # 34.7 mm w/ R5.5 corners -> 2.24 mm corner hub wall, 0 overhang
+    with bd.BuildSketch(bd.Plane.XY.offset(z_top - p.cap_bot_seal_depth)) as sk_bg0:
+        bd.Rectangle(p.core_pocket_w, p.core_pocket_w)
+    with bd.BuildSketch(bd.Plane.XY.offset(z_top + 0.05)) as sk_bg1:
+        bd.RectangleRounded(w_bg, w_bg, radius=5.5)
+    bot_seal_cut = bd.loft([sk_bg0.sketch, sk_bg1.sketch])
+    part = part - core_sock - mesh_pkt - inlet_cut - bot_seal_cut
 
     # Single M4 x 50 mm A2 stainless cross-bolt along ±X at Z = 12.5 mm + 45-deg-roofed flat bearing spotfaces at |X| = 21.0 mm
     td_m4 = _teardrop_profile_wire(p.core_bolt_hole_dia / 2.0, 42.0)

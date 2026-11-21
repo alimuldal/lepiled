@@ -2,7 +2,7 @@
   "revision": "6.0",
   "architecture": "Open-Chimney Funnel Lantern (30x30x2.0x300 mm Clear-Anodized Al Core eps=0.82, Screened 26 mm Chimney, Epoxy Cu DTP Stars, +X Vertical PCB w/ 15x15 mm Silicone-Pad/Brass-Shim Bridge)",
   "input_hashes": {
-    "cad_params.json": "b3001301b8dd7dcd",
+    "cad_params.json": "31b66b44a8f38b6b",
     "sim_summary.json": "61dfbf126aef6de0",
     "thermal_analysis.py": "dc6193829d943830"
   },

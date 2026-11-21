@@ -27,6 +27,8 @@ class LepiLEDParams:
     cap_bot_inlet_w: float = 22.0        # Open rounded-square chimney inlet at nosecone tip (R = 3 mm)
     cap_bot_bolt_z: float = 12.5         # Single M4 x 50 mm A2 stainless cross-bolt (6.5 mm from core bottom)
     cap_bot_glass_bot_z: float = 19.5    # Bottom shroud seat (14.5 mm socket -> exposed window starts at Z = 34.0 mm)
+    cap_bot_seal_groove: float = 1.8     # Rounded-square top hub V-groove (2.35 mm to 30 mm Al flats; 2.24 mm corner wall)
+    cap_bot_seal_depth: float = 2.5      # Z = 31.5 .. 34.0 mm neutral-sealant bead sealing core socket before PMMA install
     core_hub_od: float = 49.0            # Solid R = 24.5 mm central hub in both shroud sockets
 
     # 2. Extruded Clear XT PMMA Shroud (MECH-TUBE-1: Ø60 x 54 x 3.0 x 115 mm)
@@ -330,10 +332,14 @@ class LepiLEDParams:
         collar_oring_wall = 0.5 * (self.cap_bot_collar_od - self.glass_oring_groove_od)
         bot_bolt_al_edge = (self.z_bot_bolt - self.z_core_bot) - 0.5 * self.core_bolt_hole_dia
         inlet_area_cm2 = (self.cap_bot_inlet_w ** 2 - (4.0 - math.pi) * 3.0 ** 2) / 100.0
+        bot_seal_w = self.core_pocket_w + 2.0 * self.cap_bot_seal_groove  # 34.7 mm, R = 5.5 mm corners
+        bot_seal_corner_r = (0.5 * bot_seal_w - 5.5) * math.sqrt(2.0) + 5.5  # 22.26 mm
+        bot_seal_corner_wall = 0.5 * self.core_hub_od - bot_seal_corner_r    # 2.24 mm
         checks["funnel_bot_height_le_35mm"] = {"value": round(self.z_cap_bot_top, 2), "max": 35.0, "pass": self.z_cap_bot_top <= 35.0}
         checks["funnel_bot_tip_od_le_42mm"] = {"value": round(self.cap_bot_tip_od, 2), "max": 42.0, "pass": self.cap_bot_tip_od <= 42.0}
         checks["funnel_bot_cone_angle_le_46deg"] = {"value": round(cone_angle_deg, 2), "max": 46.0, "pass": cone_angle_deg <= 46.0}
         checks["nose_core_corner_wall_mm"] = {"value": round(nose_core_corner_wall, 3), "min": 2.5, "pass": nose_core_corner_wall >= 2.5}
+        checks["cap_bot_seal_corner_wall_mm"] = {"value": round(bot_seal_corner_wall, 3), "min": 2.0, "pass": bot_seal_corner_wall >= 2.0}
         checks["shroud_collar_oring_wall_mm"] = {"value": round(collar_oring_wall, 3), "min": 2.5, "pass": collar_oring_wall >= 2.5}
         checks["bot_m4_bolt_al_edge_mm"] = {"value": round(bot_bolt_al_edge, 3), "min": 4.0, "pass": bot_bolt_al_edge >= 4.0}
         checks["chimney_inlet_area_cm2"] = {"value": round(inlet_area_cm2, 2), "min": 4.0, "pass": inlet_area_cm2 >= 4.0}

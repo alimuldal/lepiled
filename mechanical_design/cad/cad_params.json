@@ -7,6 +7,8 @@
   "cap_bot_inlet_w": 22.0,
   "cap_bot_bolt_z": 12.5,
   "cap_bot_glass_bot_z": 19.5,
+  "cap_bot_seal_groove": 1.8,
+  "cap_bot_seal_depth": 2.5,
   "core_hub_od": 49.0,
   "glass_od_nom": 60.0,
   "glass_id_nom": 54.0,
@@ -192,6 +194,11 @@
     "nose_core_corner_wall_mm": {
       "value": 4.009,
       "min": 2.5,
+      "pass": true
+    },
+    "cap_bot_seal_corner_wall_mm": {
+      "value": 2.242,
+      "min": 2.0,
       "pass": true
     },
     "shroud_collar_oring_wall_mm": {
