@@ -516,7 +516,7 @@ def run_monte_carlo(n: int = 2000, seed: int = 20261120) -> dict:
     }
 
 
-def plot_results(mc_res: dict):
+def plot_results(mc_res: dict, uvlo_res: dict):
     d = load_wrdata("nominal_waveforms.txt")
     t_ms = d[:, 0] * 1e3
     vin = d[:, 1]
@@ -531,7 +531,7 @@ def plot_results(mc_res: dict):
     axes[0].plot(t_ms, i_vis, label="Ch2 Vis LED Current (mA)", color="#1f618d", lw=1.4)
     axes[0].axhline(333.3, color="gray", ls="--", lw=0.8, label="Nominal 333 mA")
     axes[0].set_ylabel("LED Current (mA)")
-    axes[0].set_title("LepiLED Rev 4.9 (CH224A + 2-Reel Hybrid HASL PCBA + OSRAM CSLNM1) — Mode Cycling")
+    axes[0].set_title("LepiLED DIY Maxi Switch (CH224A + 2-Reel Hybrid HASL PCBA + OSRAM CSLNM1) — Mode Cycling")
     axes[0].legend(loc="upper left", fontsize=8)
     axes[0].grid(True, alpha=0.3)
 
@@ -554,9 +554,12 @@ def plot_results(mc_res: dict):
     du = load_wrdata("uvlo_sweep_waveforms.txt")
     tu = du[:, 0] * 1e3
     fig, axes = plt.subplots(2, 1, figsize=(10, 5.5), sharex=True)
+    v_on_meas = uvlo_res["v_uvlo_on"]
+    v_off_meas = uvlo_res["v_uvlo_off"]
+    v_hyst_meas = v_on_meas - v_off_meas
     axes[0].plot(tu, du[:, 1], label="VIN_20V (through 0.30 Ohm source Z)", color="#c0392b", lw=1.5)
-    axes[0].axhline(17.55, color="#27ae60", ls="--", lw=0.9, label="V_ON = 17.55 V")
-    axes[0].axhline(16.53, color="#2980b9", ls=":", lw=0.9, label="V_OFF = 16.53 V (1.01 V Hyst)")
+    axes[0].axhline(v_on_meas, color="#27ae60", ls="--", lw=0.9, label=f"V_ON = {v_on_meas:.2f} V")
+    axes[0].axhline(v_off_meas, color="#2980b9", ls=":", lw=0.9, label=f"V_OFF = {v_off_meas:.2f} V ({v_hyst_meas:.2f} V Hyst)")
     axes[0].set_ylabel("Supply Voltage (V)")
     axes[0].set_title("Hysteretic Hardware UVLO (LM393DR2G + CJ431 + R19=220k + R24/C16) — Zero Chatter")
     axes[0].legend(loc="upper right", fontsize=8)
@@ -607,7 +610,7 @@ def plot_results(mc_res: dict):
 
 def main():
     backend = NGSPICE if NGSPICE else "libngspice.so.0 (ctypes)"
-    print(f"=== LepiLED Rev 4.9 SPICE + Corner + Monte Carlo Suite (backend: {backend}) ===")
+    print(f"=== LepiLED DIY Maxi Switch SPICE + Corner + Monte Carlo Suite (backend: {backend}) ===")
     cir_files = [
         "lepiled_nominal.cir",
         "lepiled_fault_uvlo_sweep.cir",
@@ -625,7 +628,7 @@ def main():
 
     corners = run_corner_sweep()
     mc = run_monte_carlo(n=2000)
-    plot_results(mc)
+    plot_results(mc, uvlo)
 
     # Nominal analytic operating point at 20.0 V, 25 C (reconciled with SPICE: Bourns SRN6045-680M 0.270 Ohm + OSRAM CSLNM1 2.85 V)
     nom_uv = solve_buck_channel(19.92, 4 * 3.59, 0.100, 0.300, 68e-6, 0.27, 0.30, 0.35, p_schottky_leak=0.005)
@@ -700,15 +703,21 @@ def main():
     input_hashes = {
         "COMPONENT_IDS.csv": _sha256_file(REPO_ROOT / "circuit_design" / "COMPONENT_IDS.csv"),
         "models.lib": _sha256_file(NET_DIR / "models.lib"),
+        "run_simulations.py": _sha256_file(Path(__file__)),
         **{cf: _sha256_file(NET_DIR / cf) for cf in cir_files},
+    }
+    output_figure_hashes = {
+        fn: _sha256_file(OUT_DIR / fn)
+        for fn in ("plot_nominal_modes.png", "plot_uvlo_sweep.png", "plot_fault_suite.png")
     }
 
     summary = {
         "revision": "4.9",
-        "architecture": "Rev 4.9 (WCH CH224A + 2-Reel Hybrid HASL PCBA + Convoy OSRAM CSLNM1 + Littelfuse 046801.5NRHF + Vishay 2512 R7 + Bourns SRN6045-680M + Dual AL8860WT-7)",
+        "architecture": "LepiLED DIY Maxi Switch (WCH CH224A + 2-Reel Hybrid HASL PCBA + Convoy OSRAM CSLNM1 + Littelfuse 046801.5NRHF + Vishay 2512 R7 + Bourns SRN6045-680M + Dual AL8860WT-7)",
         "backend": backend,
         "all_passed": all(checks.values()),
         "input_hashes": input_hashes,
+        "output_figure_hashes": output_figure_hashes,
         "thermal_export": {
             "p_pcb_nom_W": round(p_pcb_nom, 3),
             "p_pcb_wc_W": round(corners["total_pcb_loss_max"], 3),

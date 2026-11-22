@@ -131,13 +131,13 @@ def open_chimney_bore_Q(
     bore_mm: float,
     inlet_w_mm: float,
     L_duct_mm: float,
-    k_minor_mesh: float = 8.0,
+    k_minor_mesh: float = 3.0,
     orientation: str = "vertical",
     rth_penalty_factor: float = 1.0,
 ) -> tuple[float, float]:
     """
-    First-principles buoyancy-driven natural draft inside open vertical square Al duct
-    with bottom & top stainless insect mesh screens and inlet contraction loss.
+    First-principles buoyancy-driven natural draft inside open unobstructed vertical square Al duct
+    with bottom inlet contraction and top rain-finial exhaust turn loss.
     Returns (Q_bore_W, mean_air_velocity_m_s).
     """
     dT = T_wall - T_amb
@@ -274,7 +274,9 @@ def solve_system(
     A_ring = math.pi * D_port * (cad["top_base_port_h"] * 1e-3)
     A_eaves = math.pi * D_eaves * (cad["cap_top_eaves_h"] * 1e-3) + 0.5 * math.pi * (D_eaves ** 2 - D_bell ** 2)
     A_bell = math.pi * D_bell * ((cad["cap_top_roof_bot_z"] - der["z_cap_top_eaves_top"]) * 1e-3)
-    A_roof = 0.25 * math.pi * (D_bell ** 2 - (cad["cap_top_collar_w"] * 1e-3) ** 2) / math.cos(math.radians(30.6))
+    roof_run = max(1e-4, 0.5 * (D_bell - cad["cap_top_collar_w"] * 1e-3))
+    roof_slope_rad = math.atan2(cad["cap_top_roof_h"] * 1e-3, roof_run)
+    A_roof = 0.25 * math.pi * (D_bell ** 2 - (cad["cap_top_collar_w"] * 1e-3) ** 2) / math.cos(roof_slope_rad)
     A_ext = A_ring + A_eaves + A_bell + A_roof
     A_int = 0.0255  # True interior Ø85/Ø78 bay wall + ceiling + floor surface area
     # Area-weighted wall conduction: 45% thin solid bell (3.1 mm, k=0.20) + 55% thicker 25%-infill port/eaves/roof (8.5 mm, k_eff=0.11)
@@ -464,8 +466,8 @@ def main() -> None:
     )
 
     configs = [
-        ChimneyConfig("Config 0: Open Chimney + Anodized Al (eps=0.82) + PCB Thermal Bridge", True, 0.82, 0.82, k_minor_mesh=3.0, pcb_bridge_rth_KW=8.5),
-        ChimneyConfig("Config 1: Open Chimney + Anodized Al (eps=0.82), No PCB Bridge", True, 0.82, 0.82, k_minor_mesh=3.0, pcb_bridge_rth_KW=None),
+        ChimneyConfig("Config 0: Open Chimney + Bare Mill Al (eps=0.10) + PCB Thermal Bridge", True, 0.10, 0.10, k_minor_mesh=3.0, pcb_bridge_rth_KW=8.5),
+        ChimneyConfig("Config 1: Open Chimney + Anodized/Painted Al (eps=0.82) + PCB Thermal Bridge", True, 0.82, 0.82, k_minor_mesh=3.0, pcb_bridge_rth_KW=8.5),
         ChimneyConfig("Config 2: Open Chimney + Bare Mill Al (eps=0.10), No PCB Bridge", True, 0.10, 0.10, k_minor_mesh=3.0, pcb_bridge_rth_KW=None),
         ChimneyConfig("Config 3: Closed Bore + Bare Mill Al (eps=0.10), No PCB Bridge", False, 0.10, 0.10, pcb_bridge_rth_KW=None),
     ]
@@ -534,54 +536,6 @@ def main() -> None:
 
     cfg0_vert_35_real = [r for r in cfg0_rows if r["orientation"] == "vertical" and r["T_amb_C"] <= 35.0 and "DS-100%" not in r["mode"]]
 
-    summary = {
-        "revision": "6.0",
-        "architecture": "Open-Chimney Funnel Lantern (30x30x2.0x300 mm Clear-Anodized Al Core eps=0.82, Open 26 mm Chimney, Epoxy Cu DTP Stars, +X Vertical PCB w/ 15x15 mm Silicone-Pad/Brass-Shim Bridge)",
-        "input_hashes": {
-            "cad_params.json": _sha256_file(CAD_PARAMS_JSON),
-            "sim_summary.json": _sha256_file(SIM_SUMMARY_JSON),
-            "thermal_analysis.py": _sha256_file(Path(__file__)),
-        },
-        "ssot_inputs": {
-            "core_section_mm": f"{cad['core_w_nom']:.0f}x{cad['core_w_nom']:.0f}x{cad['core_wall']:.1f}",
-            "core_bore_mm": cad["core_bore_nom"],
-            "core_length_mm": cad["core_length"],
-            "core_protrusion_mm": l_chim,
-            "chimney_rad_view_factor_F_amb": f_rad_amb,
-            "exposed_shroud_window_mm": cad["derived"]["exposed_glass_window_mm"],
-            "anodized_al_emissivity": 0.82,
-            "pcb_thermal_bridge_rth_KW": 8.5,
-            "chimney_minor_loss_K": 3.0,
-            "p_pcb_4uv_nom_W": p_pcb_4uv_nom,
-            "p_pcb_8all_nom_W": p_pcb_8all_nom,
-            "p_pcb_wc_W": p_pcb_wc,
-        },
-        "vert_uk_night_22C_real_petg_all_pass": all(r["pass_all_limits_petg"] for r in cfg0_vert_22_real),
-        "vert_15_30C_nom_petg_all_pass": all(r["pass_all_limits_petg"] for r in cfg0_vert_30_nom),
-        "vert_15_30C_real_petg_all_pass": all(r["pass_all_limits_petg"] for r in cfg0_vert_30_real_petg),
-        "vert_15_35C_real_petg_all_pass": all(r["pass_all_limits_petg"] for r in cfg0_vert_35_real),
-        "vert_15_30C_real_asa_all_pass": all(r["pass_all_limits_asa"] for r in cfg0_vert_30_real_petg),
-        "baseline_results": cfg0_rows,
-        "config_comparison_30C_vert": [
-            r for r in rows if r["T_amb_C"] == 30.0 and r["orientation"] == "vertical" and r["mode"] in ("8-ALL Nom (40%UV WPE)", "8-ALL DS-RealWPE")
-        ],
-        "ambient_sweep_vert": sweep_data,
-    }
-    json_path = out_dir / "thermal_summary.json"
-    json_path.write_text(json.dumps(summary, indent=2) + "\n")
-
-    print("=== Coupled 8-Node Thermal Analysis (Open 26 mm Chimney, Anodized 30x30x2 Al eps=0.82, 15x15 mm PCB Bridge R=8.5 K/W) ===")
-    for r in cfg0_rows:
-        if r["T_amb_C"] in (22.0, 30.0, 35.0) and r["orientation"] == "vertical" and r["mode"] in ("4-UV Nom (40%WPE)", "8-ALL Nom (40%UV WPE)", "8-ALL DS-RealWPE"):
-            print(
-                f"  Tamb={r['T_amb_C']:2.0f}C vert | {r['mode']:21s} | "
-                f"TjUV={r['T_j_uv']:5.1f}C TcVis={r['T_c_vis']:4.1f}C Tbay={r['T_bay_air']:4.1f}C "
-                f"Tpcb={r['T_pcb_avg']:4.1f}C Qbore={r['Q_bore']:.2f}W | PETG={r['pass_all_limits_petg']} ASA={r['pass_all_limits_asa']}"
-            )
-    print(f"Vertical <=22 C Real-WPE (PETG + LM393) PASS: {sum(r['pass_all_limits_petg'] for r in cfg0_vert_22_real)}/{len(cfg0_vert_22_real)}")
-    print(f"Vertical 15-30 C Real-WPE (PETG + LM393) PASS: {sum(r['pass_all_limits_petg'] for r in cfg0_vert_30_real_petg)}/{len(cfg0_vert_30_real_petg)}")
-    print(f"Vertical 15-35 C Real-WPE (PETG + LM393) PASS: {sum(r['pass_all_limits_petg'] for r in cfg0_vert_35_real)}/{len(cfg0_vert_35_real)}")
-
     # Plot 1: thermal_margins.png
     fig, axes = plt.subplots(1, 3, figsize=(14.5, 4.8), dpi=150)
     sel_modes = ["4-UV Nom (40%WPE)", "8-ALL Nom (40%UV WPE)", "8-ALL DS-RealWPE", "8-ALL DS-100% (NoOpt)"]
@@ -630,7 +584,7 @@ def main() -> None:
     ax.grid(axis="y", alpha=0.3)
     ax.legend(fontsize=7.2, loc="upper left")
 
-    fig.suptitle("LepiLED Steady-State Thermal Margins (Open 26 mm Chimney, Anodized Al + 15 × 15 mm PCB Bridge)", fontweight="bold")
+    fig.suptitle("LepiLED Steady-State Thermal Margins (Open 26 mm Chimney, Bare Mill Al + 15 × 15 mm PCB Bridge)", fontweight="bold")
     fig.tight_layout()
     fig.savefig(out_dir / "thermal_margins.png")
     plt.close(fig)
@@ -660,6 +614,7 @@ def main() -> None:
     ax1.legend(fontsize=7.2)
 
     ax2.axhline(70.0, color="red", ls="--", lw=1.4, label="PETG HDT / LM393 70°C")
+    ax2.axhline(95.0, color="purple", ls=":", lw=1.2, label="ASA HDT 95°C")
     ax2.axvline(22.0, color="green", ls=":", lw=1.2)
     ax2.axvline(30.0, color="gray", ls=":", lw=1.2)
     ax2.axvline(35.0, color="darkorange", ls=":", lw=1.2)
@@ -669,7 +624,7 @@ def main() -> None:
     ax2.grid(alpha=0.3)
     ax2.legend(fontsize=6.5, ncol=2)
 
-    fig.suptitle("Ambient Temperature Sweep (10–40 °C, Open 26 mm Chimney, Anodized Al + PCB Bridge)", fontweight="bold")
+    fig.suptitle("Ambient Temperature Sweep (10–40 °C, Open 26 mm Chimney, Bare Mill Al + PCB Bridge)", fontweight="bold")
     fig.tight_layout()
     fig.savefig(out_dir / "thermal_ambient_sweep.png")
     plt.close(fig)
@@ -677,8 +632,8 @@ def main() -> None:
     # Plot 3: thermal_network_comparison.png (side-by-side UV junction + Driver PCB at 30 C)
     fig, (ax_uv, ax_pcb) = plt.subplots(1, 2, figsize=(13.2, 4.9), dpi=150)
     cfg_labels = [
-        "Open Chimney\nAnodized Al\n+ PCB Bridge",
-        "Open Chimney\nAnodized Al\n(No Bridge)",
+        "Open Chimney\nBare Mill Al\n+ PCB Bridge\n(Baseline)",
+        "Open Chimney\nAnod./Painted\n+ PCB Bridge\n(Optional)",
         "Open Chimney\nBare Mill Al\n(No Bridge)",
         "Closed Bore\nBare Mill Al\n(No Bridge)",
     ]
@@ -712,6 +667,61 @@ def main() -> None:
     fig.tight_layout()
     fig.savefig(out_dir / "thermal_network_comparison.png")
     plt.close(fig)
+
+    summary = {
+        "revision": "6.0",
+        "architecture": "Open-Chimney Funnel Lantern (30x30x2.0x300 mm Bare Mill-Finish Al Core eps=0.10, Open 26 mm Chimney, Epoxy Cu DTP Stars, +X Vertical PCB w/ 15x15 mm Silicone-Pad/Brass-Shim Bridge)",
+        "input_hashes": {
+            "cad_params.json": _sha256_file(CAD_PARAMS_JSON),
+            "sim_summary.json": _sha256_file(SIM_SUMMARY_JSON),
+            "thermal_analysis.py": _sha256_file(Path(__file__)),
+        },
+        "output_figure_hashes": {
+            "thermal_margins.png": _sha256_file(out_dir / "thermal_margins.png"),
+            "thermal_ambient_sweep.png": _sha256_file(out_dir / "thermal_ambient_sweep.png"),
+            "thermal_network_comparison.png": _sha256_file(out_dir / "thermal_network_comparison.png"),
+        },
+        "ssot_inputs": {
+            "core_section_mm": f"{cad['core_w_nom']:.0f}x{cad['core_w_nom']:.0f}x{cad['core_wall']:.1f}",
+            "core_bore_mm": cad["core_bore_nom"],
+            "core_length_mm": cad["core_length"],
+            "core_protrusion_mm": l_chim,
+            "chimney_rad_view_factor_F_amb": f_rad_amb,
+            "exposed_shroud_window_mm": cad["derived"]["exposed_glass_window_mm"],
+            "core_finish": "mill",
+            "core_emissivity": configs[0].chimney_eps,
+            "pcb_thermal_bridge_rth_KW": configs[0].pcb_bridge_rth_KW,
+            "chimney_minor_loss_K": configs[0].k_minor_mesh,
+            "p_pcb_4uv_nom_W": p_pcb_4uv_nom,
+            "p_pcb_8all_nom_W": p_pcb_8all_nom,
+            "p_pcb_wc_W": p_pcb_wc,
+        },
+        "vert_uk_night_22C_real_petg_all_pass": all(r["pass_all_limits_petg"] for r in cfg0_vert_22_real),
+        "vert_15_30C_nom_petg_all_pass": all(r["pass_all_limits_petg"] for r in cfg0_vert_30_nom),
+        "vert_15_30C_real_petg_all_pass": all(r["pass_all_limits_petg"] for r in cfg0_vert_30_real_petg),
+        "vert_15_35C_real_petg_all_pass": all(r["pass_all_limits_petg"] for r in cfg0_vert_35_real),
+        "vert_15_30C_real_asa_all_pass": all(r["pass_all_limits_asa"] for r in cfg0_vert_30_real_petg),
+        "vert_15_35C_real_asa_all_pass": all(r["pass_all_limits_asa"] for r in cfg0_vert_35_real),
+        "baseline_results": cfg0_rows,
+        "config_comparison_30C_vert": [
+            r for r in rows if r["T_amb_C"] == 30.0 and r["orientation"] == "vertical" and r["mode"] in ("8-ALL Nom (40%UV WPE)", "8-ALL DS-RealWPE")
+        ],
+        "ambient_sweep_vert": sweep_data,
+    }
+    json_path = out_dir / "thermal_summary.json"
+    json_path.write_text(json.dumps(summary, indent=2) + "\n")
+
+    print("=== Coupled 8-Node Thermal Analysis (Open 26 mm Chimney, Bare Mill 30x30x2 Al eps=0.10, 15x15 mm PCB Bridge R=8.5 K/W) ===")
+    for r in cfg0_rows:
+        if r["T_amb_C"] in (22.0, 30.0, 35.0) and r["orientation"] == "vertical" and r["mode"] in ("4-UV Nom (40%WPE)", "8-ALL Nom (40%UV WPE)", "8-ALL DS-RealWPE"):
+            print(
+                f"  Tamb={r['T_amb_C']:2.0f}C vert | {r['mode']:21s} | "
+                f"TjUV={r['T_j_uv']:5.1f}C TcVis={r['T_c_vis']:4.1f}C Tbay={r['T_bay_air']:4.1f}C "
+                f"Tpcb={r['T_pcb_avg']:4.1f}C Qbore={r['Q_bore']:.2f}W | PETG={r['pass_all_limits_petg']} ASA={r['pass_all_limits_asa']}"
+            )
+    print(f"Vertical <=22 C Real-WPE (PETG + LM393) PASS: {sum(r['pass_all_limits_petg'] for r in cfg0_vert_22_real)}/{len(cfg0_vert_22_real)}")
+    print(f"Vertical 15-30 C Real-WPE (PETG + LM393) PASS: {sum(r['pass_all_limits_petg'] for r in cfg0_vert_30_real_petg)}/{len(cfg0_vert_30_real_petg)}")
+    print(f"Vertical 15-35 C Real-WPE (ASA + LM393) PASS: {sum(r['pass_all_limits_asa'] for r in cfg0_vert_35_real)}/{len(cfg0_vert_35_real)}")
 
     print(f"Saved: {csv_path}, {json_path}, and 3 PNG plots in {out_dir}")
 

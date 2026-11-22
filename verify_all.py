@@ -115,9 +115,15 @@ def check_all() -> int:
     proc_hyb = subprocess.run([sys.executable, str(REPO_ROOT / "pcb_design" / "generate_hybrid_pcba.py"), "--check"],
                               capture_output=True, text=True)
     check(proc_hyb.returncode == 0, f"generate_hybrid_pcba.py --check failed: {proc_hyb.stderr or proc_hyb.stdout}")
-    print(f"  ERC={erc_viols}, DRC={drc_viols}/{drc_unconn}/{drc_parity}, Gerber NPTH/DNP & PCBA CSV checked.")
+    for fname in ("schematic.png", "schematic.pdf"):
+        p_sch = REPO_ROOT / "circuit_design" / fname
+        check(p_sch.is_file() and p_sch.stat().st_size > 10000, f"Missing/empty schematic artifact: {p_sch.name}")
+    for fname in ("render_top.png", "render_bottom.png", "gerbv_top.png", "gerbv_bottom.png", "assembly_map.pdf"):
+        p_ren = REPO_ROOT / "pcb_design" / "driver_pcb" / "renders" / fname
+        check(p_ren.is_file() and p_ren.stat().st_size > 10000, f"Missing/empty PCB render: {p_ren.name}")
+    print(f"  ERC={erc_viols}, DRC={drc_viols}/{drc_unconn}/{drc_parity}, Gerber NPTH/DNP, PCBA CSV & 7 PCB/schematic renders checked.")
 
-    print("=== 2. SPICE, Corners, Monte Carlo & SHA-256 Freshness ===")
+    print("=== 2. SPICE, Corners, Monte Carlo, Figures & SHA-256 Freshness ===")
     sim_path = REPO_ROOT / "circuit_design" / "sim" / "outputs" / "sim_summary.json"
     sim = json.loads(sim_path.read_text(encoding="utf-8"))
     check(sim.get("all_passed") is True, "sim_summary.json all_passed is not True")
@@ -131,6 +137,7 @@ def check_all() -> int:
     sim_sources = {
         "COMPONENT_IDS.csv": REPO_ROOT / "circuit_design" / "COMPONENT_IDS.csv",
         "models.lib": REPO_ROOT / "circuit_design" / "sim" / "netlists" / "models.lib",
+        "run_simulations.py": REPO_ROOT / "circuit_design" / "sim" / "run_simulations.py",
     }
     for cir_name in ("lepiled_nominal.cir", "lepiled_fault_uvlo_sweep.cir", "lepiled_fault_open_led.cir",
                      "lepiled_fault_short_led.cir", "lepiled_fault_input_prot.cir", "lepiled_fault_hotplug_85c.cir"):
@@ -138,9 +145,16 @@ def check_all() -> int:
     for k, p in sim_sources.items():
         actual = sha256_16(p)
         check(sim_hashes.get(k) == actual, f"STALE SPICE: {k} hash {actual} != sim_summary.json {sim_hashes.get(k)}")
-    print(f"  SPICE 16/16 checks, 2,565 corners, 2,000 MC & {len(sim_sources)} input hashes verified fresh.")
+    sim_fig_hashes = sim.get("output_figure_hashes", {})
+    sim_figs = ("plot_nominal_modes.png", "plot_uvlo_sweep.png", "plot_fault_suite.png")
+    for fn in sim_figs:
+        fp = REPO_ROOT / "circuit_design" / "sim" / "outputs" / fn
+        check(fp.is_file() and fp.stat().st_size > 10000, f"Missing/empty SPICE figure: {fn}")
+        if fp.is_file():
+            check(sim_fig_hashes.get(fn) == sha256_16(fp), f"STALE SPICE FIGURE: {fn} hash mismatch vs sim_summary.json!")
+    print(f"  SPICE 16/16 checks, 2,565 corners, 2,000 MC, {len(sim_sources)} inputs & {len(sim_figs)} figures verified fresh.")
 
-    print("=== 3. Mechanical CAD Gates, Ray-Cast Breaches & SHA-256 Freshness ===")
+    print("=== 3. Mechanical CAD Gates, Ray-Cast Breaches, Renders & SHA-256 Freshness ===")
     cad_dir = REPO_ROOT / "mechanical_design" / "cad"
     cad_ver = json.loads((cad_dir / "cad_verification.json").read_text(encoding="utf-8"))
     cad_params = json.loads((cad_dir / "cad_params.json").read_text(encoding="utf-8"))
@@ -153,20 +167,32 @@ def check_all() -> int:
     check(cad_hashes.get("params.py") == sha256_16(cad_dir / "params.py"), "STALE CAD: params.py changed since CAD build!")
     check(cad_hashes.get("driver_pcb.kicad_pcb") == sha256_16(REPO_ROOT / "pcb_design" / "driver_pcb" / "driver_pcb.kicad_pcb"),
           "STALE CAD: driver_pcb.kicad_pcb changed since CAD build!")
-    for png in ("assembly_iso.png", "assembly_section_xz.png", "assembly_section_yz.png",
-                "cap_top_detail.png", "cap_bot_detail.png", "top_base_detail.png"):
-        check((cad_dir / png).is_file() and (cad_dir / png).stat().st_size > 10000, f"Missing/empty CAD render: {png}")
+    rm_path = cad_dir / "cad_render_manifest.json"
+    check(rm_path.is_file(), "Missing cad_render_manifest.json — run render_cad.py!")
+    if rm_path.is_file():
+        rm = json.loads(rm_path.read_text(encoding="utf-8"))
+        rm_in = rm.get("input_hashes", {})
+        check(rm_in.get("render_cad.py") == sha256_16(cad_dir / "render_cad.py"), "STALE CAD RENDERS: render_cad.py changed!")
+        check(rm_in.get("cad_params.json") == sha256_16(cad_dir / "cad_params.json"), "STALE CAD RENDERS: cad_params.json changed!")
+        check(rm_in.get("cad_verification.json") == sha256_16(cad_dir / "cad_verification.json"), "STALE CAD RENDERS: cad_verification.json changed!")
+        rm_figs = rm.get("output_figure_hashes", {})
+        for png in ("assembly_iso.png", "assembly_section_xz.png", "assembly_section_yz.png",
+                    "cap_top_detail.png", "cap_bot_detail.png", "top_base_detail.png"):
+            p_png = cad_dir / png
+            check(p_png.is_file() and p_png.stat().st_size > 10000, f"Missing/empty CAD render: {png}")
+            if p_png.is_file():
+                check(rm_figs.get(png) == sha256_16(p_png), f"STALE CAD RENDER: {png} hash mismatch vs cad_render_manifest.json!")
     n_params = len(cad_params.get("checks", {}))
     n_pairs = cad_ver.get("brep_all_pairs_nominal", {}).get("total_pairs_checked", 0) + cad_ver.get("brep_all_pairs_worst_case", {}).get("total_pairs_checked", 0)
-    print(f"  CAD {n_params} param checks, 6 watertight STLs, 5 ray-cast gates, {n_pairs} B-Rep pairs, 6 renders & hashes verified.")
+    print(f"  CAD {n_params} param checks, 6 watertight STLs, 7 ray-cast gates, {n_pairs} B-Rep pairs & 6 hash-locked renders verified.")
 
-    print("=== 4. Thermal SSOT Freshness & Pass Gate ===")
+    print("=== 4. Thermal SSOT Freshness, BOM Finish Parity, Figures & Pass Gate ===")
     th_dir = REPO_ROOT / "mechanical_design" / "thermal"
     th = json.loads((th_dir / "thermal_summary.json").read_text(encoding="utf-8"))
     check(th.get("vert_uk_night_22C_real_petg_all_pass") is True, "Thermal <=22 C UK-night real-WPE modes did not all pass (PETG + LM393)")
     check(th.get("vert_15_30C_real_petg_all_pass") is True, "Thermal 15-30 C real-WPE modes did not all pass (PETG + LM393)")
-    check(th.get("vert_15_35C_real_petg_all_pass") is True, "Thermal 15-35 C real-WPE heatwave modes did not all pass (PETG + LM393)")
     check(th.get("vert_15_30C_real_asa_all_pass") is True, "Thermal 15-30 C real-WPE modes did not all pass (ASA + LM393)")
+    check(th.get("vert_15_35C_real_asa_all_pass") is True, "Thermal 15-35 C real-WPE heatwave modes did not all pass (ASA + LM393)")
     th_hashes = th.get("input_hashes", {})
     check(th_hashes.get("cad_params.json") == sha256_16(cad_dir / "cad_params.json"),
           "STALE THERMAL: cad_params.json changed since thermal_analysis.py was run!")
@@ -174,7 +200,28 @@ def check_all() -> int:
           "STALE THERMAL: sim_summary.json changed since thermal_analysis.py was run!")
     check(th_hashes.get("thermal_analysis.py") == sha256_16(th_dir / "thermal_analysis.py"),
           "STALE THERMAL: thermal_analysis.py changed since thermal_summary.json was generated!")
-    print("  Thermal 8-node open-chimney UK-night (<=22 C) & 15-30 C Real-WPE (PETG/ASA + LM393) & 3 SSOT hashes verified fresh.")
+    th_fig_hashes = th.get("output_figure_hashes", {})
+    th_figs = ("thermal_margins.png", "thermal_ambient_sweep.png", "thermal_network_comparison.png")
+    for fn in th_figs:
+        fp = th_dir / fn
+        check(fp.is_file() and fp.stat().st_size > 10000, f"Missing/empty thermal figure: {fn}")
+        if fp.is_file():
+            check(th_fig_hashes.get(fn) == sha256_16(fp), f"STALE THERMAL FIGURE: {fn} hash mismatch vs thermal_summary.json!")
+    # BOM <-> Thermal Al core finish parity check
+    import csv
+    with (REPO_ROOT / "bom" / "bom.csv").open(encoding="utf-8", newline="") as f:
+        core_rows = [r for r in csv.DictReader(f) if r.get("Source_IDs") == "MECH-HS-CORE"]
+    check(len(core_rows) == 1, "Expected exactly 1 MECH-HS-CORE row in bom/bom.csv")
+    if core_rows:
+        core_desc = f"{core_rows[0]['MPN_or_Part']} {core_rows[0]['Specification']}".lower()
+        th_eps = float(th.get("ssot_inputs", {}).get("core_emissivity", -1.0))
+        if "mill-finish" in core_desc or "bare mill" in core_desc:
+            check(0.05 <= th_eps <= 0.25, f"BOM/THERMAL MISMATCH: bom.csv specifies bare mill Al core but thermal_summary.json core_emissivity={th_eps}!")
+            check("anodized" not in th.get("architecture", "").lower(),
+                  "BOM/THERMAL MISMATCH: thermal_summary.json architecture still says Anodized while bom.csv specifies Mill-Finish!")
+        elif "anodiz" in core_desc:
+            check(th_eps >= 0.70, f"BOM/THERMAL MISMATCH: bom.csv specifies anodized Al core but thermal_summary.json core_emissivity={th_eps}!")
+    print("  Thermal 8-node bare-mill (15-30 C PETG, 15-35 C ASA + LM393), BOM finish parity & 3 hash-locked figures verified fresh.")
 
     print("=== 5. Master BOM & Datasheet Existence Parity ===")
     proc_bom = subprocess.run([sys.executable, str(REPO_ROOT / "bom" / "verify_bom.py")],
@@ -198,6 +245,7 @@ def check_all() -> int:
         REPO_ROOT / "docs" / "ASSEMBLY_GUIDE.md",
         REPO_ROOT / "docs" / "ELECTRONICS_ARCHITECTURE.md",
         REPO_ROOT / "docs" / "BLOCKERS.md",
+        REPO_ROOT / "docs" / "CHANGE_CHECKLIST.md",
         REPO_ROOT / "pcb_design" / "PCB_SUMMARY.md",
         REPO_ROOT / "mechanical_design" / "MECHANICAL_DESIGN.md",
         REPO_ROOT / "mechanical_design" / "CLEARANCE_VERIFICATION.md",

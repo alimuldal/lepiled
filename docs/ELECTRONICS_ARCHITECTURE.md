@@ -29,7 +29,7 @@ For the history of design revisions and engineering trade-offs, see [DESIGN_DECI
 - **USB-C PD Sink Controller (`U3`, `WCH CH224A`, `ESSOP-10`, `C42459160`):**
   - Integrates internal `5.1 kΩ` dead-battery `R_d` pull-downs on `CC1`/`CC2` and `32 V`-tolerant `VHV`, `VBUS`, and `PG` pins (`1.0 mm` leaded pitch).
   - `Pin 8 (VBUS)` connects directly to `Pin 1 (VHV)` / `VIN_20V`; `Pin 9 (CFG1)` is strapped via `R9 = 120 kΩ ±1%` to `GND` (single-resistor `20 V` mode).
-  - Active-low `Pin 10 (PG)` drives red diagnostic LED `D12` (`KT-0603R`, `~1.6 mA` via `R13`/`R10 = 10 kΩ / 10 kΩ`) whenever `20 V` PD is active — visible on outward-facing `F.Cu` during bench bring-up and externally through the `0.60 mm` unbroken translucent internal dimple on `MECH-CAP-TOP`.
+  - Active-low `Pin 10 (PG)` drives red diagnostic LED `D12` (`KT-0603R`, `~1.6 mA` via `R13`/`R10 = 10 kΩ / 10 kΩ`) whenever `20 V` PD is active — visible on outward-facing `F.Cu` during bench bring-up and externally through the `0.90 mm` unbroken outer-taper-contoured translucent internal dimple on `MECH-CAP-TOP`.
 - **Bench Test Pads (`TP1..TP4`):** Four bare `1.0 mm` HASL SMD pads on `F.Cu` exposing `VIN_20V`, `V_REF`, `UVLO_OK`, and `GND`.
 
 ### Block 2 — Hysteretic Hardware UVLO, Damped `V_REF` ESD Sink & Mode Switch
@@ -40,7 +40,7 @@ For the history of design revisions and engineering trade-offs, see [DESIGN_DECI
   - `U4A` (`onsemi LM393DR2G`, `SOIC-8` `C7955`, `0..+70 °C`; optional industrial alt `LM2903DR2G` `C57474`) compares `VIN_20V` via `R15 = 30.0 kΩ`, `R16 = 5.1 kΩ`, `C15 = 100 nF`, `R17/R18 = 100 kΩ/100 kΩ`, and `R19 = 220 kΩ` (`C22961`) (`V_ON = 17.55 V`, `V_OFF = 16.56 V`, `0.98 V` nominal hysteresis).
   - `U4B` inverts `UVLO_OK` to `UVLO_FAULT` (`R20 = 56.0 kΩ` / `R21 = 100 kΩ` divider: `3.21 V` at `5 V`, `<= 15.39 V` during `85 °C` hot-plug) driving `Q2`/`Q3` (`2N7002`) to clamp `U1_CTRL`/`U2_CTRL` below `0.1 mV` under UVLO.
 - **Direct Gold Dry-Circuit Mode Switch (`SW1`, `SW1_BOOT`, `J4`, `R5`, `R6`, `D15`, `D16`):**
-  - `SW1` (`C&K 7211SYZBE` gold `DPDT On-On-On` + `759D02000` silicone boot) wires directly to `J4` (`1:SW_UV_IN`, `2:GND`, `3:SW_VIS_IN`), protected by `D15`/`D16` (`BAV99`) and `R5`/`R6` (`1.0 kΩ`).
+  - `SW1` (`C&K 7211SYZBE` or verified 1:1 drop-in `E-Switch 100DP6T1B1M1REH` gold `DPDT On-On-On` + `C&K 759D02000` silicone boot) wires directly to `J4` (`1:SW_UV_IN`, `2:GND`, `3:SW_VIS_IN`), protected by `D15`/`D16` (`BAV99`) and `R5`/`R6` (`1.0 kΩ`).
 
 ### Blocks 3 & 4 — Dual `AL8860WT-7` Constant-Current Buck Drivers (`333 mA`)
 - **Current Regulation:** High-side sense resistors `R3 = R4 = 0.30 Ω ±1%` (`Bourns CRL1206-FW-R300ELF`, `0.25–0.50 W`, `>= 7.5×` derated at `33 mW`, Kelvin-sensed to `VIN` and `SET`) regulate `I_LED = 333.3 mA`. Each buck has local `1.0 µF` (`C2`/`C3`) + `100 nF` (`C8`/`C9`) input decoupling, a `68 µH` shielded inductor (`L1`/`L2`, `Bourns SRN6045-680M`, `I_sat = 1.0 A`, `I_rms = 0.9 A`, `DCR = 0.270 Ω` typ / `0.351 Ω` max), and a `40 V 3 A` Schottky catch diode (`D9`/`D10`, `MDD SS34`).

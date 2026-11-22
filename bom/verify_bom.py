@@ -282,7 +282,7 @@ def main() -> int:
     print(f"  Electrical (72 RefDes incl. 8x Convoy Cu DTP):  1-Off = £{elec_o:.2f} ex VAT (£{round2(elec_o * VAT_RATE):.2f} inc VAT) | Amort = £{elec_a:.2f} ex VAT")
     print(f"  Harness (JST-XH + 2m UV silicone + 2m USB-C):   1-Off = £{harn_o:.2f} ex VAT (£{round2(harn_o * VAT_RATE):.2f} inc VAT) | Amort = £{harn_a:.2f} ex VAT")
     print(f"  PCB Fab (HASL) + 2-Reel Hybrid PCBA (2-pc min): 1-Off = £{pcb_o:.2f} ex VAT (£{round2(pcb_o * VAT_RATE):.2f} inc VAT) | Amort = £{pcb_a:.2f} ex VAT")
-    print(f"  Mechanical (XT PMMA + Epoxy + Anod. Al, 20):    1-Off = £{mech_o:.2f} ex VAT (£{round2(mech_o * VAT_RATE):.2f} inc VAT) | Amort = £{mech_a:.2f} ex VAT")
+    print(f"  Mechanical (XT PMMA + Epoxy + Mill Al, 20):     1-Off = £{mech_o:.2f} ex VAT (£{round2(mech_o * VAT_RATE):.2f} inc VAT) | Amort = £{mech_a:.2f} ex VAT")
     print(f"  TOTAL Rev 6.0 Parts-Only (All Purchased New):   1-Off = £{tot_o:.2f} ex VAT (£{round2(tot_o * VAT_RATE):.2f} inc VAT) | Amort = £{tot_a:.2f} ex VAT (£{round2(tot_a * VAT_RATE):.2f} inc VAT)")
     print(f"  NET Parts-Only (Owned M3 HW + Pad/Shims):       1-Off = £{net_o:.2f} ex VAT (£{round2(net_o * VAT_RATE):.2f} inc VAT)")
     return 0

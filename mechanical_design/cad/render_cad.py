@@ -276,7 +276,29 @@ def main() -> None:
     render_part_detail(cad_dir / "mech_cap_bot.stl", "MECH-CAP-BOT — Open-Chimney Bottom Nosecone", cad_dir / "cap_bot_detail.png")
     render_part_detail(cad_dir / "mech_top_base.stl", "MECH-TOP-BASE — Top Electronics Chassis", cad_dir / "top_base_detail.png")
     render_part_detail(cad_dir / "mech_cap_top.stl", "MECH-CAP-TOP — Top Weatherproof Rain Bell", cad_dir / "cap_top_detail.png")
-    print("Rendered all 6 CAD PNGs cleanly.")
+
+    import hashlib
+    def _h(path: Path) -> str:
+        return hashlib.sha256(path.read_bytes()).hexdigest()[:16]
+
+    pngs = (
+        "assembly_iso.png",
+        "assembly_section_xz.png",
+        "assembly_section_yz.png",
+        "cap_bot_detail.png",
+        "top_base_detail.png",
+        "cap_top_detail.png",
+    )
+    manifest = {
+        "input_hashes": {
+            "render_cad.py": _h(Path(__file__)),
+            "cad_params.json": _h(cad_dir / "cad_params.json"),
+            "cad_verification.json": _h(cad_dir / "cad_verification.json"),
+        },
+        "output_figure_hashes": {fn: _h(cad_dir / fn) for fn in pngs},
+    }
+    (cad_dir / "cad_render_manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    print("Rendered all 6 CAD PNGs and updated cad_render_manifest.json cleanly.")
 
 
 if __name__ == "__main__":

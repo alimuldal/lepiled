@@ -1,17 +1,23 @@
 {
   "revision": "4.9",
-  "architecture": "Rev 4.9 (WCH CH224A + 2-Reel Hybrid HASL PCBA + Convoy OSRAM CSLNM1 + Littelfuse 046801.5NRHF + Vishay 2512 R7 + Bourns SRN6045-680M + Dual AL8860WT-7)",
+  "architecture": "LepiLED DIY Maxi Switch (WCH CH224A + 2-Reel Hybrid HASL PCBA + Convoy OSRAM CSLNM1 + Littelfuse 046801.5NRHF + Vishay 2512 R7 + Bourns SRN6045-680M + Dual AL8860WT-7)",
   "backend": "libngspice.so.0 (ctypes)",
   "all_passed": true,
   "input_hashes": {
     "COMPONENT_IDS.csv": "faafaf0a44649132",
     "models.lib": "b35a073eb204e367",
+    "run_simulations.py": "aba6fba5b111358b",
     "lepiled_nominal.cir": "be50f5a2dcb6b8ce",
     "lepiled_fault_uvlo_sweep.cir": "fdfc46d1b52099ff",
     "lepiled_fault_open_led.cir": "a15eefec36403c0d",
     "lepiled_fault_short_led.cir": "08f224b94c8c8e87",
     "lepiled_fault_input_prot.cir": "112c5ad7ec432f99",
     "lepiled_fault_hotplug_85c.cir": "8f5167fd7b874b9b"
+  },
+  "output_figure_hashes": {
+    "plot_nominal_modes.png": "19ace651c0437701",
+    "plot_uvlo_sweep.png": "60273d149b2eb7ff",
+    "plot_fault_suite.png": "997daf779fb0315c"
   },
   "thermal_export": {
     "p_pcb_nom_W": 0.508,
