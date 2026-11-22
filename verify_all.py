@@ -189,10 +189,13 @@ def check_all() -> int:
     print("=== 4. Thermal SSOT Freshness, BOM Finish Parity, Figures & Pass Gate ===")
     th_dir = REPO_ROOT / "mechanical_design" / "thermal"
     th = json.loads((th_dir / "thermal_summary.json").read_text(encoding="utf-8"))
-    check(th.get("vert_uk_night_22C_real_petg_all_pass") is True, "Thermal <=22 C UK-night real-WPE modes did not all pass (PETG + LM393)")
-    check(th.get("vert_15_30C_real_petg_all_pass") is True, "Thermal 15-30 C real-WPE modes did not all pass (PETG + LM393)")
-    check(th.get("vert_15_30C_real_asa_all_pass") is True, "Thermal 15-30 C real-WPE modes did not all pass (ASA + LM393)")
-    check(th.get("vert_15_35C_real_asa_all_pass") is True, "Thermal 15-35 C real-WPE heatwave modes did not all pass (ASA + LM393)")
+    sa = th.get("solver_audit", {})
+    check(sa.get("all_converged") is True, "Thermal solver_audit all_converged is not True")
+    check(float(sa.get("max_global_energy_err_W", 1.0)) < 1e-5, f"Thermal global energy err too high: {sa.get('max_global_energy_err_W')}")
+    check(th.get("vert_uk_night_22C_real_asa_lm393_all_pass") is True, "Thermal <=22 C UK-night real-WPE modes did not all pass (ASA + LM393)")
+    check(th.get("vert_15_30C_real_asa_lm393_all_pass") is True, "Thermal 15-30 C real-WPE bare-mill modes did not all pass (ASA + LM393)")
+    check(th.get("vert_15_35C_real_asa_struct_all_pass") is True, "Thermal 15-35 C real-WPE bare-mill ASA structure gate failed")
+    check(th.get("vert_15_35C_real_asa_lm393_painted_upper_all_pass") is True, "Thermal 15-35 C real-WPE upper-painted upgrade did not pass (ASA + LM393)")
     th_hashes = th.get("input_hashes", {})
     check(th_hashes.get("cad_params.json") == sha256_16(cad_dir / "cad_params.json"),
           "STALE THERMAL: cad_params.json changed since thermal_analysis.py was run!")
@@ -221,7 +224,7 @@ def check_all() -> int:
                   "BOM/THERMAL MISMATCH: thermal_summary.json architecture still says Anodized while bom.csv specifies Mill-Finish!")
         elif "anodiz" in core_desc:
             check(th_eps >= 0.70, f"BOM/THERMAL MISMATCH: bom.csv specifies anodized Al core but thermal_summary.json core_emissivity={th_eps}!")
-    print("  Thermal 8-node bare-mill (15-30 C PETG, 15-35 C ASA + LM393), BOM finish parity & 3 hash-locked figures verified fresh.")
+    print("  Thermal 8-node (+2-zone PCB) sq-duct K=9.3, ASA+LM393 gates, BOM finish parity & 3 hash-locked figures verified fresh.")
 
     print("=== 5. Master BOM & Datasheet Existence Parity ===")
     proc_bom = subprocess.run([sys.executable, str(REPO_ROOT / "bom" / "verify_bom.py")],

@@ -37,12 +37,12 @@ Nominal drive current = `333 mA` (`R3 = R4 = 0.30 Ω ±1%`), supplied from `20.0
 
 | Subsystem | `8-ALL` Electrical (W) | `8-ALL` Nom Heat (`40%` UV WPE) | `8-ALL` Worst-Case (`DS-RealWPE`) | `4-UV` Nom Heat | Thermal Limit |
 |---|---|---|---|---|---|
-| **Ch1 UV Array (`4× SST-10-UV`, `D1..D4`)** | `4.736 W` | `2.842 W` | `3.650 W` | `2.842 W` | $T_{j,\max} = 100^\circ\text{C}$ ($R_{\theta Js}=1.4^\circ\text{C/W}$) |
-| **Ch2 Visible Array (`4× OSRAM CSLNM1`, `D5..D8`)** | `3.784 W` | `2.270 W` | `2.950 W` | `0.000 W` | $T_{j,\max} = 150^\circ\text{C}$ ($R_{\theta Js}=4.1\text{–}4.9^\circ\text{C/W}$) |
-| **Interior Optical Re-Absorption (`~14%`)** | — | `0.477 W` | `0.450 W` | `0.265 W` | Split 50% core / 50% XT PMMA wall |
-| **`U1`/`U2` (`AL8860WT-7`) + Buck Passives** | `0.352 W` | `0.352 W` | `0.582 W` | `0.165 W` | $T_{j,\max} = 125^\circ\text{C}$ derated |
-| **`U3`/`U4`/`U5`/`F1`/`D12`/Quiescent Overhead** | `0.156 W` | `0.156 W` | `0.260 W` | `0.156 W` | `U4` (`LM393DR2G`) commercial `0..+70 °C` board temp |
-| **Driver PCB Total Loss (`sim_summary.json`)** | `0.508 W` | `0.508 W` | `0.842 W` | `0.321 W` | Open `26 mm` bare mill Al (`ε=0.10`) + `15×15 mm` PCB bridge: `T_PCB = 47.3 / 54.8 °C` (`22 °C`), `55.1 / 62.5 °C` (`30 °C`), `60.0 / 67.3 °C <= 70 °C` (`35 °C`) |
+| **Ch1 UV Array (`4× SST-10-UV`, `D1..D4`)** | `4.736 W` | `2.842 W` | `3.698 W` | `2.842 W` | $T_{j,\max} = 100^\circ\text{C}$ ($R_{\theta Js}=1.4^\circ\text{C/W}$) |
+| **Ch2 Visible Array (`4× OSRAM CSLNM1`, `D5..D8`)** | `3.784 W` | `2.270 W` | `3.279 W` | `0.000 W` | $T_{j,\max} = 150^\circ\text{C}$ ($R_{\theta Js}=4.1\text{–}4.9^\circ\text{C/W}$) |
+| **Spectral Optical Re-Absorption (`15.3%` UV / `3.5%` Vis)** | — | `0.343 W` | `0.336 W` | `0.290 W` | `11.3%` UV / `1.3%` Vis in PMMA wall; remainder on core/sockets |
+| **`U1`/`U2` (`AL8860WT-7`) + Buck Passives** | `0.352 W` | `0.352 W` | `0.583 W` | `0.165 W` | $T_{j,\max} = 125^\circ\text{C}$ derated |
+| **`U3`/`U4`/`U5`/`F1`/`D12`/Quiescent Overhead** | `0.156 W` | `0.156 W` | `0.259 W` | `0.156 W` | `U4` (`LM393DR2G`) commercial `0..+70 °C` rating |
+| **Driver PCB Total Loss (`sim_summary.json`)** | `0.508 W` | `0.508 W` | `0.842 W` | `0.321 W` | Bare mill Al (`K_eff=9.3`) + epoxied `16 K/W` bridge: `T_pcb / T_j,U4 = 48.9 / 47.5 °C` (`22 °C` nom), `66.0 / 65.3 °C` (`30 °C` WC); `66.3 / 67.0 °C <= 70 °C` (`35 °C` WC w/ optional upper-tube matte paint) |
 
 ### 2.2 Mechanical Interface Datums (Synced with `mechanical_design/cad/cad_params.json`)
 - **Vertical `+X` Top-Bay `driver_pcb` & Captive Thermal Bridge:** `36 × 46 × 1.6 mm` `driver_pcb` mounts vertically on `MECH-TOP-BASE` (`B.Cu` at `X = 20.9 mm`, `F.Cu` facing `+X` at `X = 22.5 mm`, `Z = 174.5..220.5 mm`, `5.9 mm` nom / `5.7 mm` WC gap to the aluminum core) via `4×` captive DIN 934 `M3` hex nuts inside `MECH-CAP-TOP`'s straight `Ø85.0 mm` bore (`9.78 mm` wire-bend space behind `J2`/`J3`). A solid `1.5 mm` plastic barrier shields `J1`/`J4` TH pins (`2.05 mm` air clearance), while a closed-perimeter `15.6 × 15.6 mm` captive chute (`Z = 199.0..214.4 mm`) behind the pin-free `U1/U2` copper zone clamps a doubly insulated `1.0 mm` silicone-pad + `15 × 15 × 0.5 mm` brass-shim thermal bridge against the aluminum core. `J1` sits at deck level (`Z_mouth = 171.32 mm`, `X_ctr = +24.38 mm`, wide slot along `±Y`) with `26.32 mm` headroom to the bay floor (`Z = 145.0 mm`), mating a standard left/right `90°` USB-C plug (`<= 18.0 mm` protrusion) curving horizontally to `+Y`.
