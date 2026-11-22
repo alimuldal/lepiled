@@ -204,12 +204,12 @@ def build_top_base(p: LepiLEDParams) -> bd.Part:
     r_port_in = p.top_base_port_id / 2.0  # 39.0
     r_deck = p.top_base_deck_od / 2.0   # 49.0
 
-    # 1. Outer body: lower collar + 45-deg flare + side-port ring + lowered 45-deg deck lip (2.0 mm vertical G3 outer rim!)
+    # 1. Outer body: lower collar + 45-deg flare + side-port ring + lowered 45-deg deck lip (1.90 mm vertical G3 outer rim below 2.20 mm groove!)
     c_col = bd.Cylinder(r_col, z_fl_bot - z_bot, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_bot))
     c_flare = bd.Cone(r_col, r_port, z_port_bot - z_fl_bot, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_fl_bot))
-    c_ring = bd.Cylinder(r_port, (z_deck - 4.2) - z_port_bot, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_port_bot))
-    c_deck_lip = bd.Cone(r_port, r_deck, 2.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_deck - 4.2))
-    c_deck_rim = bd.Cylinder(r_deck, 2.2, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_deck - 2.2))
+    c_ring = bd.Cylinder(r_port, (z_deck - 4.4) - z_port_bot, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_port_bot))
+    c_deck_lip = bd.Cone(r_port, r_deck, 2.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_deck - 4.4))
+    c_deck_rim = bd.Cylinder(r_deck, 2.4, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, z_deck - 2.4))
     part = c_col.fuse(c_flare).fuse(c_ring).fuse(c_deck_lip).fuse(c_deck_rim)
 
     # 2. +Y flat vertical clamp boss (X = ±18.5 mm, Y = 47.0 mm, Z = 145.0 .. 168.5 mm) w/ <=42.2-deg ramp tucked inside c_col

@@ -2,7 +2,7 @@
   "revision": "6.1",
   "architecture": "Open-Chimney Funnel Lantern (30x30x2.0x300 mm Bare Mill-Finish Al Core eps=0.10, Square-Duct 26 mm Chimney K_eff=9.3, White ASA Enclosure, Epoxy Cu DTP Stars, +X Vertical PCB w/ Epoxied 15 \u00d7 15 mm Bridge R=16 K/W)",
   "input_hashes": {
-    "cad_params.json": "804d0b9d4a57da8c",
+    "cad_params.json": "167ef6d665b760e9",
     "sim_summary.json": "69e1ec18cd577a32",
     "thermal_analysis.py": "aa595d6e7df41bd0"
   },

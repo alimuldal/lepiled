@@ -15,8 +15,8 @@ All `55` parametric assertions ([params.py](cad/params.py)), `6` print-ready (`Z
 | Mated `J2/J3` & PCB top edge below `MECH-CAP-TOP` internal `Circle→Square` ceiling loft | `8.396 / 12.186 mm` | `>= 4.0 / 6.0 mm` | **PASS** |
 | `18.0 mm` `90°` USB-C plug above bay floor / clamp axial standoff travel / grommet fill (`Ø9.0×10.2 mm`) | `8.320 / 1.200 mm` / `77.5%` | `>= 6.0 / 1.0 mm` / `<= 85%` | **PASS** |
 | Blind `+Y` clamp insert wall (`7.0 mm` bore) / `M3×12` closed bottom clr / inside eaves / below eaves | `3.000 / 1.500 / 4.800 / 4.500 mm` | `>= 2.5 / 0.8 / 3.5 / 4.0 mm` | **PASS** |
-| `SW1` lugs clr to worst-case Al core / boot inside `-X` rain visor / cove boot top clr / ring Z wall | `8.330 / 3.400 / 1.200 / 3.485 mm` | `>= 7.0 / 2.5 / 1.0 / 3.0 mm` | **PASS** |
-| `4×` eaves `M3×5.0` insert walls (`to G3 groove / outer` at `R=51.0 mm`) & ear CSK outer rim | `2.000 / 6.000 / 2.250 mm` | `>= 1.8 / 4.0 / 2.0 mm` | **PASS** |
+| `SW1` lugs clr to worst-case Al core / boot inside `-X` rain visor / cove boot top clr / ring Z wall | `8.330 / 3.400 / 1.200 / 3.285 mm` | `>= 7.0 / 2.5 / 1.0 / 3.0 mm` | **PASS** |
+| `4×` eaves `M3×5.0` insert walls (`to G3 groove / outer` at `R=51.0 mm`) & ear CSK outer rim | `1.900 / 6.000 / 2.250 mm` | `>= 1.8 / 4.0 / 2.0 mm` | **PASS** |
 | Ray-Cast Gate: `MECH-CAP-TOP` lofted rain roof (`432` rays) | `0 breaches` | `0` | **PASS** |
 | Ray-Cast Gate: `MECH-CAP-TOP` outer bell wall (`324` rays) & `D12` normal dimple skin at `Z = 190.9 mm` | `0 breaches` / `0.901 mm` | `0` / `0.80–1.15 mm` | **PASS** |
 | Ray-Cast Gate: `MECH-CAP-TOP` upper chimney collar zero side holes (`72` rays) | `0 breaches` | `0` | **PASS** |
@@ -28,8 +28,8 @@ All `55` parametric assertions ([params.py](cad/params.py)), `6` print-ready (`Z
 | Core hub corner wall / `MECH-CAP-TOP` vertical collar wall | `2.509 / 4.650 mm` | `>= 2.2 / 4.0 mm` | **PASS** |
 | Core corner / UV LED / `±Y` wire-slot radial clr to XT PMMA ID (`53.5 mm` min) | `5.254 / 7.870 / 4.246 mm` | `>= 5.0 / 7.0 / 2.5 mm` | **PASS** |
 | Epoxy-bonded `Ø20 mm` stars: UV-to-Vis edge gap / UV below top rim / Vis above bot rim | `14.0 / 16.0 / 16.0 mm` | `>= 10.0 / 12.0 / 12.0 mm` | **PASS** |
-| Shroud radial O-rings (`60 × 3.5 mm` VMQ50/60 on `59.2–60.6 mm` oval PMMA) & short-tube margin | `11.4–31.4%` (`69.7%` fill) / `2.90 mm` | `10–33%`, `<= 85%`, `>= 2.0 mm` | **PASS** |
-| Top rain-bell bolt-compressed axial face O-ring (`88 × 2.5 mm` VMQ50, `2.00 mm` quantized groove) | `20.0%` (`72.2%` fill) | `18–30%`, `<= 85%` | **PASS** |
+| Shroud radial O-rings (`BS229` `59.92 × 3.53 mm` VMQ 70A on `59.2–60.6 mm` oval PMMA) & short-tube margin | `12.2–32.0%` (`70.9%` fill) / `2.90 mm` | `10–33%`, `<= 85%`, `>= 2.0 mm` | **PASS** |
+| Top rain-bell bolt-compressed axial face O-ring (`BS153` `88.57 × 2.62 mm` VMQ 70A, `3.60 × 2.20 mm` groove) | `16.0%` (`68.1%` fill) | `15–30%`, `<= 85%` | **PASS** |
 | Chimney protrusion / rain roof slope / finial exhaust area & hood overhang / top `M4` Al edge | `48.0 mm` / `45.0°` / `5.18 cm²` / `6.0 mm` / `13.75 mm` | `45–75 mm` / `>= 24°` / `>= 4.5 cm²` / `>= 5.0 mm` / `>= 10.0 mm` | **PASS** |
 | FDM `>46°` overhang (`4` parts = `0.000 mm²`; outside intentional `SW1` bore & visor legend = `<= 0.005 mm²`) | `0.000–0.005 mm²` outside `SW1` bore (`12.5 mm²`) & `0.5 mm` debossed legend | `<= 1.0 mm²` outside allowed features | **PASS** |
 | Kinematic insertion (`SW1`, bell down, `±Y` JST slots, `+Y` straight plug, `90°` plug→`J1`, `4×` ear CSK bolts) | `0.000000 mm³` (`124` waypoints) | `0.000 mm³` | **PASS** |

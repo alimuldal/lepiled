@@ -1,7 +1,7 @@
 {
   "revision": "Rev 6.0 (Open-Chimney Funnel Lantern: Screened 30x30x2 mm Al Chimney, Thermal-Epoxy Stars, +X Vertical PCB, Axial Bell O-Ring & Compressing Cable Clamp)",
   "input_hashes": {
-    "params.py": "decf3d14f10fbeb4",
+    "params.py": "f2db4ca850c1513c",
     "driver_pcb.kicad_pcb": "a7f1cd15daf95a27"
   },
   "params": {
@@ -26,7 +26,7 @@
     "glass_socket_depth": 14.5,
     "glass_bore_id": 61.6,
     "glass_oring_groove_od": 65.4,
-    "glass_oring_cs": 3.5,
+    "glass_oring_cs": 3.53,
     "glass_oring_flat_w": 4.6,
     "core_w_nom": 30.0,
     "core_w_max": 30.4,
@@ -47,11 +47,11 @@
     "top_base_ear_r": 51.0,
     "top_base_ear_boss_r": 5.5,
     "top_base_ear_h": 8.0,
-    "top_oring_id": 88.0,
-    "top_oring_cs": 2.5,
-    "top_oring_groove_r_in": 43.6,
-    "top_oring_groove_w": 3.4,
-    "top_oring_groove_depth": 2.0,
+    "top_oring_id": 88.57,
+    "top_oring_cs": 2.62,
+    "top_oring_groove_r_in": 43.5,
+    "top_oring_groove_w": 3.6,
+    "top_oring_groove_depth": 2.2,
     "pcb_w": 36.0,
     "pcb_l": 46.0,
     "pcb_thick": 1.6,
@@ -90,12 +90,12 @@
     "clamp_grommet_len": 10.2,
     "clamp_grommet_id": 9.0,
     "clamp_cable_dia": 4.5,
-    "sw1_z": 154.2,
+    "sw1_z": 154.0,
     "sw1_recess_x": 5.5,
     "sw1_cove_w": 32.0,
     "sw1_cove_slope_deg": 18.0,
-    "sw1_cove_ceil_z": 162.05,
-    "sw1_cove_fl_in_z": 146.0,
+    "sw1_cove_ceil_z": 161.85,
+    "sw1_cove_fl_in_z": 145.8,
     "sw1_hole_dia": 6.5,
     "sw1_wall_thick": 2.5,
     "sw1_body_w_y": 12.7,
@@ -341,12 +341,12 @@
         "pass": true
       },
       "sw1_port_ring_z_wall_mm": {
-        "value": 3.485,
+        "value": 3.285,
         "min": 3.0,
         "pass": true
       },
       "eave_insert_to_g3_wall_mm": {
-        "value": 2.0,
+        "value": 1.9,
         "min": 1.8,
         "pass": true
       },
@@ -401,23 +401,23 @@
         "pass": true
       },
       "g12_radial_squeeze_min_pct": {
-        "value": 11.4,
+        "value": 12.2,
         "min": 10.0,
         "pass": true
       },
       "g12_radial_squeeze_nom_pct": {
-        "value": 22.9,
+        "value": 23.5,
         "min": 14.0,
         "max": 26.0,
         "pass": true
       },
       "g12_radial_squeeze_max_pct": {
-        "value": 31.4,
+        "value": 32.0,
         "max": 33.0,
         "pass": true
       },
       "g12_gland_fill_max": {
-        "value": 0.6974,
+        "value": 0.7094,
         "max": 0.85,
         "pass": true
       },
@@ -427,13 +427,13 @@
         "pass": true
       },
       "g3_axial_squeeze_pct": {
-        "value": 20.0,
-        "min": 18.0,
+        "value": 16.0,
+        "min": 15.0,
         "max": 30.0,
         "pass": true
       },
       "g3_axial_gland_fill": {
-        "value": 0.7219,
+        "value": 0.6807,
         "max": 0.85,
         "pass": true
       },
@@ -481,14 +481,14 @@
     "mech_top_base": {
       "step_file": "mech_top_base.step",
       "stl_file": "mech_top_base.stl",
-      "brep_volume_mm3": 126846.282,
-      "stl_volume_mm3": 126840.667,
+      "brep_volume_mm3": 126626.016,
+      "stl_volume_mm3": 126620.391,
       "is_watertight": true,
       "is_winding_consistent": true,
       "is_volume": true,
       "euler_number": -26,
       "genus": 14,
-      "triangles": 121136
+      "triangles": 121162
     },
     "mech_cap_top": {
       "step_file": "mech_cap_top.step",
@@ -700,17 +700,17 @@
     "all_zero": true
   },
   "mass_budget_g": {
-    "printed_lamp_volume_cm3": 361.1,
+    "printed_lamp_volume_cm3": 360.9,
     "cap_bot_volume_cm3": 60.4,
-    "top_base_volume_cm3": 126.8,
+    "top_base_volume_cm3": 126.6,
     "cap_top_volume_cm3": 152.3,
-    "asa_fdm_62pct_g": 239.6,
-    "petg_fdm_62pct_g": 284.3,
+    "asa_fdm_62pct_g": 239.4,
+    "petg_fdm_62pct_g": 284.2,
     "al_core_2mm_g": 181.1,
     "uvt_pmma_shroud_g": 72.9,
     "elec_stars_hardware_g": 94.0,
-    "total_fdm_asa_g": 587.6,
-    "total_fdm_petg_g": 632.3
+    "total_fdm_asa_g": 587.4,
+    "total_fdm_petg_g": 632.2
   },
   "summary": {
     "all_param_checks_pass": true,

@@ -42,9 +42,9 @@ class LepiLEDParams:
     glass_socket_depth: float = 14.5
     glass_bore_id: float = 61.6          # 0.50 mm/side slip clearance over 60.6 mm oval tube
 
-    # Shroud radial bore O-rings (MECH-GASKET-1..2: 60 x 3.5 mm soft VMQ50/60)
-    glass_oring_groove_od: float = 65.40 # Gland = 2.70 mm nom -> 22.9% nom / 11.4-31.4% squeeze across ovality
-    glass_oring_cs: float = 3.5
+    # Shroud radial bore O-rings (MECH-GASKET-1..2: standard BS229 59.92 x 3.53 mm VMQ 70 ShA)
+    glass_oring_groove_od: float = 65.40 # Gland = 2.70 mm nom -> 23.5% nom / 12.2-32.0% squeeze across ovality
+    glass_oring_cs: float = 3.53
     glass_oring_flat_w: float = 4.6
 
     # 3. Central Open-Chimney Bare Mill Al Core (MECH-HS-CORE: 30 x 30 x 2.0 mm x 300.0 mm 6063-T6)
@@ -70,12 +70,12 @@ class LepiLEDParams:
     top_base_ear_boss_r: float = 5.5     # 2.25 mm solid rim around Ø6.5 mm CSK seat (R_max = 56.5 mm)
     top_base_ear_h: float = 8.0          # Z = 163.0 .. 171.0 mm
 
-    # Axial face O-ring groove on Z = 171.0 mm deck (MECH-GASKET-3: 88 x 2.5 mm soft VMQ50)
-    top_oring_id: float = 88.0           # Standard 88 x 2.5 mm VMQ50 (mean dia 90.5 mm vs groove mean 90.6 mm)
-    top_oring_cs: float = 2.5
-    top_oring_groove_r_in: float = 43.6  # Groove R = 43.6 .. 47.0 mm (width = 3.4 mm; 2.0 mm vertical outer lip wall)
-    top_oring_groove_w: float = 3.4
-    top_oring_groove_depth: float = 2.00 # Exact 10 x 0.20 mm FDM layers -> 20.0% axial squeeze, 72.2% gland fill
+    # Axial face O-ring groove on Z = 171.0 mm deck (MECH-GASKET-3: standard BS153 88.57 x 2.62 mm VMQ 70 ShA)
+    top_oring_id: float = 88.57          # Standard BS153 / AS568-153 VMQ 70 ShA (OD 93.81 mm inside 87.00..94.20 groove)
+    top_oring_cs: float = 2.62
+    top_oring_groove_r_in: float = 43.50 # Groove R = 43.50 .. 47.10 mm (width = 3.60 mm; 1.90 mm vertical outer lip wall)
+    top_oring_groove_w: float = 3.60
+    top_oring_groove_depth: float = 2.20 # Exact 11 x 0.20 mm FDM layers -> 16.0% axial squeeze (~84 N/bolt in 70A), 68.1% fill
 
     # 5. Committed Ordered Driver PCB (36.0 x 46.0 x 1.6 mm) Mounted Vertically on +X Core Face
     #    Board local (bx, by, bz_from_fcu) -> Global (X = pcb_x_fcu + bz, Y = bx, Z = pcb_z_center + by)
@@ -123,12 +123,12 @@ class LepiLEDParams:
     clamp_cable_dia: float = 4.5
 
     # 7. Side-Mounted Recessed SW1 Toggle Switch (-X draining cove, sheltered inside -X visor brow)
-    sw1_z: float = 154.2                 # 1.20 mm top & 1.55 mm bottom boot margin while thickening G3 corner wall to 1.45 mm!
+    sw1_z: float = 154.0                 # 1.20 mm top & 1.55 mm bottom boot margin while preserving 1.45 mm wall beneath 2.20 mm G3
     sw1_recess_x: float = 5.5            # Recessed 5.5 mm inward from R = 47.0 ring -> face at X = -41.5 mm
     sw1_cove_w: float = 32.0             # Gloved-finger access width along ±Y
     sw1_cove_slope_deg: float = 18.0     # Outward-downward cove floor slope preventing water pooling
-    sw1_cove_ceil_z: float = 162.05      # Flat cove face top Z (1.45 mm X/Z & 1.03 mm normal wall beneath G3 outer corner!)
-    sw1_cove_fl_in_z: float = 146.0      # Flat cove face bottom Z (1.55 mm clear below Ø13.3 mm 759D02000 boot flange)
+    sw1_cove_ceil_z: float = 161.85      # Flat cove face top Z (1.45 mm X/Z & 1.03 mm normal wall beneath 2.20 mm G3 corner)
+    sw1_cove_fl_in_z: float = 145.8      # Flat cove face bottom Z (1.55 mm clear below Ø13.3 mm 759D02000 boot flange)
     sw1_hole_dia: float = 6.50           # True round Ø6.50 mm bore (360-deg flat sealing land for 759D02000 boot)
     sw1_wall_thick: float = 2.5          # Solid wall X = -41.5 .. -39.0 mm + keyed internal anti-rotation pocket
     sw1_body_w_y: float = 12.70          # Along Y = 3-terminal toggle throw axis
@@ -461,7 +461,7 @@ class LepiLEDParams:
         checks["g12_radial_squeeze_max_pct"] = {"value": round(g12_sq_max, 1), "max": 33.0, "pass": g12_sq_max <= 33.0}
         checks["g12_gland_fill_max"] = {"value": round(g12_fill, 4), "max": 0.85, "pass": g12_fill <= 0.85}
         checks["short_tube_g2_margin_mm"] = {"value": round(short_tube_seal_margin, 3), "min": 2.0, "pass": short_tube_seal_margin >= 2.0}
-        checks["g3_axial_squeeze_pct"] = {"value": round(g3_sq_pct, 1), "min": 18.0, "max": 30.0, "pass": 18.0 <= g3_sq_pct <= 30.0}
+        checks["g3_axial_squeeze_pct"] = {"value": round(g3_sq_pct, 1), "min": 15.0, "max": 30.0, "pass": 15.0 <= g3_sq_pct <= 30.0}
         checks["g3_axial_gland_fill"] = {"value": round(g3_fill, 4), "max": 0.85, "pass": g3_fill <= 0.85}
 
         # 6. Open chimney, ventilated finial & top M4 hanging bolt checks

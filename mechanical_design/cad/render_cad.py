@@ -191,7 +191,7 @@ def render_section_annotated(
         _draw_callout(ax, (20.0, p.z_hang_hole), (66.0, p.z_hang_hole - 2.0), "M4 × 50 mm hanging bolt\n+ 2× spools & wire bail")
         _draw_callout(ax, (26.0, p.pcb_z_center + 4.0), (68.0, 232.0), "Driver PCB (36 × 46 mm)\n+X face, captive 15×15 mm pad/shims")
         _draw_callout(ax, (-52.0, p.sw1_z), (-68.0, 214.0), "SW1 toggle + silicone boot\n(-X draining cove + visor)", ha="right")
-        _draw_callout(ax, (18.0, p.z_led_uv), (66.0, 128.0), "8× 20 mm Cu DTP stars\n(2-part thermal epoxy)")
+        _draw_callout(ax, (18.0, p.z_led_uv), (66.0, 128.0), "8× 20 mm Cu DTP stars\n(thermal adhesive bonded)")
         _draw_callout(ax, (20.0, p.z_bot_bolt), (66.0, 52.0), "M4 × 50 mm nosecone bolt\n+ open chimney inlet")
     else:
         _draw_hdim(ax, p.z_plug_top_end + 44.0, -r_core, r_core, f"{p.core_w_nom:.0f} × {p.core_wall:.0f} mm Al core", z_ref0=p.z_core_top, z_ref1=p.z_core_top, text_dz=3.0, va="bottom")
@@ -201,7 +201,7 @@ def render_section_annotated(
         _draw_vdim(ax, 82.0, p.z_glass_bot, p.z_glass_top, f"{p.glass_length:.0f} mm\nXT PMMA", x_ref0=r_shroud, x_ref1=r_shroud, text_dx=3.5, ha="left", fontsize=8.3)
 
         _draw_callout(ax, (28.0, 300.0), (70.0, 296.0), "USB-C power cable\n(2.0 m, routed upward)")
-        _draw_callout(ax, (45.0, p.z_top_base_deck_top), (72.0, 232.0), "88 × 2.5 mm axial face O-ring\n+ 1.4 mm eaves drip kerf")
+        _draw_callout(ax, (45.0, p.z_top_base_deck_top), (72.0, 232.0), f"BS153 ({p.top_oring_id:.2f} × {p.top_oring_cs:.2f} mm) O-ring\n+ 1.4 mm eaves drip kerf")
         _draw_callout(ax, (60.5, 176.0), (76.0, 190.0), "+Y flexible eaves C-clip\n+ zip-tie slot")
         _draw_callout(ax, (66.5, 137.0), (76.0, 146.0), "20 mm drip loop\n+ compressing clamp")
         _draw_callout(ax, (-36.0, 142.0), (-60.0, 224.0), "-Y downward breather vent\n(flat bay-floor patch)", ha="right")
@@ -209,10 +209,9 @@ def render_section_annotated(
         _draw_callout(ax, (-28.0, 16.0), (-58.0, 52.0), "45° tapered nosecone\n(open chimney inlet)", ha="right")
 
     mass_text = (
-        f"Mass Summary\n"
-        f"Total: ~{mass['total_fdm_petg_g']:.0f} g PETG\n"
-        f"       ~{mass['total_fdm_asa_g']:.0f} g ASA\n"
-        f"  Printed parts:   {mass['petg_fdm_62pct_g']:.0f} g\n"
+        f"Mass Summary (White ASA)\n"
+        f"Total: ~{mass['total_fdm_asa_g']:.0f} g White ASA\n"
+        f"  Printed ASA:     {mass['asa_fdm_62pct_g']:.0f} g\n"
         f"  300 mm Al core:  {mass['al_core_2mm_g']:.0f} g\n"
         f"  XT PMMA shroud:  {mass['uvt_pmma_shroud_g']:.0f} g\n"
         f"  LEDs / PCB / HW: {mass['elec_stars_hardware_g']:.0f} g\n"
