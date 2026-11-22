@@ -10,7 +10,7 @@
 ![Weight](https://img.shields.io/badge/Weight-~588g%20ASA%20%7C%20~632g%20PETG-teal?style=flat-square)
 ![Shroud](https://img.shields.io/badge/Shroud-Extruded%20XT%20PMMA-informational?style=flat-square)
 ![KiCad](https://img.shields.io/badge/KiCad%2010-0%20ERC%20%7C%200%20DRC%20%7C%20HASL-success?style=flat-square)
-![BOM](https://img.shields.io/badge/1--Off%20UK%20Parts-%C2%A3107%20ex--VAT%20(%C2%A397%20Net)-orange?style=flat-square)
+![BOM](https://img.shields.io/badge/1--Off%20UK%20Parts-%C2%A3105%20ex--VAT%20(%C2%A395%20Net)-orange?style=flat-square)
 
 [Features](#key-features) · [Assembly](#whole-lamp-assembly) · [Driver PCB](#driver-pcb) · [Schematic](#circuit-schematic) · [Differences from Brehm (2017)](#differences-from-brehm-2017) · [Verification](#verification-summary) · [Build & Docs](#build--documentation)
 
@@ -101,7 +101,7 @@ Run `python3 verify_all.py --check` to verify all gates, SHA-256 freshness hashe
 | **Driver PCB & Gerbers** | KiCad 10 ERC, DRC (`--refill-zones --schematic-parity --severity-all`), RS-274X Gerber M3 NPTH/DNP audit | **0 ERC, 0 DRC, 0 parity, 0 via-in-pad, 0 M3 NPTH copper (`F_Cu >= 3.61 mm`) / 0 DNP paste** | [driver_pcb.kicad_pcb](pcb_design/driver_pcb/driver_pcb.kicad_pcb) |
 | **Thermal (8-Node SSOT)** | Open `26 mm` unobstructed chimney (`30 × 30 × 2 mm` clear-anodized Al `ε=0.82`, `K=3.0`, captive `15×15 mm` PCB bridge `R=8.5 K/W`, `25%` infill) | **16/16 `15–35 °C` Real-WPE (PETG + ASA + `LM393`) PASS (`T_j,UV = 48.9 / 56.4 °C` nom; `T_PCB = 42.8 / 50.3 °C` nom, `<= 56.6 °C` at `30 °C` WC, `<= 61.3 °C` at `35 °C` WC)** | [thermal_summary.json](mechanical_design/thermal/thermal_summary.json) |
 | **Mechanical CAD** | 55 param checks, 6 print-ready Z=0 watertight STLs, 7 ray-cast gates, 124 kinematic & 240 B-Rep pairs | **All PASS** (`0` collisions incl. 4 captive M3 hex nuts, thermal bridge & upward ear CSK sweep, `0` roof/bell/collar breaches) | [cad_verification.json](mechanical_design/cad/cad_verification.json) |
-| **Master BOM & Docs** | 1:1 parity across `72` RefDes, `54` PCBA (`41` JLC + `11` DIY + `2` DNP), `20` `MECH-*`, `Datasheet_Ref` files, drill coordinates | **PASS** (`£107.30` ex-VAT / `£128.76` inc-VAT all-new; `£97.39` ex-VAT / `£116.87` inc-VAT net with owned M3 HW & pad/shims) | [bom.csv](bom/bom.csv) |
+| **Master BOM & Docs** | 1:1 parity across `72` RefDes, `54` PCBA (`41` JLC + `11` DIY + `2` DNP), `20` `MECH-*`, `Datasheet_Ref` files, drill coordinates | **PASS** (`£104.87` ex-VAT / `£125.84` inc-VAT all-new; `£94.96` ex-VAT / `£113.95` inc-VAT net with owned M3 HW & pad/shims) | [bom.csv](bom/bom.csv) |
 
 <details>
 <summary><b>Additional Visuals — YZ Section, Thermal Comparison &amp; Enclosure Parts</b></summary>
