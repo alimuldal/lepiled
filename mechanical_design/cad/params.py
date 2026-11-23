@@ -88,12 +88,12 @@ class LepiLEDParams:
     pcb_l: float = 46.0                  # Along global Z (Z = 174.5 .. 220.5 mm, center = 197.5 mm)
     pcb_thick: float = 1.6
     pcb_corner_r: float = 2.0
-    pcb_x_bcu: float = 20.9              # B.Cu face (5.90 mm nom / 5.70 mm WC from anodized Al core; 1.65/1.30 mm nut front lip)
-    pcb_z_center: float = 197.5          # Bottom edge Z = 174.5 (above deck 171.0 -> open-air J1 mating), top Z = 220.5
+    pcb_x_bcu: float = 20.9              # B.Cu face (5.90 mm nom / 5.70 mm WC from bare Al core; 1.65/1.30 mm nut front lip)
+    pcb_z_center: float = 201.8          # Bottom edge Z = 178.8 (J1 mouth Z = 175.62 -> clears 24.4 mm StarTech 90-deg plug + full 6 mm mating stroke!)
     pcb_smd_max_h: float = 4.5           # L1/L2 SRN6045 outward along +X
     pcb_jst_mated_h: float = 9.8         # J2..J4 JST-XH mated outward along +X (X = 22.5 .. 32.3 mm)
     pcb_jst_pin_protrude: float = 1.8    # TH pins inward along -X behind B.Cu (X = 19.1 .. 20.9 -> 2.05 mm clear of baffle)
-    pcb_hole_y: float = 14.0             # H1..H4 at Y = ±14.0 mm, Z = pcb_z_center ± 19.0 mm (178.5 & 216.5 mm)
+    pcb_hole_y: float = 14.0             # H1..H4 at Y = ±14.0 mm, Z = pcb_z_center ± 19.0 mm (182.8 & 220.8 mm)
     pcb_hole_z: float = 19.0
     pcb_hole_drill: float = 3.2          # M3 NPTH clearance drill on ordered board
     pcb_hole_keepout: float = 6.2
@@ -102,28 +102,28 @@ class LepiLEDParams:
     pcb_nut_af: float = 5.5              # Standard DIN 934 M3 hex nut across flats (pocket height 5.95 mm for ASA clearance)
     pcb_nut_thick: float = 2.4           # Standard DIN 934 M3 hex nut thickness (pocket width 2.70 mm at X = 16.55..19.25)
     pcb_thermal_win_w: float = 15.6      # Captive chute width along ±Y for 15 x 15 x 0.5 mm brass shims + 1 mm silicone pads
-    pcb_thermal_win_z_bot: float = 199.0 # Captive chute bottom shelf (3.0 mm above J4 pins, centered under U1/U2 at Z=207.4)
-    pcb_thermal_win_h: float = 15.4      # Straight chute side walls Z = 199.0 .. 214.4 mm + 45-deg roof to Z = 222.2 mm
+    pcb_thermal_win_z_bot: float = 203.3 # Captive chute bottom shelf (3.0 mm above J4 pins, centered under U1/U2 at Z=211.7)
+    pcb_thermal_win_h: float = 15.4      # Straight chute side walls Z = 203.3 .. 218.7 mm + 45-deg roof to Z = 226.5 mm
     core_sleeve_wall: float = 1.5        # Solid 1.5 mm insulating barrier at X = 15.55 .. 17.05 mm behind J1 & J4 TH pins
 
-    # 6. Standard Left/Right 90-deg USB-C Plug & Fixed Compressing Split Cable Clamp (+Y port)
-    usbc_j1_overhang_mm: float = 3.18    # GCT USB4085 mouth below bottom PCB edge (Z_mouth = 171.32 mm)
+    # 6. StarTech R2CCR-2M-USB-CABLE Left/Right 90-deg USB-C Plug (Ø2.8 mm TPE) & Compressing Split Clamp (+Y port)
+    usbc_j1_overhang_mm: float = 3.18    # GCT USB4085 mouth below bottom PCB edge (Z_mouth = 175.62 mm)
     usbc_x_offset_from_fcu: float = 1.88 # J1 center X = 22.5 + 1.88 = +24.38 mm
     usbc_mating_depth_mm: float = 4.55
     usbc_exposed_tongue_mm: float = 2.10 # Real GCT USB4085 exposed plug tongue below J1 mouth
-    usbc_plug_90_len: float = 18.0       # Realistic 18.0 mm commercial left/right 90-deg plug below J1 mouth
+    usbc_plug_90_len: float = 24.4       # Measured StarTech R2CCR-2M-USB-CABLE: 22.3 mm molded elbow + 2.10 mm exposed tongue
     usbc_plug_90_thick_x: float = 8.5    # Along X
     usbc_plug_90_w_y: float = 13.2       # Along Y (exits along +Y)
-    usbc_strain_relief_h: float = 7.0    # Molded boot extending along +Y
+    usbc_strain_relief_h: float = 14.4   # Measured StarTech Ø5.0 mm ribbed strain relief extending along +Y
     clamp_z: float = 156.5               # Aligned with 90-deg plug cable exit inside Z = 145.0 .. 171.0 ring
-    clamp_port_w: float = 16.0           # Along X: passes intact straight charger-end USB-C plug outward cleanly
-    clamp_port_h: float = 18.0           # 45-deg pitched gable roof Z = 148.0 .. 166.0 mm (1.86 mm clamp cheek wall, 3.0 mm under G3)
+    clamp_port_w: float = 16.0           # Along X: passes intact 11.8 mm straight charger-end USB-C plug outward cleanly
+    clamp_port_h: float = 18.0           # 45-deg pitched gable roof Z = 148.0 .. 166.0 mm (2.66 mm clamp cheek wall, 3.0 mm under G3)
     clamp_bolt_dx: float = 13.0          # 2x M3 x 12 pan-head screws in X-slotted flange into blind M3x5 inserts
     clamp_standoff_y: float = 1.2        # 1.2 mm axial standoff so 45-deg wedges actually drive radial compression
     clamp_flange_t: float = 6.0          # Outer face at Y = 47.0 + 1.2 + 6.0 = 54.2 mm (4.8 mm inside R = 59 eaves)
-    clamp_grommet_len: float = 10.2      # Full cylindrical chamber fitting 10.0 mm slit Ø8 x Ø4 silicone sleeve
-    clamp_grommet_id: float = 9.0        # 77.5% incompressible silicone fill around Ø4.5 mm cable (closes cleanly under wedge!)
-    clamp_cable_dia: float = 4.5
+    clamp_grommet_len: float = 10.2      # Full cylindrical chamber fitting 10.0 mm slit-trimmed Ø8 x Ø4 silicone sleeve (Ø6.8 x Ø2.8 wrapped)
+    clamp_grommet_id: float = 7.4        # 80.2% incompressible silicone fill around Ø2.8 mm TPE cable (closes cleanly to 6.9 x 7.4 under wedge!)
+    clamp_cable_dia: float = 3.0         # Ø3.1 mm clamp exit bore around measured Ø2.8 mm StarTech TPE cable jacket
 
     # 7. Side-Mounted Recessed SW1 Toggle Switch (-X draining cove, sheltered inside -X visor brow)
     sw1_z: float = 154.0                 # 1.20 mm top & 1.55 mm bottom boot margin while preserving 1.45 mm wall beneath 2.20 mm G3
@@ -409,10 +409,12 @@ class LepiLEDParams:
         eave_ins_outer = 0.5 * self.cap_top_eaves_od - (self.top_base_ear_r + 0.5 * self.m3_insert_pilot_dia)  # 6.0 mm
         ear_csk_rim = self.top_base_ear_boss_r - 3.25                             # 2.25 mm
 
-        clamp_sil_vol = math.pi * (4.0 ** 2 - 2.0 ** 2) * 10.0  # 10.0 mm of Ø8 x Ø4 mm silicone tubing = 377.0 mm^3
-        clamp_annular_vol = math.pi * ((0.5 * self.clamp_grommet_id) ** 2 - (0.5 * self.clamp_cable_dia) ** 2) * self.clamp_grommet_len
+        # 10.0 mm slit-trimmed Ø8 x Ø4 mm (2.0 mm wall) silicone tubing wrapped around Ø2.8 mm cable -> Ø6.8 x Ø2.8 mm sleeve (301.6 mm^3)
+        r_cab_nom = 1.40  # Measured Ø2.8 mm StarTech TPE cable jacket
+        clamp_sil_vol = math.pi * ((r_cab_nom + 2.0) ** 2 - r_cab_nom ** 2) * 10.0
+        clamp_annular_vol = math.pi * ((0.5 * self.clamp_grommet_id) ** 2 - r_cab_nom ** 2) * self.clamp_grommet_len
         clamp_grommet_fill = clamp_sil_vol / clamp_annular_vol
-        checks["usbc_plug_18mm_above_floor_mm"] = {"value": round(plug_bot_z - port_floor_z, 3), "min": 6.0, "pass": (plug_bot_z - port_floor_z) >= 6.0}
+        checks["usbc_plug_above_floor_mm"] = {"value": round(plug_bot_z - port_floor_z, 3), "min": 6.0, "pass": (plug_bot_z - port_floor_z) >= 6.0}
         checks["clamp_insert_blind_wall_mm"] = {"value": round(clamp_blind_wall, 3), "min": 2.5, "pass": clamp_blind_wall >= 2.5}
         checks["clamp_screw_closed_bottom_clr_mm"] = {"value": round(clamp_screw_closed_clr, 3), "min": 0.8, "pass": clamp_screw_closed_clr >= 0.8}
         checks["clamp_standoff_travel_mm"] = {"value": round(self.clamp_standoff_y, 3), "min": 1.0, "pass": self.clamp_standoff_y >= 1.0}

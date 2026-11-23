@@ -1,15 +1,15 @@
 {
   "input_hashes": {
     "render_cad.py": "57f74aae2fa7777c",
-    "cad_params.json": "02327cbf078adada",
-    "cad_verification.json": "bea9d0e94267ba3f"
+    "cad_params.json": "f53da48e595ec4f1",
+    "cad_verification.json": "ea4038494545c58e"
   },
   "output_figure_hashes": {
-    "assembly_iso.png": "fb72ad8322d1e873",
-    "assembly_section_xz.png": "0351149fc498dbd7",
-    "assembly_section_yz.png": "0c51ebce2eaa0f20",
+    "assembly_iso.png": "f3c96c2a251f2b22",
+    "assembly_section_xz.png": "8b58cb829c75778a",
+    "assembly_section_yz.png": "7829b1f4a0401e53",
     "cap_bot_detail.png": "bf00c9cd5a13511f",
-    "top_base_detail.png": "319e364e51a2e379",
-    "cap_top_detail.png": "1ef5d6288fac612b"
+    "top_base_detail.png": "12b1302c3d19cb19",
+    "cap_top_detail.png": "2900307bfd8746d0"
   }
 }

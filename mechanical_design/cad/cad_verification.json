@@ -1,7 +1,7 @@
 {
   "revision": "Rev 6.0 (Open-Chimney Funnel Lantern: Screened 30x30x2 mm Al Chimney, Thermal-Epoxy Stars, +X Vertical PCB, Axial Bell O-Ring & Compressing Cable Clamp)",
   "input_hashes": {
-    "params.py": "9eb0fd78a049de57",
+    "params.py": "0c9bab3fcb608587",
     "driver_pcb.kicad_pcb": "a7f1cd15daf95a27"
   },
   "params": {
@@ -60,7 +60,7 @@
     "pcb_thick": 1.6,
     "pcb_corner_r": 2.0,
     "pcb_x_bcu": 20.9,
-    "pcb_z_center": 197.5,
+    "pcb_z_center": 201.8,
     "pcb_smd_max_h": 4.5,
     "pcb_jst_mated_h": 9.8,
     "pcb_jst_pin_protrude": 1.8,
@@ -73,17 +73,17 @@
     "pcb_nut_af": 5.5,
     "pcb_nut_thick": 2.4,
     "pcb_thermal_win_w": 15.6,
-    "pcb_thermal_win_z_bot": 199.0,
+    "pcb_thermal_win_z_bot": 203.3,
     "pcb_thermal_win_h": 15.4,
     "core_sleeve_wall": 1.5,
     "usbc_j1_overhang_mm": 3.18,
     "usbc_x_offset_from_fcu": 1.88,
     "usbc_mating_depth_mm": 4.55,
     "usbc_exposed_tongue_mm": 2.1,
-    "usbc_plug_90_len": 18.0,
+    "usbc_plug_90_len": 24.4,
     "usbc_plug_90_thick_x": 8.5,
     "usbc_plug_90_w_y": 13.2,
-    "usbc_strain_relief_h": 7.0,
+    "usbc_strain_relief_h": 14.4,
     "clamp_z": 156.5,
     "clamp_port_w": 16.0,
     "clamp_port_h": 18.0,
@@ -91,8 +91,8 @@
     "clamp_standoff_y": 1.2,
     "clamp_flange_t": 6.0,
     "clamp_grommet_len": 10.2,
-    "clamp_grommet_id": 9.0,
-    "clamp_cable_dia": 4.5,
+    "clamp_grommet_id": 7.4,
+    "clamp_cable_dia": 3.0,
     "sw1_z": 154.0,
     "sw1_recess_x": 5.5,
     "sw1_cove_w": 32.0,
@@ -158,11 +158,11 @@
       "z_top_base_deck_top": 171.0,
       "pcb_x_bcu": 20.9,
       "pcb_x_fcu": 22.5,
-      "z_pcb_bot": 174.5,
-      "z_pcb_top": 220.5,
-      "z_j1_mouth": 171.32,
+      "z_pcb_bot": 178.8,
+      "z_pcb_top": 224.8,
+      "z_j1_mouth": 175.62,
       "x_j1_center": 24.38,
-      "z_d12": 190.9,
+      "z_d12": 195.2,
       "z_cap_top_bot": 171.0,
       "z_cap_top_eaves_top": 181.0,
       "z_cap_top_collar_bot": 247.0,
@@ -289,17 +289,17 @@
         "pass": true
       },
       "jst_below_ceil_cone_mm": {
-        "value": 8.396,
+        "value": 4.096,
         "min": 4.0,
         "pass": true
       },
       "pcb_top_below_ceil_cone_mm": {
-        "value": 12.186,
+        "value": 7.886,
         "min": 6.0,
         "pass": true
       },
-      "usbc_plug_18mm_above_floor_mm": {
-        "value": 8.32,
+      "usbc_plug_above_floor_mm": {
+        "value": 6.22,
         "min": 6.0,
         "pass": true
       },
@@ -324,7 +324,7 @@
         "pass": true
       },
       "clamp_grommet_silicone_fill_max": {
-        "value": 0.7746,
+        "value": 0.8024,
         "max": 0.85,
         "pass": true
       },
@@ -494,8 +494,8 @@
     "mech_top_base": {
       "step_file": "mech_top_base.step",
       "stl_file": "mech_top_base.stl",
-      "brep_volume_mm3": 126626.016,
-      "stl_volume_mm3": 126620.391,
+      "brep_volume_mm3": 127381.853,
+      "stl_volume_mm3": 127376.227,
       "is_watertight": true,
       "is_winding_consistent": true,
       "is_volume": true,
@@ -506,14 +506,14 @@
     "mech_cap_top": {
       "step_file": "mech_cap_top.step",
       "stl_file": "mech_cap_top.stl",
-      "brep_volume_mm3": 152320.981,
-      "stl_volume_mm3": 152305.402,
+      "brep_volume_mm3": 152330.043,
+      "stl_volume_mm3": 152314.41,
       "is_watertight": true,
       "is_winding_consistent": true,
       "is_volume": true,
       "euler_number": -2,
       "genus": 2,
-      "triangles": 189284
+      "triangles": 189254
     },
     "mech_plug_top": {
       "step_file": "mech_plug_top.step",
@@ -530,14 +530,14 @@
     "mech_cable_clamp": {
       "step_file": "mech_cable_clamp.step",
       "stl_file": "mech_cable_clamp.stl",
-      "brep_volume_mm3": 5056.091,
-      "stl_volume_mm3": 5056.127,
+      "brep_volume_mm3": 5317.262,
+      "stl_volume_mm3": 5317.282,
       "is_watertight": true,
       "is_winding_consistent": true,
       "is_volume": true,
       "euler_number": 0,
       "genus": 1,
-      "triangles": 14788
+      "triangles": 15392
     },
     "mech_drill_jig": {
       "step_file": "mech_drill_jig.step",
@@ -595,7 +595,7 @@
       "off_bed_overhang_gt46_faces": 0,
       "off_bed_overhang_gt46_area_mm2": 0.0,
       "off_bed_overhang_gt46_outside_allowed_mm2": 0.0,
-      "max_off_bed_overhang_deg": 45.57,
+      "max_off_bed_overhang_deg": 45.53,
       "pass": true
     },
     "mech_drill_jig": {
@@ -639,7 +639,7 @@
       "pass": true
     },
     "cap_top_d12_dimple_normal_wall_mm": {
-      "normal_wall_mm": 0.901,
+      "normal_wall_mm": 0.9,
       "target_range_mm": [
         0.8,
         1.15
@@ -688,7 +688,7 @@
       "max_intersection_vol_mm3": 0.0,
       "pass": true
     },
-    "usbc_18mm_90_plug_j1_mating_sweep": {
+    "usbc_90_plug_j1_mating_sweep": {
       "waypoints_tested": 12,
       "max_intersection_vol_mm3": 0.0,
       "pass": true
@@ -713,17 +713,17 @@
     "all_zero": true
   },
   "mass_budget_g": {
-    "printed_lamp_volume_cm3": 360.6,
+    "printed_lamp_volume_cm3": 361.6,
     "cap_bot_volume_cm3": 60.1,
-    "top_base_volume_cm3": 126.6,
+    "top_base_volume_cm3": 127.4,
     "cap_top_volume_cm3": 152.3,
-    "asa_fdm_62pct_g": 239.2,
-    "petg_fdm_62pct_g": 283.9,
+    "asa_fdm_62pct_g": 239.9,
+    "petg_fdm_62pct_g": 284.7,
     "al_core_2mm_g": 181.1,
     "uvt_pmma_shroud_g": 72.9,
     "elec_stars_hardware_g": 94.0,
-    "total_fdm_asa_g": 587.2,
-    "total_fdm_petg_g": 631.9
+    "total_fdm_asa_g": 587.9,
+    "total_fdm_petg_g": 632.7
   },
   "summary": {
     "all_param_checks_pass": true,

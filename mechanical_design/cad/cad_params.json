@@ -54,7 +54,7 @@
   "pcb_thick": 1.6,
   "pcb_corner_r": 2.0,
   "pcb_x_bcu": 20.9,
-  "pcb_z_center": 197.5,
+  "pcb_z_center": 201.8,
   "pcb_smd_max_h": 4.5,
   "pcb_jst_mated_h": 9.8,
   "pcb_jst_pin_protrude": 1.8,
@@ -67,17 +67,17 @@
   "pcb_nut_af": 5.5,
   "pcb_nut_thick": 2.4,
   "pcb_thermal_win_w": 15.6,
-  "pcb_thermal_win_z_bot": 199.0,
+  "pcb_thermal_win_z_bot": 203.3,
   "pcb_thermal_win_h": 15.4,
   "core_sleeve_wall": 1.5,
   "usbc_j1_overhang_mm": 3.18,
   "usbc_x_offset_from_fcu": 1.88,
   "usbc_mating_depth_mm": 4.55,
   "usbc_exposed_tongue_mm": 2.1,
-  "usbc_plug_90_len": 18.0,
+  "usbc_plug_90_len": 24.4,
   "usbc_plug_90_thick_x": 8.5,
   "usbc_plug_90_w_y": 13.2,
-  "usbc_strain_relief_h": 7.0,
+  "usbc_strain_relief_h": 14.4,
   "clamp_z": 156.5,
   "clamp_port_w": 16.0,
   "clamp_port_h": 18.0,
@@ -85,8 +85,8 @@
   "clamp_standoff_y": 1.2,
   "clamp_flange_t": 6.0,
   "clamp_grommet_len": 10.2,
-  "clamp_grommet_id": 9.0,
-  "clamp_cable_dia": 4.5,
+  "clamp_grommet_id": 7.4,
+  "clamp_cable_dia": 3.0,
   "sw1_z": 154.0,
   "sw1_recess_x": 5.5,
   "sw1_cove_w": 32.0,
@@ -152,11 +152,11 @@
     "z_top_base_deck_top": 171.0,
     "pcb_x_bcu": 20.9,
     "pcb_x_fcu": 22.5,
-    "z_pcb_bot": 174.5,
-    "z_pcb_top": 220.5,
-    "z_j1_mouth": 171.32,
+    "z_pcb_bot": 178.8,
+    "z_pcb_top": 224.8,
+    "z_j1_mouth": 175.62,
     "x_j1_center": 24.38,
-    "z_d12": 190.9,
+    "z_d12": 195.2,
     "z_cap_top_bot": 171.0,
     "z_cap_top_eaves_top": 181.0,
     "z_cap_top_collar_bot": 247.0,
@@ -283,17 +283,17 @@
       "pass": true
     },
     "jst_below_ceil_cone_mm": {
-      "value": 8.396,
+      "value": 4.096,
       "min": 4.0,
       "pass": true
     },
     "pcb_top_below_ceil_cone_mm": {
-      "value": 12.186,
+      "value": 7.886,
       "min": 6.0,
       "pass": true
     },
-    "usbc_plug_18mm_above_floor_mm": {
-      "value": 8.32,
+    "usbc_plug_above_floor_mm": {
+      "value": 6.22,
       "min": 6.0,
       "pass": true
     },
@@ -318,7 +318,7 @@
       "pass": true
     },
     "clamp_grommet_silicone_fill_max": {
-      "value": 0.7746,
+      "value": 0.8024,
       "max": 0.85,
       "pass": true
     },

@@ -291,15 +291,16 @@ def build_top_base(p: LepiLEDParams) -> bd.Part:
     part = part.fuse(baffle)
 
     # Twin 3.0 mm-thick side buttress webs at |Y| = 15.6 .. 18.6 mm (X = 5.5..15.55 mm; clears 31.1 core, ±Y slots, cable & nut entry!)
+    z_but_top = p.pcb_z_center + p.pcb_hole_z - 4.5  # 216.3 (sits cleanly beneath upper M3 nut pocket!)
     for sy in (-1.0, 1.0):
         with bd.BuildSketch(bd.Plane.XZ) as sk_but:
             with bd.BuildLine():
                 bd.Polyline([
                     (5.5, z_port_bot),
                     (x_core_wall + 0.5, z_port_bot),
-                    (x_core_wall + 0.5, 212.5),
-                    (x_core_wall, 212.5),
-                    (5.5, 202.0),  # 45-deg top taper -> 0 overhang, leaves M3 nut entry (X>=16.55) 100% open!
+                    (x_core_wall + 0.5, z_but_top),
+                    (x_core_wall, z_but_top),
+                    (5.5, z_but_top - (x_core_wall - 5.5)),  # 45-deg top taper -> 0 overhang, leaves M3 nut entry (X>=16.55) 100% open!
                     (5.5, z_port_bot),
                 ])
             bd.make_face()
@@ -548,23 +549,23 @@ def build_cap_top(p: LepiLEDParams) -> bd.Part:
 
     part = c_eaves.fuse(c_taper).fuse(c_bell).fuse(c_roof).fuse(c_collar).fuse(c_col_bev)
 
-    # +Y Elastic ASA-Safe Snap-In Cable C-Clip (t = 1.70 mm = 4 unbroken walls, true 3.63 mm snap throat retaining Ø3.8-4.5 mm cables!)
-    y_clip = 61.6
+    # +Y Elastic ASA-Safe Snap-In Cable C-Clip (t = 1.70 mm = 4 unbroken walls, true 2.38 mm snap throat retaining Ø2.8 mm StarTech cable!)
+    y_clip = 60.90
     x_clip = 2.5
     with bd.BuildSketch(bd.Plane.XY.offset(z_bot)) as sk_croot:
-        bd.RectangleRounded(11.0, 10.0, radius=2.5)
-    clip_root = bd.extrude(sk_croot.sketch, p.cap_top_eaves_h).translate((-6.0, 61.0, 0.0))
-    # Outer elastic cantilever arm (X = -3.5 .. +6.5, Y = 64.0 .. 65.7 -> full 1.70 mm thick, rounded R0.85 tip at X = +6.5!)
+        bd.RectangleRounded(11.0, 9.2, radius=2.5)
+    clip_root = bd.extrude(sk_croot.sketch, p.cap_top_eaves_h).translate((-6.0, 60.4, 0.0))
+    # Outer elastic cantilever arm (X = -3.5 .. +6.5, Y = 62.55 .. 64.25 -> full 1.70 mm thick, rounded R0.85 tip at X = +6.5!)
     with bd.BuildSketch(bd.Plane.XY.offset(z_bot)) as sk_carm:
         bd.SlotOverall(11.7, 1.70, rotation=0.0)
-    clip_arm = bd.extrude(sk_carm.sketch, p.cap_top_eaves_h).translate((1.5, 64.85, 0.0))
-    # Gentle rounded retention nub on inner face of arm tip at (X = +5.2, Y = 63.25) -> 3.63 mm true throat to eaves wall (Y = 58.77)!
-    clip_nub = bd.Cylinder(0.85, p.cap_top_eaves_h, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((5.2, 63.25, z_bot))
+    clip_arm = bd.extrude(sk_carm.sketch, p.cap_top_eaves_h).translate((1.5, 63.40, 0.0))
+    # Gentle rounded retention nub on inner face of arm tip at (X = +5.2, Y = 62.00) -> 2.38 mm true throat to eaves wall (Y = 58.77)!
+    clip_nub = bd.Cylinder(0.85, p.cap_top_eaves_h, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((5.2, 62.00, z_bot))
     part = part.fuse(clip_root).fuse(clip_arm).fuse(clip_nub)
-    # Clean Ø4.8 mm cable pocket at (X = +2.5, Y = 61.6 -> Y_max=64.0 preserves full 1.70 mm arm!) + inner relief slot
-    clip_bore = bd.Cylinder(2.4, p.cap_top_eaves_h + 2.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((x_clip, y_clip, z_bot - 1.0))
-    clip_relief = bd.Box(7.0, 4.6, p.cap_top_eaves_h + 2.0, align=(bd.Align.MIN, bd.Align.CENTER, bd.Align.MIN)).translate((-3.5, 61.7, z_bot - 1.0))
-    zip_slot = bd.Box(2.0, 3.8, p.cap_top_eaves_h + 2.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((-7.5, 62.0, z_bot - 1.0))
+    # Clean Ø3.3 mm cable pocket at (X = +2.5, Y = 60.90 -> Y_max=62.55 preserves full 1.70 mm arm!) + inner relief slot + zip-tie slot
+    clip_bore = bd.Cylinder(1.65, p.cap_top_eaves_h + 2.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((x_clip, y_clip, z_bot - 1.0))
+    clip_relief = bd.Box(7.0, 3.2, p.cap_top_eaves_h + 2.0, align=(bd.Align.MIN, bd.Align.CENTER, bd.Align.MIN)).translate((-3.5, 60.95, z_bot - 1.0))
+    zip_slot = bd.Box(2.0, 3.8, p.cap_top_eaves_h + 2.0, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((-7.5, 61.5, z_bot - 1.0))
     part = part - clip_bore - clip_relief - zip_slot
 
     # -X Matching Contoured Rain-Hood Visor Brow (X = -63.5 mm, +4.5 mm past R = 59.0 eaves -> shelters SW1 boot)
@@ -953,10 +954,10 @@ def build_drill_jig(p: LepiLEDParams) -> bd.Part:
 
 def build_usbc_cable(p: LepiLEDParams) -> bd.Part:
     """
-    Model BOTH internal curved Ø4.4 mm USB-C cable (from +X 90-deg plug -> +Y cable clamp)
+    Model BOTH internal curved Ø2.8 mm StarTech USB-C cable (from +X 90-deg plug -> +Y cable clamp)
     AND external gravity drip loop -> flexible +Y eaves C-clip -> upward routing!
     """
-    r_cab = 2.2
+    r_cab = 1.40
     z_c = p.clamp_z  # 156.5
 
     # 1. Internal horizontal S-curve in Z = clamp_z plane from plug strain-relief tip -> clamp inner mouth (0.0, 40.0)
@@ -989,8 +990,8 @@ def build_usbc_cable(p: LepiLEDParams) -> bd.Part:
     p2_mid = (y_ex0 + r1 + r2, z_loop - r2)
     p3 = (y_ex0 + r1 + 2.0 * r2, z_loop)  # (72.4, 142.5)
 
-    # Smooth S-curve up into elastic +Y eaves C-clip (X = 2.5, Y = 61.6, Z = 171 .. 181 mm)
-    y_clip = 61.6
+    # Smooth S-curve up into elastic +Y eaves C-clip (X = 2.5, Y = 60.90, Z = 171 .. 181 mm)
+    y_clip = 60.90
     z_clip_bot = p.z_cap_top_bot        # 171.0
     z_clip_top = p.z_cap_top_eaves_top  # 181.0
     dy_s = p3[0] - y_clip
@@ -1214,15 +1215,15 @@ def build_assembly_parts(p: LepiLEDParams, core_w_override: float | None = None,
                           align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).rotate(bd.Axis.Y, 90.0).translate((x_sw0 - 0.05, 0.0, p.sw1_z))
     sw1_assy = bd.Compound([sw_body, sw_lugs, sw_bush, sw_boot])
 
-    # Realistic 18.0 mm commercial left/right 90-deg USB-C plug + 2.10 mm exposed tongue + 7.0 mm strain relief pointing +Y!
+    # Measured StarTech R2CCR-2M-USB-CABLE left/right 90-deg USB-C plug (22.3 mm body + 2.10 mm exposed tongue = 24.4 mm) + Ø5.0 x 14.4 mm ribbed strain relief pointing +Y!
     z_plug_tip = p.z_j1_mouth + p.usbc_mating_depth_mm
     plug_barrel = bd.Box(2.5, 8.3, p.usbc_mating_depth_mm + p.usbc_exposed_tongue_mm,
                          align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((p.x_j1_center, 0.0, z_plug_tip))
     z_body_top = p.z_j1_mouth - p.usbc_exposed_tongue_mm
     plug_body = bd.Box(p.usbc_plug_90_thick_x, p.usbc_plug_90_w_y, p.usbc_plug_90_len - p.usbc_exposed_tongue_mm,
                        align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).translate((p.x_j1_center, 0.0, z_body_top))
-    plug_strain = bd.Cone(3.4, 2.3, p.usbc_strain_relief_h,
-                          align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).rotate(bd.Axis.X, -90.0).translate((p.x_j1_center, 0.5 * p.usbc_plug_90_w_y, p.clamp_z))
+    plug_strain = bd.Cylinder(2.5, p.usbc_strain_relief_h,
+                              align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).rotate(bd.Axis.X, -90.0).translate((p.x_j1_center, 0.5 * p.usbc_plug_90_w_y, p.clamp_z))
     usbc_plug_assy = plug_barrel.fuse(plug_body).fuse(plug_strain)
 
     # Top bent steel coat-hanger wire bail (Ø2.3 mm wire, ~Ø8 mm closed eyes riding on both ±X flanged spools on M4 bolt)
@@ -1411,14 +1412,15 @@ def check_shell_raycast_breaches(out_dir: Path, p: LepiLEDParams) -> dict[str, d
         "pass": min(bh_walls) >= 1.80,
     }
 
-    # 7. Verify MECH-CAP-TOP D12 translucent dimple skin directly opposite D12 (Z = 190.9 mm -> 0.80..1.10 mm normal!)
+    # 7. Verify MECH-CAP-TOP D12 translucent dimple skin directly opposite D12 (0.80..1.15 mm normal!)
     ang_rad = math.atan2(p.d12_local_bx, math.sqrt((0.5 * p.cap_top_bore_id) ** 2 - p.d12_local_bx ** 2))
     d12_dir = np.array([[math.cos(ang_rad), math.sin(ang_rad), 0.0]])
     d12_orig = np.array([[40.0 * math.cos(ang_rad), 40.0 * math.sin(ang_rad), p.z_d12]])
     d12_locs, _ = _raycast_mesh_numpy(m_top, d12_orig, d12_dir)
     d12_rs = sorted(math.hypot(float(pt[0]), float(pt[1])) for pt in d12_locs)
     d12_rad_wall = (d12_rs[-1] - d12_rs[0]) if len(d12_rs) >= 2 else 99.0
-    d12_norm_wall = round(d12_rad_wall / math.sqrt(2.0), 3)  # Normal to 45-deg eaves taper at Z = 190.9 mm
+    z_tap_top = p.z_cap_top_eaves_top + p.cap_top_eaves_taper_h
+    d12_norm_wall = round(d12_rad_wall / math.sqrt(2.0), 3) if p.z_d12 <= z_tap_top else round(d12_rad_wall, 3)
     results["cap_top_d12_dimple_normal_wall_mm"] = {
         "normal_wall_mm": d12_norm_wall,
         "target_range_mm": [0.80, 1.15],
@@ -1658,7 +1660,7 @@ def check_kinematic_insertion(assy: dict[str, bd.Shape], p: LepiLEDParams) -> di
         "cap_top_bell_straight_down_closure": {"waypoints_tested": 20, "max_intersection_vol_mm3": round(bell_max_vol, 6), "pass": bell_max_vol < 1e-4},
         "jst_xh_plug_wire_slot_sweep": {"waypoints_tested": 30, "max_intersection_vol_mm3": round(jst_max_vol, 6), "pass": jst_max_vol < 1e-4},
         "usbc_straight_plug_outward_port_pass": {"waypoints_tested": 15, "max_intersection_vol_mm3": round(port_max_vol, 6), "pass": port_max_vol < 1e-4},
-        "usbc_18mm_90_plug_j1_mating_sweep": {"waypoints_tested": 12, "max_intersection_vol_mm3": round(j1_mate_vol, 6), "pass": j1_mate_vol < 1e-4},
+        "usbc_90_plug_j1_mating_sweep": {"waypoints_tested": 12, "max_intersection_vol_mm3": round(j1_mate_vol, 6), "pass": j1_mate_vol < 1e-4},
         "top_base_ear_m3_csk_upward_insertion": {"waypoints_tested": 32, "max_intersection_vol_mm3": round(ear_ins_vol, 6), "pass": ear_ins_vol < 1e-4},
         "all_zero": (
             (sw_max_vol < 1e-4) and (bell_max_vol < 1e-4) and (jst_max_vol < 1e-4)
