@@ -146,10 +146,14 @@ def build_cap_bot(p: LepiLEDParams) -> bd.Part:
     ).translate((0, 0, z_top + 0.1))
     part = part - shroud_annulus - g1 - mouth_lead
 
-    # 31.1 x 31.1 mm core socket (Z = 5.0 .. 34.0 mm) + 22 x 22 mm R3 open chimney inlet (solid 5.0 mm core seat ledge!)
+    # 31.1 x 31.1 mm core socket (Z = 5.0 .. 34.0 mm) + optional 28.0 x 28.0 mm (R4.5) x 1.0 mm captive mesh recess (Z = 4.0 .. 5.0 mm)
+    # + 22 x 22 mm R3 open chimney inlet (Z = 0.0 .. 4.0 mm; Al tube outer walls & corners always rest at Z = 5.0 mm with or without mesh)
     # + backed 1.8 x 2.5 mm rounded-square neutral-sealant V-groove at Z = 31.5 .. 34.0 mm sealing core socket from optical chamber!
     core_sock = bd.Box(p.core_pocket_w, p.core_pocket_w, z_top - p.z_core_bot + 1.0,
                        align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).translate((0, 0, p.z_core_bot))
+    with bd.BuildSketch(bd.Plane.XY.offset(p.z_core_bot - p.cap_bot_mesh_pocket_depth)) as sk_mesh:
+        bd.RectangleRounded(p.cap_bot_mesh_pocket_w, p.cap_bot_mesh_pocket_w, radius=p.cap_bot_mesh_pocket_r)
+    mesh_recess = bd.extrude(sk_mesh.sketch, p.cap_bot_mesh_pocket_depth + 0.5)
     with bd.BuildSketch(bd.Plane.XY.offset(-1.0)) as sk_in:
         bd.RectangleRounded(p.cap_bot_inlet_w, p.cap_bot_inlet_w, radius=3.0)
     inlet_cut = bd.extrude(sk_in.sketch, p.z_core_bot + 2.0)
@@ -159,7 +163,7 @@ def build_cap_bot(p: LepiLEDParams) -> bd.Part:
     with bd.BuildSketch(bd.Plane.XY.offset(z_top + 0.05)) as sk_bg1:
         bd.RectangleRounded(w_bg, w_bg, radius=5.5)
     bot_seal_cut = bd.loft([sk_bg0.sketch, sk_bg1.sketch])
-    part = part - core_sock - inlet_cut - bot_seal_cut
+    part = part - core_sock - mesh_recess - inlet_cut - bot_seal_cut
 
     # Single DIN 912 M4 x 50 mm A2 stainless SHCS along ±X at Z = 11.5 mm:
     #   +X: 45-deg gable pocket (9.0 mm wide, Ø8.06 mm inscribed) cleanly clears Ø7.0 mm DIN 912 head + 3 mm hex key

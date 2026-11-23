@@ -1,7 +1,7 @@
 {
   "revision": "Rev 6.0 (Open-Chimney Funnel Lantern: Screened 30x30x2 mm Al Chimney, Thermal-Epoxy Stars, +X Vertical PCB, Axial Bell O-Ring & Compressing Cable Clamp)",
   "input_hashes": {
-    "params.py": "f2db4ca850c1513c",
+    "params.py": "9eb0fd78a049de57",
     "driver_pcb.kicad_pcb": "a7f1cd15daf95a27"
   },
   "params": {
@@ -11,6 +11,9 @@
     "cap_bot_cone_h": 15.8,
     "cap_bot_core_bot_z": 5.0,
     "cap_bot_inlet_w": 22.0,
+    "cap_bot_mesh_pocket_w": 28.0,
+    "cap_bot_mesh_pocket_r": 4.5,
+    "cap_bot_mesh_pocket_depth": 1.0,
     "cap_bot_bolt_z": 11.5,
     "cap_bot_glass_bot_z": 19.5,
     "cap_bot_seal_groove": 1.8,
@@ -222,6 +225,16 @@
       "chimney_inlet_area_cm2": {
         "value": 4.76,
         "min": 4.0,
+        "pass": true
+      },
+      "cap_bot_mesh_shelf_min_mm": {
+        "value": 3.0,
+        "min": 2.5,
+        "pass": true
+      },
+      "cap_bot_mesh_core_seat_wc_mm": {
+        "value": 0.45,
+        "min": 0.4,
         "pass": true
       },
       "vis_star_height_from_tip_mm": {
@@ -469,14 +482,14 @@
     "mech_cap_bot": {
       "step_file": "mech_cap_bot.step",
       "stl_file": "mech_cap_bot.stl",
-      "brep_volume_mm3": 60376.555,
-      "stl_volume_mm3": 60370.109,
+      "brep_volume_mm3": 60086.212,
+      "stl_volume_mm3": 60079.767,
       "is_watertight": true,
       "is_winding_consistent": true,
       "is_volume": true,
       "euler_number": -4,
       "genus": 3,
-      "triangles": 38244
+      "triangles": 39940
     },
     "mech_top_base": {
       "step_file": "mech_top_base.step",
@@ -700,17 +713,17 @@
     "all_zero": true
   },
   "mass_budget_g": {
-    "printed_lamp_volume_cm3": 360.9,
-    "cap_bot_volume_cm3": 60.4,
+    "printed_lamp_volume_cm3": 360.6,
+    "cap_bot_volume_cm3": 60.1,
     "top_base_volume_cm3": 126.6,
     "cap_top_volume_cm3": 152.3,
-    "asa_fdm_62pct_g": 239.4,
-    "petg_fdm_62pct_g": 284.2,
+    "asa_fdm_62pct_g": 239.2,
+    "petg_fdm_62pct_g": 283.9,
     "al_core_2mm_g": 181.1,
     "uvt_pmma_shroud_g": 72.9,
     "elec_stars_hardware_g": 94.0,
-    "total_fdm_asa_g": 587.4,
-    "total_fdm_petg_g": 632.2
+    "total_fdm_asa_g": 587.2,
+    "total_fdm_petg_g": 631.9
   },
   "summary": {
     "all_param_checks_pass": true,

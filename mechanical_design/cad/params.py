@@ -23,8 +23,11 @@ class LepiLEDParams:
     cap_bot_tip_od: float = 40.0         # Bottom nosecone tip OD (4.01 mm corner wall at Z = 6.0 mm)
     cap_bot_collar_od: float = 71.0      # Upper shroud collar OD (2.80 mm solid wall behind 60x3.5 O-ring)
     cap_bot_cone_h: float = 15.8         # Clean 44.4-deg self-supporting frustum Z = 0.0 .. 15.8 mm (0 tessellation >46 deg)
-    cap_bot_core_bot_z: float = 5.0      # Core seat ledge around 22 x 22 mm screened chimney air inlet (3.01 mm corner wall)
+    cap_bot_core_bot_z: float = 5.0      # Core seat ledge around 22 x 22 mm chimney air inlet (3.01 mm corner wall)
     cap_bot_inlet_w: float = 22.0        # Open rounded-square chimney inlet at nosecone tip (R = 3 mm)
+    cap_bot_mesh_pocket_w: float = 28.0  # Optional captive bottom mesh recess (28.0 x 28.0 R4.5; fits 27.4 x 27.4 mm 0.7 mm SS mesh)
+    cap_bot_mesh_pocket_r: float = 4.5   # Corner radius preserving >=2.44 mm diagonal Al-core seat at Z=5.0 & 3.63 mm corner shelf
+    cap_bot_mesh_pocket_depth: float = 1.0  # Exact 5 x 0.20 mm layers (Z = 4.0..5.0 mm; clears 0.7 mm mesh + wire burrs, 0 core Z-shift)
     cap_bot_bolt_z: float = 11.5         # Single M4 x 50 mm A2 stainless cross-bolt (6.5 mm from core bottom; 2.2 mm bulkhead to bore)
     cap_bot_glass_bot_z: float = 19.5    # Bottom shroud seat (14.5 mm socket -> exposed window starts at Z = 34.0 mm)
     cap_bot_seal_groove: float = 1.8     # Rounded-square top hub V-groove (2.35 mm to 30 mm Al flats; 2.24 mm corner wall)
@@ -334,6 +337,11 @@ class LepiLEDParams:
         collar_oring_wall = 0.5 * (self.cap_bot_collar_od - self.glass_oring_groove_od)
         bot_bolt_al_edge = (self.z_bot_bolt - self.z_core_bot) - 0.5 * self.core_bolt_hole_dia
         inlet_area_cm2 = (self.cap_bot_inlet_w ** 2 - (4.0 - math.pi) * 3.0 ** 2) / 100.0
+        inlet_corner_r = (0.5 * self.cap_bot_inlet_w - 3.0) * math.sqrt(2.0) + 3.0
+        mesh_pkt_corner_r = (0.5 * self.cap_bot_mesh_pocket_w - self.cap_bot_mesh_pocket_r) * math.sqrt(2.0) + self.cap_bot_mesh_pocket_r
+        mesh_shelf_min = min(0.5 * (self.cap_bot_mesh_pocket_w - self.cap_bot_inlet_w), mesh_pkt_corner_r - inlet_corner_r)
+        # Worst-case shifted 30.0 mm Al tube in 31.1 mm socket shifts up to 0.55 mm -> outer flat wall at 14.45 mm
+        mesh_core_seat_wc = (0.5 * self.core_w_nom - 0.5 * (self.core_pocket_w - self.core_w_nom)) - 0.5 * self.cap_bot_mesh_pocket_w
         bot_seal_w = self.core_pocket_w + 2.0 * self.cap_bot_seal_groove  # 34.7 mm, R = 5.5 mm corners
         bot_seal_corner_r = (0.5 * bot_seal_w - 5.5) * math.sqrt(2.0) + 5.5  # 22.26 mm
         bot_seal_corner_wall = 0.5 * self.core_hub_od - bot_seal_corner_r    # 2.24 mm
@@ -345,6 +353,8 @@ class LepiLEDParams:
         checks["shroud_collar_oring_wall_mm"] = {"value": round(collar_oring_wall, 3), "min": 2.5, "pass": collar_oring_wall >= 2.5}
         checks["bot_m4_bolt_al_edge_mm"] = {"value": round(bot_bolt_al_edge, 3), "min": 4.0, "pass": bot_bolt_al_edge >= 4.0}
         checks["chimney_inlet_area_cm2"] = {"value": round(inlet_area_cm2, 2), "min": 4.0, "pass": inlet_area_cm2 >= 4.0}
+        checks["cap_bot_mesh_shelf_min_mm"] = {"value": round(mesh_shelf_min, 3), "min": 2.5, "pass": mesh_shelf_min >= 2.5}
+        checks["cap_bot_mesh_core_seat_wc_mm"] = {"value": round(mesh_core_seat_wc, 3), "min": 0.4, "pass": mesh_core_seat_wc >= 0.4}
         checks["vis_star_height_from_tip_mm"] = {"value": round(self.z_led_vis, 2), "max": 65.0, "pass": self.z_led_vis <= 65.0}
 
         # 2. Vertical driver_pcb (+X face) & top-bay clearances inside Ø85.0 mm MECH-CAP-TOP bell

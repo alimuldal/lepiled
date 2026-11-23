@@ -5,6 +5,9 @@
   "cap_bot_cone_h": 15.8,
   "cap_bot_core_bot_z": 5.0,
   "cap_bot_inlet_w": 22.0,
+  "cap_bot_mesh_pocket_w": 28.0,
+  "cap_bot_mesh_pocket_r": 4.5,
+  "cap_bot_mesh_pocket_depth": 1.0,
   "cap_bot_bolt_z": 11.5,
   "cap_bot_glass_bot_z": 19.5,
   "cap_bot_seal_groove": 1.8,
@@ -216,6 +219,16 @@
     "chimney_inlet_area_cm2": {
       "value": 4.76,
       "min": 4.0,
+      "pass": true
+    },
+    "cap_bot_mesh_shelf_min_mm": {
+      "value": 3.0,
+      "min": 2.5,
+      "pass": true
+    },
+    "cap_bot_mesh_core_seat_wc_mm": {
+      "value": 0.45,
+      "min": 0.4,
       "pass": true
     },
     "vis_star_height_from_tip_mm": {
